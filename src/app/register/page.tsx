@@ -1,11 +1,13 @@
 import { signup } from '@/app/auth/actions'
 import Link from 'next/link'
 
-export default function RegisterPage({
+export default async function RegisterPage({
   searchParams,
 }: {
-  searchParams: { error: string }
+  searchParams: Promise<{ error?: string; message?: string }>
 }) {
+  const params = await searchParams
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-gray-100">
@@ -58,16 +60,22 @@ export default function RegisterPage({
             </div>
           </div>
 
-          {searchParams?.error && (
-            <div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded">
-              {searchParams.error}
+          {params?.error && (
+            <div className="text-red-600 text-sm text-center bg-red-50 border border-red-200 p-3 rounded-lg">
+              {params.error}
+            </div>
+          )}
+
+          {params?.message && (
+            <div className="text-emerald-700 text-sm text-center bg-emerald-50 border border-emerald-200 p-3 rounded-lg">
+              {params.message}
             </div>
           )}
 
           <div>
             <button
               type="submit"
-              className="group relative flex w-full justify-center rounded-md border border-transparent bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"
+              className="group relative flex w-full justify-center rounded-md border border-transparent bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 transition-colors cursor-pointer"
             >
               Registrarse
             </button>
