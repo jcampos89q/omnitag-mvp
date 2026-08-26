@@ -8,13 +8,13 @@ export async function GET(
   const supabase = await createClient()
   const { tag_id } = await params
 
-  // 1. Buscar el dispositivo
+  // 1. Buscar el dispositivo de forma segura con maybeSingle
   const { data: device } = await supabase
     .from('devices')
     .select('*')
     .eq('tag_id', tag_id)
     .eq('is_active', true)
-    .single()
+    .maybeSingle()
 
   // Si no existe o está inactivo, mostrar error o redirigir a la landing de OmniTag
   if (!device) {
@@ -22,10 +22,8 @@ export async function GET(
   }
 
   // 2. Registrar el escaneo asíncronamente (Analítica Básica)
-  // Obtenemos info del cliente (User-Agent, etc.)
   const userAgent = request.headers.get('user-agent') || ''
   
-  // No esperamos a que termine para no ralentizar la redirección
   supabase.from('scans').insert({
     device_id: device.id,
     os: userAgent.includes('iPhone') || userAgent.includes('Mac') ? 'Apple' : userAgent.includes('Android') ? 'Android' : 'Desktop',
@@ -41,12 +39,11 @@ export async function GET(
 
   // 3. Redirección en milisegundos
   if (device.device_type === 'vcard' && device.vcard_id) {
-    // Si redirige a una vCard, primero buscamos el slug de esa vCard
     const { data: vcard } = await supabase
       .from('vcards')
       .select('slug')
       .eq('id', device.vcard_id)
-      .single()
+      .maybeSingle()
       
     if (vcard) {
       return NextResponse.redirect(new URL(`/v/${vcard.slug}`, request.url))
@@ -58,6 +55,5 @@ export async function GET(
     return NextResponse.redirect(device.redirect_url)
   }
 
-  // Fallback si no hay url
   return NextResponse.redirect(new URL('/', request.url))
 }

@@ -12,13 +12,13 @@ export default async function PublicVCardPage({
   const supabase = await createClient()
   const { slug } = await params
 
-  // Buscar la vCard por su slug (URL)
+  // Buscar la vCard por su slug (URL) de forma segura
   const { data: vcard } = await supabase
     .from('vcards')
     .select('*')
     .eq('slug', slug)
     .eq('is_active', true)
-    .single()
+    .maybeSingle()
 
   if (!vcard) {
     notFound() // Muestra la página 404 si no existe o está desactivada

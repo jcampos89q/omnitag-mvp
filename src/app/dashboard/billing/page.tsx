@@ -14,12 +14,12 @@ export default async function BillingPage({
 
   if (!user) redirect('/login')
 
-  // Obtener el plan actual del workspace
+  // Obtener el plan actual del workspace de forma segura con maybeSingle
   const { data: workspaceMember } = await supabase
     .from('workspace_members')
     .select('workspace_id')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   let currentPlan = 'free'
   
@@ -28,7 +28,7 @@ export default async function BillingPage({
       .from('workspaces')
       .select('id, plan')
       .eq('id', workspaceMember.workspace_id)
-      .single()
+      .maybeSingle()
     
     currentPlan = workspace?.plan || 'free'
 

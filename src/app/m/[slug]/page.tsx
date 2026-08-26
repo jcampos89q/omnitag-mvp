@@ -10,13 +10,13 @@ export default async function PublicMenuPage({
   const supabase = await createClient()
   const { slug } = await params
 
-  // 1. Buscar el menú
+  // 1. Buscar el menú de forma segura
   const { data: menu } = await supabase
     .from('menus')
     .select('*')
     .eq('slug', slug)
     .eq('is_active', true)
-    .single()
+    .maybeSingle()
 
   if (!menu) {
     notFound()

@@ -5,12 +5,12 @@ export default async function LeadsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Find user's vcard id
+  // Find user's vcard id with maybeSingle
   const { data: vcard } = await supabase
     .from('vcards')
     .select('id, lead_capture_enabled')
     .eq('user_id', user?.id)
-    .single()
+    .maybeSingle()
 
   let leads = []
   if (vcard) {

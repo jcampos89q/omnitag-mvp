@@ -7,12 +7,12 @@ export default async function MenusPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Buscar menú del usuario
+  // Buscar menú del usuario de forma segura con maybeSingle
   const { data: menu } = await supabase
     .from('menus')
     .select('*')
     .eq('user_id', user?.id)
-    .single()
+    .maybeSingle()
 
   // Si tiene menú, buscar categorías con sus ítems
   let categories = []

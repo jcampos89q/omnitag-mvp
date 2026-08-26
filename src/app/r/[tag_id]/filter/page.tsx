@@ -14,7 +14,7 @@ export default async function ReviewFilterPage({
     .from('devices')
     .select('id, redirect_url, review_filter_enabled')
     .eq('tag_id', tag_id)
-    .single()
+    .maybeSingle()
 
   if (!device || !device.review_filter_enabled) {
     notFound()

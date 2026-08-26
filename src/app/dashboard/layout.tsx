@@ -11,12 +11,16 @@ export default async function DashboardLayout({
 
   let isAdmin = false
   if (user) {
-    const { data: profile } = await supabase
-      .from('users')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single()
-    isAdmin = profile?.is_admin || false
+    try {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('is_admin')
+        .eq('id', user.id)
+        .maybeSingle()
+      isAdmin = Boolean(profile?.is_admin)
+    } catch {
+      isAdmin = false
+    }
   }
 
   return (

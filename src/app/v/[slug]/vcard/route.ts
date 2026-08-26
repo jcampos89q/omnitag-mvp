@@ -8,13 +8,13 @@ export async function GET(
   const supabase = await createClient()
   const { slug } = await params
 
-  // Buscar la vCard en la base de datos
+  // Buscar la vCard en la base de datos de forma segura
   const { data: vcard } = await supabase
     .from('vcards')
     .select('*')
     .eq('slug', slug)
     .eq('is_active', true)
-    .single()
+    .maybeSingle()
 
   if (!vcard) {
     return new NextResponse('vCard not found', { status: 404 })
