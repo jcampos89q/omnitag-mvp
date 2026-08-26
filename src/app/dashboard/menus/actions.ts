@@ -21,6 +21,7 @@ export async function createMenu(formData: FormData) {
   })
 
   revalidatePath('/dashboard/menus')
+  revalidatePath('/', 'layout')
 }
 
 export async function updateMenu(formData: FormData) {
@@ -36,10 +37,14 @@ export async function updateMenu(formData: FormData) {
   const logoFile = formData.get('logo_file') as File | null
   let logoUrl = (formData.get('logo_url') as string)?.trim() || null
 
-  if (logoFile && logoFile.size > 0) {
-    const uploadedLogo = await uploadMediaFile(supabase, logoFile, 'menus', user.id)
-    if (uploadedLogo) {
-      logoUrl = uploadedLogo
+  if (logoFile && logoFile instanceof File && logoFile.size > 0) {
+    try {
+      const uploadedLogo = await uploadMediaFile(supabase, logoFile, 'menus', user.id)
+      if (uploadedLogo) {
+        logoUrl = uploadedLogo
+      }
+    } catch (err) {
+      console.error("Error al subir logo del menú:", err)
     }
   }
 
@@ -57,7 +62,7 @@ export async function updateMenu(formData: FormData) {
     .eq('user_id', user.id)
 
   revalidatePath('/dashboard/menus')
-  revalidatePath('/m', 'layout')
+  revalidatePath('/', 'layout')
 }
 
 export async function createCategory(formData: FormData) {
@@ -74,6 +79,7 @@ export async function createCategory(formData: FormData) {
   })
 
   revalidatePath('/dashboard/menus')
+  revalidatePath('/', 'layout')
 }
 
 export async function deleteCategory(formData: FormData) {
@@ -81,6 +87,7 @@ export async function deleteCategory(formData: FormData) {
   const categoryId = formData.get('category_id') as string
   await supabase.from('menu_categories').delete().eq('id', categoryId)
   revalidatePath('/dashboard/menus')
+  revalidatePath('/', 'layout')
 }
 
 export async function createMenuItem(formData: FormData) {
@@ -96,10 +103,14 @@ export async function createMenuItem(formData: FormData) {
   const imageFile = formData.get('image_file') as File | null
   let imageUrl = (formData.get('image_url') as string)?.trim() || null
 
-  if (imageFile && imageFile.size > 0) {
-    const uploaded = await uploadMediaFile(supabase, imageFile, 'items', user.id)
-    if (uploaded) {
-      imageUrl = uploaded
+  if (imageFile && imageFile instanceof File && imageFile.size > 0) {
+    try {
+      const uploaded = await uploadMediaFile(supabase, imageFile, 'items', user.id)
+      if (uploaded) {
+        imageUrl = uploaded
+      }
+    } catch (err) {
+      console.error("Error al subir imagen de platillo:", err)
     }
   }
   
@@ -123,7 +134,7 @@ export async function createMenuItem(formData: FormData) {
   })
 
   revalidatePath('/dashboard/menus')
-  revalidatePath('/m', 'layout')
+  revalidatePath('/', 'layout')
 }
 
 export async function deleteMenuItem(formData: FormData) {
@@ -131,5 +142,5 @@ export async function deleteMenuItem(formData: FormData) {
   const itemId = formData.get('item_id') as string
   await supabase.from('menu_items').delete().eq('id', itemId)
   revalidatePath('/dashboard/menus')
-  revalidatePath('/m', 'layout')
+  revalidatePath('/', 'layout')
 }
