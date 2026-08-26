@@ -25,31 +25,29 @@ export async function saveVCard(formData: FormData) {
     const phone = (formData.get('phone') as string)?.trim()
     const email = (formData.get('email') as string)?.trim()
     
-    // Archivos de imagen subidos
+    // Archivos de imagen subidos por fallback del servidor si no vinieron vía URL
     const avatarFile = formData.get('avatar_file') as File | null
     const coverFile = formData.get('cover_file') as File | null
 
-    // Procesar subida de avatar si viene archivo nuevo
-    if (avatarFile && avatarFile instanceof File && avatarFile.size > 0) {
+    if (!avatarUrl && avatarFile && avatarFile instanceof File && avatarFile.size > 0) {
       try {
         const uploadedAvatar = await uploadMediaFile(supabase, avatarFile, 'avatars', user.id)
         if (uploadedAvatar) {
           avatarUrl = uploadedAvatar
         }
       } catch (uploadErr: any) {
-        console.error("Error al subir avatar:", uploadErr)
+        console.error("Error al subir avatar en servidor:", uploadErr)
       }
     }
 
-    // Procesar subida de cover/portada si viene archivo nuevo
-    if (coverFile && coverFile instanceof File && coverFile.size > 0) {
+    if (!coverUrl && coverFile && coverFile instanceof File && coverFile.size > 0) {
       try {
         const uploadedCover = await uploadMediaFile(supabase, coverFile, 'covers', user.id)
         if (uploadedCover) {
           coverUrl = uploadedCover
         }
       } catch (uploadErr: any) {
-        console.error("Error al subir portada:", uploadErr)
+        console.error("Error al subir portada en servidor:", uploadErr)
       }
     }
 
