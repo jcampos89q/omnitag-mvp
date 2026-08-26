@@ -1,12 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
-import { createMenu, createCategory, createMenuItem, updateMenu } from './actions'
-import { Coffee, Plus, Image as ImageIcon, Flame, Leaf, WheatOff, Save } from 'lucide-react'
+import { createMenu, createCategory, createMenuItem, updateMenu, deleteMenuItem, deleteCategory } from './actions'
+import { Coffee, Plus, Image as ImageIcon, Flame, Leaf, WheatOff, Save, Trash2 } from 'lucide-react'
+import ImageUploadInput from '@/components/ImageUploadInput'
 
 export default async function MenusPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Buscar menú del usuario (asumimos 1 por ahora para el MVP)
+  // Buscar menú del usuario
   const { data: menu } = await supabase
     .from('menus')
     .select('*')
@@ -30,10 +31,14 @@ export default async function MenusPage() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Gestor de Menú Digital</h1>
-            <p className="text-gray-500 mt-1">Crea tu catálogo interactivo y actualízalo en tiempo real.</p>
+            <p className="text-gray-500 mt-1">Crea tu catálogo interactivo con fotos y actualízalo en tiempo real.</p>
           </div>
           {menu && (
-            <a href={`/m/${menu.slug}`} target="_blank" className="bg-blue-50 text-blue-700 px-4 py-2 rounded-md font-medium text-sm border border-blue-100 hover:bg-blue-100 transition whitespace-nowrap">
+            <a 
+              href={`/m/${menu.slug}`} 
+              target="_blank" 
+              className="bg-blue-50 text-blue-700 px-4 py-2 rounded-md font-medium text-sm border border-blue-100 hover:bg-blue-100 transition whitespace-nowrap"
+            >
               Ver Menú Público
             </a>
           )}
@@ -43,11 +48,20 @@ export default async function MenusPage() {
           <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 text-center py-12">
             <Coffee className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Aún no tienes un menú</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">Crea tu primer menú para empezar a añadir categorías y platillos.</p>
+            <p className="text-gray-500 mb-6 max-w-md mx-auto">Crea tu primer menú para empezar a añadir categorías y platillos con imágenes.</p>
             
             <form action={createMenu} className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
-              <input type="text" name="name" placeholder="Nombre (ej. Mi Restaurante)" required className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none" />
-              <button type="submit" className="w-full sm:w-auto bg-black text-white px-6 py-2 rounded-md font-medium hover:bg-gray-800 transition whitespace-nowrap">
+              <input 
+                type="text" 
+                name="name" 
+                placeholder="Nombre del Restaurante / Menú" 
+                required 
+                className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none" 
+              />
+              <button 
+                type="submit" 
+                className="w-full sm:w-auto bg-black text-white px-6 py-2 rounded-md font-medium hover:bg-gray-800 transition whitespace-nowrap cursor-pointer"
+              >
                 Crear Menú
               </button>
             </form>
@@ -55,24 +69,69 @@ export default async function MenusPage() {
         ) : (
           <div className="space-y-8">
             
-            {/* Configuración del Menú (WhatsApp) */}
-            <div className="bg-gray-50 p-6 rounded-lg border border-gray-100">
-              <h3 className="font-semibold text-gray-900 mb-4">Configuración de Pedidos (WhatsApp)</h3>
-              <form action={updateMenu} className="flex flex-col sm:flex-row items-end gap-3 max-w-lg">
+            {/* Configuración del Menú (Logo, Nombre y WhatsApp) */}
+            <div className="bg-gray-50 p-6 rounded-xl border border-gray-100">
+              <h3 className="font-semibold text-gray-900 mb-4 text-lg">Información del Menú y Logotipo</h3>
+              <form action={updateMenu} className="space-y-4 max-w-2xl">
                 <input type="hidden" name="menu_id" value={menu.id} />
-                <div className="w-full">
-                  <label htmlFor="whatsapp_number" className="block text-sm font-medium text-gray-700 mb-1">Número de WhatsApp del Local</label>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre del Menú</label>
+                    <input 
+                      type="text" 
+                      name="name" 
+                      id="name" 
+                      defaultValue={menu.name || ''} 
+                      required
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-black focus:outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="whatsapp_number" className="block text-sm font-medium text-gray-700 mb-1">Número de WhatsApp (Pedidos)</label>
+                    <input 
+                      type="tel" 
+                      name="whatsapp_number" 
+                      id="whatsapp_number" 
+                      defaultValue={menu.whatsapp_number || ''} 
+                      placeholder="Ej. +34600000000"
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-black focus:outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descripción / Slogan</label>
                   <input 
-                    type="tel" name="whatsapp_number" id="whatsapp_number" 
-                    defaultValue={menu.whatsapp_number || ''} placeholder="Ej. +34600000000"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none text-sm" 
+                    type="text" 
+                    name="description" 
+                    id="description" 
+                    defaultValue={menu.description || ''} 
+                    placeholder="Ej. Auténtica comida artesanal y bebidas frescas"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-black focus:outline-none" 
                   />
                 </div>
-                <button type="submit" className="bg-gray-900 text-white px-4 py-2 rounded-md font-medium hover:bg-gray-800 transition flex items-center gap-2 h-[38px]">
-                  <Save className="w-4 h-4" /> Guardar
-                </button>
+
+                {/* Subida de Logotipo */}
+                <div className="pt-2">
+                  <ImageUploadInput
+                    name="logo"
+                    label="Logotipo del Negocio / Menú"
+                    defaultValue={menu.logo_url}
+                    shape="circle"
+                    helpText="Sube el logo de tu local o restaurante (JPG, PNG, WEBP, SVG)."
+                  />
+                </div>
+
+                <div className="pt-2">
+                  <button 
+                    type="submit" 
+                    className="bg-black text-white px-5 py-2.5 rounded-md font-medium hover:bg-gray-800 transition flex items-center gap-2 text-sm cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" /> Guardar Información del Menú
+                  </button>
+                </div>
               </form>
-              <p className="text-xs text-gray-500 mt-2">Si configuras un número, los clientes verán un carrito para enviarte sus pedidos por WhatsApp.</p>
             </div>
 
             {/* Formulario de nueva categoría */}
@@ -80,8 +139,17 @@ export default async function MenusPage() {
               <span className="font-medium text-gray-700 whitespace-nowrap">Añadir Categoría:</span>
               <form action={createCategory} className="flex flex-1 w-full gap-2">
                 <input type="hidden" name="menu_id" value={menu.id} />
-                <input type="text" name="name" placeholder="Ej. Entradas, Postres, Bebidas..." required className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
-                <button type="submit" className="bg-black text-white px-4 py-1.5 rounded-md text-sm hover:bg-gray-800 flex items-center gap-1 font-medium">
+                <input 
+                  type="text" 
+                  name="name" 
+                  placeholder="Ej. Entradas, Platos Fuertes, Postres, Bebidas..." 
+                  required 
+                  className="flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:border-black focus:outline-none" 
+                />
+                <button 
+                  type="submit" 
+                  className="bg-black text-white px-4 py-1.5 rounded-md text-sm hover:bg-gray-800 flex items-center gap-1 font-medium cursor-pointer"
+                >
                   <Plus className="w-4 h-4" /> Añadir
                 </button>
               </form>
@@ -91,15 +159,25 @@ export default async function MenusPage() {
             <div className="space-y-6">
               {categories.map((category) => (
                 <div key={category.id} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                  <div className="bg-gray-50 px-5 py-3 border-b border-gray-200">
+                  <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 flex items-center justify-between">
                     <h3 className="font-bold text-lg text-gray-900">{category.name}</h3>
+                    <form action={deleteCategory}>
+                      <input type="hidden" name="category_id" value={category.id} />
+                      <button 
+                        type="submit" 
+                        className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 font-medium transition"
+                        title="Eliminar categoría"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Eliminar categoría
+                      </button>
+                    </form>
                   </div>
                   
                   <div className="p-5 bg-white">
                     {/* Grid de platillos */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                       {category.menu_items?.map((item: any) => (
-                        <div key={item.id} className="flex gap-4 p-3 border border-gray-100 rounded-lg hover:border-gray-200 transition">
+                        <div key={item.id} className="flex gap-4 p-3 border border-gray-100 rounded-lg hover:border-gray-200 transition relative group">
                           <div className="w-24 h-24 bg-gray-50 rounded-md flex items-center justify-center shrink-0 overflow-hidden relative border border-gray-200">
                             {item.image_url ? (
                               <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
@@ -119,53 +197,99 @@ export default async function MenusPage() {
                               {item.allergens?.includes('vegan') && <span className="flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded-sm uppercase"><Leaf className="w-3 h-3"/> Vegano</span>}
                               {item.allergens?.includes('spicy') && <span className="flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded-sm uppercase"><Flame className="w-3 h-3"/> Picante</span>}
                               {item.allergens?.includes('gluten_free') && <span className="flex items-center gap-1 text-[10px] font-bold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded-sm uppercase"><WheatOff className="w-3 h-3"/> Sin Gluten</span>}
-                              
-                              <span className={`text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-sm ${item.is_available ? 'bg-gray-100 text-gray-600' : 'bg-red-100 text-red-700'}`}>
-                                {item.is_available ? 'Disponible' : 'Agotado'}
-                              </span>
                             </div>
                           </div>
+
+                          <form action={deleteMenuItem} className="opacity-0 group-hover:opacity-100 transition absolute top-2 right-2">
+                            <input type="hidden" name="item_id" value={item.id} />
+                            <button 
+                              type="submit" 
+                              className="p-1 text-red-400 hover:text-red-600 bg-white/90 rounded-md shadow-xs"
+                              title="Eliminar platillo"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </form>
                         </div>
                       ))}
                     </div>
 
-                    {/* Formulario de nuevo ítem */}
-                    <div className="mt-4 pt-4 border-t border-gray-100 bg-gray-50/50 p-4 rounded-lg">
-                      <p className="text-sm font-semibold text-gray-900 mb-3">Añadir nuevo platillo a "{category.name}"</p>
-                      <form action={createMenuItem} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Formulario de nuevo ítem con subida de imagen */}
+                    <div className="mt-4 pt-4 border-t border-gray-100 bg-gray-50/70 p-4 rounded-xl">
+                      <p className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Añadir nuevo platillo a "{category.name}"
+                      </p>
+                      <form action={createMenuItem} className="space-y-4">
                         <input type="hidden" name="category_id" value={category.id} />
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Nombre del Plato *</label>
+                            <input 
+                              type="text" 
+                              name="name" 
+                              placeholder="Ej. Tacos al Pastor, Pizza Margarita..." 
+                              required 
+                              className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm bg-white focus:border-black focus:outline-none" 
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Precio *</label>
+                            <input 
+                              type="number" 
+                              step="0.01" 
+                              name="price" 
+                              placeholder="12.50" 
+                              required 
+                              className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm bg-white focus:border-black focus:outline-none" 
+                            />
+                          </div>
+                        </div>
+
                         <div>
-                          <input type="text" name="name" placeholder="Nombre del plato *" required className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Descripción</label>
+                          <input 
+                            type="text" 
+                            name="description" 
+                            placeholder="Ingredientes, preparación o detalles del plato..." 
+                            className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm bg-white focus:border-black focus:outline-none" 
+                          />
                         </div>
+
+                        {/* Subida de Imagen del Platillo */}
                         <div>
-                          <input type="number" step="0.01" name="price" placeholder="Precio * (ej. 12.50)" required className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
+                          <ImageUploadInput
+                            name="image"
+                            label="Foto del Platillo (Recomendado)"
+                            shape="square"
+                            helpText="Selecciona una fotografía del plato para atraer más clientes."
+                          />
                         </div>
-                        <div className="sm:col-span-2">
-                          <input type="text" name="description" placeholder="Descripción breve..." className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
-                        </div>
-                        <div className="sm:col-span-2">
-                          <input type="url" name="image_url" placeholder="URL de la imagen (Opcional)" className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
-                        </div>
-                        <div className="sm:col-span-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-2">
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                            <label className="flex items-center gap-1.5 cursor-pointer bg-yellow-50 px-2 py-1 rounded border border-yellow-200 text-yellow-800">
+
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-2">
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-700">
+                            <label className="flex items-center gap-1.5 cursor-pointer bg-yellow-50 px-2 py-1 rounded border border-yellow-200 text-yellow-800 font-medium">
                               <input type="checkbox" name="is_featured" className="rounded border-yellow-300 text-yellow-600 focus:ring-yellow-500" /> 
                               ⭐ Destacar
                             </label>
                             <label className="flex items-center gap-1.5 cursor-pointer">
                               <input type="checkbox" name="allergen_vegan" className="rounded border-gray-300 text-black focus:ring-black" /> 
-                              <Leaf className="w-4 h-4 text-green-600"/> Vegano
+                              <Leaf className="w-3.5 h-3.5 text-green-600"/> Vegano
                             </label>
                             <label className="flex items-center gap-1.5 cursor-pointer">
                               <input type="checkbox" name="allergen_spicy" className="rounded border-gray-300 text-black focus:ring-black" /> 
-                              <Flame className="w-4 h-4 text-red-500"/> Picante
+                              <Flame className="w-3.5 h-3.5 text-red-500"/> Picante
                             </label>
                             <label className="flex items-center gap-1.5 cursor-pointer">
                               <input type="checkbox" name="allergen_gluten_free" className="rounded border-gray-300 text-black focus:ring-black" /> 
-                              <WheatOff className="w-4 h-4 text-orange-500"/> Sin Gluten
+                              <WheatOff className="w-3.5 h-3.5 text-orange-500"/> Sin Gluten
                             </label>
                           </div>
-                          <button type="submit" className="w-full sm:w-auto bg-black text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-gray-800 whitespace-nowrap">
+                          
+                          <button 
+                            type="submit" 
+                            className="w-full sm:w-auto bg-black text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-gray-800 whitespace-nowrap transition cursor-pointer"
+                          >
                             Guardar Platillo
                           </button>
                         </div>

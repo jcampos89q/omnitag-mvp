@@ -34,11 +34,16 @@ export default async function PublicMenuPage({
       {/* Cabecera del Menú */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-6 text-center">
+          {menu.logo_url && (
+            <div className="w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden shadow-md border-2 border-gray-100 bg-white flex items-center justify-center">
+              <img src={menu.logo_url} alt={menu.name} className="w-full h-full object-cover" />
+            </div>
+          )}
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
             {menu.name}
           </h1>
           {menu.description && (
-            <p className="mt-2 text-sm text-gray-500">{menu.description}</p>
+            <p className="mt-2 text-sm text-gray-500 max-w-lg mx-auto">{menu.description}</p>
           )}
         </div>
       </header>

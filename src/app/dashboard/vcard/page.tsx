@@ -1,13 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { saveVCard } from './actions'
+import ImageUploadInput from '@/components/ImageUploadInput'
 
 export default async function VCardBuilderPage({
   searchParams,
 }: {
-  searchParams: { success?: string }
+  searchParams: Promise<{ success?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const params = await searchParams
 
   // Obtener la vCard actual si existe
   const { data: vcard } = await supabase
@@ -22,9 +24,9 @@ export default async function VCardBuilderPage({
         <h1 className="text-2xl font-bold text-gray-900">Configurar mi vCard</h1>
         <p className="text-gray-500 mt-1">Completa los datos de tu tarjeta de presentación digital.</p>
         
-        {searchParams?.success && (
+        {params?.success && (
           <div className="mt-4 p-4 bg-green-50 text-green-800 rounded-md border border-green-100">
-            ¡Tus datos se han guardado correctamente!
+            ¡Tus datos e imágenes se han guardado correctamente!
           </div>
         )}
 
@@ -42,27 +44,31 @@ export default async function VCardBuilderPage({
       </div>
 
       <form action={saveVCard} className="space-y-6 max-w-2xl">
-        {/* Aspecto Visual */}
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 mb-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Aspecto Visual</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Aspecto Visual & Fotos */}
+        <div className="bg-gray-50 p-6 rounded-lg border border-gray-100 mb-6 space-y-6">
+          <h2 className="text-lg font-semibold text-gray-900">Aspecto Visual y Fotos</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="avatar_url" className="block text-sm font-medium text-gray-700">URL de Foto de Perfil</label>
-              <input 
-                type="url" name="avatar_url" id="avatar_url" 
-                defaultValue={vcard?.avatar_url || ''} placeholder="https://..."
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none sm:text-sm" 
+              <ImageUploadInput
+                name="avatar"
+                label="Foto de Perfil"
+                defaultValue={vcard?.avatar_url}
+                shape="circle"
+                helpText="Recomendado: Imagen cuadrada de tu rostro o logotipo personal."
               />
             </div>
             <div>
-              <label htmlFor="cover_url" className="block text-sm font-medium text-gray-700">URL de Portada</label>
-              <input 
-                type="url" name="cover_url" id="cover_url" 
-                defaultValue={vcard?.cover_url || ''} placeholder="https://..."
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none sm:text-sm" 
+              <ImageUploadInput
+                name="cover"
+                label="Imagen de Portada / Banner"
+                defaultValue={vcard?.cover_url}
+                shape="banner"
+                helpText="Recomendado: Imagen horizontal para el encabezado."
               />
             </div>
           </div>
+
           <div>
             <label htmlFor="color" className="block text-sm font-medium text-gray-700">Color Principal</label>
             <div className="flex items-center gap-3 mt-1">
@@ -71,7 +77,7 @@ export default async function VCardBuilderPage({
                 defaultValue={vcard?.theme?.color || '#000000'}
                 className="h-10 w-14 rounded-md border border-gray-300 cursor-pointer" 
               />
-              <span className="text-sm text-gray-500">Selecciona el color de tu marca</span>
+              <span className="text-sm text-gray-500">Selecciona el color de tu marca o botón</span>
             </div>
           </div>
         </div>
@@ -189,7 +195,7 @@ export default async function VCardBuilderPage({
         <div className="flex justify-end pt-6">
           <button 
             type="submit" 
-            className="bg-black text-white px-6 py-2 rounded-md font-medium hover:bg-gray-800 transition-colors"
+            className="bg-black text-white px-6 py-2 rounded-md font-medium hover:bg-gray-800 transition-colors cursor-pointer"
           >
             Guardar Cambios
           </button>

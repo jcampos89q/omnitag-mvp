@@ -1,7 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { uploadMediaFile } from '@/lib/supabase/storage'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 export async function saveVCard(formData: FormData) {
   const supabase = await createClient()
@@ -9,23 +11,44 @@ export async function saveVCard(formData: FormData) {
 
   if (!user) throw new Error("No autenticado")
 
-  const firstName = formData.get('first_name') as string
-  const lastName = formData.get('last_name') as string
-  const jobTitle = formData.get('job_title') as string
-  const companyName = formData.get('company_name') as string
-  const bio = formData.get('bio') as string
-  const phone = formData.get('phone') as string
-  const email = formData.get('email') as string
+  const firstName = (formData.get('first_name') as string)?.trim()
+  const lastName = (formData.get('last_name') as string)?.trim()
+  const jobTitle = (formData.get('job_title') as string)?.trim()
+  const companyName = (formData.get('company_name') as string)?.trim()
+  const bio = (formData.get('bio') as string)?.trim()
+  const phone = (formData.get('phone') as string)?.trim()
+  const email = (formData.get('email') as string)?.trim()
   
-  // Nuevos campos
-  const avatarUrl = formData.get('avatar_url') as string
-  const coverUrl = formData.get('cover_url') as string
-  const color = formData.get('color') as string || '#000000'
-  const instagram = formData.get('instagram') as string
-  const linkedin = formData.get('linkedin') as string
-  const website = formData.get('website') as string
-  const facebook = formData.get('facebook') as string
-  const tiktok = formData.get('tiktok') as string
+  // Archivos de imagen subidos
+  const avatarFile = formData.get('avatar_file') as File | null
+  const coverFile = formData.get('cover_file') as File | null
+
+  // URLs de respaldo o URLs manuales
+  let avatarUrl = (formData.get('avatar_url') as string)?.trim() || null
+  let coverUrl = (formData.get('cover_url') as string)?.trim() || null
+
+  // Procesar subida de avatar si viene archivo nuevo
+  if (avatarFile && avatarFile.size > 0) {
+    const uploadedAvatar = await uploadMediaFile(supabase, avatarFile, 'avatars', user.id)
+    if (uploadedAvatar) {
+      avatarUrl = uploadedAvatar
+    }
+  }
+
+  // Procesar subida de cover/portada si viene archivo nuevo
+  if (coverFile && coverFile.size > 0) {
+    const uploadedCover = await uploadMediaFile(supabase, coverFile, 'covers', user.id)
+    if (uploadedCover) {
+      coverUrl = uploadedCover
+    }
+  }
+
+  const color = (formData.get('color') as string) || '#000000'
+  const instagram = (formData.get('instagram') as string)?.trim()
+  const linkedin = (formData.get('linkedin') as string)?.trim()
+  const website = (formData.get('website') as string)?.trim()
+  const facebook = (formData.get('facebook') as string)?.trim()
+  const tiktok = (formData.get('tiktok') as string)?.trim()
   const leadCaptureEnabled = formData.get('lead_capture_enabled') === 'on'
 
   // Check if vcard exists for this user
@@ -49,10 +72,10 @@ export async function saveVCard(formData: FormData) {
     color
   }
 
-  // Generate a basic slug if it's new (in a real app we'd ensure uniqueness perfectly)
+  // Generate a basic slug if it's new
   const slug = existingVcard 
     ? undefined 
-    : `${firstName.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString().slice(-4)}`
+    : `${(firstName || 'usuario').toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString().slice(-4)}`
 
   const payload = {
     first_name: firstName,
@@ -62,21 +85,19 @@ export async function saveVCard(formData: FormData) {
     bio,
     contact_info,
     theme,
-    avatar_url: avatarUrl || null,
-    cover_url: coverUrl || null,
+    avatar_url: avatarUrl,
+    cover_url: coverUrl,
     lead_capture_enabled: leadCaptureEnabled
   }
 
   if (existingVcard) {
-    // Update
     const { error } = await supabase
       .from('vcards')
       .update(payload)
       .eq('id', existingVcard.id)
       
-    if (error) console.error("Error updating:", error)
+    if (error) console.error("Error updating vCard:", error)
   } else {
-    // Insert
     const { error } = await supabase
       .from('vcards')
       .insert({
@@ -85,9 +106,10 @@ export async function saveVCard(formData: FormData) {
         ...payload
       })
       
-    if (error) console.error("Error inserting:", error)
+    if (error) console.error("Error inserting vCard:", error)
   }
 
-  const { redirect } = await import('next/navigation')
+  revalidatePath('/dashboard/vcard')
+  revalidatePath('/v', 'layout')
   redirect('/dashboard/vcard?success=true')
 }
