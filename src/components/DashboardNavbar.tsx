@@ -15,7 +15,7 @@ import {
   CreditCard,
   Menu as MenuIcon,
   X,
-  Sparkles
+  ShieldCheck
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 
@@ -25,9 +25,10 @@ interface NavItem {
   icon: any
   badge?: string
   accent?: boolean
+  adminOnly?: boolean
 }
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { name: 'Inicio', href: '/dashboard', icon: Home },
   { name: 'Mi vCard', href: '/dashboard/vcard', icon: UserCircle },
   { name: 'Contactos (CRM)', href: '/dashboard/leads', icon: Users },
@@ -39,12 +40,19 @@ const navItems: NavItem[] = [
 ]
 
 export default function DashboardNavbar({ 
-  userEmail 
+  userEmail,
+  isAdmin = false,
 }: { 
   userEmail?: string 
+  isAdmin?: boolean
 }) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const navItems = [
+    ...baseNavItems,
+    ...(isAdmin ? [{ name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true }] : [])
+  ]
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard'
@@ -60,6 +68,11 @@ export default function DashboardNavbar({
             O
           </div>
           <span className="text-xl font-bold tracking-tight text-gray-900">OmniTag</span>
+          {isAdmin && (
+            <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded">
+              ADMIN
+            </span>
+          )}
         </Link>
 
         <button
@@ -101,6 +114,11 @@ export default function DashboardNavbar({
               <div className="px-3 py-2 bg-gray-50 rounded-lg mb-4">
                 <p className="text-xs text-gray-500 font-medium">Conectado como:</p>
                 <p className="text-sm font-semibold text-gray-800 truncate">{userEmail}</p>
+                {isAdmin && (
+                  <span className="inline-block mt-1 text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
+                    👑 Super Administrador
+                  </span>
+                )}
               </div>
             )}
 
@@ -116,10 +134,12 @@ export default function DashboardNavbar({
                     className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
                       active
                         ? 'bg-black text-white shadow-xs'
+                        : item.adminOnly 
+                        ? 'text-purple-700 bg-purple-50/70 hover:bg-purple-100 font-bold'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
-                    <Icon className={`w-5 h-5 ${active ? 'text-white' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
+                    <Icon className={`w-5 h-5 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
                     <span>{item.name}</span>
                   </Link>
                 )
@@ -154,8 +174,15 @@ export default function DashboardNavbar({
 
         {userEmail && (
           <div className="px-6 py-2">
-            <p className="text-xs text-gray-400 font-medium">Cuenta activa</p>
-            <p className="text-xs font-semibold text-gray-700 truncate">{userEmail}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-400 font-medium">Cuenta activa</p>
+              {isAdmin && (
+                <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded">
+                  ADMIN
+                </span>
+              )}
+            </div>
+            <p className="text-xs font-semibold text-gray-700 truncate mt-0.5">{userEmail}</p>
           </div>
         )}
         
@@ -170,10 +197,12 @@ export default function DashboardNavbar({
                 className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
                   active 
                     ? 'bg-black text-white shadow-xs' 
+                    : item.adminOnly
+                    ? 'text-purple-700 bg-purple-50/70 hover:bg-purple-100 font-bold'
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${active ? 'text-white' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
+                <Icon className={`w-5 h-5 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
                 <span>{item.name}</span>
               </Link>
             )
@@ -228,13 +257,25 @@ export default function DashboardNavbar({
           <Smartphone className="w-5 h-5 mb-0.5" />
           <span>QRs</span>
         </Link>
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="flex flex-col items-center py-1 px-2 text-xs font-medium text-gray-500 hover:text-black focus:outline-none"
-        >
-          <MenuIcon className="w-5 h-5 mb-0.5" />
-          <span>Más</span>
-        </button>
+        {isAdmin ? (
+          <Link
+            href="/dashboard/admin"
+            className={`flex flex-col items-center py-1 px-2 text-xs font-medium ${
+              isActive('/dashboard/admin') ? 'text-purple-700 font-bold' : 'text-purple-600'
+            }`}
+          >
+            <ShieldCheck className="w-5 h-5 mb-0.5" />
+            <span>Admin</span>
+          </Link>
+        ) : (
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="flex flex-col items-center py-1 px-2 text-xs font-medium text-gray-500 hover:text-black focus:outline-none"
+          >
+            <MenuIcon className="w-5 h-5 mb-0.5" />
+            <span>Más</span>
+          </button>
+        )}
       </nav>
     </>
   )
