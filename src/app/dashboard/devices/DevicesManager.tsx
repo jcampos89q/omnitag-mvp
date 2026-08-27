@@ -17,27 +17,57 @@ import {
   UserCircle,
   Gift,
   Globe,
-  ArrowRight
+  ArrowRight,
+  Zap
 } from 'lucide-react'
 import { createDevice, deleteDevice } from './actions'
 import Link from 'next/link'
+import ProFeatureModal from '@/components/ProFeatureModal'
 
 interface DevicesManagerProps {
   devices: any[]
   vcard?: any
   menu?: any
   loyalty?: any
+  isPro?: boolean
 }
 
 export default function DevicesManager({ 
   devices,
   vcard,
   menu,
-  loyalty
+  loyalty,
+  isPro = false
 }: DevicesManagerProps) {
   const [deviceType, setDeviceType] = useState<string>('tap_to_rate')
   const [reviewFilter, setReviewFilter] = useState<boolean>(true)
   const [showGoogleHelp, setShowGoogleHelp] = useState<boolean>(false)
+  const [showProModal, setShowProModal] = useState<boolean>(false)
+  const [proModalFeature, setProModalFeature] = useState({ name: '', desc: '' })
+
+  const handleCreateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    // Si no es PRO y ya tiene 1 dispositivo registrado
+    if (!isPro && devices.length >= 1) {
+      e.preventDefault()
+      setProModalFeature({
+        name: 'Placas NFC & QRs Ilimitados',
+        desc: 'El Plan Básico incluye 1 placa activa. Con OmniTag PRO puedes registrar todas las placas de mostrador, mesas y puntos de contacto que necesites.'
+      })
+      setShowProModal(true)
+      return
+    }
+
+    // Si no es PRO y seleccionó el filtro inteligente
+    if (!isPro && reviewFilter && deviceType === 'tap_to_rate') {
+      e.preventDefault()
+      setProModalFeature({
+        name: 'Escudo Anti-Quejas para Google Reviews',
+        desc: 'El filtro inteligente de reseñas de 5 estrellas y el libro digital de quejas privadas es una función exclusiva del Plan PRO.'
+      })
+      setShowProModal(true)
+      return
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -75,7 +105,14 @@ export default function DevicesManager({
               <ShieldCheck className="w-4 h-4 text-amber-700" />
             </div>
             <div>
-              <h4 className="text-xs font-bold text-amber-900">1 a 3 Estrellas (Quejas o Reclamos)</h4>
+              <h4 className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                <span>1 a 3 Estrellas (Quejas Privadas)</span>
+                {!isPro && (
+                  <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.2 rounded">
+                    PRO
+                  </span>
+                )}
+              </h4>
               <p className="text-[11px] text-gray-600 mt-0.5">
                 Abre un <b>buzón privado</b> en OmniTag para resolver la inconformidad internamente sin dañar tu puntaje en Google.
               </p>
@@ -95,9 +132,15 @@ export default function DevicesManager({
               Elige qué función deseas que se abra cuando los clientes toquen o escaneen esta placa física.
             </p>
           </div>
+
+          {!isPro && (
+            <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+              Límite Básico: {devices.length}/1 Placa
+            </span>
+          )}
         </div>
 
-        <form action={createDevice} className="space-y-5">
+        <form action={createDevice} onSubmit={handleCreateSubmit} className="space-y-5">
           {/* Selector de Tipo de Placa */}
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
@@ -203,16 +246,32 @@ export default function DevicesManager({
                 </div>
               )}
 
-              <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 pt-1 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  name="review_filter" 
-                  checked={reviewFilter}
-                  onChange={(e) => setReviewFilter(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black" 
-                />
-                <span>Activar Escudo Inteligente (Las reseñas de 1 a 3 estrellas irán a tu buzón privado)</span>
-              </label>
+              <div className="pt-1">
+                <label className="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    name="review_filter" 
+                    checked={reviewFilter}
+                    onChange={(e) => {
+                      if (!isPro && e.target.checked) {
+                        setProModalFeature({
+                          name: 'Escudo Anti-Quejas para Google Reviews',
+                          desc: 'El filtro inteligente de reseñas y el buzón privado es una función exclusiva del Plan PRO.'
+                        })
+                        setShowProModal(true)
+                      }
+                      setReviewFilter(e.target.checked)
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black" 
+                  />
+                  <span>Activar Escudo Inteligente (Las quejas de 1 a 3 estrellas irán a tu buzón privado)</span>
+                  {!isPro && (
+                    <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.2 rounded">
+                      PRO
+                    </span>
+                  )}
+                </label>
+              </div>
             </div>
           )}
 
@@ -351,6 +410,14 @@ export default function DevicesManager({
           </div>
         )}
       </div>
+
+      {/* Modal de Upgrade PRO */}
+      <ProFeatureModal
+        isOpen={showProModal}
+        onClose={() => setShowProModal(false)}
+        featureName={proModalFeature.name}
+        featureDescription={proModalFeature.desc}
+      />
     </div>
   )
 }

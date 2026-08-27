@@ -1,19 +1,29 @@
 import { createClient } from '@/lib/supabase/server'
-import { BarChart3, Smartphone, MonitorSmartphone, Activity, Globe, UserCircle, Coffee, Gift, QrCode } from 'lucide-react'
+import { BarChart3, Smartphone, MonitorSmartphone, Activity, Globe, UserCircle, Coffee, Gift, QrCode, Sparkles, ArrowRight, Zap } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function AnalyticsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 1. Obtener todas las visitas y escaneos de todos los recursos del usuario (vCards, Menús, Fidelización, Placas)
+  // 1. Obtener plan del usuario
+  const { data: workspaceMember } = await supabase
+    .from('workspace_members')
+    .select('workspace_id, workspaces(plan)')
+    .eq('user_id', user?.id)
+    .maybeSingle()
+
+  const isPro = (workspaceMember?.workspaces as any)?.plan === 'pro'
+
+  // 2. Obtener todas las visitas y escaneos de todos los recursos del usuario
   const { data: scansData } = await supabase
     .from('scans')
-    .select('id, device_id, vcard_id, menu_id, loyalty_program_id, source_type, os, country, scanned_at')
+    .select('id, device_id, vcard_id, menu_id, loyalty_program_id, source_type, os, country, scanned_at, user_agent')
     .order('scanned_at', { ascending: false })
 
   const scans = scansData || []
 
-  // 2. Procesar datos para KPIs
+  // 3. Procesar datos para KPIs
   const totalScans = scans.length
   
   const appleScans = scans.filter(s => s.os === 'Apple').length
@@ -33,14 +43,26 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 sm:p-8">
-        <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 flex items-center gap-2.5">
-            <BarChart3 className="w-6 h-6 text-blue-600" />
-            Estadísticas y Analítica en Tiempo Real
-          </h1>
-          <p className="text-gray-500 text-xs sm:text-sm mt-1">
-            Monitorea en tiempo real todas las visitas y escaneos a tus <b>vCards, Menús Digitales, Programas de Fidelización y Placas NFC/QR</b>.
-          </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 flex items-center gap-2.5">
+              <BarChart3 className="w-6 h-6 text-blue-600" />
+              Estadísticas y Analítica en Tiempo Real
+            </h1>
+            <p className="text-gray-500 text-xs sm:text-sm mt-1">
+              Monitorea en tiempo real todas las visitas y escaneos a tus <b>vCards, Menús Digitales, Programas de Fidelización y Placas NFC/QR</b>.
+            </p>
+          </div>
+
+          {!isPro && (
+            <Link
+              href="/dashboard/billing"
+              className="bg-linear-to-r from-amber-500 to-purple-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-xs hover:opacity-95 transition flex items-center gap-1.5 shrink-0"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Desbloquear Analítica PRO</span>
+            </Link>
+          )}
         </div>
 
         {/* KPIs Principales en Grid Responsivo */}
@@ -68,125 +90,111 @@ export default async function AnalyticsPage() {
               <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tráfico Android</h3>
               <MonitorSmartphone className="w-5 h-5 text-emerald-600" />
             </div>
-            <p className="text-3xl sm:text-4xl font-extrabold text-emerald-700">{androidPercent}%</p>
-            <p className="text-xs text-gray-500 mt-0.5">{androidScans} visitas de móviles Android</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-gray-900">{androidPercent}%</p>
+            <p className="text-xs text-gray-500 mt-0.5">{androidScans} visitas móviles Android</p>
           </div>
 
           <div className="bg-gray-50/90 p-5 sm:p-6 rounded-2xl border border-gray-100">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tráfico Desktop / PC</h3>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Computadoras (Desktop)</h3>
               <Globe className="w-5 h-5 text-purple-600" />
             </div>
-            <p className="text-3xl sm:text-4xl font-extrabold text-purple-700">{desktopPercent}%</p>
-            <p className="text-xs text-gray-500 mt-0.5">{desktopScans} visitas desde ordenador</p>
+            <p className="text-3xl sm:text-4xl font-extrabold text-gray-900">{desktopPercent}%</p>
+            <p className="text-xs text-gray-500 mt-0.5">{desktopScans} visitas desde navegadores PC</p>
           </div>
         </div>
 
-        {/* Desglose de Rendimiento por Canal */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Tráfico por Tipo de Producto */}
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-gray-700" /> Desglose por Servicio
-            </h2>
-            <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4 shadow-xs">
-              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
-                    <UserCircle className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900">vCards Digitales</h4>
-                    <p className="text-[10px] text-gray-500">Visitas a tu perfil personal/empresa</p>
-                  </div>
-                </div>
-                <span className="font-extrabold text-sm text-gray-900">{vcardScans} vistas</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
-                    <Coffee className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900">Menús & Catálogos</h4>
-                    <p className="text-[10px] text-gray-500">Visitas a carta y catálogo interactivo</p>
-                  </div>
-                </div>
-                <span className="font-extrabold text-sm text-gray-900">{menuScans} vistas</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center">
-                    <Gift className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900">Club de Fidelización</h4>
-                    <p className="text-[10px] text-gray-500">Tarjetas de sellos abiertas por clientes</p>
-                  </div>
-                </div>
-                <span className="font-extrabold text-sm text-gray-900">{loyaltyScans} vistas</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center">
-                    <QrCode className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-gray-900">Placas NFC & Tap-to-Rate</h4>
-                    <p className="text-[10px] text-gray-500">Taps y escaneos a placas físicas</p>
-                  </div>
-                </div>
-                <span className="font-extrabold text-sm text-gray-900">{deviceScans} escaneos</span>
-              </div>
-            </div>
+        {/* Tráfico Desglosado por Recursos */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-100 text-center">
+            <UserCircle className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+            <p className="text-lg sm:text-xl font-extrabold text-blue-950">{vcardScans}</p>
+            <p className="text-[11px] font-semibold text-blue-700">Visitas a vCards</p>
           </div>
 
-          {/* Últimos Escaneos y Visitas en Vivo */}
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-gray-700" /> Registro de Actividad Reciente
-            </h2>
-            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs">
-              <ul className="divide-y divide-gray-100 max-h-[340px] overflow-y-auto">
-                {scans.length === 0 ? (
-                  <li className="p-8 text-gray-400 text-xs sm:text-sm text-center">
-                    Aún no hay visitas registradas. Comparte tus enlaces o escanea tus placas para comenzar.
-                  </li>
-                ) : (
-                  scans.slice(0, 10).map((scan) => {
-                    const date = new Date(scan.scanned_at)
-                    const sourceLabel = 
-                      scan.source_type === 'vcard' || scan.vcard_id ? '📇 vCard' :
-                      scan.source_type === 'menu' || scan.menu_id ? '🍽️ Menú' :
-                      scan.source_type === 'loyalty' || scan.loyalty_program_id ? '🎁 Fidelización' :
-                      '📱 Placa NFC / QR'
+          <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-100 text-center">
+            <Coffee className="w-5 h-5 text-amber-600 mx-auto mb-1" />
+            <p className="text-lg sm:text-xl font-extrabold text-amber-950">{menuScans}</p>
+            <p className="text-[11px] font-semibold text-amber-700">Vistas a Menús</p>
+          </div>
 
-                    return (
-                      <li key={scan.id} className="p-3.5 flex items-center justify-between text-xs hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center gap-2.5">
-                          <div className={`w-2.5 h-2.5 rounded-full ${
-                            scan.os === 'Apple' ? 'bg-black' : 
-                            scan.os === 'Android' ? 'bg-emerald-500' : 
-                            'bg-blue-500'
-                          }`} />
-                          <div>
-                            <p className="font-bold text-gray-900">{sourceLabel} ({scan.os})</p>
-                            <p className="text-[10px] text-gray-500">{scan.country || 'Desconocido'}</p>
-                          </div>
+          <div className="p-4 rounded-xl bg-purple-50/60 border border-purple-100 text-center">
+            <Gift className="w-5 h-5 text-purple-600 mx-auto mb-1" />
+            <p className="text-lg sm:text-xl font-extrabold text-purple-950">{loyaltyScans}</p>
+            <p className="text-[11px] font-semibold text-purple-700">Sellos Fidelización</p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-100 text-center">
+            <QrCode className="w-5 h-5 text-emerald-600 mx-auto mb-1" />
+            <p className="text-lg sm:text-xl font-extrabold text-emerald-950">{deviceScans}</p>
+            <p className="text-[11px] font-semibold text-emerald-700">Placas NFC / QRs</p>
+          </div>
+        </div>
+
+        {/* LOG DETALLADO DE ESCANEOS EN VIVO */}
+        <div className="space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-gray-900">
+            Registro Detallado de Visitas y Dispositivos ({scans.length})
+          </h2>
+
+          {scans.length === 0 ? (
+            <div className="p-12 text-center text-gray-500 border border-gray-100 rounded-2xl bg-gray-50/50">
+              <Activity className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <p className="font-semibold text-gray-700">No hay registros de tráfico todavía</p>
+              <p className="text-xs text-gray-400 mt-1">Comparte tus enlaces o acerca tu móvil a tus placas NFC para ver el tráfico en vivo.</p>
+            </div>
+          ) : (
+            <div className="relative">
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+                <div className="divide-y divide-gray-100">
+                  {scans.slice(0, isPro ? 50 : 5).map((scan) => (
+                    <div key={scan.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
+                          scan.os === 'Apple' ? 'bg-gray-100 text-gray-900' : scan.os === 'Android' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
+                        }`}>
+                          {scan.os === 'Apple' ? 'iOS' : scan.os === 'Android' ? 'AND' : 'PC'}
                         </div>
-                        <span className="text-[11px] text-gray-400 font-medium">
-                          {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </li>
-                    )
-                  })
-                )}
-              </ul>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs sm:text-sm text-gray-900">{scan.user_agent?.split('|')[0] || scan.os}</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 uppercase">
+                              {scan.source_type}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-gray-400 mt-0.5">
+                            País: {scan.country || 'Desconocido'} • {new Date(scan.scanned_at).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {!isPro && scans.length > 5 && (
+                <div className="mt-4 p-5 bg-linear-to-r from-purple-50 to-amber-50 border border-purple-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h4 className="font-extrabold text-sm text-gray-900 flex items-center gap-1.5">
+                      <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                      Visualiza el historial ilimitado con OmniTag PRO
+                    </h4>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      El Plan Básico muestra las últimas 5 visitas. Mejora a PRO por L. 550 / $20 para ver analítica completa de todos tus clientes.
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/dashboard/billing"
+                    className="bg-black text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0"
+                  >
+                    <span>Mejorar a PRO</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

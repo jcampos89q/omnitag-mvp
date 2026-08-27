@@ -6,7 +6,16 @@ export default async function LeadsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 1. Buscar vCards del usuario
+  // 1. Obtener plan del usuario
+  const { data: workspaceMember } = await supabase
+    .from('workspace_members')
+    .select('workspace_id, workspaces(plan)')
+    .eq('user_id', user?.id)
+    .maybeSingle()
+
+  const isPro = (workspaceMember?.workspaces as any)?.plan === 'pro'
+
+  // 2. Buscar vCards del usuario
   const { data: vcards } = await supabase
     .from('vcards')
     .select('id, slug, lead_capture_enabled')
@@ -14,7 +23,7 @@ export default async function LeadsPage() {
 
   const vcardIds = vcards?.map(v => v.id) || []
 
-  // 2. Buscar programas de fidelización del usuario
+  // 3. Buscar programas de fidelización del usuario
   const { data: loyaltyPrograms } = await supabase
     .from('loyalty_programs')
     .select('id, name, slug')
@@ -22,7 +31,7 @@ export default async function LeadsPage() {
 
   const loyaltyIds = loyaltyPrograms?.map(l => l.id) || []
 
-  // 3. Obtener leads de vCards y miembros de fidelización en paralelo
+  // 4. Obtener leads de vCards y miembros de fidelización en paralelo
   const [
     { data: vcardLeadsData },
     { data: loyaltyMembersData }
@@ -63,8 +72,6 @@ export default async function LeadsPage() {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   )
 
-  const hasLeadCaptureDisabled = vcards?.some(v => !v.lead_capture_enabled) && vcards?.length > 0
-
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 sm:p-8">
@@ -78,7 +85,7 @@ export default async function LeadsPage() {
           </p>
         </div>
 
-        <LeadsClient leads={allLeads} />
+        <LeadsClient leads={allLeads} isPro={isPro} />
       </div>
     </div>
   )

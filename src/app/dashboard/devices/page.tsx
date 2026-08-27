@@ -11,14 +11,23 @@ export default async function DevicesPage({
   const { data: { user } } = await supabase.auth.getUser()
   const { success, error } = await searchParams
 
-  // 1. Obtener placas del usuario
+  // 1. Obtener plan del usuario
+  const { data: workspaceMember } = await supabase
+    .from('workspace_members')
+    .select('workspace_id, workspaces(plan)')
+    .eq('user_id', user?.id)
+    .maybeSingle()
+
+  const isPro = (workspaceMember?.workspaces as any)?.plan === 'pro'
+
+  // 2. Obtener placas del usuario
   const { data: devices } = await supabase
     .from('devices')
     .select('*')
     .eq('user_id', user?.id)
     .order('created_at', { ascending: false })
 
-  // 2. Obtener vCard, Menú y Fidelización para vinculación rápida
+  // 3. Obtener vCard, Menú y Fidelización para vinculación rápida
   const [
     { data: vcard },
     { data: menu },
@@ -61,6 +70,7 @@ export default async function DevicesPage({
           vcard={vcard}
           menu={menu}
           loyalty={loyalty}
+          isPro={isPro}
         />
       </div>
     </div>

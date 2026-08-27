@@ -6,28 +6,37 @@ export default async function QRStudioPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 1. Buscar vCard del usuario
+  // 1. Obtener plan del usuario
+  const { data: workspaceMember } = await supabase
+    .from('workspace_members')
+    .select('workspace_id, workspaces(plan)')
+    .eq('user_id', user?.id)
+    .maybeSingle()
+
+  const isPro = (workspaceMember?.workspaces as any)?.plan === 'pro'
+
+  // 2. Buscar vCard del usuario
   const { data: vcard } = await supabase
     .from('vcards')
     .select('id, slug, first_name, last_name, company_name, avatar_url')
     .eq('user_id', user?.id)
     .maybeSingle()
 
-  // 2. Buscar Menú del usuario
+  // 3. Buscar Menú del usuario
   const { data: menu } = await supabase
     .from('menus')
     .select('id, slug, name, logo_url')
     .eq('user_id', user?.id)
     .maybeSingle()
 
-  // 3. Buscar Programa de Fidelización del usuario
+  // 4. Buscar Programa de Fidelización del usuario
   const { data: loyalty } = await supabase
     .from('loyalty_programs')
     .select('id, slug, name, logo_url')
     .eq('user_id', user?.id)
     .maybeSingle()
 
-  // 4. Buscar Dispositivos NFC / QRs
+  // 5. Buscar Dispositivos NFC / QRs
   const { data: devices } = await supabase
     .from('devices')
     .select('id, tag_id, device_type, redirect_url')
@@ -39,6 +48,9 @@ export default async function QRStudioPage() {
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 sm:p-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-[11px] font-extrabold uppercase tracking-wider mb-2">
+              <Sparkles className="w-3.5 h-3.5" /> Generador de Impresión HD
+            </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 flex items-center gap-2.5">
               <QrCode className="w-6 h-6 text-purple-600" />
               Estudio de Códigos QR & Diseños para Impresión
@@ -54,6 +66,7 @@ export default async function QRStudioPage() {
           menu={menu}
           loyalty={loyalty}
           devices={devices || []}
+          isPro={isPro}
         />
       </div>
     </div>

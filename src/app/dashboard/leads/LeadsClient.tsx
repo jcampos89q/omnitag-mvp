@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, Mail, Phone, Calendar, Download, MessageSquare, Search, FileSpreadsheet, UserPlus, Gift, UserCircle } from 'lucide-react'
+import { Users, Mail, Phone, Calendar, Download, MessageSquare, Search, FileSpreadsheet, UserPlus, Gift, UserCircle, Sparkles } from 'lucide-react'
+import ProFeatureModal from '@/components/ProFeatureModal'
 
 export interface Lead {
   id: string
@@ -14,8 +15,15 @@ export interface Lead {
   loyaltyStamps?: number
 }
 
-export default function LeadsClient({ leads }: { leads: Lead[] }) {
+export default function LeadsClient({ 
+  leads,
+  isPro = false
+}: { 
+  leads: Lead[]
+  isPro?: boolean
+}) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [showProModal, setShowProModal] = useState(false)
 
   const filteredLeads = leads.filter((lead) => {
     const term = searchTerm.toLowerCase()
@@ -58,8 +66,13 @@ export default function LeadsClient({ leads }: { leads: Lead[] }) {
     URL.revokeObjectURL(url)
   }
 
-  // Exportar lista completa a CSV para Excel / CRM
+  // Exportar lista completa a CSV para Excel / CRM (Función PRO)
   const handleExportCSV = () => {
+    if (!isPro) {
+      setShowProModal(true)
+      return
+    }
+
     if (leads.length === 0) return
 
     const headers = ['Nombre', 'Teléfono', 'Email', 'Origen', 'Detalle', 'Fecha']
@@ -100,10 +113,19 @@ export default function LeadsClient({ leads }: { leads: Lead[] }) {
 
         <button
           onClick={handleExportCSV}
-          disabled={leads.length === 0}
-          className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap cursor-pointer"
+          className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap cursor-pointer ${
+            isPro 
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
+              : 'bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200'
+          }`}
         >
-          <FileSpreadsheet className="w-4 h-4" /> Exportar a Excel (CSV)
+          <FileSpreadsheet className="w-4 h-4" />
+          <span>Exportar a Excel (CSV)</span>
+          {!isPro && (
+            <span className="bg-purple-600 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-md">
+              PRO
+            </span>
+          )}
         </button>
       </div>
 
@@ -301,6 +323,14 @@ export default function LeadsClient({ leads }: { leads: Lead[] }) {
           </div>
         </>
       )}
+
+      {/* Modal de Upgrade PRO para exportación de Excel */}
+      <ProFeatureModal
+        isOpen={showProModal}
+        onClose={() => setShowProModal(false)}
+        featureName="Exportación de Contactos a Excel (CSV)"
+        featureDescription="Descarga tu base completa de clientes, teléfonos de WhatsApp y prospectos para sincronizar con tus campañas masivas de marketing o software de ventas."
+      />
     </div>
   )
 }
