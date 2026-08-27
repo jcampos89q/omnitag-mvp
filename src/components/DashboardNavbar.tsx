@@ -15,6 +15,7 @@ import {
   CreditCard,
   Menu as MenuIcon,
   X,
+  Gift,
   ShieldCheck
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
@@ -32,9 +33,10 @@ const baseNavItems: NavItem[] = [
   { name: 'Inicio', href: '/dashboard', icon: Home },
   { name: 'Mi vCard', href: '/dashboard/vcard', icon: UserCircle },
   { name: 'Contactos (CRM)', href: '/dashboard/leads', icon: Users },
+  { name: 'Fidelización & Sellos', href: '/dashboard/loyalty', icon: Gift },
+  { name: 'Menú & Catálogo', href: '/dashboard/menus', icon: Coffee },
   { name: 'Mis Dispositivos', href: '/dashboard/devices', icon: Smartphone },
   { name: 'Quejas Privadas', href: '/dashboard/feedback', icon: MessageSquareWarning },
-  { name: 'Menú Digital', href: '/dashboard/menus', icon: Coffee },
   { name: 'Estadísticas', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Suscripción', href: '/dashboard/billing', icon: CreditCard, accent: true },
 ]

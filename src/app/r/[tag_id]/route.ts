@@ -50,6 +50,18 @@ export async function GET(
     }
   }
 
+  if (device.device_type === 'loyalty' && device.loyalty_program_id) {
+    const { data: program } = await supabase
+      .from('loyalty_programs')
+      .select('slug')
+      .eq('id', device.loyalty_program_id)
+      .maybeSingle()
+      
+    if (program) {
+      return NextResponse.redirect(new URL(`/l/${program.slug}`, request.url))
+    }
+  }
+
   // Comportamiento por defecto (Tap-to-Rate o Enlace Genérico)
   if (device.redirect_url) {
     return NextResponse.redirect(device.redirect_url)
