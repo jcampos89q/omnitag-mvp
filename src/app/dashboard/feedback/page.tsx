@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { MessageSquareWarning, Star, Calendar } from 'lucide-react'
+import { MessageSquareWarning, Star, Calendar, Phone, Mail, MessageCircle, CheckCircle2, Building2 } from 'lucide-react'
 
 export default async function FeedbackPage() {
   const supabase = await createClient()
@@ -13,7 +13,7 @@ export default async function FeedbackPage() {
 
   const deviceIds = devices?.map(d => d.id) || []
 
-  let feedbacks = []
+  let feedbacks: any[] = []
   if (deviceIds.length > 0) {
     const { data } = await supabase
       .from('private_feedbacks')
@@ -28,82 +28,99 @@ export default async function FeedbackPage() {
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 sm:p-8">
         <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2.5">
-            <MessageSquareWarning className="w-6 h-6 text-red-500" />
-            Buzón de Quejas (Privado)
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-bold mb-2">
+            <MessageSquareWarning className="w-3.5 h-3.5" /> Libro Digital de Quejas y Sugerencias
+          </div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 flex items-center gap-2.5">
+            Buzón Privado de Quejas y Reclamos
           </h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-1">
-            Reseñas negativas de 1 a 3 estrellas interceptadas por el Filtro Inteligente antes de llegar a Google Maps.
+            Reseñas negativas (1 a 3 estrellas) interceptadas por tu <b>Escudo Anti-Quejas</b> antes de que pudieran publicarse en Google Maps. Úsalas para contactar al cliente, solucionar su inconformidad y convertirlo en un cliente fiel.
           </p>
         </div>
 
         {feedbacks.length === 0 ? (
           <div className="p-12 text-center text-gray-500 border border-gray-100 rounded-2xl bg-gray-50/50">
-            <Star className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="font-semibold text-gray-800">No tienes quejas registradas</p>
-            <p className="text-xs sm:text-sm mt-1">El filtro inteligente está activo, pero aún nadie ha dejado malas calificaciones.</p>
+            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
+            <p className="font-bold text-gray-800 text-base">¡Excelente! No tienes quejas pendientes</p>
+            <p className="text-xs sm:text-sm text-gray-400 mt-1">
+              Tu escudo de Google Reviews está activo. Cualquier calificación baja será capturada aquí en privado.
+            </p>
           </div>
         ) : (
-          <>
-            {/* Vista Móvil (Tarjetas para teléfonos) */}
-            <div className="block md:hidden space-y-3">
-              {feedbacks.map((fb: any) => (
-                <div key={fb.id} className="p-4 bg-gray-50/70 border border-gray-200 rounded-xl space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs bg-white px-2 py-0.5 rounded border border-gray-200 text-gray-700">
-                      ID: {fb.devices?.tag_id}
-                    </span>
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                      <span className="font-bold text-sm text-gray-900">{fb.rating}/5</span>
-                    </div>
-                  </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {feedbacks.map((fb) => {
+                const cleanPhone = fb.customer_phone ? fb.customer_phone.replace(/\D/g, '') : null
 
-                  <p className="text-sm text-gray-800 italic bg-white p-3 rounded-lg border border-gray-100">
-                    {fb.message ? `"${fb.message}"` : <span className="text-gray-400">Sin mensaje adicional</span>}
-                  </p>
+                return (
+                  <div key={fb.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex flex-col justify-between hover:border-gray-300 transition space-y-3">
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-amber-500 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                          <span className="font-extrabold text-xs text-gray-900">{fb.rating} / 5 Estrellas</span>
+                        </div>
 
-                  <div className="text-[11px] text-gray-400 flex items-center justify-end gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {new Date(fb.created_at).toLocaleDateString()} {new Date(fb.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Vista Escritorio (Tabla tradicional) */}
-            <div className="hidden md:block border border-gray-200 rounded-xl overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold">
-                    <th className="px-6 py-3.5">Dispositivo</th>
-                    <th className="px-6 py-3.5">Calificación</th>
-                    <th className="px-6 py-3.5">Mensaje del Cliente</th>
-                    <th className="px-6 py-3.5">Fecha</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {feedbacks.map((fb: any) => (
-                    <tr key={fb.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 font-mono text-xs text-gray-600">{fb.devices?.tag_id}</td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1 font-bold text-sm text-gray-900">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          {fb.rating}/5
+                        <span className="font-mono text-[11px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">
+                          Placa: {fb.devices?.tag_id}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-800 text-sm max-w-md">
-                        {fb.message ? `"${fb.message}"` : <span className="text-gray-400 italic">Sin mensaje</span>}
-                      </td>
-                      <td className="px-6 py-4 text-gray-500 text-xs">
-                        {new Date(fb.created_at).toLocaleDateString()} {new Date(fb.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+
+                      {/* Mensaje de la Queja */}
+                      <div className="bg-red-50/60 p-3.5 rounded-xl border border-red-100 text-xs sm:text-sm text-red-950 font-medium leading-relaxed">
+                        {fb.message ? `"${fb.message}"` : <span className="text-gray-400 italic">El cliente no especificó un texto.</span>}
+                      </div>
+
+                      {/* Datos del Cliente */}
+                      <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs space-y-1">
+                        <p className="font-bold text-gray-900">
+                          Cliente: {fb.customer_name || 'Anónimo'}
+                        </p>
+                        {fb.customer_phone && (
+                          <p className="text-gray-700 font-mono flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-gray-400" /> {fb.customer_phone}
+                          </p>
+                        )}
+                        {fb.customer_email && (
+                          <p className="text-gray-600 flex items-center gap-1.5 truncate">
+                            <Mail className="w-3.5 h-3.5 text-gray-400" /> {fb.customer_email}
+                          </p>
+                        )}
+                        <p className="text-[10px] text-gray-400 pt-1 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(fb.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Acciones para resolver */}
+                    {cleanPhone && (
+                      <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
+                        <a
+                          href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(`¡Hola ${fb.customer_name || ''}! Recibimos tus comentarios en nuestro libro de atención al cliente. Queremos disculparnos y ofrecerte una solución de inmediato.`)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 bg-[#25D366] text-white py-2 px-3 rounded-xl font-bold text-xs hover:bg-[#1EBE57] transition flex items-center justify-center gap-1.5 shadow-2xs"
+                        >
+                          <MessageCircle className="w-4 h-4 fill-white" />
+                          <span>Contactar por WhatsApp para Resolver</span>
+                        </a>
+
+                        <a
+                          href={`tel:${fb.customer_phone}`}
+                          className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition"
+                          title="Llamar"
+                        >
+                          <Phone className="w-4 h-4" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
