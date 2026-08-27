@@ -8,15 +8,29 @@ export interface UserPlanInfo {
 }
 
 /**
- * Obtiene de forma 100% infalible el plan del usuario y sus privilegios de administrador
- * Nota: Los administradores (is_admin = true) siempre tienen acceso PRO ilimitado
+ * Obtiene de forma 100% infalible y en tiempo real el plan del usuario y sus privilegios
+ * Utiliza la función RPC en Postgres con SECURITY DEFINER para evitar problemas de RLS o desincronización
  */
 export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string): Promise<UserPlanInfo> {
   if (!userId) {
     return { plan: 'free', isPro: false, isAdmin: false, workspaceId: null }
   }
 
-  // 1. Obtener perfil de usuario (is_admin)
+  // 1. Invocar la función RPC con permisos directos en PostgreSQL
+  const { data, error } = await supabase.rpc('get_user_plan', {
+    p_user_id: userId
+  })
+
+  if (!error && data) {
+    return {
+      plan: data.plan === 'pro' ? 'pro' : 'free',
+      isPro: Boolean(data.is_pro),
+      isAdmin: Boolean(data.is_admin),
+      workspaceId: data.workspace_id || userId
+    }
+  }
+
+  // 2. Fallback de contingencia si el RPC falla
   const { data: profile } = await supabase
     .from('users')
     .select('is_admin')
@@ -28,30 +42,19 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     return { plan: 'pro', isPro: true, isAdmin: true, workspaceId: userId }
   }
 
-  // 2. Buscar membresía de workspace
   const { data: member } = await supabase
     .from('workspace_members')
-    .select('workspace_id')
+    .select('workspace_id, workspaces(plan)')
     .eq('user_id', userId)
     .maybeSingle()
 
-  const targetWorkspaceId = member?.workspace_id || userId
-
-  // 3. Consultar directamente el plan en la tabla workspaces
-  const { data: workspace } = await supabase
-    .from('workspaces')
-    .select('id, plan')
-    .eq('id', targetWorkspaceId)
-    .maybeSingle()
-
-  const rawPlan = workspace?.plan || 'free'
+  const rawPlan = (member?.workspaces as any)?.plan || 'free'
   const isPro = rawPlan === 'pro'
-  const plan = isPro ? 'pro' : 'free'
 
   return {
-    plan,
+    plan: isPro ? 'pro' : 'free',
     isPro,
     isAdmin,
-    workspaceId: targetWorkspaceId
+    workspaceId: member?.workspace_id || userId
   }
 }
