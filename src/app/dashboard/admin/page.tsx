@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ShieldCheck, Users, Zap, Smartphone, Coffee, UserCircle, Activity, HeartHandshake, DollarSign, ArrowLeft, Gift } from 'lucide-react'
+import { ShieldCheck, Users, Zap, Smartphone, Coffee, UserCircle, Activity, HeartHandshake, DollarSign, ArrowLeft, Gift, CreditCard } from 'lucide-react'
 import AdminCreationsHub, { AdminCreationsData } from './AdminCreationsHub'
 import { AdminUser } from './AdminUserTable'
+import { AdminBankTransfer } from './AdminBankTransfers'
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
@@ -40,17 +41,19 @@ export default async function AdminDashboardPage() {
     )
   }
 
-  // Obtener métricas globales, usuarios, creaciones y contactos master mediante RPCs
+  // Obtener métricas globales, usuarios, creaciones, contactos master y transferencias bancarias
   const [
     { data: metricsData }, 
     { data: usersData }, 
     { data: creationsData },
-    { data: contactsData }
+    { data: contactsData },
+    { data: transfersData }
   ] = await Promise.all([
     supabase.rpc('get_admin_metrics'),
     supabase.rpc('get_admin_users_list'),
     supabase.rpc('get_admin_all_creations'),
-    supabase.rpc('get_admin_master_contacts')
+    supabase.rpc('get_admin_master_contacts'),
+    supabase.rpc('get_admin_bank_transfers')
   ])
 
   const users: AdminUser[] = usersData || []
@@ -67,6 +70,8 @@ export default async function AdminDashboardPage() {
     private_feedbacks: []
   }
 
+  const transfers: AdminBankTransfer[] = transfersData || []
+
   // Cálculos dinámicos garantizados para KPIs superiores
   const totalUsers = users.length || Number(metricsData?.total_users || 0)
   const totalProUsers = users.filter(u => u.out_plan === 'pro').length || Number(metricsData?.total_pro_users || 0)
@@ -80,11 +85,14 @@ export default async function AdminDashboardPage() {
   const totalScans = Number(metricsData?.total_scans || 0) || users.reduce((acc, u) => acc + Number(u.out_scans_count || 0), 0)
   const totalDevices = creations.devices?.length || Number(metricsData?.total_devices || 0)
 
-  // Tasa de conversión y estimación de ingresos
+  // Tasa de conversión y estimación de ingresos ($20 USD / mes o L. 550 HNL)
   const conversionRate = totalUsers > 0 
     ? ((totalProUsers / totalUsers) * 100).toFixed(1) 
     : '0.0'
-  const estimatedMrr = totalProUsers * 29 // $29/mes por usuario PRO
+  const estimatedMrr = totalProUsers * 20 // $20/mes por usuario PRO
+  const estimatedMrrHnl = totalProUsers * 550 // L. 550/mes
+
+  const pendingTransfers = transfers.filter(t => t.status === 'pending').length
 
   return (
     <div className="space-y-8">
@@ -99,7 +107,7 @@ export default async function AdminDashboardPage() {
               Base de Datos Master & Control Global
             </h1>
             <p className="text-gray-500 text-xs sm:text-sm mt-1">
-              Supervisa el crecimiento, <b>gestiona y descarga todos los contactos y prospectos capturados</b> en la plataforma y accede a todas las creaciones en vivo.
+              Supervisa el crecimiento, <b>aprueba pagos por transferencia BAC</b>, gestiona contactos y accede a todas las creaciones en vivo.
             </p>
           </div>
         </div>
@@ -124,7 +132,7 @@ export default async function AdminDashboardPage() {
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">MRR Estimado</span>
               <DollarSign className="w-5 h-5 text-emerald-600" />
             </div>
-            <p className="text-3xl font-extrabold text-gray-900">${estimatedMrr}</p>
+            <p className="text-3xl font-extrabold text-gray-900">${estimatedMrr} <span className="text-sm font-semibold text-gray-500">(L. {estimatedMrrHnl})</span></p>
             <p className="text-xs text-gray-500 mt-1">
               Tasa de Conversión: <span className="font-bold text-gray-800">{conversionRate}%</span>
             </p>
@@ -142,25 +150,26 @@ export default async function AdminDashboardPage() {
             </p>
           </div>
 
-          {/* Dispositivos y Escaneos */}
-          <div className="bg-gray-50/90 p-5 rounded-2xl border border-gray-100">
+          {/* Transferencias BAC Pendientes */}
+          <div className={`p-5 rounded-2xl border ${pendingTransfers > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50/90 border-gray-100'}`}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tráfico / Escaneos</span>
-              <Activity className="w-5 h-5 text-amber-600" />
+              <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">Pagos BAC Pendientes</span>
+              <CreditCard className={`w-5 h-5 ${pendingTransfers > 0 ? 'text-amber-600' : 'text-gray-400'}`} />
             </div>
-            <p className="text-3xl font-extrabold text-gray-900">{totalScans}</p>
+            <p className="text-3xl font-extrabold text-gray-900">{pendingTransfers}</p>
             <p className="text-xs text-gray-500 mt-1">
-              En <span className="font-semibold text-gray-800">{totalDevices}</span> QRs y placas activas
+              {pendingTransfers > 0 ? '⚠️ Requieren verificación' : 'Todos los pagos al día'}
             </p>
           </div>
         </div>
 
-        {/* Explorador de Creaciones & Contactos Master */}
+        {/* Explorador de Creaciones, Contactos Master & Pagos BAC */}
         <div>
           <AdminCreationsHub 
             users={users} 
             creations={creations} 
             contacts={contacts}
+            transfers={transfers}
           />
         </div>
       </div>
