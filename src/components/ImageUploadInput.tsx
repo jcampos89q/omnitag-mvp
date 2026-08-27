@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { UploadCloud, X, Image as ImageIcon, Link as LinkIcon, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -11,6 +11,7 @@ interface ImageUploadInputProps {
   shape?: 'circle' | 'banner' | 'square'
   helpText?: string
   placeholder?: string
+  onImageChange?: (url: string) => void
 }
 
 /**
@@ -68,6 +69,7 @@ export default function ImageUploadInput({
   shape = 'square',
   helpText,
   placeholder = 'https://...',
+  onImageChange,
 }: ImageUploadInputProps) {
   const [currentUrl, setCurrentUrl] = useState<string>(defaultValue || '')
   const [isUrlMode, setIsUrlMode] = useState(false)
@@ -76,6 +78,13 @@ export default function ImageUploadInput({
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (defaultValue !== undefined && defaultValue !== currentUrl) {
+      setCurrentUrl(defaultValue || '')
+      setUrlValue(defaultValue || '')
+    }
+  }, [defaultValue])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -86,11 +95,12 @@ export default function ImageUploadInput({
     setUploadSuccess(false)
 
     try {
-      // 1. Vista previa inmediata
+      // 1. Vista previa local inmediata
       const localPreview = URL.createObjectURL(file)
       setCurrentUrl(localPreview)
+      onImageChange?.(localPreview)
 
-      // 2. Comprimir imagen para optimizar carga (evita errores de peso en Vercel)
+      // 2. Comprimir imagen para optimizar carga
       const compressedBlob = await compressImage(file, 1920, 0.85)
 
       // 3. Subir directo a Supabase Storage desde el cliente
@@ -123,6 +133,7 @@ export default function ImageUploadInput({
       setCurrentUrl(finalPublicUrl)
       setUrlValue(finalPublicUrl)
       setUploadSuccess(true)
+      onImageChange?.(finalPublicUrl)
     } catch (err: any) {
       console.error('Error en subida de imagen:', err)
       setUploadError(err.message || 'No se pudo subir la imagen. Intenta con otra.')
@@ -139,12 +150,14 @@ export default function ImageUploadInput({
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+    onImageChange?.('')
   }
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value
     setUrlValue(val)
     setCurrentUrl(val)
+    onImageChange?.(val)
   }
 
   // Preview container aspect ratio / shape classes

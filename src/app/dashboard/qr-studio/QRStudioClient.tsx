@@ -174,9 +174,7 @@ export default function QRStudioClient({
       }
     }
 
-    if (logoUrl) {
-      qrOptions.image = logoUrl
-    }
+    qrOptions.image = logoUrl || ''
 
     if (!qrCodeInstance.current) {
       qrCodeInstance.current = new QRCodeStyling(qrOptions)
@@ -534,6 +532,7 @@ export default function QRStudioClient({
             label="Logotipo en el Centro del QR"
             defaultValue={logoUrl}
             shape="circle"
+            onImageChange={(url) => setLogoUrl(url)}
             helpText="Tu logo quedará protegido en el centro sin afectar la lectura del QR."
           />
 
