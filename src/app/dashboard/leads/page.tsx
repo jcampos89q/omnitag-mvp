@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { createClient } from '@/lib/supabase/server'
 import { Users, Gift, UserCircle } from 'lucide-react'
 import LeadsClient, { Lead } from './LeadsClient'

@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -12,7 +15,7 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
+  // 1. Obtener plan y privilegios del usuario (Admins y usuarios activados son PRO)
   const { isPro, isAdmin } = await getUserPlanInfo(supabase, user.id)
 
   // 2. Obtener conteos básicos para KPIs rápidos
@@ -101,7 +104,7 @@ export default async function DashboardPage() {
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
               <div>
-                <p className="font-bold">Tu cuenta cuenta con Acceso Total Ilimitado</p>
+                <p className="font-bold">Tu cuenta cuenta con Acceso Total Ilimitado (Plan PRO)</p>
                 <p className="text-[11px] opacity-80">vCards, Menús, Placas NFC con Escudo 5★ y Diseños QR HD sin restricciones.</p>
               </div>
             </div>
