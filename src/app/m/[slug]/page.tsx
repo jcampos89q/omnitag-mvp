@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import PublicMenuClient from './PublicMenuClient'
+import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 
 export default async function PublicMenuPage({
   params
@@ -10,7 +11,7 @@ export default async function PublicMenuPage({
   const supabase = await createClient()
   const { slug } = await params
 
-  // 1. Buscar el menú de forma segura
+  // 1. Buscar el menú de forma segura con maybeSingle
   const { data: menu } = await supabase
     .from('menus')
     .select('*')
@@ -29,35 +30,59 @@ export default async function PublicMenuPage({
     .eq('menu_id', menu.id)
     .order('created_at', { ascending: true })
 
+  const theme = resolveTheme(menu.theme)
+  const fontUrl = getGoogleFontUrl(theme.font_family)
+  const fontFamilyCss = getFontFamilyCss(theme.font_family)
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Cabecera del Menú */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-6 text-center">
-          {menu.logo_url && (
-            <div className="w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden shadow-md border-2 border-gray-100 bg-white flex items-center justify-center">
-              <img src={menu.logo_url} alt={menu.name} className="w-full h-full object-cover" />
-            </div>
-          )}
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-            {menu.name}
-          </h1>
-          {menu.description && (
-            <p className="mt-2 text-sm text-gray-500 max-w-lg mx-auto">{menu.description}</p>
-          )}
+    <>
+      {/* Inyección de fuente Google Fonts */}
+      <link rel="stylesheet" href={fontUrl} />
+
+      <div 
+        className="min-h-screen flex flex-col transition-colors duration-300"
+        style={{ 
+          backgroundColor: theme.bg_color, 
+          color: theme.text_color,
+          fontFamily: fontFamilyCss
+        }}
+      >
+        {/* Cabecera del Menú */}
+        <header 
+          className="shadow-sm sticky top-0 z-20 border-b border-black/5 backdrop-blur-md"
+          style={{ backgroundColor: `${theme.card_bg}F0` }}
+        >
+          <div className="max-w-3xl mx-auto px-4 py-6 text-center">
+            {menu.logo_url && (
+              <div 
+                className="w-20 h-20 mx-auto mb-3 rounded-2xl overflow-hidden shadow-md border-2 bg-white flex items-center justify-center p-1"
+                style={{ borderColor: theme.primary_color }}
+              >
+                <img src={menu.logo_url} alt={menu.name} className="w-full h-full object-cover rounded-xl" />
+              </div>
+            )}
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: theme.text_color }}>
+              {menu.name}
+            </h1>
+            {menu.description && (
+              <p className="mt-1.5 text-xs sm:text-sm opacity-75 max-w-lg mx-auto" style={{ color: theme.text_color }}>
+                {menu.description}
+              </p>
+            )}
+          </div>
+        </header>
+
+        {/* Componente interactivo del catálogo y carrito */}
+        <div className="flex-1">
+          <PublicMenuClient menu={menu} categories={categories || []} theme={theme} />
         </div>
-      </header>
 
-      {/* Componente interactivo del carrito y catálogo */}
-      <div className="flex-1">
-        <PublicMenuClient menu={menu} categories={categories || []} />
+        <footer className="mt-8 text-center pb-8 border-t border-black/5 pt-8 opacity-60">
+          <p className="text-xs font-medium">
+            Digitalizado por <span className="font-bold">OmniTag</span>
+          </p>
+        </footer>
       </div>
-
-      <footer className="mt-8 text-center pb-8 border-t border-gray-200 pt-8">
-        <p className="text-xs text-gray-400 font-medium">
-          Digitalizado por <span className="text-gray-800 font-bold">OmniTag</span>
-        </p>
-      </footer>
-    </div>
+    </>
   )
 }

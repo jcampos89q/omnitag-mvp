@@ -34,22 +34,33 @@ export async function updateMenu(formData: FormData) {
   const description = (formData.get('description') as string)?.trim()
   const whatsappNumber = (formData.get('whatsapp_number') as string)?.trim()
   
-  const logoFile = formData.get('logo_file') as File | null
   let logoUrl = (formData.get('logo_url') as string)?.trim() || null
 
-  if (logoFile && logoFile instanceof File && logoFile.size > 0) {
-    try {
-      const uploadedLogo = await uploadMediaFile(supabase, logoFile, 'menus', user.id)
-      if (uploadedLogo) {
-        logoUrl = uploadedLogo
-      }
-    } catch (err) {
-      console.error("Error al subir logo del menú:", err)
-    }
+  // Parsear tema y tipografía
+  const themePreset = (formData.get('theme_preset') as string) || 'warm_bistro'
+  const themePrimary = (formData.get('theme_primary_color') as string) || (formData.get('color') as string) || '#B45309'
+  const themeBg = (formData.get('theme_bg_color') as string) || '#FBF8F3'
+  const themeCardBg = (formData.get('theme_card_bg') as string) || '#FFFFFF'
+  const themeText = (formData.get('theme_text_color') as string) || '#292524'
+  const themeFont = (formData.get('theme_font_family') as string) || 'playfair'
+  const themeBorder = (formData.get('theme_border_style') as string) || 'rounded'
+  const themeIsDark = formData.get('theme_is_dark') === 'true'
+
+  const theme = {
+    preset: themePreset,
+    color: themePrimary,
+    primary_color: themePrimary,
+    bg_color: themeBg,
+    card_bg: themeCardBg,
+    text_color: themeText,
+    font_family: themeFont,
+    border_style: themeBorder,
+    is_dark: themeIsDark
   }
 
   const updateData: any = {
     whatsapp_number: whatsappNumber,
+    theme
   }
   if (name) updateData.name = name
   if (description !== undefined) updateData.description = description
@@ -99,20 +110,7 @@ export async function createMenuItem(formData: FormData) {
   const name = (formData.get('name') as string)?.trim()
   const description = (formData.get('description') as string)?.trim()
   const price = parseFloat(formData.get('price') as string) || 0
-  
-  const imageFile = formData.get('image_file') as File | null
   let imageUrl = (formData.get('image_url') as string)?.trim() || null
-
-  if (imageFile && imageFile instanceof File && imageFile.size > 0) {
-    try {
-      const uploaded = await uploadMediaFile(supabase, imageFile, 'items', user.id)
-      if (uploaded) {
-        imageUrl = uploaded
-      }
-    } catch (err) {
-      console.error("Error al subir imagen de platillo:", err)
-    }
-  }
   
   // Recoger checkboxes de alérgenos y destacado
   const allergens: string[] = []

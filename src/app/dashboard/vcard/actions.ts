@@ -17,6 +17,7 @@ export async function saveVCard(formData: FormData) {
   let coverUrl = (formData.get('cover_url') as string)?.trim() || null
 
   try {
+    const cardType = (formData.get('card_type') as string) || 'personal'
     const firstName = (formData.get('first_name') as string)?.trim()
     const lastName = (formData.get('last_name') as string)?.trim()
     const jobTitle = (formData.get('job_title') as string)?.trim()
@@ -25,33 +26,44 @@ export async function saveVCard(formData: FormData) {
     const phone = (formData.get('phone') as string)?.trim()
     const email = (formData.get('email') as string)?.trim()
     
-    // Archivos de imagen subidos por fallback del servidor si no vinieron vía URL
+    // Archivos de imagen por fallback si fuera necesario
     const avatarFile = formData.get('avatar_file') as File | null
     const coverFile = formData.get('cover_file') as File | null
 
     if (!avatarUrl && avatarFile && avatarFile instanceof File && avatarFile.size > 0) {
       try {
         const uploadedAvatar = await uploadMediaFile(supabase, avatarFile, 'avatars', user.id)
-        if (uploadedAvatar) {
-          avatarUrl = uploadedAvatar
-        }
+        if (uploadedAvatar) avatarUrl = uploadedAvatar
       } catch (uploadErr: any) {
-        console.error("Error al subir avatar en servidor:", uploadErr)
+        console.error("Error al subir avatar:", uploadErr)
       }
     }
 
     if (!coverUrl && coverFile && coverFile instanceof File && coverFile.size > 0) {
       try {
         const uploadedCover = await uploadMediaFile(supabase, coverFile, 'covers', user.id)
-        if (uploadedCover) {
-          coverUrl = uploadedCover
-        }
+        if (uploadedCover) coverUrl = uploadedCover
       } catch (uploadErr: any) {
-        console.error("Error al subir portada en servidor:", uploadErr)
+        console.error("Error al subir portada:", uploadErr)
       }
     }
 
-    const color = (formData.get('color') as string) || '#000000'
+    // Datos corporativos y de negocio
+    const businessHours = (formData.get('business_hours') as string)?.trim() || ''
+    const businessAddress = (formData.get('business_address') as string)?.trim() || ''
+    const googleMapsUrl = (formData.get('google_maps_url') as string)?.trim() || ''
+    const ctaText = (formData.get('cta_text') as string)?.trim() || ''
+    const ctaUrl = (formData.get('cta_url') as string)?.trim() || ''
+
+    const business_info = {
+      hours: businessHours,
+      address: businessAddress,
+      maps_url: googleMapsUrl,
+      cta_text: ctaText,
+      cta_url: ctaUrl
+    }
+
+    // Redes y contacto
     const instagram = (formData.get('instagram') as string)?.trim()
     const linkedin = (formData.get('linkedin') as string)?.trim()
     const website = (formData.get('website') as string)?.trim()
@@ -59,12 +71,27 @@ export async function saveVCard(formData: FormData) {
     const tiktok = (formData.get('tiktok') as string)?.trim()
     const leadCaptureEnabled = formData.get('lead_capture_enabled') === 'on'
 
-    // Check if vcard exists for this user
-    const { data: existingVcard } = await supabase
-      .from('vcards')
-      .select('id, slug')
-      .eq('user_id', user.id)
-      .maybeSingle()
+    // Tema visual, tipografía y paleta de colores
+    const themePreset = (formData.get('theme_preset') as string) || 'minimal_white'
+    const themePrimary = (formData.get('theme_primary_color') as string) || (formData.get('color') as string) || '#0F172A'
+    const themeBg = (formData.get('theme_bg_color') as string) || '#F8FAFC'
+    const themeCardBg = (formData.get('theme_card_bg') as string) || '#FFFFFF'
+    const themeText = (formData.get('theme_text_color') as string) || '#0F172A'
+    const themeFont = (formData.get('theme_font_family') as string) || 'jakarta'
+    const themeBorder = (formData.get('theme_border_style') as string) || 'rounded'
+    const themeIsDark = formData.get('theme_is_dark') === 'true'
+
+    const theme = {
+      preset: themePreset,
+      color: themePrimary,
+      primary_color: themePrimary,
+      bg_color: themeBg,
+      card_bg: themeCardBg,
+      text_color: themeText,
+      font_family: themeFont,
+      border_style: themeBorder,
+      is_dark: themeIsDark
+    }
 
     const contact_info = {
       phone,
@@ -75,13 +102,16 @@ export async function saveVCard(formData: FormData) {
       facebook,
       tiktok
     }
-    
-    const theme = {
-      color
-    }
+
+    // Check if vcard exists for this user
+    const { data: existingVcard } = await supabase
+      .from('vcards')
+      .select('id, slug')
+      .eq('user_id', user.id)
+      .maybeSingle()
 
     // Generate clean slug if new
-    const baseSlug = (firstName || 'usuario')
+    const baseSlug = (firstName || companyName || 'usuario')
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -93,11 +123,13 @@ export async function saveVCard(formData: FormData) {
       : `${baseSlug}-${Date.now().toString().slice(-4)}`
 
     const payload = {
+      card_type: cardType,
       first_name: firstName,
       last_name: lastName,
       job_title: jobTitle,
       company_name: companyName,
       bio,
+      business_info,
       contact_info,
       theme,
       avatar_url: avatarUrl,
@@ -135,7 +167,7 @@ export async function saveVCard(formData: FormData) {
     revalidatePath('/', 'layout')
   } catch (err: any) {
     if (err?.digest?.startsWith('NEXT_REDIRECT')) {
-      throw err // Permite que las redirecciones normales de Next.js continúen
+      throw err
     }
     console.error("Error guardando vCard:", err)
     redirect('/dashboard/vcard?error=' + encodeURIComponent(err.message || 'Error al guardar'))
