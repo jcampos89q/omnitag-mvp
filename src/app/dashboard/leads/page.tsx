@@ -1,19 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { Users, Gift, UserCircle } from 'lucide-react'
 import LeadsClient, { Lead } from './LeadsClient'
+import { getUserPlanInfo } from '@/lib/plans'
 
 export default async function LeadsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 1. Obtener plan del usuario
-  const { data: workspaceMember } = await supabase
-    .from('workspace_members')
-    .select('workspace_id, workspaces(plan)')
-    .eq('user_id', user?.id)
-    .maybeSingle()
-
-  const isPro = (workspaceMember?.workspaces as any)?.plan === 'pro'
+  // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
+  const { isPro } = await getUserPlanInfo(supabase, user?.id)
 
   // 2. Buscar vCards del usuario
   const { data: vcards } = await supabase

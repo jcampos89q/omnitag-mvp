@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Star, ShieldCheck, QrCode } from 'lucide-react'
 import DevicesManager from './DevicesManager'
+import { getUserPlanInfo } from '@/lib/plans'
 
 export default async function DevicesPage({
   searchParams
@@ -11,14 +12,8 @@ export default async function DevicesPage({
   const { data: { user } } = await supabase.auth.getUser()
   const { success, error } = await searchParams
 
-  // 1. Obtener plan del usuario
-  const { data: workspaceMember } = await supabase
-    .from('workspace_members')
-    .select('workspace_id, workspaces(plan)')
-    .eq('user_id', user?.id)
-    .maybeSingle()
-
-  const isPro = (workspaceMember?.workspaces as any)?.plan === 'pro'
+  // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
+  const { isPro } = await getUserPlanInfo(supabase, user?.id)
 
   // 2. Obtener placas del usuario
   const { data: devices } = await supabase

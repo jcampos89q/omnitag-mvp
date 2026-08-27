@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { CreditCard } from 'lucide-react'
 import BillingClient from './BillingClient'
+import { getUserPlanInfo } from '@/lib/plans'
 
 export default async function BillingPage({
   searchParams
@@ -13,26 +14,10 @@ export default async function BillingPage({
 
   if (!user) redirect('/login')
 
-  // Obtener el plan actual del workspace
-  const { data: workspaceMember } = await supabase
-    .from('workspace_members')
-    .select('workspace_id')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  // 1. Obtener plan del usuario (Admins siempre son PRO)
+  const { plan: currentPlan } = await getUserPlanInfo(supabase, user.id)
 
-  let currentPlan = 'free'
-  
-  if (workspaceMember) {
-    const { data: workspace } = await supabase
-      .from('workspaces')
-      .select('id, plan')
-      .eq('id', workspaceMember.workspace_id)
-      .maybeSingle()
-    
-    currentPlan = workspace?.plan || 'free'
-  }
-
-  // Obtener transferencias enviadas por el usuario
+  // 2. Obtener transferencias enviadas por el usuario
   const { data: transfersData } = await supabase
     .from('bank_transfers')
     .select('*')

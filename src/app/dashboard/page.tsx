@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { UserCircle, Smartphone, Coffee, Users, BarChart3, ArrowRight, Zap, Sparkles, Star, QrCode, Gift, Check, ShieldCheck } from 'lucide-react'
+import { getUserPlanInfo } from '@/lib/plans'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -11,15 +12,8 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // 1. Obtener plan actual del usuario
-  const { data: workspaceMember } = await supabase
-    .from('workspace_members')
-    .select('workspace_id, workspaces(plan)')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  const currentPlan = (workspaceMember?.workspaces as any)?.plan || 'free'
-  const isPro = currentPlan === 'pro'
+  // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
+  const { isPro, isAdmin } = await getUserPlanInfo(supabase, user.id)
 
   // 2. Obtener conteos básicos para KPIs rápidos
   const [
@@ -71,8 +65,8 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* BANNER INFORMATIVO FREEMIUM SI ES BÁSICO */}
-        {!isPro && (
+        {/* BANNER INFORMATIVO FREEMIUM SOLO SI ES BÁSICO */}
+        {!isPro ? (
           <div className="mb-6 p-4 rounded-2xl bg-linear-to-r from-purple-50/80 via-amber-50/60 to-white border border-purple-100 text-xs space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-bold text-gray-900 flex items-center gap-1.5">
@@ -99,6 +93,16 @@ export default async function DashboardPage() {
               <div className="p-2 bg-white rounded-xl border border-gray-100">
                 <p className="font-bold text-gray-900">Escudo 5★: Bloqueado</p>
                 <p className="text-[10px] text-purple-600 font-semibold">Exclusivo PRO</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs flex items-center justify-between text-emerald-950">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div>
+                <p className="font-bold">Tu cuenta cuenta con Acceso Total Ilimitado</p>
+                <p className="text-[11px] opacity-80">vCards, Menús, Placas NFC con Escudo 5★ y Diseños QR HD sin restricciones.</p>
               </div>
             </div>
           </div>
