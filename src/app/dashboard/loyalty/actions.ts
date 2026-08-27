@@ -184,6 +184,23 @@ export async function validateAndAddStamp(formData: FormData) {
     stamps_at_event: newStampCount
   })
 
+  // Enviar notificación al dueño del negocio
+  try {
+    if (program.user_id) {
+      await supabase.from('notifications').insert({
+        user_id: program.user_id,
+        title: isRewardUnlocked ? '🏆 ¡Cliente Desbloqueó su Premio!' : '🎁 Nuevo Sello Registrado',
+        message: isRewardUnlocked 
+          ? `¡${name} completó ${program.total_stamps_required} sellos y desbloqueó su premio: "${program.reward_title}"!`
+          : `${name} acumuló su sello #${newStampCount} en "${program.name}".`,
+        type: isRewardUnlocked ? 'success' : 'info',
+        link: '/dashboard/leads'
+      })
+    }
+  } catch (notifErr) {
+    console.error('Error enviando notificacion de loyalty:', notifErr)
+  }
+
   revalidatePath(`/l/${program.slug}`)
   revalidatePath('/dashboard/loyalty')
 
@@ -241,6 +258,21 @@ export async function claimLoyaltyReward(formData: FormData) {
     action: 'reward_claimed',
     stamps_at_event: 0
   })
+
+  // Enviar notificación al dueño del negocio
+  try {
+    if (program.user_id) {
+      await supabase.from('notifications').insert({
+        user_id: program.user_id,
+        title: '🎉 ¡Premio de Fidelización Canjeado!',
+        message: `${member.customer_name || 'Un cliente'} ha canjeado exitosamente su premio: "${program.reward_title}".`,
+        type: 'success',
+        link: '/dashboard/leads'
+      })
+    }
+  } catch (notifErr) {
+    console.error('Error enviando notificacion de premio:', notifErr)
+  }
 
   revalidatePath(`/l/${program.slug}`)
   revalidatePath('/dashboard/loyalty')

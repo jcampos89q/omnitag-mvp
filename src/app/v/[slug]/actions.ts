@@ -28,6 +28,27 @@ export async function saveLead(formData: FormData) {
     return { success: false, error: error.message }
   }
 
+  // Enviar notificación en tiempo real al dueño de la vCard
+  try {
+    const { data: vcard } = await supabase
+      .from('vcards')
+      .select('user_id')
+      .eq('id', vcardId)
+      .maybeSingle()
+
+    if (vcard?.user_id) {
+      await supabase.from('notifications').insert({
+        user_id: vcard.user_id,
+        title: '👤 ¡Nuevo Contacto Capturado!',
+        message: `${name}${phone ? ` (${phone})` : ''} ha guardado tu vCard y te ha compartido sus datos.`,
+        type: 'success',
+        link: '/dashboard/leads'
+      })
+    }
+  } catch (notifErr) {
+    console.error('Error enviando notificacion de lead:', notifErr)
+  }
+
   if (slug) {
     revalidatePath(`/v/${slug}`)
   }

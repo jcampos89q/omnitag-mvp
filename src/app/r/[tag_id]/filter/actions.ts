@@ -30,6 +30,27 @@ export async function submitPrivateFeedback(formData: FormData) {
     return { success: false, error: error.message }
   }
 
+  // Enviar notificación en tiempo real al dueño de la placa / negocio
+  try {
+    const { data: device } = await supabase
+      .from('devices')
+      .select('user_id, name')
+      .eq('id', deviceId)
+      .maybeSingle()
+
+    if (device?.user_id) {
+      await supabase.from('notifications').insert({
+        user_id: device.user_id,
+        title: '⚠️ Queja / Opinión Privada Recibida',
+        message: `${customerName || 'Un cliente'} dejó ${rating}★ en "${device.name || 'tu placa'}"${message ? `: "${message.slice(0, 70)}${message.length > 70 ? '...' : ''}"` : '.'}`,
+        type: 'warning',
+        link: '/dashboard/feedback'
+      })
+    }
+  } catch (notifErr) {
+    console.error('Error enviando notificacion de feedback:', notifErr)
+  }
+
   revalidatePath('/dashboard/feedback')
   revalidatePath('/dashboard/admin')
 
