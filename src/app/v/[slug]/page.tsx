@@ -254,11 +254,11 @@ export default async function PublicVCardPage({
 
             {/* Modal de Intercambiar Contacto / Leads */}
             {lead_capture_enabled && (
-              <LeadCaptureModal vcardId={vcardId} slug={slug} mainColor={theme.primary_color} />
+              <LeadCaptureModal vcardId={vcardId} slug={slug} theme={theme} />
             )}
 
             {/* Botones Sociales para Compartir */}
-            <ShareButtons slug={slug} name={titleName} />
+            <ShareButtons slug={slug} name={titleName} isDark={theme.is_dark} />
 
             {/* Detalles Corporativos: Horario, Dirección y Ubicación */}
             {(businessInfo?.hours || businessInfo?.address || contact_info?.phone || contact_info?.email) && (
