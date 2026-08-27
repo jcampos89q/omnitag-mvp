@@ -16,6 +16,7 @@ import {
   Menu as MenuIcon,
   X,
   Gift,
+  QrCode,
   ShieldCheck
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
@@ -35,6 +36,7 @@ const baseNavItems: NavItem[] = [
   { name: 'Contactos (CRM)', href: '/dashboard/leads', icon: Users },
   { name: 'Fidelización & Sellos', href: '/dashboard/loyalty', icon: Gift },
   { name: 'Menú & Catálogo', href: '/dashboard/menus', icon: Coffee },
+  { name: 'Estudio QR (Imprimibles)', href: '/dashboard/qr-studio', icon: QrCode, badge: 'PRO' },
   { name: 'Mis Dispositivos', href: '/dashboard/devices', icon: Smartphone },
   { name: 'Quejas Privadas', href: '/dashboard/feedback', icon: MessageSquareWarning },
   { name: 'Estadísticas', href: '/dashboard/analytics', icon: BarChart3 },

@@ -1,0 +1,662 @@
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { 
+  QrCode, 
+  Download, 
+  Sparkles, 
+  Image as ImageIcon, 
+  Layers, 
+  Palette, 
+  Type, 
+  Check, 
+  Smartphone, 
+  ExternalLink,
+  Crown,
+  FileImage
+} from 'lucide-react'
+import QRCodeStyling, { DotType, CornerSquareType, CornerDotType, GradientType } from 'qr-code-styling'
+import ImageUploadInput from '@/components/ImageUploadInput'
+
+interface QRStudioClientProps {
+  vcard?: any
+  menu?: any
+  loyalty?: any
+  devices?: any[]
+  isPro?: boolean
+}
+
+interface PresetGradient {
+  id: string
+  name: string
+  colors: string[]
+  type: GradientType
+  rotation: number
+}
+
+const PRESET_GRADIENTS: PresetGradient[] = [
+  { id: 'instagram', name: 'Instagram Sunset', colors: ['#833AB4', '#FD1D1D', '#FCB045'], type: 'linear', rotation: 45 },
+  { id: 'luxury_gold', name: 'Luxury Gold', colors: ['#92400E', '#D97706', '#FDE68A'], type: 'linear', rotation: 45 },
+  { id: 'cyber_emerald', name: 'Cyber Emerald', colors: ['#064E3B', '#10B981', '#6EE7B7'], type: 'linear', rotation: 45 },
+  { id: 'electric_blue', name: 'Ocean Electric', colors: ['#1E3A8A', '#2563EB', '#60A5FA'], type: 'linear', rotation: 45 },
+  { id: 'dark_violet', name: 'Neon Purple', colors: ['#4C1D95', '#7C3AED', '#C084FC'], type: 'linear', rotation: 45 },
+  { id: 'monochrome', name: 'Negro Azabache', colors: ['#000000', '#111827'], type: 'linear', rotation: 0 },
+]
+
+const FRAME_STYLES = [
+  { id: 'none', name: 'Sin Marco (Solo QR)' },
+  { id: 'instagram_nametag', name: 'Estilo Nametag / Instagram (Con cabecera y botón)' },
+  { id: 'table_tent', name: 'Placa de Mostrador / Mesa (Con llamado a la acción)' },
+  { id: 'badge', name: 'Tarjeta / Badge Redondo' },
+]
+
+export default function QRStudioClient({ 
+  vcard, 
+  menu, 
+  loyalty, 
+  devices = [], 
+  isPro = true 
+}: QRStudioClientProps) {
+  // 1. Tipo de Destino
+  const [sourceType, setSourceType] = useState<'vcard' | 'menu' | 'loyalty' | 'device' | 'custom'>(
+    vcard ? 'vcard' : menu ? 'menu' : loyalty ? 'loyalty' : 'custom'
+  )
+  const [customUrl, setCustomUrl] = useState('https://')
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(devices[0]?.id || '')
+
+  // 2. Personalización de Estilo
+  const [dotStyle, setDotStyle] = useState<DotType>('dots')
+  const [cornerSquareStyle, setCornerSquareStyle] = useState<CornerSquareType>('extra-rounded')
+  const [cornerDotStyle, setCornerDotStyle] = useState<CornerDotType>('dot')
+  const [colorPreset, setColorPreset] = useState<string>('instagram')
+  const [customColor, setCustomColor] = useState<string>('#833AB4')
+  const [useGradient, setUseGradient] = useState<boolean>(true)
+
+  // 3. Logo en el Centro
+  const [logoUrl, setLogoUrl] = useState<string>('')
+  const [frameStyle, setFrameStyle] = useState<string>('instagram_nametag')
+  const [frameText, setFrameText] = useState<string>('ESCANÉAME CON TU CÁMARA')
+  const [frameTitle, setFrameTitle] = useState<string>('')
+
+  // Referencias
+  const qrRef = useRef<HTMLDivElement>(null)
+  const qrCodeInstance = useRef<QRCodeStyling | null>(null)
+
+  // Calcular la URL final
+  const getTargetUrl = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.omnitag.site'
+    switch (sourceType) {
+      case 'vcard':
+        return vcard ? `${origin}/v/${vcard.slug}` : `${origin}`
+      case 'menu':
+        return menu ? `${origin}/m/${menu.slug}` : `${origin}`
+      case 'loyalty':
+        return loyalty ? `${origin}/l/${loyalty.slug}` : `${origin}`
+      case 'device': {
+        const dev = devices.find(d => d.id === selectedDeviceId)
+        return dev ? `${origin}/r/${dev.tag_id}` : `${origin}`
+      }
+      case 'custom':
+      default:
+        return customUrl || `${origin}`
+    }
+  }
+
+  // Pre-cargar valores según origen
+  useEffect(() => {
+    if (sourceType === 'vcard' && vcard) {
+      setLogoUrl(vcard.avatar_url || '')
+      setFrameTitle(vcard.first_name ? `${vcard.first_name} ${vcard.last_name || ''}` : vcard.company_name || 'Mi Perfil')
+      setFrameText('GUARDA MI CONTACTO')
+    } else if (sourceType === 'menu' && menu) {
+      setLogoUrl(menu.logo_url || '')
+      setFrameTitle(menu.name || 'Menú Digital')
+      setFrameText('ESCANEA PARA VER EL MENÚ')
+    } else if (sourceType === 'loyalty' && loyalty) {
+      setLogoUrl(loyalty.logo_url || '')
+      setFrameTitle(loyalty.name || 'Club de Premios')
+      setFrameText('ACUMULA SELLOS Y GANA PREMIOS')
+    } else if (sourceType === 'device') {
+      setFrameTitle('Google Reviews')
+      setFrameText('TOCA O ESCANEA PARA CALIFICAR')
+    }
+  }, [sourceType, vcard, menu, loyalty])
+
+  // Inicializar y actualizar QRCodeStyling
+  useEffect(() => {
+    const targetUrl = getTargetUrl()
+    const selectedPreset = PRESET_GRADIENTS.find(p => p.id === colorPreset) || PRESET_GRADIENTS[0]
+
+    const dotsOptions: any = {
+      type: dotStyle,
+    }
+
+    if (useGradient && selectedPreset.colors.length > 1) {
+      dotsOptions.gradient = {
+        type: selectedPreset.type,
+        rotation: (selectedPreset.rotation || 45) * (Math.PI / 180),
+        colorStops: selectedPreset.colors.map((color, index) => ({
+          offset: index / (selectedPreset.colors.length - 1),
+          color: color
+        }))
+      }
+    } else {
+      dotsOptions.color = customColor
+    }
+
+    const qrOptions: any = {
+      width: 280,
+      height: 280,
+      data: targetUrl,
+      margin: 12,
+      qrOptions: {
+        typeNumber: 0,
+        mode: 'Byte',
+        errorCorrectionLevel: 'Q'
+      },
+      imageOptions: {
+        hideBackgroundDots: true,
+        imageSize: 0.35,
+        margin: 6,
+        crossOrigin: 'anonymous'
+      },
+      dotsOptions,
+      cornersSquareOptions: {
+        type: cornerSquareStyle,
+        color: useGradient ? selectedPreset.colors[0] : customColor
+      },
+      cornersDotOptions: {
+        type: cornerDotStyle,
+        color: useGradient ? selectedPreset.colors[0] : customColor
+      },
+      backgroundOptions: {
+        color: '#FFFFFF'
+      }
+    }
+
+    if (logoUrl) {
+      qrOptions.image = logoUrl
+    }
+
+    if (!qrCodeInstance.current) {
+      qrCodeInstance.current = new QRCodeStyling(qrOptions)
+      if (qrRef.current) {
+        qrRef.current.innerHTML = ''
+        qrCodeInstance.current.append(qrRef.current)
+      }
+    } else {
+      qrCodeInstance.current.update(qrOptions)
+    }
+  }, [
+    sourceType, 
+    customUrl, 
+    selectedDeviceId, 
+    dotStyle, 
+    cornerSquareStyle, 
+    cornerDotStyle, 
+    colorPreset, 
+    customColor, 
+    useGradient, 
+    logoUrl
+  ])
+
+  // Descargar QR en Alta Definición (PNG o SVG) con o sin marco
+  const handleDownload = async (format: 'png' | 'svg') => {
+    if (frameStyle === 'none') {
+      if (qrCodeInstance.current) {
+        await qrCodeInstance.current.download({
+          name: `omnitag_qr_${sourceType}_hd`,
+          extension: format
+        })
+      }
+      return
+    }
+
+    // Renderizar marco completo en alta resolución (1800 x 2250 px) para imprenta
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const scale = 3 // Calidad ultra HD
+    const width = 600 * scale
+    const height = 750 * scale
+    canvas.width = width
+    canvas.height = height
+
+    const selectedPreset = PRESET_GRADIENTS.find(p => p.id === colorPreset) || PRESET_GRADIENTS[0]
+
+    // Fondo del marco con gradiente o color
+    if (frameStyle === 'instagram_nametag') {
+      const gradient = ctx.createLinearGradient(0, 0, width, height)
+      gradient.addColorStop(0, selectedPreset.colors[0])
+      gradient.addColorStop(0.5, selectedPreset.colors[1] || selectedPreset.colors[0])
+      gradient.addColorStop(1, selectedPreset.colors[2] || selectedPreset.colors[0])
+      ctx.fillStyle = gradient
+    } else if (frameStyle === 'table_tent') {
+      ctx.fillStyle = '#0F172A'
+    } else {
+      ctx.fillStyle = '#18181B'
+    }
+    ctx.fillRect(0, 0, width, height)
+
+    // Cabecera / Título
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = `bold ${28 * scale}px "Plus Jakarta Sans", system-ui, sans-serif`
+    ctx.textAlign = 'center'
+    ctx.fillText(frameTitle || 'OMNITAG', width / 2, 70 * scale)
+
+    // Tarjeta blanca para el QR
+    const cardX = 60 * scale
+    const cardY = 110 * scale
+    const cardSize = 480 * scale
+    const cardRadius = 35 * scale
+
+    ctx.fillStyle = '#FFFFFF'
+    ctx.beginPath()
+    ctx.roundRect(cardX, cardY, cardSize, cardSize, cardRadius)
+    ctx.fill()
+
+    // Renderizar QR en alta resolución sobre la tarjeta
+    const highResDots: any = {
+      type: dotStyle,
+    }
+    if (useGradient && selectedPreset.colors.length > 1) {
+      highResDots.gradient = {
+        type: selectedPreset.type,
+        rotation: (selectedPreset.rotation || 45) * (Math.PI / 180),
+        colorStops: selectedPreset.colors.map((c, i) => ({ offset: i / (selectedPreset.colors.length - 1), color: c }))
+      }
+    } else {
+      highResDots.color = customColor
+    }
+
+    const highResQr = new QRCodeStyling({
+      width: 420 * scale,
+      height: 420 * scale,
+      data: getTargetUrl(),
+      margin: 8 * scale,
+      qrOptions: { errorCorrectionLevel: 'Q' },
+      imageOptions: { hideBackgroundDots: true, imageSize: 0.35, margin: 4 * scale, crossOrigin: 'anonymous' },
+      dotsOptions: highResDots,
+      cornersSquareOptions: { type: cornerSquareStyle, color: selectedPreset.colors[0] },
+      cornersDotOptions: { type: cornerDotStyle, color: selectedPreset.colors[0] },
+      backgroundOptions: { color: 'transparent' },
+      image: logoUrl || undefined
+    })
+
+    const rawBlob = await highResQr.getRawData('png')
+    if (rawBlob) {
+      const img = new Image()
+      const url = URL.createObjectURL(rawBlob as Blob)
+      img.src = url
+      await new Promise(resolve => { img.onload = resolve })
+
+      ctx.drawImage(img, cardX + 30 * scale, cardY + 30 * scale, 420 * scale, 420 * scale)
+      URL.revokeObjectURL(url)
+    }
+
+    // Botón / Llamada a la acción inferior
+    const btnY = 620 * scale
+    const btnHeight = 65 * scale
+    const btnWidth = 440 * scale
+    const btnX = (width - btnWidth) / 2
+
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'
+    ctx.beginPath()
+    ctx.roundRect(btnX, btnY, btnWidth, btnHeight, 20 * scale)
+    ctx.fill()
+
+    ctx.fillStyle = '#000000'
+    ctx.font = `bold ${16 * scale}px "Plus Jakarta Sans", system-ui, sans-serif`
+    ctx.fillText(frameText.toUpperCase(), width / 2, btnY + 40 * scale)
+
+    // Descargar desde canvas
+    const downloadUrl = canvas.toDataURL('image/png')
+    const a = document.createElement('a')
+    a.href = downloadUrl
+    a.download = `omnitag_qr_imprimible_${sourceType}_hd.png`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* PANEL IZQUIERDO: CONTROLES DE DISEÑO */}
+      <div className="lg:col-span-7 space-y-6">
+        
+        {/* 1. Seleccionar Qué Vincular */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+            1. ¿Qué deseas vincular a este Código QR?
+          </label>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <button
+              type="button"
+              onClick={() => setSourceType('vcard')}
+              className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                sourceType === 'vcard'
+                  ? 'border-black bg-black text-white shadow-xs'
+                  : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <span>📇 Mi vCard</span>
+              <span className="text-[10px] opacity-75 font-normal truncate mt-1">{vcard?.slug || 'No creada'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSourceType('menu')}
+              className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                sourceType === 'menu'
+                  ? 'border-black bg-black text-white shadow-xs'
+                  : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <span>🍽️ Menú / Catálogo</span>
+              <span className="text-[10px] opacity-75 font-normal truncate mt-1">{menu?.name || 'No creado'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSourceType('loyalty')}
+              className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                sourceType === 'loyalty'
+                  ? 'border-black bg-black text-white shadow-xs'
+                  : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <span>🎁 Fidelización / Sellos</span>
+              <span className="text-[10px] opacity-75 font-normal truncate mt-1">{loyalty?.name || 'No creado'}</span>
+            </button>
+
+            {devices.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSourceType('device')}
+                className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                  sourceType === 'device'
+                    ? 'border-black bg-black text-white shadow-xs'
+                    : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span>⭐ Placa Google Reviews</span>
+                <span className="text-[10px] opacity-75 font-normal mt-1">{devices.length} Placa(s)</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setSourceType('custom')}
+              className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                sourceType === 'custom'
+                  ? 'border-black bg-black text-white shadow-xs'
+                  : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <span>🌐 Enlace Web Libre</span>
+              <span className="text-[10px] opacity-75 font-normal mt-1">Cualquier URL</span>
+            </button>
+          </div>
+
+          {sourceType === 'custom' && (
+            <div className="pt-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Introduce la URL de Destino:</label>
+              <input 
+                type="url"
+                value={customUrl}
+                onChange={(e) => setCustomUrl(e.target.value)}
+                placeholder="https://tu-sitio-web.com"
+                className="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+              />
+            </div>
+          )}
+
+          {sourceType === 'device' && devices.length > 0 && (
+            <div className="pt-2">
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Selecciona la Placa NFC / QR:</label>
+              <select
+                value={selectedDeviceId}
+                onChange={(e) => setSelectedDeviceId(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black"
+              >
+                {devices.map(d => (
+                  <option key={d.id} value={d.id}>Placa {d.tag_id} ({d.device_type})</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* 2. Paletas de Colores & Degradados Tipo Instagram */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between">
+            <span>2. Paleta de Color y Degradados</span>
+            <Sparkles className="w-4 h-4 text-purple-600" />
+          </label>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {PRESET_GRADIENTS.map((p) => {
+              const isSelected = colorPreset === p.id && useGradient
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setColorPreset(p.id)
+                    setUseGradient(true)
+                  }}
+                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center gap-2.5 ${
+                    isSelected ? 'border-black ring-2 ring-black/10 bg-gray-50 font-bold' : 'border-gray-200 bg-white hover:bg-gray-50'
+                  }`}
+                >
+                  <div 
+                    className="w-6 h-6 rounded-full shrink-0 shadow-xs border border-white"
+                    style={{
+                      background: p.colors.length > 1 
+                        ? `linear-gradient(135deg, ${p.colors.join(', ')})`
+                        : p.colors[0]
+                    }}
+                  />
+                  <span className="text-xs text-gray-900 truncate">{p.name}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* 3. Forma de Puntos y Esquinas (Dots & Eyes) */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-5">
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+            3. Patrón de Puntos y Esquinas
+          </label>
+
+          {/* Tipo de puntos */}
+          <div>
+            <span className="block text-xs font-semibold text-gray-700 mb-2">Forma de los Puntos:</span>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { id: 'dots', name: 'Puntos Circulares (Instagram)' },
+                { id: 'rounded', name: 'Burbujas Suaves' },
+                { id: 'classy', name: 'Elegante / Tech' },
+                { id: 'square', name: 'Cuadrado Clásico' },
+              ].map(d => (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => setDotStyle(d.id as DotType)}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold transition cursor-pointer text-center ${
+                    dotStyle === d.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  {d.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Ojos / Esquinas */}
+          <div>
+            <span className="block text-xs font-semibold text-gray-700 mb-2">Diseño de las Esquinas (Ojos):</span>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'extra-rounded', name: 'Curvas Suaves' },
+                { id: 'dot', name: 'Círculo Interior' },
+                { id: 'square', name: 'Cuadrado Limpio' },
+              ].map(e => (
+                <button
+                  key={e.id}
+                  type="button"
+                  onClick={() => {
+                    setCornerSquareStyle(e.id as CornerSquareType)
+                    setCornerDotStyle(e.id === 'dot' ? 'dot' : 'square')
+                  }}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold transition cursor-pointer text-center ${
+                    cornerSquareStyle === e.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  {e.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Logotipo Central & Marco de Impresión */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-5">
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+            4. Logotipo Central y Marco para Impresión
+          </label>
+
+          <ImageUploadInput
+            name="logo"
+            label="Logotipo en el Centro del QR"
+            defaultValue={logoUrl}
+            shape="circle"
+            helpText="Tu logo quedará protegido en el centro sin afectar la lectura del QR."
+          />
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 mb-2">Estilo de Marco Imprimible:</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {FRAME_STYLES.map(f => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFrameStyle(f.id)}
+                  className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer ${
+                    frameStyle === f.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                  }`}
+                >
+                  {f.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {frameStyle !== 'none' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Título de la Cabecera:</label>
+                <input 
+                  type="text"
+                  value={frameTitle}
+                  onChange={(e) => setFrameTitle(e.target.value)}
+                  placeholder="Ej. NEXORIA DIGITAL / MI NEGOCIO"
+                  className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Texto del Botón Inferior:</label>
+                <input 
+                  type="text"
+                  value={frameText}
+                  onChange={(e) => setFrameText(e.target.value)}
+                  placeholder="Ej. ESCANÉAME CON TU CÁMARA"
+                  className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* PANEL DERECHO: VISTA PREVIA EN VIVO Y BOTÓN DE DESCARGA */}
+      <div className="lg:col-span-5 sticky top-6 space-y-6">
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-lg text-center">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-[11px] font-extrabold uppercase tracking-wider mb-4">
+            <Crown className="w-3.5 h-3.5" /> Generador de Impresión HD
+          </div>
+
+          {/* VISTA PREVIA DEL MARCO Y QR */}
+          <div className="flex justify-center p-2">
+            {frameStyle === 'none' ? (
+              <div className="p-4 bg-white rounded-3xl shadow-md border border-gray-200 inline-block">
+                <div ref={qrRef} className="flex items-center justify-center" />
+              </div>
+            ) : (
+              <div 
+                className="w-full max-w-xs rounded-3xl p-5 shadow-2xl text-white transition-all text-center"
+                style={{
+                  background: frameStyle === 'instagram_nametag'
+                    ? `linear-gradient(135deg, ${PRESET_GRADIENTS.find(p => p.id === colorPreset)?.colors.join(', ') || '#833AB4, #FD1D1D, #FCB045'})`
+                    : frameStyle === 'table_tent'
+                    ? '#0F172A'
+                    : '#18181B'
+                }}
+              >
+                <h4 className="font-extrabold text-sm sm:text-base tracking-tight mb-3 uppercase truncate">
+                  {frameTitle || 'OMNITAG'}
+                </h4>
+
+                <div className="bg-white rounded-2xl p-2.5 shadow-md inline-block">
+                  <div ref={qrRef} className="flex items-center justify-center scale-90 sm:scale-100 origin-center" />
+                </div>
+
+                <div className="mt-4 bg-white/95 text-black font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-xs uppercase tracking-wider">
+                  {frameText || 'ESCANÉAME'}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-gray-500 mt-4 leading-relaxed">
+            Destino: <span className="font-mono font-bold text-gray-700 break-all">{getTargetUrl()}</span>
+          </p>
+
+          {/* BOTONES DE DESCARGA PARA IMPRESIÓN */}
+          <div className="mt-6 space-y-2.5">
+            <button
+              type="button"
+              onClick={() => handleDownload('png')}
+              className="w-full bg-black text-white font-extrabold py-3.5 px-6 rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Descargar en Alta Calidad (PNG 2000px)</span>
+            </button>
+
+            {frameStyle === 'none' && (
+              <button
+                type="button"
+                onClick={() => handleDownload('svg')}
+                className="w-full bg-gray-100 text-gray-800 font-bold py-2.5 px-4 rounded-xl hover:bg-gray-200 transition flex items-center justify-center gap-2 cursor-pointer text-xs"
+              >
+                <FileImage className="w-4 h-4" />
+                <span>Descargar en SVG Vectorial (Diseño Gráfico)</span>
+              </button>
+            )}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-gray-100 text-left text-xs text-gray-500 space-y-1">
+            <p className="font-semibold text-gray-700">💡 Listo para imprimir en:</p>
+            <p>• Placas acrílicas para mostrador o recepción</p>
+            <p>• Carpas de mesa para restaurantes y cafeterías</p>
+            <p>• Tarjetas de presentación físicas y stickers</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
