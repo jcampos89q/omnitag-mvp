@@ -53,18 +53,6 @@ export default async function AdminDashboardPage() {
     supabase.rpc('get_admin_master_contacts')
   ])
 
-  const metrics = metricsData || {
-    total_users: 0,
-    total_pro_users: 0,
-    total_free_users: 0,
-    total_vcards: 0,
-    total_menus: 0,
-    total_devices: 0,
-    total_scans: 0,
-    total_leads: 0,
-    total_feedbacks: 0
-  }
-
   const users: AdminUser[] = usersData || []
   const creations: AdminCreationsData = creationsData || {
     vcards: [],
@@ -79,16 +67,24 @@ export default async function AdminDashboardPage() {
     private_feedbacks: []
   }
 
-  // Tasa de conversión y estimación de ingresos
-  const conversionRate = metrics.total_users > 0 
-    ? ((metrics.total_pro_users / metrics.total_users) * 100).toFixed(1) 
-    : '0.0'
-  const estimatedMrr = metrics.total_pro_users * 29 // $29/mes por usuario PRO
-
+  // Cálculos dinámicos garantizados para KPIs superiores
+  const totalUsers = users.length || Number(metricsData?.total_users || 0)
+  const totalProUsers = users.filter(u => u.out_plan === 'pro').length || Number(metricsData?.total_pro_users || 0)
+  const totalFreeUsers = users.filter(u => u.out_plan !== 'pro').length || Number(metricsData?.total_free_users || 0)
+  
   const totalCapturedContacts = 
     (contacts.vcard_leads?.length || 0) + 
     (contacts.loyalty_members?.length || 0) + 
     (contacts.private_feedbacks?.length || 0)
+
+  const totalScans = Number(metricsData?.total_scans || 0) || users.reduce((acc, u) => acc + Number(u.out_scans_count || 0), 0)
+  const totalDevices = creations.devices?.length || Number(metricsData?.total_devices || 0)
+
+  // Tasa de conversión y estimación de ingresos
+  const conversionRate = totalUsers > 0 
+    ? ((totalProUsers / totalUsers) * 100).toFixed(1) 
+    : '0.0'
+  const estimatedMrr = totalProUsers * 29 // $29/mes por usuario PRO
 
   return (
     <div className="space-y-8">
@@ -116,9 +112,9 @@ export default async function AdminDashboardPage() {
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Usuarios Plataforma</span>
               <Users className="w-5 h-5 text-blue-600" />
             </div>
-            <p className="text-3xl font-extrabold text-gray-900">{metrics.total_users}</p>
+            <p className="text-3xl font-extrabold text-gray-900">{totalUsers}</p>
             <p className="text-xs text-gray-500 mt-1">
-              <span className="font-semibold text-emerald-600">{metrics.total_pro_users} PRO</span> • {metrics.total_free_users} Gratuitos
+              <span className="font-semibold text-emerald-600">{totalProUsers} PRO</span> • {totalFreeUsers} Gratuitos
             </p>
           </div>
 
@@ -152,9 +148,9 @@ export default async function AdminDashboardPage() {
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tráfico / Escaneos</span>
               <Activity className="w-5 h-5 text-amber-600" />
             </div>
-            <p className="text-3xl font-extrabold text-gray-900">{metrics.total_scans}</p>
+            <p className="text-3xl font-extrabold text-gray-900">{totalScans}</p>
             <p className="text-xs text-gray-500 mt-1">
-              En <span className="font-semibold text-gray-800">{metrics.total_devices}</span> QRs y placas activas
+              En <span className="font-semibold text-gray-800">{totalDevices}</span> QRs y placas activas
             </p>
           </div>
         </div>
