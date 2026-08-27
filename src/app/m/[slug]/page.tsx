@@ -1,7 +1,59 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import PublicMenuClient from './PublicMenuClient'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const supabase = await createClient()
+  const { slug } = await params
+
+  const { data: menu } = await supabase
+    .from('menus')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (!menu) {
+    return {
+      title: 'Menú Digital | OmniTag',
+    }
+  }
+
+  const title = `${menu.name} | Menú Digital & Pedidos`
+  const description = menu.description || `Explora el menú digital interactivo y catálogo de ${menu.name}. Haz tus pedidos directo por WhatsApp.`
+  const imageUrl = menu.logo_url || ''
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://www.omnitag.site/m/${slug}`,
+      siteName: 'OmniTag Menús',
+      images: imageUrl ? [
+        {
+          url: imageUrl,
+          width: 800,
+          height: 800,
+          alt: menu.name,
+        }
+      ] : [],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: imageUrl ? [imageUrl] : [],
+    },
+  }
+}
 
 export default async function PublicMenuPage({
   params

@@ -20,8 +20,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "OmniTag - Conecta el mundo físico con tu ecosistema digital",
+  metadataBase: new URL('https://www.omnitag.site'),
+  title: {
+    default: "OmniTag - Conecta el mundo físico con tu ecosistema digital",
+    template: "%s | OmniTag"
+  },
   description: "Tarjetas vCard inteligentes, menús digitales con pedidos a WhatsApp y placas Tap-to-Rate para Google Reviews.",
+  openGraph: {
+    title: "OmniTag - Conecta el mundo físico con tu ecosistema digital",
+    description: "Tarjetas vCard inteligentes, menús digitales con pedidos a WhatsApp y placas Tap-to-Rate para Google Reviews.",
+    url: 'https://www.omnitag.site',
+    siteName: 'OmniTag',
+    locale: 'es_ES',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({

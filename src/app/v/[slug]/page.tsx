@@ -1,9 +1,69 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { UserCircle2, Briefcase, Mail, Phone, Download, Building2, Clock, MapPin, ExternalLink, Sparkles } from 'lucide-react'
 import ShareButtons from '@/components/ShareButtons'
 import LeadCaptureModal from './LeadCaptureModal'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+  const supabase = await createClient()
+  const { slug } = await params
+
+  const { data: vcard } = await supabase
+    .from('vcards')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (!vcard) {
+    return {
+      title: 'Perfil Digital | OmniTag',
+    }
+  }
+
+  const isBusiness = vcard.card_type === 'business'
+  const titleName = isBusiness 
+    ? (vcard.first_name || vcard.company_name || 'Perfil Empresarial')
+    : [vcard.first_name, vcard.last_name].filter(Boolean).join(' ') || 'Contacto'
+
+  const subtitle = vcard.job_title 
+    ? `${vcard.job_title}${vcard.company_name ? ` • ${vcard.company_name}` : ''}`
+    : vcard.company_name || 'Tarjeta de Presentación Digital'
+
+  const description = vcard.bio || `${subtitle}. Conecta, guarda mis datos de contacto o comunícate conmigo.`
+  const imageUrl = vcard.cover_url || vcard.avatar_url || ''
+
+  return {
+    title: `${titleName} | ${subtitle}`,
+    description,
+    openGraph: {
+      title: titleName,
+      description,
+      url: `https://www.omnitag.site/v/${slug}`,
+      siteName: 'OmniTag',
+      images: imageUrl ? [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: titleName,
+        }
+      ] : [],
+      type: 'profile',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: titleName,
+      description,
+      images: imageUrl ? [imageUrl] : [],
+    },
+  }
+}
 
 export default async function PublicVCardPage({
   params
