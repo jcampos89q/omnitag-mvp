@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendPushNotificationToUser } from '@/lib/push'
 
 export async function submitPrivateFeedback(formData: FormData) {
   const supabase = await createClient()
@@ -30,7 +31,7 @@ export async function submitPrivateFeedback(formData: FormData) {
     return { success: false, error: error.message }
   }
 
-  // Enviar notificación en tiempo real al dueño de la placa / negocio
+  // Enviar notificación interna y Push Flotante al celular del dueño
   try {
     const { data: device } = await supabase
       .from('devices')
@@ -45,6 +46,13 @@ export async function submitPrivateFeedback(formData: FormData) {
         message: `${customerName || 'Un cliente'} dejó ${rating}★ en "${device.name || 'tu placa'}"${message ? `: "${message.slice(0, 70)}${message.length > 70 ? '...' : ''}"` : '.'}`,
         type: 'warning',
         link: '/dashboard/feedback'
+      })
+
+      // Push Flotante al celular bloqueado
+      await sendPushNotificationToUser(device.user_id, {
+        title: '⚠️ ¡Alerta de Reseña / Queja en OmniTag!',
+        body: `Un cliente dejó ${rating}★ en "${device.name || 'tu placa'}". Toca para verla y responder.`,
+        url: '/dashboard/feedback'
       })
     }
   } catch (notifErr) {

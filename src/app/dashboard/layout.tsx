@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import DashboardNavbar from '@/components/DashboardNavbar'
+import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 
 export default async function DashboardLayout({
   children,
@@ -30,7 +31,10 @@ export default async function DashboardLayout({
 
       {/* Contenido Principal */}
       <main className="flex-1 p-4 sm:p-6 md:p-8 pb-24 md:pb-8 w-full overflow-x-hidden">
-        <div className="max-w-5xl mx-auto w-full">
+        <div className="max-w-5xl mx-auto w-full space-y-6">
+          {/* Banner de Activación de Notificaciones Push Flotantes */}
+          <PushNotificationPrompt userId={user?.id} />
+
           {children}
         </div>
       </main>

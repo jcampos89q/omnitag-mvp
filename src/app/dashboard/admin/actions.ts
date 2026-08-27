@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendPushNotificationToUser } from '@/lib/push'
 
 export async function toggleUserPlan(formData: FormData) {
   const supabase = await createClient()
@@ -26,13 +27,26 @@ export async function toggleUserPlan(formData: FormData) {
   // Invocar la función RPC con permisos definer en Postgres
   const { data, error } = await supabase.rpc('admin_set_user_plan', {
     p_user_id: targetUserId,
-    p_plan: newPlan
+    p_plan: newPlan,
+    p_duration_days: 30
   })
 
   if (error) {
     console.error("Error toggling user plan via RPC:", error)
-    // Fallback: actualización directa por si acaso
     await supabase.from('workspaces').update({ plan: newPlan }).eq('id', targetUserId)
+  }
+
+  // Notificación Push al celular del usuario
+  try {
+    if (newPlan === 'pro') {
+      await sendPushNotificationToUser(targetUserId, {
+        title: '🎉 ¡Tu Plan PRO ha sido Activado!',
+        body: 'Tienes 30 días de acceso total ilimitado a descargas HD, CRM y Escudo 5★.',
+        url: '/dashboard'
+      })
+    }
+  } catch (err) {
+    console.error('Error enviando push en admin plan toggle:', err)
   }
 
   revalidatePath('/dashboard/admin')
@@ -57,8 +71,19 @@ export async function activateUserProCash(targetUserId: string) {
 
   await supabase.rpc('admin_set_user_plan', {
     p_user_id: targetUserId,
-    p_plan: 'pro'
+    p_plan: 'pro',
+    p_duration_days: 30
   })
+
+  try {
+    await sendPushNotificationToUser(targetUserId, {
+      title: '🎉 ¡Tu Plan PRO ha sido Activado!',
+      body: 'Tu pago ha sido registrado. Tienes 30 días de acceso ilimitado a todas las herramientas PRO.',
+      url: '/dashboard'
+    })
+  } catch (err) {
+    console.error('Error enviando push:', err)
+  }
 
   revalidatePath('/dashboard/admin')
   revalidatePath('/dashboard/billing')

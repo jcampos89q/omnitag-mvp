@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendPushNotificationToUser } from '@/lib/push'
 
 export async function saveLead(formData: FormData) {
   const supabase = await createClient()
@@ -28,7 +29,7 @@ export async function saveLead(formData: FormData) {
     return { success: false, error: error.message }
   }
 
-  // Enviar notificación en tiempo real al dueño de la vCard
+  // Enviar notificación interna y Notificación Push Flotante al celular del usuario
   try {
     const { data: vcard } = await supabase
       .from('vcards')
@@ -37,12 +38,20 @@ export async function saveLead(formData: FormData) {
       .maybeSingle()
 
     if (vcard?.user_id) {
+      // 1. Guardar en base de datos
       await supabase.from('notifications').insert({
         user_id: vcard.user_id,
         title: '👤 ¡Nuevo Contacto Capturado!',
         message: `${name}${phone ? ` (${phone})` : ''} ha guardado tu vCard y te ha compartido sus datos.`,
         type: 'success',
         link: '/dashboard/leads'
+      })
+
+      // 2. Disparar Push Flotante al sistema operativo / celular bloqueado
+      await sendPushNotificationToUser(vcard.user_id, {
+        title: '👤 ¡Nuevo Contacto Capturado en OmniTag!',
+        body: `${name}${phone ? ` (${phone})` : ''} te ha dejado sus datos de contacto. Toca para verlos.`,
+        url: '/dashboard/leads'
       })
     }
   } catch (notifErr) {
