@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import PublicMenuClient from './PublicMenuClient'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
+import { recordPageViewScan } from '@/lib/analytics'
 
 export async function generateMetadata({
   params
@@ -74,6 +75,13 @@ export default async function PublicMenuPage({
   if (!menu) {
     notFound()
   }
+
+  // Registrar visita / escaneo del menú digital
+  recordPageViewScan({
+    menuId: menu.id,
+    targetUserId: menu.user_id,
+    sourceType: 'menu'
+  })
 
   // 2. Buscar categorías e ítems
   const { data: categories } = await supabase

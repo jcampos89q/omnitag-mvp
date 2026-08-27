@@ -5,6 +5,7 @@ import { UserCircle2, Briefcase, Mail, Phone, Download, Building2, Clock, MapPin
 import ShareButtons from '@/components/ShareButtons'
 import LeadCaptureModal from './LeadCaptureModal'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
+import { recordPageViewScan } from '@/lib/analytics'
 
 export async function generateMetadata({
   params
@@ -84,6 +85,13 @@ export default async function PublicVCardPage({
   if (!vcard) {
     notFound()
   }
+
+  // Registrar visita / escaneo de la vCard asíncronamente
+  recordPageViewScan({
+    vcardId: vcard.id,
+    targetUserId: vcard.user_id,
+    sourceType: 'vcard'
+  })
 
   const { 
     id: vcardId, 

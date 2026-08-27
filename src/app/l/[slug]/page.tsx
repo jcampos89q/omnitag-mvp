@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import LoyaltyCardClient from './LoyaltyCardClient'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
+import { recordPageViewScan } from '@/lib/analytics'
 
 export async function generateMetadata({
   params
@@ -73,6 +74,13 @@ export default async function PublicLoyaltyPage({
   if (!program) {
     notFound()
   }
+
+  // Registrar visita / escaneo de la tarjeta de fidelización
+  recordPageViewScan({
+    loyaltyProgramId: program.id,
+    targetUserId: program.user_id,
+    sourceType: 'loyalty'
+  })
 
   const theme = resolveTheme(program.theme)
   const fontUrl = getGoogleFontUrl(theme.font_family)

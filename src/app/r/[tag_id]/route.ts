@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { recordPageViewScan } from '@/lib/analytics'
 
 export async function GET(
   request: NextRequest,
@@ -21,15 +22,11 @@ export async function GET(
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // 2. Registrar el escaneo asíncronamente (Analítica Básica)
-  const userAgent = request.headers.get('user-agent') || ''
-  
-  supabase.from('scans').insert({
-    device_id: device.id,
-    os: userAgent.includes('iPhone') || userAgent.includes('Mac') ? 'Apple' : userAgent.includes('Android') ? 'Android' : 'Desktop',
-    country: request.headers.get('x-vercel-ip-country') || 'Desconocido'
-  }).then(({ error }) => {
-    if (error) console.error('Error logging scan:', error)
+  // 2. Registrar el escaneo asíncronamente
+  recordPageViewScan({
+    deviceId: device.id,
+    targetUserId: device.user_id,
+    sourceType: 'nfc_device'
   })
 
   // Si tiene el filtro inteligente, lo enviamos primero a la pantalla de estrellitas
