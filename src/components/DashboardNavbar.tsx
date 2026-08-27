@@ -1,24 +1,25 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import { 
   Home, 
   UserCircle, 
   Smartphone, 
-  LogOut, 
-  Coffee, 
-  BarChart3, 
-  Users, 
   MessageSquareWarning, 
+  BarChart3, 
+  LogOut, 
+  Coffee,
+  Users,
   CreditCard,
   Menu as MenuIcon,
   X,
   Gift,
   QrCode,
   ShieldCheck,
-  Star
+  Star,
+  Sparkles
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 
@@ -29,19 +30,20 @@ interface NavItem {
   badge?: string
   accent?: boolean
   adminOnly?: boolean
+  section?: string
 }
 
 const baseNavItems: NavItem[] = [
-  { name: 'Inicio', href: '/dashboard', icon: Home },
-  { name: 'Mi vCard', href: '/dashboard/vcard', icon: UserCircle },
-  { name: 'Contactos (CRM)', href: '/dashboard/leads', icon: Users },
-  { name: 'Fidelización & Sellos', href: '/dashboard/loyalty', icon: Gift },
-  { name: 'Menú & Catálogo', href: '/dashboard/menus', icon: Coffee },
-  { name: 'Estudio QR (Imprimibles)', href: '/dashboard/qr-studio', icon: QrCode, badge: 'PRO' },
-  { name: 'Reseñas Google & NFC', href: '/dashboard/devices', icon: Star },
-  { name: 'Quejas Privadas', href: '/dashboard/feedback', icon: MessageSquareWarning },
-  { name: 'Estadísticas', href: '/dashboard/analytics', icon: BarChart3 },
-  { name: 'Suscripción', href: '/dashboard/billing', icon: CreditCard, accent: true },
+  { name: 'Inicio', href: '/dashboard', icon: Home, section: 'principal' },
+  { name: 'Mi vCard', href: '/dashboard/vcard', icon: UserCircle, section: 'creaciones' },
+  { name: 'Estudio QR (Imprimibles)', href: '/dashboard/qr-studio', icon: QrCode, badge: 'HD', section: 'creaciones' },
+  { name: 'Reseñas Google & NFC', href: '/dashboard/devices', icon: Star, section: 'creaciones' },
+  { name: 'Menú & Catálogo', href: '/dashboard/menus', icon: Coffee, section: 'creaciones' },
+  { name: 'Fidelización & Sellos', href: '/dashboard/loyalty', icon: Gift, section: 'creaciones' },
+  { name: 'Contactos (CRM)', href: '/dashboard/leads', icon: Users, section: 'gestion' },
+  { name: 'Quejas Privadas', href: '/dashboard/feedback', icon: MessageSquareWarning, section: 'gestion' },
+  { name: 'Estadísticas', href: '/dashboard/analytics', icon: BarChart3, section: 'gestion' },
+  { name: 'Suscripción', href: '/dashboard/billing', icon: CreditCard, accent: true, section: 'cuenta' },
 ]
 
 export default function DashboardNavbar({ 
@@ -56,7 +58,7 @@ export default function DashboardNavbar({
 
   const navItems = [
     ...baseNavItems,
-    ...(isAdmin ? [{ name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true }] : [])
+    ...(isAdmin ? [{ name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true, section: 'admin' }] : [])
   ]
 
   const isActive = (href: string) => {
@@ -82,43 +84,44 @@ export default function DashboardNavbar({
 
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 rounded-lg text-gray-600 hover:text-black hover:bg-gray-100 transition-colors focus:outline-none"
+          className="p-2 rounded-xl text-gray-700 hover:text-black hover:bg-gray-100 transition-colors focus:outline-none flex items-center gap-1.5 font-bold text-xs"
           aria-label="Abrir menú"
         >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <MenuIcon className="w-6 h-6" />}
+          <span>Menú</span>
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
         </button>
       </header>
 
-      {/* 2. DRAWER MÓVIL (Slide-over menú) */}
+      {/* 2. DRAWER MÓVIL (Slide-over menú completo) */}
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex">
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity" 
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity" 
             onClick={() => setIsMobileMenuOpen(false)} 
           />
 
           {/* Drawer Panel */}
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl p-6 z-10 animate-in slide-in-from-left duration-200">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-4">
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl p-5 z-10 animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center font-bold text-lg">
+                <div className="w-7 h-7 bg-black text-white rounded-lg flex items-center justify-center font-bold text-base">
                   O
                 </div>
-                <span className="text-xl font-bold tracking-tight text-gray-900">OmniTag</span>
+                <span className="text-lg font-bold tracking-tight text-gray-900">Menú Principal</span>
               </div>
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 text-gray-400 hover:text-black rounded-lg hover:bg-gray-100"
+                className="p-1.5 text-gray-400 hover:text-black rounded-lg hover:bg-gray-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {userEmail && (
-              <div className="px-3 py-2 bg-gray-50 rounded-lg mb-4">
-                <p className="text-xs text-gray-500 font-medium">Conectado como:</p>
-                <p className="text-sm font-semibold text-gray-800 truncate">{userEmail}</p>
+              <div className="px-3 py-2 bg-gray-50 rounded-xl mb-3 border border-gray-100">
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Conectado como:</p>
+                <p className="text-xs font-bold text-gray-800 truncate">{userEmail}</p>
                 {isAdmin && (
                   <span className="inline-block mt-1 text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
                     👑 Super Administrador
@@ -127,7 +130,7 @@ export default function DashboardNavbar({
               </div>
             )}
 
-            <nav className="flex-1 space-y-1.5 overflow-y-auto">
+            <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
               {navItems.map((item) => {
                 const Icon = item.icon
                 const active = isActive(item.href)
@@ -136,28 +139,38 @@ export default function DashboardNavbar({
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all ${
                       active
-                        ? 'bg-black text-white shadow-xs'
+                        ? 'bg-black text-white shadow-xs font-bold'
                         : item.adminOnly 
                         ? 'text-purple-700 bg-purple-50/70 hover:bg-purple-100 font-bold'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
-                    <Icon className={`w-5 h-5 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
-                    <span>{item.name}</span>
+                    <div className="flex items-center gap-2.5">
+                      <Icon className={`w-4 h-4 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
+                      <span>{item.name}</span>
+                    </div>
+
+                    {item.badge && (
+                      <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                        active ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
                   </Link>
                 )
               })}
             </nav>
 
-            <div className="pt-4 mt-auto border-t border-gray-100">
+            <div className="pt-3 mt-auto border-t border-gray-100">
               <form action={logout}>
                 <button
                   type="submit"
-                  className="flex w-full items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                  className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-4 h-4" />
                   <span>Cerrar Sesión</span>
                 </button>
               </form>
@@ -199,16 +212,26 @@ export default function DashboardNavbar({
               <Link 
                 key={item.href}
                 href={item.href} 
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
                   active 
-                    ? 'bg-black text-white shadow-xs' 
+                    ? 'bg-black text-white shadow-xs font-bold' 
                     : item.adminOnly
                     ? 'text-purple-700 bg-purple-50/70 hover:bg-purple-100 font-bold'
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
-                <span>{item.name}</span>
+                <div className="flex items-center gap-3">
+                  <Icon className={`w-5 h-5 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
+                  <span>{item.name}</span>
+                </div>
+
+                {item.badge && (
+                  <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                    active ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
+                  }`}>
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -224,63 +247,67 @@ export default function DashboardNavbar({
         </div>
       </aside>
 
-      {/* 4. BARRA DE NAVEGACIÓN RÁPIDA INFERIOR (Mobile Bottom Bar en móviles) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-gray-200 flex items-center justify-around py-2 px-1 shadow-lg">
+      {/* 4. BARRA DE NAVEGACIÓN RÁPIDA INFERIOR (Mobile Bottom Bar Optimizada) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-gray-200 flex items-center justify-around py-2 px-1 shadow-lg pb-safe">
+        {/* 1. Inicio */}
         <Link 
           href="/dashboard" 
-          className={`flex flex-col items-center py-1 px-2 text-xs font-medium ${
-            isActive('/dashboard') ? 'text-black font-bold' : 'text-gray-500'
+          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors ${
+            isActive('/dashboard') ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-800'
           }`}
         >
-          <Home className="w-5 h-5 mb-0.5" />
+          <Home className={`w-5 h-5 mb-0.5 ${isActive('/dashboard') ? 'stroke-[2.5px]' : ''}`} />
           <span>Inicio</span>
         </Link>
+
+        {/* 2. Mi vCard */}
         <Link 
           href="/dashboard/vcard" 
-          className={`flex flex-col items-center py-1 px-2 text-xs font-medium ${
-            isActive('/dashboard/vcard') ? 'text-black font-bold' : 'text-gray-500'
+          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors ${
+            isActive('/dashboard/vcard') ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-800'
           }`}
         >
-          <UserCircle className="w-5 h-5 mb-0.5" />
+          <UserCircle className={`w-5 h-5 mb-0.5 ${isActive('/dashboard/vcard') ? 'stroke-[2.5px]' : ''}`} />
           <span>vCard</span>
         </Link>
+
+        {/* 3. Estudio QR (Imprimibles) */}
         <Link 
-          href="/dashboard/menus" 
-          className={`flex flex-col items-center py-1 px-2 text-xs font-medium ${
-            isActive('/dashboard/menus') ? 'text-black font-bold' : 'text-gray-500'
+          href="/dashboard/qr-studio" 
+          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors ${
+            isActive('/dashboard/qr-studio') ? 'text-purple-700 font-bold' : 'text-gray-500 hover:text-gray-800'
           }`}
         >
-          <Coffee className="w-5 h-5 mb-0.5" />
-          <span>Menú</span>
+          <QrCode className={`w-5 h-5 mb-0.5 ${isActive('/dashboard/qr-studio') ? 'text-purple-700 stroke-[2.5px]' : ''}`} />
+          <span>Estudio QR</span>
         </Link>
+
+        {/* 4. Reseñas Google & NFC */}
         <Link 
           href="/dashboard/devices" 
-          className={`flex flex-col items-center py-1 px-2 text-xs font-medium ${
-            isActive('/dashboard/devices') ? 'text-black font-bold' : 'text-gray-500'
+          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors ${
+            isActive('/dashboard/devices') ? 'text-amber-600 font-bold' : 'text-gray-500 hover:text-gray-800'
           }`}
         >
-          <Smartphone className="w-5 h-5 mb-0.5" />
-          <span>QRs</span>
+          <Star className={`w-5 h-5 mb-0.5 ${isActive('/dashboard/devices') ? 'fill-amber-500 text-amber-500 stroke-[2.5px]' : ''}`} />
+          <span>Reseñas</span>
         </Link>
-        {isAdmin ? (
-          <Link
-            href="/dashboard/admin"
-            className={`flex flex-col items-center py-1 px-2 text-xs font-medium ${
-              isActive('/dashboard/admin') ? 'text-purple-700 font-bold' : 'text-purple-600'
-            }`}
-          >
-            <ShieldCheck className="w-5 h-5 mb-0.5" />
-            <span>Admin</span>
-          </Link>
-        ) : (
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="flex flex-col items-center py-1 px-2 text-xs font-medium text-gray-500 hover:text-black focus:outline-none"
-          >
+
+        {/* 5. Botón Más Opciones (Abre Menú Completo con Menús, Fidelización, CRM, etc.) */}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors cursor-pointer ${
+            isAdmin ? 'text-purple-700 font-bold' : 'text-gray-600 hover:text-black'
+          }`}
+        >
+          <div className="relative">
             <MenuIcon className="w-5 h-5 mb-0.5" />
-            <span>Más</span>
-          </button>
-        )}
+            {isAdmin && (
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-purple-600 rounded-full ring-2 ring-white" />
+            )}
+          </div>
+          <span>{isAdmin ? 'Admin / Más' : 'Más'}</span>
+        </button>
       </nav>
     </>
   )
