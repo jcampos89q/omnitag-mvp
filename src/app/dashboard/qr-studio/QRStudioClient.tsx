@@ -13,7 +13,8 @@ import {
   Smartphone, 
   ExternalLink,
   Crown,
-  FileImage
+  FileImage,
+  Share2
 } from 'lucide-react'
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType, GradientType } from 'qr-code-styling'
 import ImageUploadInput from '@/components/ImageUploadInput'
@@ -47,7 +48,7 @@ const FRAME_STYLES = [
   { id: 'none', name: 'Sin Marco (Solo QR)' },
   { id: 'instagram_nametag', name: 'Estilo Nametag / Instagram (Con cabecera y botón)' },
   { id: 'table_tent', name: 'Placa de Mostrador / Mesa (Con llamado a la acción)' },
-  { id: 'badge', name: 'Tarjeta / Badge Redondo' },
+  { id: 'badge', name: 'Tarjeta / Badge Oscuro' },
 ]
 
 export default function QRStudioClient({ 
@@ -77,6 +78,7 @@ export default function QRStudioClient({
   const [frameStyle, setFrameStyle] = useState<string>('instagram_nametag')
   const [frameText, setFrameText] = useState<string>('ESCANÉAME CON TU CÁMARA')
   const [frameTitle, setFrameTitle] = useState<string>('')
+  const [isDownloading, setIsDownloading] = useState<boolean>(false)
 
   // Referencias
   const qrRef = useRef<HTMLDivElement>(null)
@@ -122,7 +124,7 @@ export default function QRStudioClient({
     }
   }, [sourceType, vcard, menu, loyalty])
 
-  // Inicializar y actualizar QRCodeStyling
+  // Inicializar y actualizar QRCodeStyling para vista previa responsiva
   useEffect(() => {
     const targetUrl = getTargetUrl()
     const selectedPreset = PRESET_GRADIENTS.find(p => p.id === colorPreset) || PRESET_GRADIENTS[0]
@@ -145,10 +147,10 @@ export default function QRStudioClient({
     }
 
     const qrOptions: any = {
-      width: 280,
-      height: 280,
+      width: 220,
+      height: 220,
       data: targetUrl,
-      margin: 12,
+      margin: 6,
       qrOptions: {
         typeNumber: 0,
         mode: 'Byte',
@@ -157,7 +159,7 @@ export default function QRStudioClient({
       imageOptions: {
         hideBackgroundDots: true,
         imageSize: 0.35,
-        margin: 6,
+        margin: 4,
         crossOrigin: 'anonymous'
       },
       dotsOptions,
@@ -171,10 +173,9 @@ export default function QRStudioClient({
       },
       backgroundOptions: {
         color: '#FFFFFF'
-      }
+      },
+      image: logoUrl || ''
     }
-
-    qrOptions.image = logoUrl || ''
 
     if (!qrCodeInstance.current) {
       qrCodeInstance.current = new QRCodeStyling(qrOptions)
@@ -198,124 +199,181 @@ export default function QRStudioClient({
     logoUrl
   ])
 
-  // Descargar QR en Alta Definición (PNG o SVG) con o sin marco
+  // Descargar QR en Alta Definición con soporte para Fototeca / Galería de iOS y Android
   const handleDownload = async (format: 'png' | 'svg') => {
-    if (frameStyle === 'none') {
-      if (qrCodeInstance.current) {
-        await qrCodeInstance.current.download({
-          name: `omnitag_qr_${sourceType}_hd`,
-          extension: format
+    setIsDownloading(true)
+    try {
+      if (frameStyle === 'none') {
+        if (qrCodeInstance.current) {
+          const rawBlob = await qrCodeInstance.current.getRawData(format)
+          if (rawBlob) {
+            const filename = `omnitag_qr_${sourceType}_hd.${format}`
+            const file = new File([rawBlob as Blob], filename, { type: format === 'png' ? 'image/png' : 'image/svg+xml' })
+
+            if (format === 'png' && typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+              try {
+                await navigator.share({
+                  files: [file],
+                  title: 'Mi Código QR OmniTag',
+                  text: 'Guarda tu código QR en tu galería o fototeca.'
+                })
+                return
+              } catch (e: any) {
+                if (e.name === 'AbortError') return
+              }
+            }
+
+            const url = URL.createObjectURL(rawBlob as Blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = filename
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            URL.revokeObjectURL(url)
+          }
+        }
+        return
+      }
+
+      // Renderizar marco completo en ultra alta resolución (1800 x 2250 px) para imprenta
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      const scale = 3
+      const width = 600 * scale
+      const height = 750 * scale
+      canvas.width = width
+      canvas.height = height
+
+      const selectedPreset = PRESET_GRADIENTS.find(p => p.id === colorPreset) || PRESET_GRADIENTS[0]
+
+      // Fondo del marco con gradiente o color
+      if (frameStyle === 'instagram_nametag') {
+        const gradient = ctx.createLinearGradient(0, 0, width, height)
+        gradient.addColorStop(0, selectedPreset.colors[0])
+        gradient.addColorStop(0.5, selectedPreset.colors[1] || selectedPreset.colors[0])
+        gradient.addColorStop(1, selectedPreset.colors[2] || selectedPreset.colors[0])
+        ctx.fillStyle = gradient
+      } else if (frameStyle === 'table_tent') {
+        ctx.fillStyle = '#0F172A'
+      } else {
+        ctx.fillStyle = '#18181B'
+      }
+      ctx.fillRect(0, 0, width, height)
+
+      // Cabecera / Título
+      ctx.fillStyle = '#FFFFFF'
+      ctx.font = `bold ${28 * scale}px "Plus Jakarta Sans", -apple-system, system-ui, sans-serif`
+      ctx.textAlign = 'center'
+      ctx.fillText((frameTitle || 'OMNITAG').toUpperCase(), width / 2, 70 * scale)
+
+      // Tarjeta blanca para el QR
+      const cardX = 60 * scale
+      const cardY = 110 * scale
+      const cardSize = 480 * scale
+      const cardRadius = 35 * scale
+
+      ctx.fillStyle = '#FFFFFF'
+      ctx.beginPath()
+      ctx.roundRect(cardX, cardY, cardSize, cardSize, cardRadius)
+      ctx.fill()
+
+      // Renderizar QR en alta resolución sobre la tarjeta
+      const highResDots: any = {
+        type: dotStyle,
+      }
+      if (useGradient && selectedPreset.colors.length > 1) {
+        highResDots.gradient = {
+          type: selectedPreset.type,
+          rotation: (selectedPreset.rotation || 45) * (Math.PI / 180),
+          colorStops: selectedPreset.colors.map((c, i) => ({ offset: i / (selectedPreset.colors.length - 1), color: c }))
+        }
+      } else {
+        highResDots.color = customColor
+      }
+
+      const highResQr = new QRCodeStyling({
+        width: 420 * scale,
+        height: 420 * scale,
+        data: getTargetUrl(),
+        margin: 8 * scale,
+        qrOptions: { errorCorrectionLevel: 'Q' },
+        imageOptions: { hideBackgroundDots: true, imageSize: 0.35, margin: 4 * scale, crossOrigin: 'anonymous' },
+        dotsOptions: highResDots,
+        cornersSquareOptions: { type: cornerSquareStyle, color: selectedPreset.colors[0] },
+        cornersDotOptions: { type: cornerDotStyle, color: selectedPreset.colors[0] },
+        backgroundOptions: { color: 'transparent' },
+        image: logoUrl || undefined
+      })
+
+      const rawBlob = await highResQr.getRawData('png')
+      if (rawBlob) {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        const url = URL.createObjectURL(rawBlob as Blob)
+        img.src = url
+        await new Promise(resolve => { 
+          img.onload = resolve
+          img.onerror = resolve
         })
+
+        ctx.drawImage(img, cardX + 30 * scale, cardY + 30 * scale, 420 * scale, 420 * scale)
+        URL.revokeObjectURL(url)
       }
-      return
+
+      // Botón / Llamada a la acción inferior
+      const btnY = 620 * scale
+      const btnHeight = 65 * scale
+      const btnWidth = 440 * scale
+      const btnX = (width - btnWidth) / 2
+
+      ctx.fillStyle = 'rgba(255,255,255,0.95)'
+      ctx.beginPath()
+      ctx.roundRect(btnX, btnY, btnWidth, btnHeight, 20 * scale)
+      ctx.fill()
+
+      ctx.fillStyle = '#000000'
+      ctx.font = `bold ${16 * scale}px "Plus Jakarta Sans", -apple-system, system-ui, sans-serif`
+      ctx.fillText(frameText.toUpperCase(), width / 2, btnY + 40 * scale)
+
+      // Guardar directamente en Galería / Fototeca (Móvil) o Descargar (PC)
+      canvas.toBlob(async (blob) => {
+        if (!blob) return
+        const filename = `omnitag_qr_imprimible_${sourceType}_hd.png`
+        const file = new File([blob], filename, { type: 'image/png' })
+
+        // 1. Soporte Nativo para Guardar en Fotos / Fototeca de iOS y Android
+        if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'Código QR OmniTag para Impresión',
+              text: 'Toca "Guardar imagen" para guardarlo directo en tu Fototeca o Galería.'
+            })
+            return
+          } catch (err: any) {
+            if (err.name === 'AbortError') return
+          }
+        }
+
+        // 2. Fallback estándar para PC / navegadores de escritorio
+        const downloadUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = downloadUrl
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(downloadUrl)
+      }, 'image/png', 1.0)
+
+    } catch (err) {
+      console.error('Error generando QR:', err)
+    } finally {
+      setIsDownloading(false)
     }
-
-    // Renderizar marco completo en alta resolución (1800 x 2250 px) para imprenta
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const scale = 3 // Calidad ultra HD
-    const width = 600 * scale
-    const height = 750 * scale
-    canvas.width = width
-    canvas.height = height
-
-    const selectedPreset = PRESET_GRADIENTS.find(p => p.id === colorPreset) || PRESET_GRADIENTS[0]
-
-    // Fondo del marco con gradiente o color
-    if (frameStyle === 'instagram_nametag') {
-      const gradient = ctx.createLinearGradient(0, 0, width, height)
-      gradient.addColorStop(0, selectedPreset.colors[0])
-      gradient.addColorStop(0.5, selectedPreset.colors[1] || selectedPreset.colors[0])
-      gradient.addColorStop(1, selectedPreset.colors[2] || selectedPreset.colors[0])
-      ctx.fillStyle = gradient
-    } else if (frameStyle === 'table_tent') {
-      ctx.fillStyle = '#0F172A'
-    } else {
-      ctx.fillStyle = '#18181B'
-    }
-    ctx.fillRect(0, 0, width, height)
-
-    // Cabecera / Título
-    ctx.fillStyle = '#FFFFFF'
-    ctx.font = `bold ${28 * scale}px "Plus Jakarta Sans", system-ui, sans-serif`
-    ctx.textAlign = 'center'
-    ctx.fillText(frameTitle || 'OMNITAG', width / 2, 70 * scale)
-
-    // Tarjeta blanca para el QR
-    const cardX = 60 * scale
-    const cardY = 110 * scale
-    const cardSize = 480 * scale
-    const cardRadius = 35 * scale
-
-    ctx.fillStyle = '#FFFFFF'
-    ctx.beginPath()
-    ctx.roundRect(cardX, cardY, cardSize, cardSize, cardRadius)
-    ctx.fill()
-
-    // Renderizar QR en alta resolución sobre la tarjeta
-    const highResDots: any = {
-      type: dotStyle,
-    }
-    if (useGradient && selectedPreset.colors.length > 1) {
-      highResDots.gradient = {
-        type: selectedPreset.type,
-        rotation: (selectedPreset.rotation || 45) * (Math.PI / 180),
-        colorStops: selectedPreset.colors.map((c, i) => ({ offset: i / (selectedPreset.colors.length - 1), color: c }))
-      }
-    } else {
-      highResDots.color = customColor
-    }
-
-    const highResQr = new QRCodeStyling({
-      width: 420 * scale,
-      height: 420 * scale,
-      data: getTargetUrl(),
-      margin: 8 * scale,
-      qrOptions: { errorCorrectionLevel: 'Q' },
-      imageOptions: { hideBackgroundDots: true, imageSize: 0.35, margin: 4 * scale, crossOrigin: 'anonymous' },
-      dotsOptions: highResDots,
-      cornersSquareOptions: { type: cornerSquareStyle, color: selectedPreset.colors[0] },
-      cornersDotOptions: { type: cornerDotStyle, color: selectedPreset.colors[0] },
-      backgroundOptions: { color: 'transparent' },
-      image: logoUrl || undefined
-    })
-
-    const rawBlob = await highResQr.getRawData('png')
-    if (rawBlob) {
-      const img = new Image()
-      const url = URL.createObjectURL(rawBlob as Blob)
-      img.src = url
-      await new Promise(resolve => { img.onload = resolve })
-
-      ctx.drawImage(img, cardX + 30 * scale, cardY + 30 * scale, 420 * scale, 420 * scale)
-      URL.revokeObjectURL(url)
-    }
-
-    // Botón / Llamada a la acción inferior
-    const btnY = 620 * scale
-    const btnHeight = 65 * scale
-    const btnWidth = 440 * scale
-    const btnX = (width - btnWidth) / 2
-
-    ctx.fillStyle = 'rgba(255,255,255,0.95)'
-    ctx.beginPath()
-    ctx.roundRect(btnX, btnY, btnWidth, btnHeight, 20 * scale)
-    ctx.fill()
-
-    ctx.fillStyle = '#000000'
-    ctx.font = `bold ${16 * scale}px "Plus Jakarta Sans", system-ui, sans-serif`
-    ctx.fillText(frameText.toUpperCase(), width / 2, btnY + 40 * scale)
-
-    // Descargar desde canvas
-    const downloadUrl = canvas.toDataURL('image/png')
-    const a = document.createElement('a')
-    a.href = downloadUrl
-    a.download = `omnitag_qr_imprimible_${sourceType}_hd.png`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
   }
 
   return (
@@ -584,20 +642,23 @@ export default function QRStudioClient({
 
       {/* PANEL DERECHO: VISTA PREVIA EN VIVO Y BOTÓN DE DESCARGA */}
       <div className="lg:col-span-5 sticky top-6 space-y-6">
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-lg text-center">
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-lg text-center overflow-hidden">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-[11px] font-extrabold uppercase tracking-wider mb-4">
             <Crown className="w-3.5 h-3.5" /> Generador de Impresión HD
           </div>
 
-          {/* VISTA PREVIA DEL MARCO Y QR */}
-          <div className="flex justify-center p-2">
+          {/* VISTA PREVIA PERFECTAMENTE RESPONSIVA Y CENTRADA */}
+          <div className="flex justify-center items-center py-2 px-1">
             {frameStyle === 'none' ? (
-              <div className="p-4 bg-white rounded-3xl shadow-md border border-gray-200 inline-block">
-                <div ref={qrRef} className="flex items-center justify-center" />
+              <div className="p-3 sm:p-4 bg-white rounded-3xl shadow-md border border-gray-200 inline-flex items-center justify-center max-w-full">
+                <div 
+                  ref={qrRef} 
+                  className="flex items-center justify-center [&>canvas]:max-w-full [&>canvas]:h-auto [&>svg]:max-w-full [&>svg]:h-auto" 
+                />
               </div>
             ) : (
               <div 
-                className="w-full max-w-xs rounded-3xl p-5 shadow-2xl text-white transition-all text-center"
+                className="w-full max-w-[280px] sm:max-w-xs rounded-3xl p-4 sm:p-5 shadow-2xl text-white transition-all text-center mx-auto overflow-hidden flex flex-col items-center justify-between"
                 style={{
                   background: frameStyle === 'instagram_nametag'
                     ? `linear-gradient(135deg, ${PRESET_GRADIENTS.find(p => p.id === colorPreset)?.colors.join(', ') || '#833AB4, #FD1D1D, #FCB045'})`
@@ -606,34 +667,39 @@ export default function QRStudioClient({
                     : '#18181B'
                 }}
               >
-                <h4 className="font-extrabold text-sm sm:text-base tracking-tight mb-3 uppercase truncate">
+                <h4 className="font-extrabold text-xs sm:text-sm tracking-tight mb-3 uppercase truncate w-full px-2">
                   {frameTitle || 'OMNITAG'}
                 </h4>
 
-                <div className="bg-white rounded-2xl p-2.5 shadow-md inline-block">
-                  <div ref={qrRef} className="flex items-center justify-center scale-90 sm:scale-100 origin-center" />
+                {/* Contenedor blanco del QR con dimensiones estrictamente contenidas */}
+                <div className="bg-white rounded-2xl p-2 shadow-md w-[220px] h-[220px] max-w-full flex items-center justify-center overflow-hidden mx-auto">
+                  <div 
+                    ref={qrRef} 
+                    className="w-full h-full flex items-center justify-center [&>canvas]:max-w-full [&>canvas]:h-auto [&>svg]:max-w-full [&>svg]:h-auto" 
+                  />
                 </div>
 
-                <div className="mt-4 bg-white/95 text-black font-extrabold text-xs py-2.5 px-4 rounded-xl shadow-xs uppercase tracking-wider">
+                <div className="mt-3.5 bg-white/95 text-black font-extrabold text-[11px] sm:text-xs py-2 px-3 rounded-xl shadow-xs uppercase tracking-wider w-full truncate">
                   {frameText || 'ESCANÉAME'}
                 </div>
               </div>
             )}
           </div>
 
-          <p className="text-xs text-gray-500 mt-4 leading-relaxed">
-            Destino: <span className="font-mono font-bold text-gray-700 break-all">{getTargetUrl()}</span>
+          <p className="text-xs text-gray-500 mt-4 leading-relaxed truncate px-2">
+            Destino: <span className="font-mono font-bold text-gray-700">{getTargetUrl()}</span>
           </p>
 
-          {/* BOTONES DE DESCARGA PARA IMPRESIÓN */}
+          {/* BOTONES DE DESCARGA PARA FOTOTECA / GALERÍA Y PC */}
           <div className="mt-6 space-y-2.5">
             <button
               type="button"
+              disabled={isDownloading}
               onClick={() => handleDownload('png')}
-              className="w-full bg-black text-white font-extrabold py-3.5 px-6 rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-sm"
+              className="w-full bg-black text-white font-extrabold py-3.5 px-5 rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-xs sm:text-sm disabled:opacity-50"
             >
               <Download className="w-4 h-4" />
-              <span>Descargar en Alta Calidad (PNG 2000px)</span>
+              <span>{isDownloading ? 'Generando imagen HD...' : 'Guardar en Fotos / Galería (HD)'}</span>
             </button>
 
             {frameStyle === 'none' && (
@@ -648,11 +714,12 @@ export default function QRStudioClient({
             )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 text-left text-xs text-gray-500 space-y-1">
-            <p className="font-semibold text-gray-700">💡 Listo para imprimir en:</p>
+          <div className="mt-4 pt-4 border-t border-gray-100 text-left text-[11px] text-gray-500 space-y-1">
+            <p className="font-semibold text-gray-700">📱 En tu teléfono móvil:</p>
+            <p>• Al presionar el botón, se abrirá la opción para <b>"Guardar imagen"</b> directo en tu Fototeca o Carrete de Fotos.</p>
+            <p className="font-semibold text-gray-700 pt-1">💡 Listo para imprimir en:</p>
             <p>• Placas acrílicas para mostrador o recepción</p>
             <p>• Carpas de mesa para restaurantes y cafeterías</p>
-            <p>• Tarjetas de presentación físicas y stickers</p>
           </div>
         </div>
       </div>
