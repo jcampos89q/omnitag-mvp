@@ -90,7 +90,7 @@ export default function AdminCreationsHub({
     private_feedbacks: MasterContact[]
   }
 }) {
-  const [activeTab, setActiveTab] = useState<'contacts' | 'users' | 'vcards' | 'menus' | 'loyalty' | 'devices'>('contacts')
+  const [activeTab, setActiveTab] = useState<'users' | 'contacts' | 'vcards' | 'menus' | 'loyalty' | 'devices'>('users')
   const [searchTerm, setSearchTerm] = useState('')
 
   const totalMasterContacts = 
@@ -130,18 +130,6 @@ export default function AdminCreationsHub({
       {/* Pestañas de Navegación del Superadministrador */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-200 text-xs sm:text-sm">
         <button
-          onClick={() => { setActiveTab('contacts'); setSearchTerm('') }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition whitespace-nowrap cursor-pointer ${
-            activeTab === 'contacts'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
-          }`}
-        >
-          <HeartHandshake className="w-4 h-4" />
-          <span>🎯 Contactos & Leads Recolectados ({totalMasterContacts})</span>
-        </button>
-
-        <button
           onClick={() => { setActiveTab('users'); setSearchTerm('') }}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap cursor-pointer ${
             activeTab === 'users'
@@ -150,7 +138,19 @@ export default function AdminCreationsHub({
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Usuarios Registrados ({users.length})</span>
+          <span>Base de Usuarios ({users.length})</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('contacts'); setSearchTerm('') }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition whitespace-nowrap cursor-pointer ${
+            activeTab === 'contacts'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+          }`}
+        >
+          <HeartHandshake className="w-4 h-4" />
+          <span>🎯 Master CRM & Leads ({totalMasterContacts})</span>
         </button>
 
         <button
