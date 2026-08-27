@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Download, ShieldCheck, Mail, Phone, Calendar, Smartphone, Coffee, UserCheck, MessageCircle, Sparkles, CheckCircle2, Zap } from 'lucide-react'
+import { Search, Download, ShieldCheck, Mail, Phone, Calendar, Smartphone, Coffee, UserCheck, MessageCircle, Sparkles, CheckCircle2, Zap, Clock, PlusCircle } from 'lucide-react'
 import { toggleUserPlan } from './actions'
 
 export interface AdminUser {
@@ -10,6 +10,7 @@ export interface AdminUser {
   out_full_name: string
   out_created_at: string
   out_plan: string
+  out_expires_at?: string | null
   out_phone: string | null
   out_vcards_count: number
   out_menus_count: number
@@ -39,12 +40,13 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
 
   // Exportar a CSV para Campañas de Marketing (Meta Ads, Mailchimp, WhatsApp)
   const exportToCSV = () => {
-    const headers = ['Nombre', 'Email', 'Telefono', 'Plan', 'Fecha Registro', 'vCards', 'Menus', 'Dispositivos', 'Escaneos', 'Leads']
+    const headers = ['Nombre', 'Email', 'Telefono', 'Plan', 'Vencimiento', 'Fecha Registro', 'vCards', 'Menus', 'Dispositivos', 'Escaneos', 'Leads']
     const rows = filteredUsers.map(u => [
       `"${(u.out_full_name || '').replace(/"/g, '""')}"`,
       `"${(u.out_email || '').replace(/"/g, '""')}"`,
       `"${(u.out_phone || '').replace(/"/g, '""')}"`,
       `"${u.out_plan === 'pro' ? 'PRO' : 'Gratuito'}"`,
+      `"${u.out_expires_at ? new Date(u.out_expires_at).toLocaleDateString() : 'N/A'}"`,
       `"${new Date(u.out_created_at).toLocaleDateString()}"`,
       u.out_vcards_count || 0,
       u.out_menus_count || 0,
@@ -135,90 +137,112 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
         <>
           {/* Vista Móvil (Tarjetas detalladas) */}
           <div className="block md:hidden space-y-3">
-            {filteredUsers.map((u) => (
-              <div key={u.out_user_id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-base">{u.out_full_name}</h3>
-                    <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
-                      <Mail className="w-3.5 h-3.5 text-gray-400" /> {u.out_email}
-                    </p>
-                  </div>
-                  <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                    u.out_plan === 'pro' 
-                      ? 'bg-black text-yellow-400 border border-yellow-500/40' 
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {u.out_plan === 'pro' ? '★ PRO' : 'Gratis'}
-                  </span>
-                </div>
+            {filteredUsers.map((u) => {
+              const isPro = u.out_plan === 'pro'
+              const expiresDate = u.out_expires_at ? new Date(u.out_expires_at) : null
+              const isExpired = expiresDate ? expiresDate < new Date() : false
+              const daysLeft = expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null
 
-                {u.out_phone && (
-                  <div className="flex items-center justify-between text-xs bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-100">
-                    <span className="flex items-center gap-1.5 font-medium">
-                      <Phone className="w-3.5 h-3.5 text-emerald-600" /> {u.out_phone}
+              return (
+                <div key={u.out_user_id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-base">{u.out_full_name}</h3>
+                      <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+                        <Mail className="w-3.5 h-3.5 text-gray-400" /> {u.out_email}
+                      </p>
+                    </div>
+                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                      isPro 
+                        ? 'bg-black text-yellow-400 border border-yellow-500/40' 
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {isPro ? '★ PRO' : 'Gratis'}
                     </span>
-                    <a
-                      href={`https://wa.me/${u.out_phone.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-bold text-emerald-700 underline flex items-center gap-1"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5" /> Enviar WhatsApp
-                    </a>
                   </div>
-                )}
 
-                {/* Métricas de Actividad del Usuario */}
-                <div className="grid grid-cols-4 gap-2 text-center bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-[11px]">
-                  <div>
-                    <p className="font-bold text-gray-900">{u.out_vcards_count || 0}</p>
-                    <p className="text-gray-400 text-[9px] uppercase">vCards</p>
+                  {/* Estado de Vencimiento Mensual */}
+                  {isPro && expiresDate && (
+                    <div className={`p-2 rounded-xl text-xs flex items-center justify-between font-medium ${
+                      isExpired ? 'bg-red-50 text-red-800' : daysLeft && daysLeft <= 5 ? 'bg-amber-50 text-amber-900' : 'bg-purple-50 text-purple-900'
+                    }`}>
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        {isExpired ? 'Suscripción Vencida' : `${daysLeft} días restantes`}
+                      </span>
+                      <span className="text-[10px] opacity-80">
+                        Vence: {expiresDate.toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+
+                  {u.out_phone && (
+                    <div className="flex items-center justify-between text-xs bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-100">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Phone className="w-3.5 h-3.5 text-emerald-600" /> {u.out_phone}
+                      </span>
+                      <a
+                        href={`https://wa.me/${u.out_phone.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-bold text-emerald-700 underline flex items-center gap-1"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Métricas de Actividad */}
+                  <div className="grid grid-cols-4 gap-2 text-center bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-[11px]">
+                    <div>
+                      <p className="font-bold text-gray-900">{u.out_vcards_count || 0}</p>
+                      <p className="text-gray-400 text-[9px] uppercase">vCards</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">{u.out_menus_count || 0}</p>
+                      <p className="text-gray-400 text-[9px] uppercase">Menús</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">{u.out_devices_count || 0}</p>
+                      <p className="text-gray-400 text-[9px] uppercase">QRs</p>
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">{u.out_leads_count || 0}</p>
+                      <p className="text-gray-400 text-[9px] uppercase">Leads</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-gray-900">{u.out_menus_count || 0}</p>
-                    <p className="text-gray-400 text-[9px] uppercase">Menús</p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900">{u.out_devices_count || 0}</p>
-                    <p className="text-gray-400 text-[9px] uppercase">QRs</p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-900">{u.out_leads_count || 0}</p>
-                    <p className="text-gray-400 text-[9px] uppercase">Leads</p>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {new Date(u.out_created_at).toLocaleDateString()}
+                    </span>
+
+                    <form action={toggleUserPlan}>
+                      <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                      <input type="hidden" name="current_plan" value={u.out_plan} />
+                      <button
+                        type="submit"
+                        className={`text-xs font-bold px-3 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 cursor-pointer ${
+                          isPro
+                            ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
+                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        }`}
+                      >
+                        {isPro ? (
+                          <span>Bajar a Gratis</span>
+                        ) : (
+                          <>
+                            <Zap className="w-3.5 h-3.5 fill-white" />
+                            <span>Activar PRO (+30 Días)</span>
+                          </>
+                        )}
+                      </button>
+                    </form>
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <span className="flex items-center gap-1 text-[11px] text-gray-400">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {new Date(u.out_created_at).toLocaleDateString()}
-                  </span>
-
-                  <form action={toggleUserPlan}>
-                    <input type="hidden" name="target_user_id" value={u.out_user_id} />
-                    <input type="hidden" name="current_plan" value={u.out_plan} />
-                    <button
-                      type="submit"
-                      className={`text-xs font-bold px-3 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 cursor-pointer ${
-                        u.out_plan === 'pro'
-                          ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                      }`}
-                    >
-                      {u.out_plan === 'pro' ? (
-                        <span>Bajar a Gratis</span>
-                      ) : (
-                        <>
-                          <Zap className="w-3.5 h-3.5 fill-white" />
-                          <span>Activar PRO (Efectivo)</span>
-                        </>
-                      )}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Vista Escritorio (Tabla Completa) */}
@@ -227,87 +251,107 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold">
                   <th className="px-6 py-3.5">Usuario / Email</th>
-                  <th className="px-6 py-3.5">Plan Actual</th>
+                  <th className="px-6 py-3.5">Plan & Vigencia (30 Días)</th>
                   <th className="px-6 py-3.5">Contacto</th>
                   <th className="px-6 py-3.5">Actividad</th>
                   <th className="px-6 py-3.5">Registro</th>
-                  <th className="px-6 py-3.5 text-right">Gestión de Plan (Efectivo / Manual)</th>
+                  <th className="px-6 py-3.5 text-right">Gestión de Suscripción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredUsers.map((u) => (
-                  <tr key={u.out_user_id} className="hover:bg-gray-50/80 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-gray-900">{u.out_full_name}</p>
-                      <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                        <Mail className="w-3.5 h-3.5 text-gray-400" /> {u.out_email}
-                      </p>
-                    </td>
+                {filteredUsers.map((u) => {
+                  const isPro = u.out_plan === 'pro'
+                  const expiresDate = u.out_expires_at ? new Date(u.out_expires_at) : null
+                  const isExpired = expiresDate ? expiresDate < new Date() : false
+                  const daysLeft = expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null
 
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
-                        u.out_plan === 'pro' 
-                          ? 'bg-black text-yellow-400 border border-yellow-500/30' 
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {u.out_plan === 'pro' ? <><Sparkles className="w-3 h-3 text-yellow-400" /> PRO ACTIVO</> : 'Plan Básico'}
-                      </span>
-                    </td>
+                  return (
+                    <tr key={u.out_user_id} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-gray-900">{u.out_full_name}</p>
+                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                          <Mail className="w-3.5 h-3.5 text-gray-400" /> {u.out_email}
+                        </p>
+                      </td>
 
-                    <td className="px-6 py-4">
-                      {u.out_phone ? (
-                        <a
-                          href={`https://wa.me/${u.out_phone.replace(/\D/g, '')}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-emerald-700 font-medium hover:underline bg-emerald-50 px-2.5 py-1 rounded-md"
-                        >
-                          <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                          {u.out_phone}
-                        </a>
-                      ) : (
-                        <span className="text-xs text-gray-400 italic">Sin teléfono</span>
-                      )}
-                    </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
+                            isPro 
+                              ? 'bg-black text-yellow-400 border border-yellow-500/30' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {isPro ? <><Sparkles className="w-3 h-3 text-yellow-400" /> PRO ACTIVO</> : 'Plan Básico'}
+                          </span>
 
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <span className="bg-gray-100 px-2 py-0.5 rounded" title="vCards">📇 {u.out_vcards_count || 0}</span>
-                        <span className="bg-gray-100 px-2 py-0.5 rounded" title="Menús">☕ {u.out_menus_count || 0}</span>
-                        <span className="bg-gray-100 px-2 py-0.5 rounded" title="QRs/Dispositivos">📱 {u.out_devices_count || 0}</span>
-                        <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium" title="Leads capturados">👥 {u.out_leads_count || 0}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4 text-xs text-gray-500">
-                      {new Date(u.out_created_at).toLocaleDateString()}
-                    </td>
-
-                    <td className="px-6 py-4 text-right">
-                      <form action={toggleUserPlan} className="inline-block">
-                        <input type="hidden" name="target_user_id" value={u.out_user_id} />
-                        <input type="hidden" name="current_plan" value={u.out_plan} />
-                        <button
-                          type="submit"
-                          className={`text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer ${
-                            u.out_plan === 'pro'
-                              ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
-                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                          }`}
-                        >
-                          {u.out_plan === 'pro' ? (
-                            <span>Bajar a Gratis</span>
-                          ) : (
-                            <>
-                              <Zap className="w-3.5 h-3.5 fill-white" />
-                              <span>Activar PRO (Pago Efectivo)</span>
-                            </>
+                          {isPro && expiresDate && (
+                            <p className="text-[11px] text-gray-500 flex items-center gap-1 font-mono">
+                              <Clock className="w-3 h-3 text-purple-600" />
+                              {isExpired ? (
+                                <span className="text-red-600 font-bold">Vencido ({expiresDate.toLocaleDateString()})</span>
+                              ) : (
+                                <span>{daysLeft} días (Vence {expiresDate.toLocaleDateString()})</span>
+                              )}
+                            </p>
                           )}
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {u.out_phone ? (
+                          <a
+                            href={`https://wa.me/${u.out_phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs text-emerald-700 font-medium hover:underline bg-emerald-50 px-2.5 py-1 rounded-md"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                            {u.out_phone}
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Sin teléfono</span>
+                        )}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                          <span className="bg-gray-100 px-2 py-0.5 rounded" title="vCards">📇 {u.out_vcards_count || 0}</span>
+                          <span className="bg-gray-100 px-2 py-0.5 rounded" title="Menús">☕ {u.out_menus_count || 0}</span>
+                          <span className="bg-gray-100 px-2 py-0.5 rounded" title="QRs/Dispositivos">📱 {u.out_devices_count || 0}</span>
+                          <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium" title="Leads capturados">👥 {u.out_leads_count || 0}</span>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4 text-xs text-gray-500">
+                        {new Date(u.out_created_at).toLocaleDateString()}
+                      </td>
+
+                      <td className="px-6 py-4 text-right">
+                        <form action={toggleUserPlan} className="inline-block">
+                          <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                          <input type="hidden" name="current_plan" value={u.out_plan} />
+                          <button
+                            type="submit"
+                            className={`text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                              isPro
+                                ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
+                                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            }`}
+                          >
+                            {isPro ? (
+                              <span>Bajar a Gratis</span>
+                            ) : (
+                              <>
+                                <Zap className="w-3.5 h-3.5 fill-white" />
+                                <span>Activar PRO (+30 Días)</span>
+                              </>
+                            )}
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

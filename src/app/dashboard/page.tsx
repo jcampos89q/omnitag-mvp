@@ -4,7 +4,7 @@ export const revalidate = 0
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { UserCircle, Smartphone, Coffee, Users, BarChart3, ArrowRight, Zap, Sparkles, Star, QrCode, Gift, Check, ShieldCheck } from 'lucide-react'
+import { UserCircle, Smartphone, Coffee, Users, BarChart3, ArrowRight, Zap, Sparkles, Star, QrCode, Gift, Check, ShieldCheck, Clock, AlertTriangle } from 'lucide-react'
 import { getUserPlanInfo } from '@/lib/plans'
 
 export default async function DashboardPage() {
@@ -15,8 +15,8 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
-  // 1. Obtener plan y privilegios del usuario (Admins y usuarios activados son PRO)
-  const { isPro, isAdmin } = await getUserPlanInfo(supabase, user.id)
+  // 1. Obtener plan, contador de días restantes y privilegios del usuario
+  const { isPro, isAdmin, expiresAt, daysLeft, isExpired } = await getUserPlanInfo(supabase, user.id)
 
   // 2. Obtener conteos básicos para KPIs rápidos
   const [
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
 
           {!isPro && (
             <Link
-              href="/dashboard/billing"
+              href="/dashboard/billing#metodos-pago"
               className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
@@ -68,15 +68,66 @@ export default async function DashboardPage() {
           )}
         </div>
 
+        {/* CONTADOR DE TIEMPO / ESTADO MENSUAL PRO */}
+        {isPro && !isAdmin && expiresAt && (
+          <div className={`mb-6 p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+            daysLeft <= 5 
+              ? 'bg-amber-50 border-amber-200 text-amber-950' 
+              : 'bg-purple-50/80 border-purple-200 text-purple-950'
+          }`}>
+            <div className="flex items-center gap-2.5">
+              <Clock className={`w-5 h-5 shrink-0 ${daysLeft <= 5 ? 'text-amber-600' : 'text-purple-600'}`} />
+              <div>
+                <p className="font-extrabold text-sm">
+                  {daysLeft > 0 
+                    ? `Suscripción Activa: ${daysLeft} ${daysLeft === 1 ? 'día restante' : 'días restantes'}`
+                    : 'Suscripción por vencer hoy'}
+                </p>
+                <p className="text-[11px] opacity-80 mt-0.5">
+                  Vence el <b>{new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}</b>. Se renueva con tu pago mensual por transferencia BAC o efectivo.
+                </p>
+              </div>
+            </div>
+
+            {daysLeft <= 7 && (
+              <Link
+                href="/dashboard/billing#metodos-pago"
+                className="bg-black text-white font-bold px-3 py-1.5 rounded-xl text-xs shrink-0 hover:bg-gray-800 transition shadow-2xs"
+              >
+                Renovar con BAC →
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* AVISO DE PLAN EXPIRADO */}
+        {isExpired && (
+          <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-xs flex items-center justify-between text-red-950">
+            <div className="flex items-center gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+              <div>
+                <p className="font-bold">Tu periodo mensual de Plan PRO ha finalizado</p>
+                <p className="text-[11px] opacity-80">Realiza tu transferencia por BAC o paga en efectivo para reactivar tus herramientas PRO de inmediato.</p>
+              </div>
+            </div>
+            <Link
+              href="/dashboard/billing#metodos-pago"
+              className="bg-red-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs shrink-0 hover:bg-red-700 transition"
+            >
+              Reactivar PRO →
+            </Link>
+          </div>
+        )}
+
         {/* BANNER INFORMATIVO FREEMIUM SOLO SI ES BÁSICO */}
-        {!isPro ? (
+        {!isPro && !isExpired && (
           <div className="mb-6 p-4 rounded-2xl bg-linear-to-r from-purple-50/80 via-amber-50/60 to-white border border-purple-100 text-xs space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-bold text-gray-900 flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-purple-600" />
                 Límites de tu Plan Básico Gratuito
               </span>
-              <Link href="/dashboard/billing" className="text-purple-700 font-extrabold hover:underline">
+              <Link href="/dashboard/billing#metodos-pago" className="text-purple-700 font-extrabold hover:underline">
                 Ver Beneficios PRO →
               </Link>
             </div>
@@ -96,16 +147,6 @@ export default async function DashboardPage() {
               <div className="p-2 bg-white rounded-xl border border-gray-100">
                 <p className="font-bold text-gray-900">Escudo 5★: Bloqueado</p>
                 <p className="text-[10px] text-purple-600 font-semibold">Exclusivo PRO</p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs flex items-center justify-between text-emerald-950">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
-              <div>
-                <p className="font-bold">Tu cuenta cuenta con Acceso Total Ilimitado (Plan PRO)</p>
-                <p className="text-[11px] opacity-80">vCards, Menús, Placas NFC con Escudo 5★ y Diseños QR HD sin restricciones.</p>
               </div>
             </div>
           </div>

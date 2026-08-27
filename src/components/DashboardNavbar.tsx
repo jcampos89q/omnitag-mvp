@@ -22,6 +22,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
+import NotificationBell from './NotificationBell'
 
 interface NavItem {
   name: string
@@ -48,9 +49,11 @@ const baseNavItems: NavItem[] = [
 
 export default function DashboardNavbar({ 
   userEmail,
+  userId,
   isAdmin = false,
 }: { 
   userEmail?: string 
+  userId?: string
   isAdmin?: boolean
 }) {
   const pathname = usePathname()
@@ -82,14 +85,18 @@ export default function DashboardNavbar({
           )}
         </Link>
 
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 rounded-xl text-gray-700 hover:text-black hover:bg-gray-100 transition-colors focus:outline-none flex items-center gap-1.5 font-bold text-xs"
-          aria-label="Abrir menú"
-        >
-          <span>Menú</span>
-          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <NotificationBell userId={userId} />
+
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-xl text-gray-700 hover:text-black hover:bg-gray-100 transition-colors focus:outline-none flex items-center gap-1 font-bold text-xs"
+            aria-label="Abrir menú"
+          >
+            <span>Menú</span>
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+          </button>
+        </div>
       </header>
 
       {/* 2. DRAWER MÓVIL (Slide-over menú completo) */}
@@ -139,21 +146,21 @@ export default function DashboardNavbar({
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all ${
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
                       active
-                        ? 'bg-black text-white shadow-xs font-bold'
-                        : item.adminOnly 
-                        ? 'text-purple-700 bg-purple-50/70 hover:bg-purple-100 font-bold'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-black text-white font-bold shadow-xs'
+                        : item.adminOnly
+                        ? 'text-purple-700 bg-purple-50 hover:bg-purple-100 font-bold'
+                        : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Icon className={`w-4 h-4 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
+                    <div className="flex items-center gap-3">
+                      <Icon className={`w-5 h-5 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : 'text-gray-500'}`} />
                       <span>{item.name}</span>
                     </div>
 
                     {item.badge && (
-                      <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
                         active ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
                       }`}>
                         {item.badge}
@@ -164,11 +171,11 @@ export default function DashboardNavbar({
               })}
             </nav>
 
-            <div className="pt-3 mt-auto border-t border-gray-100">
+            <div className="pt-3 border-t border-gray-100 mt-auto">
               <form action={logout}>
-                <button
-                  type="submit"
-                  className="flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                <button 
+                  type="submit" 
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Cerrar Sesión</span>
@@ -181,13 +188,15 @@ export default function DashboardNavbar({
 
       {/* 3. SIDEBAR DE ESCRITORIO (Visible solo en >= md) */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 shrink-0 min-h-screen sticky top-0 h-screen">
-        <div className="p-6 pb-4">
+        <div className="p-6 pb-4 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2.5">
             <div className="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center font-bold text-lg">
               O
             </div>
             <span className="text-2xl font-bold tracking-tight text-gray-900">OmniTag</span>
           </Link>
+
+          <NotificationBell userId={userId} />
         </div>
 
         {userEmail && (
@@ -239,74 +248,65 @@ export default function DashboardNavbar({
 
         <div className="p-4 border-t border-gray-200 mt-auto">
           <form action={logout}>
-            <button className="flex w-full items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
-              <LogOut className="w-5 h-5" />
+            <button 
+              type="submit" 
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
               <span>Cerrar Sesión</span>
             </button>
           </form>
         </div>
       </aside>
 
-      {/* 4. BARRA DE NAVEGACIÓN RÁPIDA INFERIOR (Mobile Bottom Bar Optimizada) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-gray-200 flex items-center justify-around py-2 px-1 shadow-lg pb-safe">
-        {/* 1. Inicio */}
+      {/* 4. BARRA DE ACCIONES RÁPIDAS INFERIOR MÓVIL */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 py-1.5 flex items-center justify-around shadow-lg">
         <Link 
-          href="/dashboard" 
-          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors ${
-            isActive('/dashboard') ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-800'
+          href="/dashboard"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+            pathname === '/dashboard' ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
-          <Home className={`w-5 h-5 mb-0.5 ${isActive('/dashboard') ? 'stroke-[2.5px]' : ''}`} />
-          <span>Inicio</span>
+          <Home className={`w-5 h-5 ${pathname === '/dashboard' ? 'stroke-[2.5]' : ''}`} />
+          <span className="text-[10px] mt-0.5">Inicio</span>
         </Link>
 
-        {/* 2. Mi vCard */}
         <Link 
-          href="/dashboard/vcard" 
-          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors ${
-            isActive('/dashboard/vcard') ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-800'
+          href="/dashboard/vcard"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+            pathname.startsWith('/dashboard/vcard') ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
-          <UserCircle className={`w-5 h-5 mb-0.5 ${isActive('/dashboard/vcard') ? 'stroke-[2.5px]' : ''}`} />
-          <span>vCard</span>
+          <UserCircle className={`w-5 h-5 ${pathname.startsWith('/dashboard/vcard') ? 'stroke-[2.5]' : ''}`} />
+          <span className="text-[10px] mt-0.5">vCard</span>
         </Link>
 
-        {/* 3. Estudio QR (Imprimibles) */}
         <Link 
-          href="/dashboard/qr-studio" 
-          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors ${
-            isActive('/dashboard/qr-studio') ? 'text-purple-700 font-bold' : 'text-gray-500 hover:text-gray-800'
+          href="/dashboard/qr-studio"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+            pathname.startsWith('/dashboard/qr-studio') ? 'text-purple-600 font-bold' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
-          <QrCode className={`w-5 h-5 mb-0.5 ${isActive('/dashboard/qr-studio') ? 'text-purple-700 stroke-[2.5px]' : ''}`} />
-          <span>Estudio QR</span>
+          <QrCode className={`w-5 h-5 ${pathname.startsWith('/dashboard/qr-studio') ? 'stroke-[2.5]' : ''}`} />
+          <span className="text-[10px] mt-0.5">Estudio QR</span>
         </Link>
 
-        {/* 4. Reseñas Google & NFC */}
         <Link 
-          href="/dashboard/devices" 
-          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors ${
-            isActive('/dashboard/devices') ? 'text-amber-600 font-bold' : 'text-gray-500 hover:text-gray-800'
+          href="/dashboard/devices"
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+            pathname.startsWith('/dashboard/devices') ? 'text-amber-500 font-bold' : 'text-gray-500 hover:text-gray-900'
           }`}
         >
-          <Star className={`w-5 h-5 mb-0.5 ${isActive('/dashboard/devices') ? 'fill-amber-500 text-amber-500 stroke-[2.5px]' : ''}`} />
-          <span>Reseñas</span>
+          <Star className={`w-5 h-5 ${pathname.startsWith('/dashboard/devices') ? 'fill-amber-400 stroke-amber-500' : ''}`} />
+          <span className="text-[10px] mt-0.5">Reseñas</span>
         </Link>
 
-        {/* 5. Botón Más Opciones (Abre Menú Completo con Menús, Fidelización, CRM, etc.) */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className={`flex flex-col items-center py-1 px-1.5 text-[11px] font-medium transition-colors cursor-pointer ${
-            isAdmin ? 'text-purple-700 font-bold' : 'text-gray-600 hover:text-black'
-          }`}
+          className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition"
         >
-          <div className="relative">
-            <MenuIcon className="w-5 h-5 mb-0.5" />
-            {isAdmin && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-purple-600 rounded-full ring-2 ring-white" />
-            )}
-          </div>
-          <span>{isAdmin ? 'Admin / Más' : 'Más'}</span>
+          <MenuIcon className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5 font-bold">Más</span>
         </button>
       </nav>
     </>

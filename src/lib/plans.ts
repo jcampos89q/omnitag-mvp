@@ -5,15 +5,26 @@ export interface UserPlanInfo {
   isPro: boolean
   isAdmin: boolean
   workspaceId: string | null
+  expiresAt: string | null
+  daysLeft: number
+  isExpired: boolean
 }
 
 /**
- * Obtiene de forma 100% infalible y en tiempo real el plan del usuario y sus privilegios
- * Utiliza la función RPC en Postgres con SECURITY DEFINER para evitar problemas de RLS o desincronización
+ * Obtiene de forma 100% infalible y en tiempo real el plan del usuario, fecha de vencimiento y privilegios
+ * Utiliza la función RPC en Postgres con SECURITY DEFINER para verificar vigencia mensual
  */
 export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string): Promise<UserPlanInfo> {
   if (!userId) {
-    return { plan: 'free', isPro: false, isAdmin: false, workspaceId: null }
+    return { 
+      plan: 'free', 
+      isPro: false, 
+      isAdmin: false, 
+      workspaceId: null,
+      expiresAt: null,
+      daysLeft: 0,
+      isExpired: false
+    }
   }
 
   // 1. Invocar la función RPC con permisos directos en PostgreSQL
@@ -26,7 +37,10 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
       plan: data.plan === 'pro' ? 'pro' : 'free',
       isPro: Boolean(data.is_pro),
       isAdmin: Boolean(data.is_admin),
-      workspaceId: data.workspace_id || userId
+      workspaceId: data.workspace_id || userId,
+      expiresAt: data.expires_at || null,
+      daysLeft: Number(data.days_left || 0),
+      isExpired: Boolean(data.is_expired)
     }
   }
 
@@ -39,22 +53,24 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
 
   const isAdmin = Boolean(profile?.is_admin)
   if (isAdmin) {
-    return { plan: 'pro', isPro: true, isAdmin: true, workspaceId: userId }
+    return { 
+      plan: 'pro', 
+      isPro: true, 
+      isAdmin: true, 
+      workspaceId: userId,
+      expiresAt: null,
+      daysLeft: 9999,
+      isExpired: false
+    }
   }
 
-  const { data: member } = await supabase
-    .from('workspace_members')
-    .select('workspace_id, workspaces(plan)')
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  const rawPlan = (member?.workspaces as any)?.plan || 'free'
-  const isPro = rawPlan === 'pro'
-
   return {
-    plan: isPro ? 'pro' : 'free',
-    isPro,
-    isAdmin,
-    workspaceId: member?.workspace_id || userId
+    plan: 'free',
+    isPro: false,
+    isAdmin: false,
+    workspaceId: userId,
+    expiresAt: null,
+    daysLeft: 0,
+    isExpired: false
   }
 }
