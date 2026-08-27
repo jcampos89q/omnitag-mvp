@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ShieldCheck, Users, Zap, Smartphone, Coffee, UserCircle, Activity, HeartHandshake, DollarSign, ArrowLeft } from 'lucide-react'
-import AdminUserTable, { AdminUser } from './AdminUserTable'
+import { ShieldCheck, Users, Zap, Smartphone, Coffee, UserCircle, Activity, HeartHandshake, DollarSign, ArrowLeft, Gift } from 'lucide-react'
+import AdminCreationsHub, { AdminCreationsData } from './AdminCreationsHub'
+import { AdminUser } from './AdminUserTable'
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
@@ -39,10 +40,11 @@ export default async function AdminDashboardPage() {
     )
   }
 
-  // Obtener métricas globales y lista de usuarios mediante RPC
-  const [{ data: metricsData }, { data: usersData }] = await Promise.all([
+  // Obtener métricas globales, usuarios y todas las creaciones mediante RPCs
+  const [{ data: metricsData }, { data: usersData }, { data: creationsData }] = await Promise.all([
     supabase.rpc('get_admin_metrics'),
-    supabase.rpc('get_admin_users_list')
+    supabase.rpc('get_admin_users_list'),
+    supabase.rpc('get_admin_all_creations')
   ])
 
   const metrics = metricsData || {
@@ -58,6 +60,12 @@ export default async function AdminDashboardPage() {
   }
 
   const users: AdminUser[] = usersData || []
+  const creations: AdminCreationsData = creationsData || {
+    vcards: [],
+    menus: [],
+    loyalty: [],
+    devices: []
+  }
 
   // Tasa de conversión y estimación de ingresos
   const conversionRate = metrics.total_users > 0 
@@ -75,10 +83,10 @@ export default async function AdminDashboardPage() {
               <ShieldCheck className="w-4 h-4" /> PANEL DE SUPERADMINISTRADOR
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-              Métricas Globales y Base de Datos
+              Control Global de la Plataforma
             </h1>
             <p className="text-gray-500 text-xs sm:text-sm mt-1">
-              Supervisa el crecimiento de la plataforma, conversiones a planes de pago y exporta prospectos para marketing.
+              Supervisa el crecimiento, gestiona usuarios y <b>accede a todas las creaciones en vivo</b> (vCards, Menús, Clubes de Fidelización y QRs).
             </p>
           </div>
         </div>
@@ -138,32 +146,25 @@ export default async function AdminDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-gray-50/60 rounded-2xl border border-gray-100 mb-8 text-center text-xs">
           <div>
             <span className="text-gray-400 font-medium">vCards Digitales:</span>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">{metrics.total_vcards}</p>
+            <p className="text-lg font-bold text-gray-900 mt-0.5">{creations.vcards?.length || metrics.total_vcards}</p>
           </div>
           <div>
-            <span className="text-gray-400 font-medium">Menús Digitales:</span>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">{metrics.total_menus}</p>
+            <span className="text-gray-400 font-medium">Menús & Catálogos:</span>
+            <p className="text-lg font-bold text-gray-900 mt-0.5">{creations.menus?.length || metrics.total_menus}</p>
+          </div>
+          <div>
+            <span className="text-gray-400 font-medium">Programas Lealtad:</span>
+            <p className="text-lg font-bold text-gray-900 mt-0.5">{creations.loyalty?.length || 0}</p>
           </div>
           <div>
             <span className="text-gray-400 font-medium">Placas y QRs:</span>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">{metrics.total_devices}</p>
-          </div>
-          <div>
-            <span className="text-gray-400 font-medium">Quejas Privadas:</span>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">{metrics.total_feedbacks}</p>
+            <p className="text-lg font-bold text-gray-900 mt-0.5">{creations.devices?.length || metrics.total_devices}</p>
           </div>
         </div>
 
-        {/* Base de Datos de Usuarios & Marketing */}
+        {/* Explorador de Creaciones & Usuarios */}
         <div>
-          <div className="mb-4">
-            <h2 className="text-lg font-bold text-gray-900">Base de Datos de Clientes y Marketing</h2>
-            <p className="text-xs text-gray-500">
-              Visualiza los usuarios registrados, sus números de contacto y exporta la lista para tus campañas publicitarias.
-            </p>
-          </div>
-
-          <AdminUserTable users={users} />
+          <AdminCreationsHub users={users} creations={creations} />
         </div>
       </div>
     </div>
