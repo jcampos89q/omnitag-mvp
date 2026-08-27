@@ -10,12 +10,14 @@ export async function createMenu(formData: FormData) {
   if (!user) throw new Error("No autenticado")
 
   const name = (formData.get('name') as string)?.trim()
+  const businessType = (formData.get('business_type') as string) || 'restaurant'
   const currency = (formData.get('currency') as string) || 'USD'
-  const slug = `${name.toLowerCase().replace(/\s+/g, '-')}-${Math.random().toString(36).substring(2, 6)}`
+  const slug = `${name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-')}-${Math.random().toString(36).substring(2, 6)}`
 
   await supabase.from('menus').insert({
     user_id: user.id,
     name,
+    business_type: businessType,
     slug,
     currency
   })
@@ -31,6 +33,7 @@ export async function updateMenu(formData: FormData) {
 
   const menuId = formData.get('menu_id') as string
   const name = (formData.get('name') as string)?.trim()
+  const businessType = (formData.get('business_type') as string) || 'restaurant'
   const description = (formData.get('description') as string)?.trim()
   const whatsappNumber = (formData.get('whatsapp_number') as string)?.trim()
   
@@ -59,6 +62,7 @@ export async function updateMenu(formData: FormData) {
   }
 
   const updateData: any = {
+    business_type: businessType,
     whatsapp_number: whatsappNumber,
     theme
   }
@@ -69,6 +73,55 @@ export async function updateMenu(formData: FormData) {
   await supabase
     .from('menus')
     .update(updateData)
+    .eq('id', menuId)
+    .eq('user_id', user.id)
+
+  revalidatePath('/dashboard/menus')
+  revalidatePath('/', 'layout')
+}
+
+export async function setDailySpecial(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const menuId = formData.get('menu_id') as string
+  const name = (formData.get('name') as string)?.trim()
+  const description = (formData.get('description') as string)?.trim()
+  const price = parseFloat(formData.get('price') as string) || 0
+  const imageUrl = (formData.get('image_url') as string)?.trim() || null
+
+  const today = new Date().toISOString().slice(0, 10)
+
+  const daily_special = {
+    name,
+    description,
+    price,
+    image_url: imageUrl,
+    date: today,
+    is_active: true
+  }
+
+  await supabase
+    .from('menus')
+    .update({ daily_special })
+    .eq('id', menuId)
+    .eq('user_id', user.id)
+
+  revalidatePath('/dashboard/menus')
+  revalidatePath('/', 'layout')
+}
+
+export async function deleteDailySpecial(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const menuId = formData.get('menu_id') as string
+
+  await supabase
+    .from('menus')
+    .update({ daily_special: { is_active: false } })
     .eq('id', menuId)
     .eq('user_id', user.id)
 
@@ -110,9 +163,11 @@ export async function createMenuItem(formData: FormData) {
   const name = (formData.get('name') as string)?.trim()
   const description = (formData.get('description') as string)?.trim()
   const price = parseFloat(formData.get('price') as string) || 0
+  const priceType = (formData.get('price_type') as string) || 'fixed'
+  const durationMinutes = (formData.get('duration_minutes') as string)?.trim() || null
   let imageUrl = (formData.get('image_url') as string)?.trim() || null
   
-  // Recoger checkboxes de alérgenos y destacado
+  // Recoger alérgenos / tags
   const allergens: string[] = []
   if (formData.get('allergen_vegan')) allergens.push('vegan')
   if (formData.get('allergen_spicy')) allergens.push('spicy')
@@ -125,6 +180,8 @@ export async function createMenuItem(formData: FormData) {
     name,
     description,
     price,
+    price_type: priceType,
+    duration_minutes: durationMinutes,
     image_url: imageUrl,
     allergens,
     is_featured: isFeatured,
