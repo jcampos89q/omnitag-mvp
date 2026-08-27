@@ -18,7 +18,10 @@ import {
   Lock,
   Eye,
   CheckCircle2,
-  X
+  X,
+  Zap,
+  ArrowRight,
+  Printer
 } from 'lucide-react'
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType, GradientType } from 'qr-code-styling'
 import ImageUploadInput from '@/components/ImageUploadInput'
@@ -46,11 +49,11 @@ const PRESET_GRADIENTS: PresetGradient[] = [
   { id: 'cyber_emerald', name: 'Cyber Emerald', colors: ['#064E3B', '#10B981', '#6EE7B7'], type: 'linear', rotation: 45 },
   { id: 'electric_blue', name: 'Ocean Electric', colors: ['#1E3A8A', '#2563EB', '#60A5FA'], type: 'linear', rotation: 45 },
   { id: 'dark_violet', name: 'Neon Purple', colors: ['#4C1D95', '#7C3AED', '#C084FC'], type: 'linear', rotation: 45 },
-  { id: 'monochrome', name: 'Negro Azabache (Básico)', colors: ['#000000', '#111827'], type: 'linear', rotation: 0 },
+  { id: 'monochrome', name: 'Negro Clásico (Gratis)', colors: ['#000000', '#111827'], type: 'linear', rotation: 0 },
 ]
 
 const FRAME_STYLES = [
-  { id: 'none', name: 'Sin Marco (Solo QR)', isPro: false },
+  { id: 'none', name: 'Sin Marco (Solo Código QR)', isPro: false },
   { id: 'instagram_nametag', name: 'Estilo Nametag / Instagram (Con cabecera y botón)', isPro: true },
   { id: 'table_tent', name: 'Placa de Mostrador / Mesa (Con llamado a la acción)', isPro: true },
   { id: 'badge', name: 'Tarjeta / Badge Oscuro', isPro: true },
@@ -209,13 +212,13 @@ export default function QRStudioClient({
     logoUrl
   ])
 
-  // Manejo de descarga 100% infalible para móviles y computadoras
-  const handleDownload = async (format: 'png' | 'svg') => {
-    // Si no es PRO e intenta descargar marco o degradados premium
-    if (!isPro && (frameStyle !== 'none' || useGradient || logoUrl)) {
+  // Manejo de descarga estándar o PRO
+  const handleDownload = async (format: 'png' | 'svg', forcePro: boolean = false) => {
+    // Si intenta descargar función PRO sin plan
+    if (!isPro && forcePro) {
       setProModalInfo({
-        name: 'Estudio QR HD, Degradados & Logos',
-        desc: 'Genera códigos QR de ultra alta resolución (2000px) con marcos tipo Instagram, degradados personalizados y tu logo en el centro listos para imprenta.'
+        name: 'Estudio QR HD (2000px), Degradados & Marcos',
+        desc: 'Descarga tus códigos QR en resolución ultra alta (2000px) listos para imprenta, con marcos para acrílico de mesa y degradados estilo Instagram.'
       })
       setShowProModal(true)
       return
@@ -223,14 +226,14 @@ export default function QRStudioClient({
 
     setIsDownloading(true)
     try {
-      if (frameStyle === 'none') {
+      if (frameStyle === 'none' || (!isPro && !forcePro)) {
+        // Descarga directa del QR estándar (500px)
         if (qrCodeInstance.current) {
           const rawBlob = await qrCodeInstance.current.getRawData(format)
           if (rawBlob) {
-            const filename = `omnitag_qr_${sourceType}_hd.${format}`
+            const filename = `omnitag_qr_${sourceType}_${isPro ? '2000px_hd' : '500px'}.${format}`
             const downloadUrl = URL.createObjectURL(rawBlob as Blob)
             
-            // 1. Descarga directa en el navegador
             const a = document.createElement('a')
             a.href = downloadUrl
             a.download = filename
@@ -238,7 +241,6 @@ export default function QRStudioClient({
             a.click()
             document.body.removeChild(a)
 
-            // 2. Si es imagen PNG, mostrar modal para que en iPhone puedan tocar "Guardar en Fotos"
             if (format === 'png') {
               setPreviewDownloadImage(downloadUrl)
             }
@@ -349,13 +351,12 @@ export default function QRStudioClient({
       ctx.font = `bold ${16 * scale}px "Plus Jakarta Sans", -apple-system, system-ui, sans-serif`
       ctx.fillText(frameText.toUpperCase(), width / 2, btnY + 40 * scale)
 
-      // Convertir Canvas a imagen descargable y visualizable
+      // Convertir Canvas a imagen descargable
       canvas.toBlob(async (blob) => {
         if (!blob) return
         const filename = `omnitag_qr_imprimible_${sourceType}_hd.png`
         const downloadUrl = URL.createObjectURL(blob)
 
-        // 1. Descarga automática por navegador
         const a = document.createElement('a')
         a.href = downloadUrl
         a.download = filename
@@ -363,7 +364,6 @@ export default function QRStudioClient({
         a.click()
         document.body.removeChild(a)
 
-        // 2. Abrir modal con la imagen para usuarios en iOS/Android
         setPreviewDownloadImage(downloadUrl)
       }, 'image/png', 1.0)
 
@@ -375,393 +375,451 @@ export default function QRStudioClient({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      {/* PANEL IZQUIERDO: CONTROLES DE DISEÑO */}
-      <div className="lg:col-span-7 space-y-6">
-        
-        {/* 1. Seleccionar Qué Vincular */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-            1. ¿Qué deseas vincular a este Código QR?
-          </label>
+    <div className="space-y-6">
+      {/* BANNER EDUCATIVO PRO vs BÁSICO (Para que el cliente conozca todas las opciones PRO) */}
+      {!isPro && (
+        <div className="bg-linear-to-r from-purple-900 via-indigo-900 to-black text-white p-5 sm:p-6 rounded-2xl shadow-lg border border-purple-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-black uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 fill-black" /> Desbloquea el Estudio QR Profesional
+            </div>
+            <h3 className="text-base sm:text-lg font-extrabold tracking-tight">
+              ¿Quieres tus QRs listos para imprenta con tu Logo y Degradados?
+            </h3>
+            <p className="text-xs text-purple-200 leading-relaxed">
+              En el <b>Plan Básico</b> puedes descargar QRs estándar en 500px. Con <b>OmniTag PRO</b> obtienes descargas en <b>Ultra HD (2000px)</b>, formato <b>SVG Vectorial</b>, marcos para acrílicos de mesa/mostrador y tu logotipo central.
+            </p>
+          </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            <button
-              type="button"
-              onClick={() => setSourceType('vcard')}
-              className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
-                sourceType === 'vcard'
-                  ? 'border-black bg-black text-white shadow-xs'
-                  : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span>📇 Mi vCard</span>
-              <span className="text-[10px] opacity-75 font-normal truncate mt-1">{vcard?.slug || 'No creada'}</span>
-            </button>
+          <button
+            type="button"
+            onClick={() => {
+              setProModalInfo({
+                name: 'Estudio QR HD, Degradados & Marcos para Imprenta',
+                desc: 'Descarga tus códigos QR en resolución ultra alta (2000px y SVG) listos para imprenta, con marcos para acrílico de mesa y degradados estilo Instagram.'
+              })
+              setShowProModal(true)
+            }}
+            className="bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold text-xs px-5 py-3 rounded-xl shadow-md transition flex items-center gap-2 shrink-0 cursor-pointer"
+          >
+            <span>Ver Opciones PRO (L. 550 / $20)</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
-            <button
-              type="button"
-              onClick={() => setSourceType('menu')}
-              className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
-                sourceType === 'menu'
-                  ? 'border-black bg-black text-white shadow-xs'
-                  : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span>🍽️ Menú / Catálogo</span>
-              <span className="text-[10px] opacity-75 font-normal truncate mt-1">{menu?.name || 'No creado'}</span>
-            </button>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* PANEL IZQUIERDO: CONTROLES DE DISEÑO */}
+        <div className="lg:col-span-7 space-y-6">
+          
+          {/* 1. Seleccionar Qué Vincular */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+              1. ¿Qué deseas vincular a este Código QR?
+            </label>
 
-            <button
-              type="button"
-              onClick={() => setSourceType('loyalty')}
-              className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
-                sourceType === 'loyalty'
-                  ? 'border-black bg-black text-white shadow-xs'
-                  : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span>🎁 Fidelización / Sellos</span>
-              <span className="text-[10px] opacity-75 font-normal truncate mt-1">{loyalty?.name || 'No creado'}</span>
-            </button>
-
-            {devices.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               <button
                 type="button"
-                onClick={() => setSourceType('device')}
+                onClick={() => setSourceType('vcard')}
                 className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
-                  sourceType === 'device'
+                  sourceType === 'vcard'
                     ? 'border-black bg-black text-white shadow-xs'
                     : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                <span>⭐ Placa Google Reviews</span>
-                <span className="text-[10px] opacity-75 font-normal mt-1">{devices.length} Placa(s)</span>
+                <span>📇 Mi vCard</span>
+                <span className="text-[10px] opacity-75 font-normal truncate mt-1">{vcard?.slug || 'No creada'}</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setSourceType('menu')}
+                className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                  sourceType === 'menu'
+                    ? 'border-black bg-black text-white shadow-xs'
+                    : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span>🍽️ Menú / Catálogo</span>
+                <span className="text-[10px] opacity-75 font-normal truncate mt-1">{menu?.name || 'No creado'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSourceType('loyalty')}
+                className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                  sourceType === 'loyalty'
+                    ? 'border-black bg-black text-white shadow-xs'
+                    : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span>🎁 Fidelización / Sellos</span>
+                <span className="text-[10px] opacity-75 font-normal truncate mt-1">{loyalty?.name || 'No creado'}</span>
+              </button>
+
+              {devices.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSourceType('device')}
+                  className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                    sourceType === 'device'
+                      ? 'border-black bg-black text-white shadow-xs'
+                      : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <span>⭐ Placa Google Reviews</span>
+                  <span className="text-[10px] opacity-75 font-normal mt-1">{devices.length} Placa(s)</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setSourceType('custom')}
+                className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                  sourceType === 'custom'
+                    ? 'border-black bg-black text-white shadow-xs'
+                    : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span>🌐 Enlace Web Libre</span>
+                <span className="text-[10px] opacity-75 font-normal mt-1">Cualquier URL</span>
+              </button>
+            </div>
+
+            {sourceType === 'custom' && (
+              <div className="pt-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Introduce la URL de Destino:</label>
+                <input 
+                  type="url"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  placeholder="https://tu-sitio-web.com"
+                  className="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+                />
+              </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => setSourceType('custom')}
-              className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
-                sourceType === 'custom'
-                  ? 'border-black bg-black text-white shadow-xs'
-                  : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span>🌐 Enlace Web Libre</span>
-              <span className="text-[10px] opacity-75 font-normal mt-1">Cualquier URL</span>
-            </button>
+            {sourceType === 'device' && devices.length > 0 && (
+              <div className="pt-2">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Selecciona la Placa NFC / QR:</label>
+                <select
+                  value={selectedDeviceId}
+                  onChange={(e) => setSelectedDeviceId(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  {devices.map(d => (
+                    <option key={d.id} value={d.id}>Placa {d.tag_id} ({d.device_type})</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
-          {sourceType === 'custom' && (
-            <div className="pt-2">
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Introduce la URL de Destino:</label>
-              <input 
-                type="url"
-                value={customUrl}
-                onChange={(e) => setCustomUrl(e.target.value)}
-                placeholder="https://tu-sitio-web.com"
-                className="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-              />
+          {/* 2. Paletas de Colores & Degradados Tipo Instagram */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                2. Paleta de Color y Degradados
+              </label>
+              {!isPro && (
+                <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-purple-600" /> Degradados PRO
+                </span>
+              )}
             </div>
-          )}
 
-          {sourceType === 'device' && devices.length > 0 && (
-            <div className="pt-2">
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Selecciona la Placa NFC / QR:</label>
-              <select
-                value={selectedDeviceId}
-                onChange={(e) => setSelectedDeviceId(e.target.value)}
-                className="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-black"
-              >
-                {devices.map(d => (
-                  <option key={d.id} value={d.id}>Placa {d.tag_id} ({d.device_type})</option>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {PRESET_GRADIENTS.map((p) => {
+                const isSelected = colorPreset === p.id && useGradient
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      if (!isPro && p.id !== 'monochrome') {
+                        setProModalInfo({
+                          name: 'Degradados de Color Estilo Instagram',
+                          desc: 'Desbloquea degradados vibrantes y paletas exclusivas para que tus códigos QR resalten y atraigan más escaneos.'
+                        })
+                        setShowProModal(true)
+                      }
+                      setColorPreset(p.id)
+                      setUseGradient(p.id !== 'monochrome')
+                    }}
+                    className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
+                      isSelected ? 'border-black ring-2 ring-black/10 bg-gray-50 font-bold' : 'border-gray-200 bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div 
+                        className="w-6 h-6 rounded-full shrink-0 shadow-xs border border-white"
+                        style={{
+                          background: p.colors.length > 1 
+                            ? `linear-gradient(135deg, ${p.colors.join(', ')})`
+                            : p.colors[0]
+                        }}
+                      />
+                      <span className="text-xs text-gray-900 truncate">{p.name}</span>
+                    </div>
+
+                    {!isPro && p.id !== 'monochrome' && (
+                      <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 3. Forma de Puntos y Esquinas (Dots & Eyes) */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-5">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+              3. Patrón de Puntos y Esquinas
+            </label>
+
+            {/* Tipo de puntos */}
+            <div>
+              <span className="block text-xs font-semibold text-gray-700 mb-2">Forma de los Puntos:</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { id: 'dots', name: 'Puntos Circulares (Instagram)' },
+                  { id: 'rounded', name: 'Burbujas Suaves' },
+                  { id: 'classy', name: 'Elegante / Tech' },
+                  { id: 'square', name: 'Cuadrado Clásico' },
+                ].map(d => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setDotStyle(d.id as DotType)}
+                    className={`p-2.5 rounded-xl border text-xs font-semibold transition cursor-pointer text-center ${
+                      dotStyle === d.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    {d.name}
+                  </button>
                 ))}
-              </select>
-            </div>
-          )}
-        </div>
-
-        {/* 2. Paletas de Colores & Degradados Tipo Instagram */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-              2. Paleta de Color y Degradados
-            </label>
-            {!isPro && (
-              <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-purple-600" /> Degradados PRO
-              </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {PRESET_GRADIENTS.map((p) => {
-              const isSelected = colorPreset === p.id && useGradient
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => {
-                    if (!isPro && p.id !== 'monochrome') {
-                      setProModalInfo({
-                        name: 'Degradados de Color Estilo Instagram',
-                        desc: 'Desbloquea degradados vibrantes y paletas exclusivas para que tus códigos QR resalten y atraigan más escaneos.'
-                      })
-                      setShowProModal(true)
-                    }
-                    setColorPreset(p.id)
-                    setUseGradient(p.id !== 'monochrome')
-                  }}
-                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
-                    isSelected ? 'border-black ring-2 ring-black/10 bg-gray-50 font-bold' : 'border-gray-200 bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div 
-                      className="w-6 h-6 rounded-full shrink-0 shadow-xs border border-white"
-                      style={{
-                        background: p.colors.length > 1 
-                          ? `linear-gradient(135deg, ${p.colors.join(', ')})`
-                          : p.colors[0]
-                      }}
-                    />
-                    <span className="text-xs text-gray-900 truncate">{p.name}</span>
-                  </div>
-
-                  {!isPro && p.id !== 'monochrome' && (
-                    <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* 3. Forma de Puntos y Esquinas (Dots & Eyes) */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-5">
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-            3. Patrón de Puntos y Esquinas
-          </label>
-
-          {/* Tipo de puntos */}
-          <div>
-            <span className="block text-xs font-semibold text-gray-700 mb-2">Forma de los Puntos:</span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                { id: 'dots', name: 'Puntos Circulares (Instagram)' },
-                { id: 'rounded', name: 'Burbujas Suaves' },
-                { id: 'classy', name: 'Elegante / Tech' },
-                { id: 'square', name: 'Cuadrado Clásico' },
-              ].map(d => (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => setDotStyle(d.id as DotType)}
-                  className={`p-2.5 rounded-xl border text-xs font-semibold transition cursor-pointer text-center ${
-                    dotStyle === d.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  {d.name}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Ojos / Esquinas */}
-          <div>
-            <span className="block text-xs font-semibold text-gray-700 mb-2">Diseño de las Esquinas (Ojos):</span>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { id: 'extra-rounded', name: 'Curvas Suaves' },
-                { id: 'dot', name: 'Círculo Interior' },
-                { id: 'square', name: 'Cuadrado Limpio' },
-              ].map(e => (
-                <button
-                  key={e.id}
-                  type="button"
-                  onClick={() => {
-                    setCornerSquareStyle(e.id as CornerSquareType)
-                    setCornerDotStyle(e.id === 'dot' ? 'dot' : 'square')
-                  }}
-                  className={`p-2.5 rounded-xl border text-xs font-semibold transition cursor-pointer text-center ${
-                    cornerSquareStyle === e.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  {e.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Logotipo Central & Marco de Impresión */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-5">
-          <div className="flex items-center justify-between">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-              4. Logotipo Central y Marco para Impresión
-            </label>
-            {!isPro && (
-              <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-                <Crown className="w-3 h-3 text-purple-600" /> Marcos HD PRO
-              </span>
-            )}
-          </div>
-
-          <ImageUploadInput
-            name="logo"
-            label="Logotipo en el Centro del QR"
-            defaultValue={logoUrl}
-            shape="circle"
-            onImageChange={(url) => {
-              if (!isPro && url) {
-                setProModalInfo({
-                  name: 'Logotipo Central en Código QR',
-                  desc: 'Incrusta el logotipo o foto de tu marca directamente en el centro del código QR sin afectar la legibilidad de lectura.'
-                })
-                setShowProModal(true)
-              }
-              setLogoUrl(url)
-            }}
-            helpText="Tu logo quedará protegido en el centro sin afectar la lectura del QR."
-          />
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-2">Estilo de Marco Imprimible:</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {FRAME_STYLES.map(f => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => {
-                    if (!isPro && f.isPro) {
-                      setProModalInfo({
-                        name: 'Marcos de Impresión para Negocios',
-                        desc: 'Descarga marcos profesionales para acrílicos de mesa, mostrador y tarjetas con tu nombre y llamado a la acción.'
-                      })
-                      setShowProModal(true)
-                    }
-                    setFrameStyle(f.id)
-                  }}
-                  className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex items-center justify-between ${
-                    frameStyle === f.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  <span>{f.name}</span>
-                  {!isPro && f.isPro && (
-                    <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {frameStyle !== 'none' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Título de la Cabecera:</label>
-                <input 
-                  type="text"
-                  value={frameTitle}
-                  onChange={(e) => setFrameTitle(e.target.value)}
-                  placeholder="Ej. NEXORIA DIGITAL / MI NEGOCIO"
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-black"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Texto del Botón Inferior:</label>
-                <input 
-                  type="text"
-                  value={frameText}
-                  onChange={(e) => setFrameText(e.target.value)}
-                  placeholder="Ej. ESCANÉAME CON TU CÁMARA"
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-black"
-                />
               </div>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* PANEL DERECHO: VISTA PREVIA EN VIVO Y BOTÓN DE DESCARGA */}
-      <div className="lg:col-span-5 sticky top-6 space-y-6">
-        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-lg text-center overflow-hidden">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-[11px] font-extrabold uppercase tracking-wider mb-4">
-            <Crown className="w-3.5 h-3.5" /> Generador de Impresión HD
+            {/* Ojos / Esquinas */}
+            <div>
+              <span className="block text-xs font-semibold text-gray-700 mb-2">Diseño de las Esquinas (Ojos):</span>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: 'extra-rounded', name: 'Curvas Suaves' },
+                  { id: 'dot', name: 'Círculo Interior' },
+                  { id: 'square', name: 'Cuadrado Limpio' },
+                ].map(e => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => {
+                      setCornerSquareStyle(e.id as CornerSquareType)
+                      setCornerDotStyle(e.id === 'dot' ? 'dot' : 'square')
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-semibold transition cursor-pointer text-center ${
+                      cornerSquareStyle === e.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    {e.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* VISTA PREVIA PERFECTAMENTE RESPONSIVA Y CENTRADA */}
-          <div className="flex justify-center items-center py-2 px-1">
-            {frameStyle === 'none' ? (
-              <div className="p-3 sm:p-4 bg-white rounded-3xl shadow-md border border-gray-200 inline-flex items-center justify-center max-w-full">
-                <div 
-                  ref={qrRef} 
-                  className="flex items-center justify-center [&>canvas]:max-w-full [&>canvas]:h-auto [&>svg]:max-w-full [&>svg]:h-auto" 
-                />
-              </div>
-            ) : (
-              <div 
-                className="w-full max-w-[280px] sm:max-w-xs rounded-3xl p-4 sm:p-5 shadow-2xl text-white transition-all text-center mx-auto overflow-hidden flex flex-col items-center justify-between"
-                style={{
-                  background: frameStyle === 'instagram_nametag'
-                    ? `linear-gradient(135deg, ${PRESET_GRADIENTS.find(p => p.id === colorPreset)?.colors.join(', ') || '#833AB4, #FD1D1D, #FCB045'})`
-                    : frameStyle === 'table_tent'
-                    ? '#0F172A'
-                    : '#18181B'
-                }}
-              >
-                <h4 className="font-extrabold text-xs sm:text-sm tracking-tight mb-3 uppercase truncate w-full px-2">
-                  {frameTitle || 'OMNITAG'}
-                </h4>
+          {/* 4. Logotipo Central & Marco de Impresión */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                4. Logotipo Central y Marco para Impresión
+              </label>
+              {!isPro && (
+                <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Crown className="w-3 h-3 text-purple-600" /> Marcos HD PRO
+                </span>
+              )}
+            </div>
 
-                {/* Contenedor blanco del QR */}
-                <div className="bg-white rounded-2xl p-2 shadow-md w-[220px] h-[220px] max-w-full flex items-center justify-center overflow-hidden mx-auto">
-                  <div 
-                    ref={qrRef} 
-                    className="w-full h-full flex items-center justify-center [&>canvas]:max-w-full [&>canvas]:h-auto [&>svg]:max-w-full [&>svg]:h-auto" 
+            <ImageUploadInput
+              name="logo"
+              label="Logotipo en el Centro del QR"
+              defaultValue={logoUrl}
+              shape="circle"
+              onImageChange={(url) => {
+                if (!isPro && url) {
+                  setProModalInfo({
+                    name: 'Logotipo Central en Código QR',
+                    desc: 'Incrusta el logotipo o foto de tu marca directamente en el centro del código QR sin afectar la legibilidad de lectura.'
+                  })
+                  setShowProModal(true)
+                }
+                setLogoUrl(url)
+              }}
+              helpText="Tu logo quedará protegido en el centro sin afectar la lectura del QR."
+            />
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-2">Estilo de Marco Imprimible:</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {FRAME_STYLES.map(f => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => {
+                      if (!isPro && f.isPro) {
+                        setProModalInfo({
+                          name: 'Marcos de Impresión para Negocios',
+                          desc: 'Descarga marcos profesionales para acrílicos de mesa, mostrador y tarjetas con tu nombre y llamado a la acción.'
+                        })
+                        setShowProModal(true)
+                      }
+                      setFrameStyle(f.id)
+                    }}
+                    className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex items-center justify-between ${
+                      frameStyle === f.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <span>{f.name}</span>
+                    {!isPro && f.isPro && (
+                      <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {frameStyle !== 'none' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Título de la Cabecera:</label>
+                  <input 
+                    type="text"
+                    value={frameTitle}
+                    onChange={(e) => setFrameTitle(e.target.value)}
+                    placeholder="Ej. NEXORIA DIGITAL / MI NEGOCIO"
+                    className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-black"
                   />
                 </div>
 
-                <div className="mt-3.5 bg-white/95 text-black font-extrabold text-[11px] sm:text-xs py-2 px-3 rounded-xl shadow-xs uppercase tracking-wider w-full truncate">
-                  {frameText || 'ESCANÉAME'}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Texto del Botón Inferior:</label>
+                  <input 
+                    type="text"
+                    value={frameText}
+                    onChange={(e) => setFrameText(e.target.value)}
+                    placeholder="Ej. ESCANÉAME CON TU CÁMARA"
+                    className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-black"
+                  />
                 </div>
               </div>
             )}
           </div>
+        </div>
 
-          <p className="text-xs text-gray-500 mt-4 leading-relaxed truncate px-2">
-            Destino: <span className="font-mono font-bold text-gray-700">{getTargetUrl()}</span>
-          </p>
+        {/* PANEL DERECHO: VISTA PREVIA EN VIVO Y BOTÓN DE DESCARGA */}
+        <div className="lg:col-span-5 sticky top-6 space-y-6">
+          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-gray-200 shadow-lg text-center overflow-hidden">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-[11px] font-extrabold uppercase tracking-wider mb-4">
+              <Crown className="w-3.5 h-3.5" /> Generador de Impresión HD
+            </div>
 
-          {/* BOTONES DE DESCARGA */}
-          <div className="mt-6 space-y-2.5">
-            <button
-              type="button"
-              disabled={isDownloading}
-              onClick={() => handleDownload('png')}
-              className="w-full bg-black text-white font-extrabold py-3.5 px-5 rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-xs sm:text-sm disabled:opacity-50"
-            >
-              <Download className="w-4 h-4" />
-              <span>{isDownloading ? 'Generando imagen...' : isPro ? 'Descargar en Alta Calidad (PNG 2000px)' : 'Descargar Código QR (PNG)'}</span>
-            </button>
+            {/* VISTA PREVIA PERFECTAMENTE RESPONSIVA Y CENTRADA */}
+            <div className="flex justify-center items-center py-2 px-1">
+              {frameStyle === 'none' ? (
+                <div className="p-3 sm:p-4 bg-white rounded-3xl shadow-md border border-gray-200 inline-flex items-center justify-center max-w-full">
+                  <div 
+                    ref={qrRef} 
+                    className="flex items-center justify-center [&>canvas]:max-w-full [&>canvas]:h-auto [&>svg]:max-w-full [&>svg]:h-auto" 
+                  />
+                </div>
+              ) : (
+                <div 
+                  className="w-full max-w-[280px] sm:max-w-xs rounded-3xl p-4 sm:p-5 shadow-2xl text-white transition-all text-center mx-auto overflow-hidden flex flex-col items-center justify-between"
+                  style={{
+                    background: frameStyle === 'instagram_nametag'
+                      ? `linear-gradient(135deg, ${PRESET_GRADIENTS.find(p => p.id === colorPreset)?.colors.join(', ') || '#833AB4, #FD1D1D, #FCB045'})`
+                      : frameStyle === 'table_tent'
+                      ? '#0F172A'
+                      : '#18181B'
+                  }}
+                >
+                  <h4 className="font-extrabold text-xs sm:text-sm tracking-tight mb-3 uppercase truncate w-full px-2">
+                    {frameTitle || 'OMNITAG'}
+                  </h4>
 
-            {frameStyle === 'none' && isPro && (
+                  {/* Contenedor blanco del QR */}
+                  <div className="bg-white rounded-2xl p-2 shadow-md w-[220px] h-[220px] max-w-full flex items-center justify-center overflow-hidden mx-auto">
+                    <div 
+                      ref={qrRef} 
+                      className="w-full h-full flex items-center justify-center [&>canvas]:max-w-full [&>canvas]:h-auto [&>svg]:max-w-full [&>svg]:h-auto" 
+                    />
+                  </div>
+
+                  <div className="mt-3.5 bg-white/95 text-black font-extrabold text-[11px] sm:text-xs py-2 px-3 rounded-xl shadow-xs uppercase tracking-wider w-full truncate">
+                    {frameText || 'ESCANÉAME'}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-500 mt-4 leading-relaxed truncate px-2">
+              Destino: <span className="font-mono font-bold text-gray-700">{getTargetUrl()}</span>
+            </p>
+
+            {/* BOTONES DE DESCARGA CON DIFERENCIACIÓN CLARA */}
+            <div className="mt-6 space-y-2.5">
+              {/* Botón 1: Descarga Estándar Gratuita (Para usuarios Básico) o Descarga Ultra HD (Para PRO) */}
               <button
                 type="button"
-                onClick={() => handleDownload('svg')}
-                className="w-full bg-gray-100 text-gray-800 font-bold py-2.5 px-4 rounded-xl hover:bg-gray-200 transition flex items-center justify-center gap-2 cursor-pointer text-xs"
+                disabled={isDownloading}
+                onClick={() => handleDownload('png', false)}
+                className={`w-full font-extrabold py-3.5 px-5 rounded-xl transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-xs sm:text-sm disabled:opacity-50 ${
+                  isPro 
+                    ? 'bg-black hover:bg-gray-800 text-white' 
+                    : 'bg-gray-900 hover:bg-black text-white'
+                }`}
               >
-                <FileImage className="w-4 h-4" />
-                <span>Descargar en SVG Vectorial (Imprenta)</span>
+                <Download className="w-4 h-4" />
+                <span>
+                  {isDownloading 
+                    ? 'Generando imagen...' 
+                    : isPro 
+                    ? 'Descargar en Ultra HD (PNG 2000px)' 
+                    : 'Descargar Código QR Estándar (500px)'}
+                </span>
               </button>
-            )}
-          </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 text-left text-[11px] text-gray-500 space-y-1">
-            <p className="font-semibold text-gray-700">📱 En tu teléfono móvil:</p>
-            <p>• Al presionar descargar, se guardará en tu dispositivo y se abrirá una ventana para guardarlo en tu <b>Fototeca o Carrete de Fotos</b>.</p>
+              {/* Botón 2: Botón de Descarga PRO para usuarios Free (Desbloquear 2000px / Marcos) */}
+              {!isPro && (
+                <button
+                  type="button"
+                  onClick={() => handleDownload('png', true)}
+                  className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-md text-xs cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-yellow-300" />
+                  <span>Desbloquear Descarga HD para Imprenta (2000px / SVG)</span>
+                </button>
+              )}
+
+              {/* Botón 3: SVG Vectorial para usuarios PRO */}
+              {isPro && frameStyle === 'none' && (
+                <button
+                  type="button"
+                  onClick={() => handleDownload('svg', false)}
+                  className="w-full bg-gray-100 text-gray-800 font-bold py-2.5 px-4 rounded-xl hover:bg-gray-200 transition flex items-center justify-center gap-2 cursor-pointer text-xs"
+                >
+                  <FileImage className="w-4 h-4" />
+                  <span>Descargar en SVG Vectorial (Imprenta)</span>
+                </button>
+              )}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-gray-100 text-left text-[11px] text-gray-500 space-y-1">
+              <p className="font-semibold text-gray-700">📱 En tu teléfono móvil:</p>
+              <p>• Al presionar descargar, se guardará el archivo y se abrirá una ventana para guardarlo directo en tu <b>Fototeca o Carrete de Fotos</b>.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -778,7 +836,7 @@ export default function QRStudioClient({
           >
             <div className="flex items-center justify-between border-b border-gray-100 pb-2">
               <h4 className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> ¡Código QR Generado!
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> ¡Código QR Listo!
               </h4>
               <button 
                 onClick={() => setPreviewDownloadImage(null)}
