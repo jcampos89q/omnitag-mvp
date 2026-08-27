@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { uploadMediaFile } from '@/lib/supabase/storage'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getUserPlanInfo } from '@/lib/plans'
 
 export async function saveVCard(formData: FormData) {
   const supabase = await createClient()
@@ -12,6 +13,9 @@ export async function saveVCard(formData: FormData) {
   if (!user) {
     redirect('/login')
   }
+
+  // 1. Verificar si el usuario tiene Plan PRO para permitir captura de leads
+  const { isPro } = await getUserPlanInfo(supabase, user.id)
 
   let avatarUrl = (formData.get('avatar_url') as string)?.trim() || null
   let coverUrl = (formData.get('cover_url') as string)?.trim() || null
@@ -69,7 +73,9 @@ export async function saveVCard(formData: FormData) {
     const website = (formData.get('website') as string)?.trim()
     const facebook = (formData.get('facebook') as string)?.trim()
     const tiktok = (formData.get('tiktok') as string)?.trim()
-    const leadCaptureEnabled = formData.get('lead_capture_enabled') === 'on'
+
+    // REGLA FREEMIUM: La captura de leads sólo se activa si el usuario es PRO
+    const leadCaptureEnabled = isPro ? (formData.get('lead_capture_enabled') === 'on') : false
 
     // Tema visual, tipografía y paleta de colores
     const themePreset = (formData.get('theme_preset') as string) || 'minimal_white'

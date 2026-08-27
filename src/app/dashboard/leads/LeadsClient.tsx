@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, Mail, Phone, Calendar, Download, MessageSquare, Search, FileSpreadsheet, UserPlus, Gift, UserCircle, Sparkles } from 'lucide-react'
+import { Users, Mail, Phone, Calendar, Download, MessageSquare, Search, FileSpreadsheet, UserPlus, Gift, UserCircle, Sparkles, Lock, ArrowRight, Building2, Zap } from 'lucide-react'
+import Link from 'next/link'
 import ProFeatureModal from '@/components/ProFeatureModal'
 
 export interface Lead {
@@ -97,7 +98,32 @@ export default function LeadsClient({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* BANNER PRO SI EL USUARIO ESTÁ EN PLAN BÁSICO */}
+      {!isPro && (
+        <div className="bg-linear-to-r from-purple-900 via-indigo-900 to-black text-white p-6 rounded-2xl shadow-lg border border-purple-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-black uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 fill-black" /> Módulo CRM Exclusivo PRO
+            </div>
+            <h3 className="text-base sm:text-lg font-extrabold tracking-tight">
+              Captura prospectos y exporta tu base de clientes a Excel
+            </h3>
+            <p className="text-xs text-purple-200 leading-relaxed">
+              El <b>Plan Básico</b> incluye tu vCard y catálogo básico. Con <b>OmniTag PRO (L. 550 o $20/mes)</b> activas el formulario de intercambio de contactos en tus tarjetas, gestión de clientes CRM, botones directos de WhatsApp y descarga completa a Excel (CSV).
+            </p>
+          </div>
+
+          <Link
+            href="/dashboard/billing#metodos-pago"
+            className="bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold text-xs px-5 py-3 rounded-xl shadow-md transition flex items-center gap-2 shrink-0 cursor-pointer"
+          >
+            <span>Activar CRM con Plan PRO</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
+
       {/* Controles de Búsqueda y Exportación */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-gray-50/80 p-3.5 sm:p-4 rounded-2xl border border-gray-200">
         <div className="relative flex-1">
@@ -129,8 +155,27 @@ export default function LeadsClient({
         </button>
       </div>
 
-      {/* Lista Vacía */}
-      {filteredLeads.length === 0 ? (
+      {/* Lista Vacía o Bloqueada */}
+      {!isPro ? (
+        <div className="p-10 text-center bg-gray-50/50 rounded-2xl border border-dashed border-gray-300 space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center mx-auto shadow-2xs">
+            <Lock className="w-6 h-6" />
+          </div>
+          <h3 className="font-extrabold text-gray-900 text-base">La Captura de Leads y CRM requiere Plan PRO</h3>
+          <p className="text-xs text-gray-500 max-w-md mx-auto leading-relaxed">
+            Activa tu suscripción PRO por <b>L. 550 / $20</b> para habilitar el formulario de intercambio de contactos en tus vCards y registrar a todos tus clientes en este panel.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/dashboard/billing#metodos-pago"
+              className="inline-flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-xs hover:bg-gray-800 transition"
+            >
+              <span>Ver Formas de Pago</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      ) : filteredLeads.length === 0 ? (
         <div className="p-12 text-center text-gray-500 bg-white rounded-2xl border border-gray-200">
           <Users className="w-10 h-10 text-gray-300 mx-auto mb-2" />
           <p className="font-semibold text-gray-700">No hay contactos registrados todavía</p>

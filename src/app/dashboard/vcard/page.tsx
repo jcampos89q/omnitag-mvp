@@ -1,6 +1,10 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import VCardForm from './VCardForm'
+import { getUserPlanInfo } from '@/lib/plans'
 
 export default async function VCardBuilderPage({
   searchParams,
@@ -15,7 +19,10 @@ export default async function VCardBuilderPage({
     redirect('/login')
   }
 
-  // Obtener la vCard actual de forma segura con maybeSingle
+  // 1. Obtener estado del plan
+  const { isPro } = await getUserPlanInfo(supabase, user.id)
+
+  // 2. Obtener la vCard actual de forma segura con maybeSingle
   const { data: vcard } = await supabase
     .from('vcards')
     .select('*')
@@ -68,7 +75,7 @@ export default async function VCardBuilderPage({
         </div>
 
         {/* Formulario Principal interactivo */}
-        <VCardForm vcard={vcard} />
+        <VCardForm vcard={vcard} isPro={isPro} />
       </div>
     </div>
   )

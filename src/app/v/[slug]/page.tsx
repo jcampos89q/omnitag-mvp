@@ -6,6 +6,7 @@ import ShareButtons from '@/components/ShareButtons'
 import LeadCaptureModal from './LeadCaptureModal'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
+import { getUserPlanInfo } from '@/lib/plans'
 
 export async function generateMetadata({
   params
@@ -95,6 +96,7 @@ export default async function PublicVCardPage({
 
   const { 
     id: vcardId, 
+    user_id: ownerId,
     card_type = 'personal',
     first_name, 
     last_name, 
@@ -108,6 +110,10 @@ export default async function PublicVCardPage({
     theme: rawTheme, 
     lead_capture_enabled 
   } = vcard
+
+  // Comprobar si el dueño de la vCard es PRO
+  const { isPro: ownerIsPro } = await getUserPlanInfo(supabase, ownerId)
+  const canCaptureLeads = ownerIsPro && lead_capture_enabled
 
   const businessInfo = business_info || {}
   const isBusiness = card_type === 'business'
@@ -320,8 +326,8 @@ export default async function PublicVCardPage({
               Guardar Contacto en el Móvil
             </a>
 
-            {/* Modal de Intercambiar Contacto / Leads */}
-            {lead_capture_enabled && (
+            {/* Modal de Intercambiar Contacto / Leads (Exclusivo PRO) */}
+            {canCaptureLeads && (
               <LeadCaptureModal vcardId={vcardId} slug={slug} theme={theme} />
             )}
 
