@@ -14,10 +14,15 @@ import {
   ExternalLink,
   Crown,
   FileImage,
-  Share2
+  Share2,
+  Lock,
+  Eye,
+  CheckCircle2,
+  X
 } from 'lucide-react'
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType, GradientType } from 'qr-code-styling'
 import ImageUploadInput from '@/components/ImageUploadInput'
+import ProFeatureModal from '@/components/ProFeatureModal'
 
 interface QRStudioClientProps {
   vcard?: any
@@ -41,14 +46,14 @@ const PRESET_GRADIENTS: PresetGradient[] = [
   { id: 'cyber_emerald', name: 'Cyber Emerald', colors: ['#064E3B', '#10B981', '#6EE7B7'], type: 'linear', rotation: 45 },
   { id: 'electric_blue', name: 'Ocean Electric', colors: ['#1E3A8A', '#2563EB', '#60A5FA'], type: 'linear', rotation: 45 },
   { id: 'dark_violet', name: 'Neon Purple', colors: ['#4C1D95', '#7C3AED', '#C084FC'], type: 'linear', rotation: 45 },
-  { id: 'monochrome', name: 'Negro Azabache', colors: ['#000000', '#111827'], type: 'linear', rotation: 0 },
+  { id: 'monochrome', name: 'Negro Azabache (Básico)', colors: ['#000000', '#111827'], type: 'linear', rotation: 0 },
 ]
 
 const FRAME_STYLES = [
-  { id: 'none', name: 'Sin Marco (Solo QR)' },
-  { id: 'instagram_nametag', name: 'Estilo Nametag / Instagram (Con cabecera y botón)' },
-  { id: 'table_tent', name: 'Placa de Mostrador / Mesa (Con llamado a la acción)' },
-  { id: 'badge', name: 'Tarjeta / Badge Oscuro' },
+  { id: 'none', name: 'Sin Marco (Solo QR)', isPro: false },
+  { id: 'instagram_nametag', name: 'Estilo Nametag / Instagram (Con cabecera y botón)', isPro: true },
+  { id: 'table_tent', name: 'Placa de Mostrador / Mesa (Con llamado a la acción)', isPro: true },
+  { id: 'badge', name: 'Tarjeta / Badge Oscuro', isPro: true },
 ]
 
 export default function QRStudioClient({ 
@@ -56,7 +61,7 @@ export default function QRStudioClient({
   menu, 
   loyalty, 
   devices = [], 
-  isPro = true 
+  isPro = false 
 }: QRStudioClientProps) {
   // 1. Tipo de Destino
   const [sourceType, setSourceType] = useState<'vcard' | 'menu' | 'loyalty' | 'device' | 'custom'>(
@@ -69,16 +74,21 @@ export default function QRStudioClient({
   const [dotStyle, setDotStyle] = useState<DotType>('dots')
   const [cornerSquareStyle, setCornerSquareStyle] = useState<CornerSquareType>('extra-rounded')
   const [cornerDotStyle, setCornerDotStyle] = useState<CornerDotType>('dot')
-  const [colorPreset, setColorPreset] = useState<string>('instagram')
-  const [customColor, setCustomColor] = useState<string>('#833AB4')
-  const [useGradient, setUseGradient] = useState<boolean>(true)
+  const [colorPreset, setColorPreset] = useState<string>(isPro ? 'instagram' : 'monochrome')
+  const [customColor, setCustomColor] = useState<string>('#000000')
+  const [useGradient, setUseGradient] = useState<boolean>(isPro)
 
   // 3. Logo en el Centro
   const [logoUrl, setLogoUrl] = useState<string>('')
-  const [frameStyle, setFrameStyle] = useState<string>('instagram_nametag')
+  const [frameStyle, setFrameStyle] = useState<string>(isPro ? 'instagram_nametag' : 'none')
   const [frameText, setFrameText] = useState<string>('ESCANÉAME CON TU CÁMARA')
   const [frameTitle, setFrameTitle] = useState<string>('')
   const [isDownloading, setIsDownloading] = useState<boolean>(false)
+
+  // 4. Modal para Guardar en Fotos (Mobile Helper)
+  const [previewDownloadImage, setPreviewDownloadImage] = useState<string | null>(null)
+  const [showProModal, setShowProModal] = useState<boolean>(false)
+  const [proModalInfo, setProModalInfo] = useState({ name: '', desc: '' })
 
   // Referencias
   const qrRef = useRef<HTMLDivElement>(null)
@@ -107,22 +117,22 @@ export default function QRStudioClient({
   // Pre-cargar valores según origen
   useEffect(() => {
     if (sourceType === 'vcard' && vcard) {
-      setLogoUrl(vcard.avatar_url || '')
+      if (isPro) setLogoUrl(vcard.avatar_url || '')
       setFrameTitle(vcard.first_name ? `${vcard.first_name} ${vcard.last_name || ''}` : vcard.company_name || 'Mi Perfil')
       setFrameText('GUARDA MI CONTACTO')
     } else if (sourceType === 'menu' && menu) {
-      setLogoUrl(menu.logo_url || '')
+      if (isPro) setLogoUrl(menu.logo_url || '')
       setFrameTitle(menu.name || 'Menú Digital')
       setFrameText('ESCANEA PARA VER EL MENÚ')
     } else if (sourceType === 'loyalty' && loyalty) {
-      setLogoUrl(loyalty.logo_url || '')
+      if (isPro) setLogoUrl(loyalty.logo_url || '')
       setFrameTitle(loyalty.name || 'Club de Premios')
       setFrameText('ACUMULA SELLOS Y GANA PREMIOS')
     } else if (sourceType === 'device') {
       setFrameTitle('Google Reviews')
       setFrameText('TOCA O ESCANEA PARA CALIFICAR')
     }
-  }, [sourceType, vcard, menu, loyalty])
+  }, [sourceType, vcard, menu, loyalty, isPro])
 
   // Inicializar y actualizar QRCodeStyling para vista previa responsiva
   useEffect(() => {
@@ -199,8 +209,18 @@ export default function QRStudioClient({
     logoUrl
   ])
 
-  // Descargar QR en Alta Definición con soporte para Fototeca / Galería de iOS y Android
+  // Manejo de descarga 100% infalible para móviles y computadoras
   const handleDownload = async (format: 'png' | 'svg') => {
+    // Si no es PRO e intenta descargar marco o degradados premium
+    if (!isPro && (frameStyle !== 'none' || useGradient || logoUrl)) {
+      setProModalInfo({
+        name: 'Estudio QR HD, Degradados & Logos',
+        desc: 'Genera códigos QR de ultra alta resolución (2000px) con marcos tipo Instagram, degradados personalizados y tu logo en el centro listos para imprenta.'
+      })
+      setShowProModal(true)
+      return
+    }
+
     setIsDownloading(true)
     try {
       if (frameStyle === 'none') {
@@ -208,29 +228,20 @@ export default function QRStudioClient({
           const rawBlob = await qrCodeInstance.current.getRawData(format)
           if (rawBlob) {
             const filename = `omnitag_qr_${sourceType}_hd.${format}`
-            const file = new File([rawBlob as Blob], filename, { type: format === 'png' ? 'image/png' : 'image/svg+xml' })
-
-            if (format === 'png' && typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
-              try {
-                await navigator.share({
-                  files: [file],
-                  title: 'Mi Código QR OmniTag',
-                  text: 'Guarda tu código QR en tu galería o fototeca.'
-                })
-                return
-              } catch (e: any) {
-                if (e.name === 'AbortError') return
-              }
-            }
-
-            const url = URL.createObjectURL(rawBlob as Blob)
+            const downloadUrl = URL.createObjectURL(rawBlob as Blob)
+            
+            // 1. Descarga directa en el navegador
             const a = document.createElement('a')
-            a.href = url
+            a.href = downloadUrl
             a.download = filename
             document.body.appendChild(a)
             a.click()
             document.body.removeChild(a)
-            URL.revokeObjectURL(url)
+
+            // 2. Si es imagen PNG, mostrar modal para que en iPhone puedan tocar "Guardar en Fotos"
+            if (format === 'png') {
+              setPreviewDownloadImage(downloadUrl)
+            }
           }
         }
         return
@@ -338,35 +349,22 @@ export default function QRStudioClient({
       ctx.font = `bold ${16 * scale}px "Plus Jakarta Sans", -apple-system, system-ui, sans-serif`
       ctx.fillText(frameText.toUpperCase(), width / 2, btnY + 40 * scale)
 
-      // Guardar directamente en Galería / Fototeca (Móvil) o Descargar (PC)
+      // Convertir Canvas a imagen descargable y visualizable
       canvas.toBlob(async (blob) => {
         if (!blob) return
         const filename = `omnitag_qr_imprimible_${sourceType}_hd.png`
-        const file = new File([blob], filename, { type: 'image/png' })
-
-        // 1. Soporte Nativo para Guardar en Fotos / Fototeca de iOS y Android
-        if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: 'Código QR OmniTag para Impresión',
-              text: 'Toca "Guardar imagen" para guardarlo directo en tu Fototeca o Galería.'
-            })
-            return
-          } catch (err: any) {
-            if (err.name === 'AbortError') return
-          }
-        }
-
-        // 2. Fallback estándar para PC / navegadores de escritorio
         const downloadUrl = URL.createObjectURL(blob)
+
+        // 1. Descarga automática por navegador
         const a = document.createElement('a')
         a.href = downloadUrl
         a.download = filename
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
-        URL.revokeObjectURL(downloadUrl)
+
+        // 2. Abrir modal con la imagen para usuarios en iOS/Android
+        setPreviewDownloadImage(downloadUrl)
       }, 'image/png', 1.0)
 
     } catch (err) {
@@ -487,10 +485,16 @@ export default function QRStudioClient({
 
         {/* 2. Paletas de Colores & Degradados Tipo Instagram */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-4">
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between">
-            <span>2. Paleta de Color y Degradados</span>
-            <Sparkles className="w-4 h-4 text-purple-600" />
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+              2. Paleta de Color y Degradados
+            </label>
+            {!isPro && (
+              <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-purple-600" /> Degradados PRO
+              </span>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {PRESET_GRADIENTS.map((p) => {
@@ -500,22 +504,35 @@ export default function QRStudioClient({
                   key={p.id}
                   type="button"
                   onClick={() => {
+                    if (!isPro && p.id !== 'monochrome') {
+                      setProModalInfo({
+                        name: 'Degradados de Color Estilo Instagram',
+                        desc: 'Desbloquea degradados vibrantes y paletas exclusivas para que tus códigos QR resalten y atraigan más escaneos.'
+                      })
+                      setShowProModal(true)
+                    }
                     setColorPreset(p.id)
-                    setUseGradient(true)
+                    setUseGradient(p.id !== 'monochrome')
                   }}
-                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center gap-2.5 ${
+                  className={`p-3 rounded-xl border text-left transition cursor-pointer flex items-center justify-between gap-2 ${
                     isSelected ? 'border-black ring-2 ring-black/10 bg-gray-50 font-bold' : 'border-gray-200 bg-white hover:bg-gray-50'
                   }`}
                 >
-                  <div 
-                    className="w-6 h-6 rounded-full shrink-0 shadow-xs border border-white"
-                    style={{
-                      background: p.colors.length > 1 
-                        ? `linear-gradient(135deg, ${p.colors.join(', ')})`
-                        : p.colors[0]
-                    }}
-                  />
-                  <span className="text-xs text-gray-900 truncate">{p.name}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div 
+                      className="w-6 h-6 rounded-full shrink-0 shadow-xs border border-white"
+                      style={{
+                        background: p.colors.length > 1 
+                          ? `linear-gradient(135deg, ${p.colors.join(', ')})`
+                          : p.colors[0]
+                      }}
+                    />
+                    <span className="text-xs text-gray-900 truncate">{p.name}</span>
+                  </div>
+
+                  {!isPro && p.id !== 'monochrome' && (
+                    <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  )}
                 </button>
               )
             })}
@@ -581,16 +598,32 @@ export default function QRStudioClient({
 
         {/* 4. Logotipo Central & Marco de Impresión */}
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-5">
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-            4. Logotipo Central y Marco para Impresión
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+              4. Logotipo Central y Marco para Impresión
+            </label>
+            {!isPro && (
+              <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Crown className="w-3 h-3 text-purple-600" /> Marcos HD PRO
+              </span>
+            )}
+          </div>
 
           <ImageUploadInput
             name="logo"
             label="Logotipo en el Centro del QR"
             defaultValue={logoUrl}
             shape="circle"
-            onImageChange={(url) => setLogoUrl(url)}
+            onImageChange={(url) => {
+              if (!isPro && url) {
+                setProModalInfo({
+                  name: 'Logotipo Central en Código QR',
+                  desc: 'Incrusta el logotipo o foto de tu marca directamente en el centro del código QR sin afectar la legibilidad de lectura.'
+                })
+                setShowProModal(true)
+              }
+              setLogoUrl(url)
+            }}
             helpText="Tu logo quedará protegido en el centro sin afectar la lectura del QR."
           />
 
@@ -601,12 +634,24 @@ export default function QRStudioClient({
                 <button
                   key={f.id}
                   type="button"
-                  onClick={() => setFrameStyle(f.id)}
-                  className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer ${
+                  onClick={() => {
+                    if (!isPro && f.isPro) {
+                      setProModalInfo({
+                        name: 'Marcos de Impresión para Negocios',
+                        desc: 'Descarga marcos profesionales para acrílicos de mesa, mostrador y tarjetas con tu nombre y llamado a la acción.'
+                      })
+                      setShowProModal(true)
+                    }
+                    setFrameStyle(f.id)
+                  }}
+                  className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex items-center justify-between ${
                     frameStyle === f.id ? 'border-black bg-black text-white' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
                   }`}
                 >
-                  {f.name}
+                  <span>{f.name}</span>
+                  {!isPro && f.isPro && (
+                    <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                  )}
                 </button>
               ))}
             </div>
@@ -671,7 +716,7 @@ export default function QRStudioClient({
                   {frameTitle || 'OMNITAG'}
                 </h4>
 
-                {/* Contenedor blanco del QR con dimensiones estrictamente contenidas */}
+                {/* Contenedor blanco del QR */}
                 <div className="bg-white rounded-2xl p-2 shadow-md w-[220px] h-[220px] max-w-full flex items-center justify-center overflow-hidden mx-auto">
                   <div 
                     ref={qrRef} 
@@ -690,7 +735,7 @@ export default function QRStudioClient({
             Destino: <span className="font-mono font-bold text-gray-700">{getTargetUrl()}</span>
           </p>
 
-          {/* BOTONES DE DESCARGA PARA FOTOTECA / GALERÍA Y PC */}
+          {/* BOTONES DE DESCARGA */}
           <div className="mt-6 space-y-2.5">
             <button
               type="button"
@@ -699,30 +744,81 @@ export default function QRStudioClient({
               className="w-full bg-black text-white font-extrabold py-3.5 px-5 rounded-xl hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-xs sm:text-sm disabled:opacity-50"
             >
               <Download className="w-4 h-4" />
-              <span>{isDownloading ? 'Generando imagen HD...' : 'Guardar en Fotos / Galería (HD)'}</span>
+              <span>{isDownloading ? 'Generando imagen...' : isPro ? 'Descargar en Alta Calidad (PNG 2000px)' : 'Descargar Código QR (PNG)'}</span>
             </button>
 
-            {frameStyle === 'none' && (
+            {frameStyle === 'none' && isPro && (
               <button
                 type="button"
                 onClick={() => handleDownload('svg')}
                 className="w-full bg-gray-100 text-gray-800 font-bold py-2.5 px-4 rounded-xl hover:bg-gray-200 transition flex items-center justify-center gap-2 cursor-pointer text-xs"
               >
                 <FileImage className="w-4 h-4" />
-                <span>Descargar en SVG Vectorial (Diseño Gráfico)</span>
+                <span>Descargar en SVG Vectorial (Imprenta)</span>
               </button>
             )}
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-100 text-left text-[11px] text-gray-500 space-y-1">
             <p className="font-semibold text-gray-700">📱 En tu teléfono móvil:</p>
-            <p>• Al presionar el botón, se abrirá la opción para <b>"Guardar imagen"</b> directo en tu Fototeca o Carrete de Fotos.</p>
-            <p className="font-semibold text-gray-700 pt-1">💡 Listo para imprimir en:</p>
-            <p>• Placas acrílicas para mostrador o recepción</p>
-            <p>• Carpas de mesa para restaurantes y cafeterías</p>
+            <p>• Al presionar descargar, se guardará en tu dispositivo y se abrirá una ventana para guardarlo en tu <b>Fototeca o Carrete de Fotos</b>.</p>
           </div>
         </div>
       </div>
+
+      {/* Modal para Ayudar a Guardar en Fotos en Móviles */}
+      {previewDownloadImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in"
+          onClick={() => setPreviewDownloadImage(null)}
+        >
+          <div 
+            className="relative max-w-sm w-full bg-white rounded-3xl p-5 shadow-2xl space-y-4 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+              <h4 className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> ¡Código QR Generado!
+              </h4>
+              <button 
+                onClick={() => setPreviewDownloadImage(null)}
+                className="p-1 text-gray-400 hover:text-black rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-2 bg-gray-50 rounded-2xl flex items-center justify-center max-h-[50vh] overflow-hidden">
+              <img 
+                src={previewDownloadImage} 
+                alt="QR Generado" 
+                className="max-h-full max-w-full object-contain rounded-xl shadow-xs" 
+              />
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left text-xs text-amber-900 space-y-1">
+              <p className="font-bold">📱 Para guardarlo en tu Fototeca / Galería:</p>
+              <p className="text-[11px]">Mantén presionada la imagen de arriba y selecciona <b>"Guardar en Fotos"</b> o <b>"Descargar imagen"</b>.</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPreviewDownloadImage(null)}
+              className="w-full bg-black text-white font-bold py-2.5 rounded-xl text-xs"
+            >
+              Listo / Cerrar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Upgrade PRO */}
+      <ProFeatureModal
+        isOpen={showProModal}
+        onClose={() => setShowProModal(false)}
+        featureName={proModalInfo.name}
+        featureDescription={proModalInfo.desc}
+      />
     </div>
   )
 }
