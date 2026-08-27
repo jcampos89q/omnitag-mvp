@@ -10,14 +10,59 @@ export async function createDevice(formData: FormData) {
 
   if (!user) throw new Error("No autenticado")
 
-  const deviceType = formData.get('device_type') as string
-  let redirectUrl = formData.get('redirect_url') as string
-  const reviewFilter = formData.get('review_filter') === 'on'
+  const deviceType = (formData.get('device_type') as string) || 'tap_to_rate'
+  let redirectUrl = (formData.get('redirect_url') as string)?.trim() || ''
+  const reviewFilter = formData.get('review_filter') === 'on' || deviceType === 'tap_to_rate'
   const tagId = Math.random().toString(36).substring(2, 8).toUpperCase() // ej: X7F9A2
 
-  // Smart Link para Google Reviews: Si el usuario pega solo un Place ID (empieza con ChI), lo convertimos
+  let vcardId: string | null = null
+  let loyaltyId: string | null = null
+
+  // Si es tap-to-rate y pega un Place ID de Google (empieza con ChI)
   if (deviceType === 'tap_to_rate' && redirectUrl.startsWith('ChI')) {
     redirectUrl = `https://search.google.com/local/writereview?placeid=${redirectUrl}`
+  }
+
+  // Si es vincular a vCard
+  if (deviceType === 'vcard') {
+    const { data: vcard } = await supabase
+      .from('vcards')
+      .select('id, slug')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (vcard) {
+      vcardId = vcard.id
+      redirectUrl = `https://www.omnitag.site/v/${vcard.slug}`
+    }
+  }
+
+  // Si es vincular a Menú
+  if (deviceType === 'menu') {
+    const { data: menu } = await supabase
+      .from('menus')
+      .select('id, slug')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (menu) {
+      redirectUrl = `https://www.omnitag.site/m/${menu.slug}`
+    }
+  }
+
+  // Si es vincular a Fidelización
+  if (deviceType === 'loyalty') {
+    const { data: loyalty } = await supabase
+      .from('loyalty_programs')
+      .select('id, slug')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (loyalty) {
+      loyaltyId = loyalty.id
+      redirectUrl = `https://www.omnitag.site/l/${loyalty.slug}`
+    }
+  }
+
+  if (!redirectUrl) {
+    redirect('/dashboard/devices?error=missing_url')
   }
 
   const { error } = await supabase
@@ -27,6 +72,8 @@ export async function createDevice(formData: FormData) {
       tag_id: tagId,
       device_type: deviceType,
       redirect_url: redirectUrl,
+      vcard_id: vcardId,
+      loyalty_program_id: loyaltyId,
       review_filter_enabled: reviewFilter,
       is_active: true
     })
@@ -37,6 +84,7 @@ export async function createDevice(formData: FormData) {
   }
 
   revalidatePath('/dashboard/devices')
+  revalidatePath('/dashboard/admin')
   redirect('/dashboard/devices?success=true')
 }
 
@@ -54,4 +102,5 @@ export async function deleteDevice(formData: FormData) {
     .eq('user_id', user.id)
 
   revalidatePath('/dashboard/devices')
+  revalidatePath('/dashboard/admin')
 }

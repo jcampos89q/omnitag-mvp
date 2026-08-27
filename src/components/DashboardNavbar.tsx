@@ -17,7 +17,8 @@ import {
   X,
   Gift,
   QrCode,
-  ShieldCheck
+  ShieldCheck,
+  Star
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 
@@ -37,7 +38,7 @@ const baseNavItems: NavItem[] = [
   { name: 'Fidelización & Sellos', href: '/dashboard/loyalty', icon: Gift },
   { name: 'Menú & Catálogo', href: '/dashboard/menus', icon: Coffee },
   { name: 'Estudio QR (Imprimibles)', href: '/dashboard/qr-studio', icon: QrCode, badge: 'PRO' },
-  { name: 'Mis Dispositivos', href: '/dashboard/devices', icon: Smartphone },
+  { name: 'Reseñas Google & NFC', href: '/dashboard/devices', icon: Star },
   { name: 'Quejas Privadas', href: '/dashboard/feedback', icon: MessageSquareWarning },
   { name: 'Estadísticas', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Suscripción', href: '/dashboard/billing', icon: CreditCard, accent: true },
