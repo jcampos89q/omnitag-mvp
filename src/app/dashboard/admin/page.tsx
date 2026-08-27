@@ -40,11 +40,17 @@ export default async function AdminDashboardPage() {
     )
   }
 
-  // Obtener métricas globales, usuarios y todas las creaciones mediante RPCs
-  const [{ data: metricsData }, { data: usersData }, { data: creationsData }] = await Promise.all([
+  // Obtener métricas globales, usuarios, creaciones y contactos master mediante RPCs
+  const [
+    { data: metricsData }, 
+    { data: usersData }, 
+    { data: creationsData },
+    { data: contactsData }
+  ] = await Promise.all([
     supabase.rpc('get_admin_metrics'),
     supabase.rpc('get_admin_users_list'),
-    supabase.rpc('get_admin_all_creations')
+    supabase.rpc('get_admin_all_creations'),
+    supabase.rpc('get_admin_master_contacts')
   ])
 
   const metrics = metricsData || {
@@ -67,11 +73,22 @@ export default async function AdminDashboardPage() {
     devices: []
   }
 
+  const contacts = contactsData || {
+    vcard_leads: [],
+    loyalty_members: [],
+    private_feedbacks: []
+  }
+
   // Tasa de conversión y estimación de ingresos
   const conversionRate = metrics.total_users > 0 
     ? ((metrics.total_pro_users / metrics.total_users) * 100).toFixed(1) 
     : '0.0'
   const estimatedMrr = metrics.total_pro_users * 29 // $29/mes por usuario PRO
+
+  const totalCapturedContacts = 
+    (contacts.vcard_leads?.length || 0) + 
+    (contacts.loyalty_members?.length || 0) + 
+    (contacts.private_feedbacks?.length || 0)
 
   return (
     <div className="space-y-8">
@@ -83,10 +100,10 @@ export default async function AdminDashboardPage() {
               <ShieldCheck className="w-4 h-4" /> PANEL DE SUPERADMINISTRADOR
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-              Control Global de la Plataforma
+              Base de Datos Master & Control Global
             </h1>
             <p className="text-gray-500 text-xs sm:text-sm mt-1">
-              Supervisa el crecimiento, gestiona usuarios y <b>accede a todas las creaciones en vivo</b> (vCards, Menús, Clubes de Fidelización y QRs).
+              Supervisa el crecimiento, <b>gestiona y descarga todos los contactos y prospectos capturados</b> en la plataforma y accede a todas las creaciones en vivo.
             </p>
           </div>
         </div>
@@ -96,7 +113,7 @@ export default async function AdminDashboardPage() {
           {/* Total Usuarios */}
           <div className="bg-gray-50/90 p-5 rounded-2xl border border-gray-100">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Registrados</span>
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Usuarios Plataforma</span>
               <Users className="w-5 h-5 text-blue-600" />
             </div>
             <p className="text-3xl font-extrabold text-gray-900">{metrics.total_users}</p>
@@ -117,6 +134,18 @@ export default async function AdminDashboardPage() {
             </p>
           </div>
 
+          {/* Contactos Master Capturados */}
+          <div className="bg-emerald-50/70 p-5 rounded-2xl border border-emerald-100">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Base Master Clientes</span>
+              <HeartHandshake className="w-5 h-5 text-emerald-600" />
+            </div>
+            <p className="text-3xl font-extrabold text-emerald-900">{totalCapturedContacts}</p>
+            <p className="text-xs text-emerald-700 mt-1">
+              vCards, Fidelización y Reseñas
+            </p>
+          </div>
+
           {/* Dispositivos y Escaneos */}
           <div className="bg-gray-50/90 p-5 rounded-2xl border border-gray-100">
             <div className="flex items-center justify-between mb-2">
@@ -128,43 +157,15 @@ export default async function AdminDashboardPage() {
               En <span className="font-semibold text-gray-800">{metrics.total_devices}</span> QRs y placas activas
             </p>
           </div>
-
-          {/* Leads y vCards */}
-          <div className="bg-gray-50/90 p-5 rounded-2xl border border-gray-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Contactos / Leads</span>
-              <HeartHandshake className="w-5 h-5 text-purple-600" />
-            </div>
-            <p className="text-3xl font-extrabold text-gray-900">{metrics.total_leads}</p>
-            <p className="text-xs text-gray-500 mt-1">
-              Generados en <span className="font-semibold text-gray-800">{metrics.total_vcards}</span> vCards
-            </p>
-          </div>
         </div>
 
-        {/* Resumen de Recursos Creados en la Plataforma */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-gray-50/60 rounded-2xl border border-gray-100 mb-8 text-center text-xs">
-          <div>
-            <span className="text-gray-400 font-medium">vCards Digitales:</span>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">{creations.vcards?.length || metrics.total_vcards}</p>
-          </div>
-          <div>
-            <span className="text-gray-400 font-medium">Menús & Catálogos:</span>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">{creations.menus?.length || metrics.total_menus}</p>
-          </div>
-          <div>
-            <span className="text-gray-400 font-medium">Programas Lealtad:</span>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">{creations.loyalty?.length || 0}</p>
-          </div>
-          <div>
-            <span className="text-gray-400 font-medium">Placas y QRs:</span>
-            <p className="text-lg font-bold text-gray-900 mt-0.5">{creations.devices?.length || metrics.total_devices}</p>
-          </div>
-        </div>
-
-        {/* Explorador de Creaciones & Usuarios */}
+        {/* Explorador de Creaciones & Contactos Master */}
         <div>
-          <AdminCreationsHub users={users} creations={creations} />
+          <AdminCreationsHub 
+            users={users} 
+            creations={creations} 
+            contacts={contacts}
+          />
         </div>
       </div>
     </div>

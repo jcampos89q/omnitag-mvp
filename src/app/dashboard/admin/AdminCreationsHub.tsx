@@ -15,9 +15,11 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  Eye
+  Eye,
+  HeartHandshake
 } from 'lucide-react'
 import AdminUserTable, { AdminUser } from './AdminUserTable'
+import AdminMasterContacts, { MasterContact } from './AdminMasterContacts'
 
 export interface AdminCreationsData {
   vcards: Array<{
@@ -77,13 +79,24 @@ export interface AdminCreationsData {
 
 export default function AdminCreationsHub({
   users,
-  creations
+  creations,
+  contacts
 }: {
   users: AdminUser[]
   creations: AdminCreationsData
+  contacts: {
+    vcard_leads: MasterContact[]
+    loyalty_members: MasterContact[]
+    private_feedbacks: MasterContact[]
+  }
 }) {
-  const [activeTab, setActiveTab] = useState<'users' | 'vcards' | 'menus' | 'loyalty' | 'devices'>('users')
+  const [activeTab, setActiveTab] = useState<'contacts' | 'users' | 'vcards' | 'menus' | 'loyalty' | 'devices'>('contacts')
   const [searchTerm, setSearchTerm] = useState('')
+
+  const totalMasterContacts = 
+    (contacts?.vcard_leads?.length || 0) + 
+    (contacts?.loyalty_members?.length || 0) + 
+    (contacts?.private_feedbacks?.length || 0)
 
   // Filtrados por búsqueda
   const filteredVCards = (creations.vcards || []).filter(v => 
@@ -117,6 +130,18 @@ export default function AdminCreationsHub({
       {/* Pestañas de Navegación del Superadministrador */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-200 text-xs sm:text-sm">
         <button
+          onClick={() => { setActiveTab('contacts'); setSearchTerm('') }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition whitespace-nowrap cursor-pointer ${
+            activeTab === 'contacts'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+          }`}
+        >
+          <HeartHandshake className="w-4 h-4" />
+          <span>🎯 Contactos & Leads Recolectados ({totalMasterContacts})</span>
+        </button>
+
+        <button
           onClick={() => { setActiveTab('users'); setSearchTerm('') }}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap cursor-pointer ${
             activeTab === 'users'
@@ -125,7 +150,7 @@ export default function AdminCreationsHub({
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Base de Usuarios ({users.length})</span>
+          <span>Usuarios Registrados ({users.length})</span>
         </button>
 
         <button
@@ -177,7 +202,12 @@ export default function AdminCreationsHub({
         </button>
       </div>
 
-      {/* 1. PESTAÑA: BASE DE USUARIOS & MARKETING */}
+      {/* 0. PESTAÑA DESTACADA: CRM MASTER DE CONTACTOS RECOLECTADOS */}
+      {activeTab === 'contacts' && (
+        <AdminMasterContacts contacts={contacts} />
+      )}
+
+      {/* 1. PESTAÑA: BASE DE USUARIOS REGISTRADOS */}
       {activeTab === 'users' && (
         <AdminUserTable users={users} />
       )}
