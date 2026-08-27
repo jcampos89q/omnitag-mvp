@@ -83,26 +83,18 @@ export default function ProFeatureModal({
               <span className="text-xs text-gray-500 font-medium">HNL / mes</span>
               <span className="text-xs text-gray-400 font-normal">($20 USD)</span>
             </div>
-            <p className="text-[11px] text-gray-400 mt-0.5">Cancela cuando quieras • Pago con BAC o Tarjeta</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">Transferencia Bancaria BAC Credomatic o Pago Directo</p>
           </div>
 
           <div className="space-y-2">
             <Link
-              href="/dashboard/billing"
+              href="/dashboard/billing#metodos-pago"
               onClick={onClose}
               className="w-full bg-black text-white font-extrabold py-3.5 px-4 rounded-xl hover:bg-gray-800 transition text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Mejorar a PRO Ahora</span>
+              <Building2 className="w-4 h-4 text-red-500" />
+              <span>Ver Datos de Transferencia BAC</span>
               <ArrowRight className="w-4 h-4" />
-            </Link>
-
-            <Link
-              href="/dashboard/billing#metodos-pago"
-              onClick={onClose}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-4 rounded-xl transition text-xs flex items-center justify-center gap-1.5"
-            >
-              <Building2 className="w-3.5 h-3.5 text-red-600" />
-              <span>Pagar por Transferencia BAC Credomatic</span>
             </Link>
           </div>
         </div>

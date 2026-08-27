@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Download, ShieldCheck, Mail, Phone, Calendar, Smartphone, Coffee, UserCheck, MessageCircle, Sparkles } from 'lucide-react'
+import { Search, Download, ShieldCheck, Mail, Phone, Calendar, Smartphone, Coffee, UserCheck, MessageCircle, Sparkles, CheckCircle2, Zap } from 'lucide-react'
 import { toggleUserPlan } from './actions'
 
 export interface AdminUser {
@@ -84,7 +84,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
           <button
             onClick={() => setPlanFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
               planFilter === 'all' ? 'bg-black text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
@@ -92,7 +92,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
           </button>
           <button
             onClick={() => setPlanFilter('pro')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
               planFilter === 'pro' ? 'bg-black text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
@@ -100,7 +100,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
           </button>
           <button
             onClick={() => setPlanFilter('free')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
               planFilter === 'free' ? 'bg-black text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
@@ -108,7 +108,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
           </button>
           <button
             onClick={() => setPlanFilter('with_phone')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
               planFilter === 'with_phone' ? 'bg-black text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
@@ -189,10 +189,10 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-1 text-[11px] text-gray-400 border-t border-gray-100">
-                  <span className="flex items-center gap-1">
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <span className="flex items-center gap-1 text-[11px] text-gray-400">
                     <Calendar className="w-3.5 h-3.5" />
-                    Registrado: {new Date(u.out_created_at).toLocaleDateString()}
+                    {new Date(u.out_created_at).toLocaleDateString()}
                   </span>
 
                   <form action={toggleUserPlan}>
@@ -200,9 +200,20 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                     <input type="hidden" name="current_plan" value={u.out_plan} />
                     <button
                       type="submit"
-                      className="text-xs font-semibold px-2.5 py-1 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 transition"
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 cursor-pointer ${
+                        u.out_plan === 'pro'
+                          ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      }`}
                     >
-                      {u.out_plan === 'pro' ? 'Bajar a Free' : 'Subir a PRO'}
+                      {u.out_plan === 'pro' ? (
+                        <span>Bajar a Gratis</span>
+                      ) : (
+                        <>
+                          <Zap className="w-3.5 h-3.5 fill-white" />
+                          <span>Activar PRO (Efectivo)</span>
+                        </>
+                      )}
                     </button>
                   </form>
                 </div>
@@ -216,11 +227,11 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold">
                   <th className="px-6 py-3.5">Usuario / Email</th>
-                  <th className="px-6 py-3.5">Plan</th>
+                  <th className="px-6 py-3.5">Plan Actual</th>
                   <th className="px-6 py-3.5">Contacto</th>
                   <th className="px-6 py-3.5">Actividad</th>
                   <th className="px-6 py-3.5">Registro</th>
-                  <th className="px-6 py-3.5 text-right">Acciones</th>
+                  <th className="px-6 py-3.5 text-right">Gestión de Plan (Efectivo / Manual)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -239,7 +250,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                           ? 'bg-black text-yellow-400 border border-yellow-500/30' 
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {u.out_plan === 'pro' ? <><Sparkles className="w-3 h-3 text-yellow-400" /> PRO</> : 'Básico'}
+                        {u.out_plan === 'pro' ? <><Sparkles className="w-3 h-3 text-yellow-400" /> PRO ACTIVO</> : 'Plan Básico'}
                       </span>
                     </td>
 
@@ -278,9 +289,20 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                         <input type="hidden" name="current_plan" value={u.out_plan} />
                         <button
                           type="submit"
-                          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition cursor-pointer"
+                          className={`text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                            u.out_plan === 'pro'
+                              ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          }`}
                         >
-                          {u.out_plan === 'pro' ? 'Bajar a Free' : 'Cambiar a PRO'}
+                          {u.out_plan === 'pro' ? (
+                            <span>Bajar a Gratis</span>
+                          ) : (
+                            <>
+                              <Zap className="w-3.5 h-3.5 fill-white" />
+                              <span>Activar PRO (Pago Efectivo)</span>
+                            </>
+                          )}
                         </button>
                       </form>
                     </td>
