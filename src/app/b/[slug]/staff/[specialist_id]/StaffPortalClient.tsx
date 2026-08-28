@@ -12,9 +12,16 @@ import {
   User, 
   ChevronRight,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Lock,
+  Plus,
+  Trash2,
+  X,
+  Coffee,
+  Utensils
 } from 'lucide-react'
 import { updateBookingStatus } from '@/app/dashboard/appointments/actions'
+import { staffCreateScheduleBlock, staffDeleteBooking } from '@/app/b/[slug]/actions'
 
 interface Specialist {
   id: string
@@ -53,6 +60,17 @@ export default function StaffPortalClient({
   reviews: any[]
 }) {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10))
+  const [showBlockModal, setShowBlockModal] = useState<boolean>(false)
+  const [blockTime, setBlockTime] = useState<string>('01:00 PM')
+  const [blockReason, setBlockReason] = useState<string>('🥗 Almuerzo / Comida')
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+
+  const timeSlots = [
+    '09:00 AM', '09:45 AM', '10:30 AM', '11:15 AM',
+    '12:00 PM', '12:45 PM', '01:00 PM', '01:45 PM',
+    '02:30 PM', '03:15 PM', '04:00 PM', '04:45 PM',
+    '05:30 PM', '06:15 PM', '07:00 PM'
+  ]
 
   // Siguientes 7 días
   const nextDays = Array.from({ length: 7 }, (_, i) => {
@@ -73,6 +91,22 @@ export default function StaffPortalClient({
   const avgRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : '5.0'
+
+  const handleBlockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    const formData = new FormData()
+    formData.append('business_id', business.id)
+    formData.append('specialist_id', specialist.id)
+    formData.append('booking_date', selectedDate)
+    formData.append('booking_time', blockTime)
+    formData.append('reason', blockReason)
+    formData.append('slug', business.slug)
+
+    await staffCreateScheduleBlock(formData)
+    setIsSubmitting(false)
+    setShowBlockModal(false)
+  }
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-gray-50 pb-16">
@@ -126,14 +160,20 @@ export default function StaffPortalClient({
           ))}
         </div>
 
-        {/* Resumen del Día */}
-        <div className="flex items-center justify-between px-1">
+        {/* Botón para Bloquear Horario / Almuerzo */}
+        <div className="flex items-center justify-between gap-2 px-1">
           <h2 className="font-extrabold text-sm text-gray-900">
-            Citas de {selectedDate === new Date().toISOString().slice(0, 10) ? 'Hoy' : selectedDate}
+            Agenda de {selectedDate === new Date().toISOString().slice(0, 10) ? 'Hoy' : selectedDate}
           </h2>
-          <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg">
-            {dayBookings.length} {dayBookings.length === 1 ? 'turno' : 'turnos'}
-          </span>
+
+          <button
+            type="button"
+            onClick={() => setShowBlockModal(true)}
+            className="text-xs font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            <span>Bloquear Turno / Almuerzo</span>
+          </button>
         </div>
 
         {/* Lista de Citas */}
@@ -146,31 +186,48 @@ export default function StaffPortalClient({
         ) : (
           <div className="space-y-3">
             {dayBookings.map((b) => {
+              const isBlock = b.customer_name.startsWith('🔒')
               const waMessage = encodeURIComponent(
                 `¡Hola ${b.customer_name}! Te saluda ${specialist.name} de ${business.name}. Te recordamos tu cita hoy a las ${b.booking_time} para ${b.appointment_services?.name || 'tu servicio'}. ¡Te esperamos!`
               )
               const waUrl = `https://wa.me/${b.customer_phone.replace(/\D/g, '')}?text=${waMessage}`
 
               return (
-                <div key={b.id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs space-y-3">
+                <div 
+                  key={b.id} 
+                  className={`p-4 rounded-2xl border shadow-xs space-y-3 ${
+                    isBlock 
+                      ? 'bg-amber-50/70 border-amber-200' 
+                      : 'bg-white border-gray-200'
+                  }`}
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-lg">
+                        <span className={`text-xs font-black px-2.5 py-0.5 rounded-lg ${
+                          isBlock ? 'bg-amber-200 text-amber-950' : 'bg-purple-100 text-purple-800'
+                        }`}>
                           ⏰ {b.booking_time}
                         </span>
                         <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                          b.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
+                          isBlock
+                            ? 'bg-amber-200/60 text-amber-900'
+                            : b.status === 'confirmed' 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : 'bg-gray-100 text-gray-600'
                         }`}>
-                          {b.status === 'confirmed' ? 'Confirmada' : b.status}
+                          {isBlock ? 'Horario Bloqueado' : b.status === 'confirmed' ? 'Confirmada' : b.status}
                         </span>
                       </div>
 
                       <h3 className="font-black text-base text-gray-900 mt-2">{b.customer_name}</h3>
-                      <p className="text-xs text-gray-600 font-semibold mt-0.5">
-                        ✂️ {b.appointment_services?.name || 'Servicio General'} 
-                        {b.appointment_services?.price ? ` • $${b.appointment_services.price}` : ''}
-                      </p>
+                      
+                      {!isBlock && (
+                        <p className="text-xs text-gray-600 font-semibold mt-0.5">
+                          ✂️ {b.appointment_services?.name || 'Servicio General'} 
+                          {b.appointment_services?.price ? ` • $${b.appointment_services.price}` : ''}
+                        </p>
+                      )}
 
                       {b.notes && (
                         <p className="text-xs text-gray-500 italic mt-1 bg-gray-50 p-2 rounded-xl border border-gray-100">
@@ -182,31 +239,48 @@ export default function StaffPortalClient({
 
                   {/* Acciones para el Barbero / Especialista */}
                   <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                    <a
-                      href={waUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="bg-[#25D366] hover:bg-[#1EBE57] text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-                    >
-                      <MessageCircle className="w-4 h-4 fill-white" />
-                      <span>WhatsApp Cliente</span>
-                    </a>
+                    {isBlock ? (
+                      <form action={staffDeleteBooking}>
+                        <input type="hidden" name="booking_id" value={b.id} />
+                        <input type="hidden" name="specialist_id" value={specialist.id} />
+                        <input type="hidden" name="slug" value={business.slug} />
+                        <button
+                          type="submit"
+                          className="text-xs font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Desbloquear Horario</span>
+                        </button>
+                      </form>
+                    ) : (
+                      <>
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="bg-[#25D366] hover:bg-[#1EBE57] text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                        >
+                          <MessageCircle className="w-4 h-4 fill-white" />
+                          <span>WhatsApp Cliente</span>
+                        </a>
 
-                    <form action={updateBookingStatus}>
-                      <input type="hidden" name="booking_id" value={b.id} />
-                      <input type="hidden" name="status" value={b.status === 'completed' ? 'confirmed' : 'completed'} />
-                      <button
-                        type="submit"
-                        className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
-                          b.status === 'completed' 
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
-                            : 'bg-black text-white hover:bg-gray-800'
-                        }`}
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{b.status === 'completed' ? 'Reabrir' : 'Completado'}</span>
-                      </button>
-                    </form>
+                        <form action={updateBookingStatus}>
+                          <input type="hidden" name="booking_id" value={b.id} />
+                          <input type="hidden" name="status" value={b.status === 'completed' ? 'confirmed' : 'completed'} />
+                          <button
+                            type="submit"
+                            className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                              b.status === 'completed' 
+                                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                                : 'bg-black text-white hover:bg-gray-800'
+                            }`}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>{b.status === 'completed' ? 'Reabrir' : 'Completado'}</span>
+                          </button>
+                        </form>
+                      </>
+                    )}
                   </div>
                 </div>
               )
@@ -214,6 +288,72 @@ export default function StaffPortalClient({
           </div>
         )}
       </main>
+
+      {/* Modal para Bloquear Horario / Almuerzo */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full space-y-4 relative">
+            <button
+              onClick={() => setShowBlockModal(false)}
+              className="absolute top-4 right-4 p-1 text-gray-400 hover:text-black rounded-lg"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                <Lock className="w-6 h-6" />
+              </div>
+              <h3 className="font-extrabold text-gray-900 text-base">
+                Bloquear Mi Horario
+              </h3>
+              <p className="text-xs text-gray-500">
+                Reserva tu hora de comida, descanso o salida para que ningún cliente agende en ese momento.
+              </p>
+            </div>
+
+            <form onSubmit={handleBlockSubmit} className="space-y-3.5 pt-1">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Hora a Bloquear</label>
+                <select
+                  value={blockTime}
+                  onChange={(e) => setBlockTime(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                >
+                  {timeSlots.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo / Razón</label>
+                <select
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                >
+                  <option value="🥗 Hora de Almuerzo / Comida">🥗 Hora de Almuerzo / Comida</option>
+                  <option value="☕ Descanso / Break de 30 min">☕ Descanso / Break de 30 min</option>
+                  <option value="🏃 Salida Temprana / Permiso">🏃 Salida Temprana / Permiso</option>
+                  <option value="🩺 Cita Médica / Personal">🩺 Cita Médica / Personal</option>
+                  <option value="✂️ Cita Presencial en Local">✂️ Cita Presencial en Local</option>
+                </select>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-black hover:bg-gray-800 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Bloqueando...' : 'Confirmar Bloqueo'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -173,3 +173,59 @@ export async function lookupCustomerBookings(businessId: string, phone: string) 
 
   return { success: true, bookings: bookings || [] }
 }
+
+export async function staffCreateScheduleBlock(formData: FormData) {
+  const supabase = await createClient()
+
+  const businessId = (formData.get('business_id') as string)?.trim()
+  const specialistId = (formData.get('specialist_id') as string)?.trim()
+  const bookingDate = (formData.get('booking_date') as string)?.trim()
+  const bookingTime = (formData.get('booking_time') as string)?.trim()
+  const reason = (formData.get('reason') as string)?.trim() || '🥗 Almuerzo / Descanso'
+  const slug = (formData.get('slug') as string)?.trim()
+
+  if (!businessId || !specialistId || !bookingDate || !bookingTime) {
+    return { success: false, error: 'Fecha y hora requeridas' }
+  }
+
+  const { error } = await supabase.from('bookings').insert({
+    business_id: businessId,
+    specialist_id: specialistId,
+    customer_name: `🔒 ${reason}`,
+    customer_phone: '00000000',
+    booking_date: bookingDate,
+    booking_time: bookingTime,
+    notes: 'Horario bloqueado por el especialista',
+    status: 'confirmed'
+  })
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  if (slug) {
+    revalidatePath(`/b/${slug}`)
+    revalidatePath(`/b/${slug}/staff/${specialistId}`)
+  }
+  revalidatePath('/dashboard/appointments')
+
+  return { success: true }
+}
+
+export async function staffDeleteBooking(formData: FormData) {
+  const supabase = await createClient()
+
+  const bookingId = (formData.get('booking_id') as string)?.trim()
+  const specialistId = (formData.get('specialist_id') as string)?.trim()
+  const slug = (formData.get('slug') as string)?.trim()
+
+  if (!bookingId) return
+
+  await supabase.from('bookings').delete().eq('id', bookingId)
+
+  if (slug) {
+    revalidatePath(`/b/${slug}`)
+    if (specialistId) revalidatePath(`/b/${slug}/staff/${specialistId}`)
+  }
+  revalidatePath('/dashboard/appointments')
+}
