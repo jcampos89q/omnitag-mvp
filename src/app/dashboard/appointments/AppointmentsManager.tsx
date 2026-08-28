@@ -17,11 +17,12 @@ import {
   MessageCircle,
   ShieldCheck,
   User,
-  Building2
+  Building2,
+  Lock
 } from 'lucide-react'
 import Link from 'next/link'
 import ImageUploadInput from '@/components/ImageUploadInput'
-import { createOrUpdateBusiness, createSpecialist, deleteSpecialist, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability } from './actions'
+import { createOrUpdateBusiness, createSpecialist, deleteSpecialist, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability, createManualBlockOrBooking, deleteBooking } from './actions'
 
 interface AppointmentsManagerProps {
   business: any
@@ -43,6 +44,13 @@ export default function AppointmentsManager({
   const [activeTab, setActiveTab] = useState<'bookings' | 'specialists' | 'services' | 'reviews' | 'business'>('bookings')
   const [showAddSpecialist, setShowAddSpecialist] = useState(false)
   const [showAddService, setShowAddService] = useState(false)
+  const [showAddBlock, setShowAddBlock] = useState(false)
+
+  const timeSlots = [
+    '09:00 AM', '09:45 AM', '10:30 AM', '11:15 AM',
+    '01:00 PM', '01:45 PM', '02:30 PM', '03:15 PM',
+    '04:00 PM', '04:45 PM', '05:30 PM', '06:15 PM'
+  ]
 
   return (
     <div className="space-y-6">
@@ -125,10 +133,67 @@ export default function AppointmentsManager({
       {/* PESTAÑA 1: AGENDA DE CITAS */}
       {activeTab === 'bookings' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-extrabold text-gray-900 text-base">Citas Registradas</h3>
-            <span className="text-xs text-gray-500 font-medium">Actualizado en vivo</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="font-extrabold text-gray-900 text-base">Agenda de Turnos & Citas</h3>
+              <span className="text-xs text-gray-500 font-medium">Sincronizado en tiempo real</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAddBlock(!showAddBlock)}
+              className="bg-black text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-gray-800 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Lock className="w-3.5 h-3.5 text-yellow-400" />
+              <span>{showAddBlock ? 'Cerrar' : '+ Bloquear Horario / Salida Temprana'}</span>
+            </button>
           </div>
+
+          {/* Formulario de Bloqueo de Horario o Cita Presencial */}
+          {showAddBlock && (
+            <form action={createManualBlockOrBooking} className="p-5 bg-amber-50/70 border border-amber-200 rounded-2xl space-y-4 animate-in fade-in">
+              <input type="hidden" name="business_id" value={business.id} />
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-amber-200 text-amber-900 flex items-center justify-center font-bold text-xs">🔒</span>
+                <h4 className="font-extrabold text-sm text-amber-950">Bloquear Horario o Registrar Cita en Local</h4>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Especialista</label>
+                  <select name="specialist_id" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none">
+                    <option value="">Todos los especialistas</option>
+                    {specialists.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha *</label>
+                  <input type="date" name="booking_date" required defaultValue={new Date().toISOString().slice(0, 10)} className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Hora a Bloquear *</label>
+                  <select name="booking_time" required className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none">
+                    {timeSlots.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo / Razón</label>
+                  <input type="text" name="reason" placeholder="Salida Temprana / Asunto Personal" defaultValue="Salida Temprana" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button type="button" onClick={() => setShowAddBlock(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer">Cancelar</button>
+                <button type="submit" className="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs">Bloquear Horario en Web</button>
+              </div>
+            </form>
+          )}
 
           {bookings.length === 0 ? (
             <div className="p-12 text-center bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
@@ -184,6 +249,17 @@ export default function AppointmentsManager({
                           className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer"
                         >
                           {b.status === 'completed' ? 'Reabrir' : 'Completar'}
+                        </button>
+                      </form>
+
+                      <form action={deleteBooking}>
+                        <input type="hidden" name="booking_id" value={b.id} />
+                        <button
+                          type="submit"
+                          className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer"
+                          title="Eliminar cita o desbloquear horario"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </form>
                     </div>

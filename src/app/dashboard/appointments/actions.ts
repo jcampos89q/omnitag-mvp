@@ -165,3 +165,45 @@ export async function toggleSpecialistAvailability(formData: FormData) {
   revalidatePath('/dashboard/appointments')
   revalidatePath('/', 'layout')
 }
+
+export async function createManualBlockOrBooking(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const businessId = (formData.get('business_id') as string)?.trim()
+  const specialistId = (formData.get('specialist_id') as string)?.trim() || null
+  const bookingDate = (formData.get('booking_date') as string)?.trim()
+  const bookingTime = (formData.get('booking_time') as string)?.trim()
+  const reason = (formData.get('reason') as string)?.trim() || 'Bloqueo / Salida Temprana'
+
+  if (!businessId || !bookingDate || !bookingTime) {
+    throw new Error("Fecha y hora requeridas")
+  }
+
+  await supabase.from('bookings').insert({
+    business_id: businessId,
+    specialist_id: specialistId || null,
+    customer_name: `🔒 ${reason}`,
+    customer_phone: '00000000',
+    booking_date: bookingDate,
+    booking_time: bookingTime,
+    notes: 'Horario bloqueado por el administrador',
+    status: 'confirmed'
+  })
+
+  revalidatePath('/dashboard/appointments')
+  revalidatePath('/', 'layout')
+}
+
+export async function deleteBooking(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const bookingId = formData.get('booking_id') as string
+  if (!bookingId) return
+
+  await supabase.from('bookings').delete().eq('id', bookingId)
+  revalidatePath('/dashboard/appointments')
+}

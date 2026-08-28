@@ -69,15 +69,18 @@ export default async function PublicBookingPage({
     .eq('is_active', true)
     .maybeSingle()
 
-  // 3. Buscar especialistas, servicios y reseñas en paralelo
+  // 3. Buscar especialistas, servicios, reseñas y citas activas en paralelo
+  const todayStr = new Date().toISOString().slice(0, 10)
   const [
     { data: specialists },
     { data: services },
-    { data: reviews }
+    { data: reviews },
+    { data: existingBookings }
   ] = await Promise.all([
     supabase.from('specialists').select('*').eq('business_id', business.id).eq('is_active', true).order('order_index'),
     supabase.from('appointment_services').select('*').eq('business_id', business.id).eq('is_active', true),
-    supabase.from('specialist_reviews').select('*').eq('business_id', business.id).order('created_at', { ascending: false }).limit(30)
+    supabase.from('specialist_reviews').select('*').eq('business_id', business.id).order('created_at', { ascending: false }).limit(30),
+    supabase.from('bookings').select('id, specialist_id, booking_date, booking_time, status').eq('business_id', business.id).gte('booking_date', todayStr).neq('status', 'cancelled')
   ])
 
   return (
@@ -139,6 +142,7 @@ export default async function PublicBookingPage({
           specialists={specialists || []}
           services={services || []}
           reviews={reviews || []}
+          existingBookings={existingBookings || []}
         />
       </main>
 

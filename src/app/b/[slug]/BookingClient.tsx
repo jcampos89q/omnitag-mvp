@@ -53,12 +53,14 @@ export default function BookingClient({
   business,
   specialists,
   services,
-  reviews
+  reviews,
+  existingBookings = []
 }: {
   business: any
   specialists: Specialist[]
   services: Service[]
   reviews: Review[]
+  existingBookings?: any[]
 }) {
   const [selectedService, setSelectedService] = useState<Service | null>(services[0] || null)
   const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null) // null = cualquiera
@@ -421,20 +423,33 @@ export default function BookingClient({
             Horas disponibles:
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {timeSlots.map((time) => (
-              <button
-                key={time}
-                type="button"
-                onClick={() => setSelectedTime(time)}
-                className={`py-2 px-3 rounded-xl text-xs font-extrabold transition cursor-pointer border ${
-                  selectedTime === time
-                    ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
-                    : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                {time}
-              </button>
-            ))}
+            {timeSlots.map((time) => {
+              const isOccupied = existingBookings.some((b: any) => 
+                b.booking_date === selectedDate && 
+                b.booking_time === time &&
+                (!selectedSpecialist || b.specialist_id === selectedSpecialist.id || !b.specialist_id)
+              )
+
+              return (
+                <button
+                  key={time}
+                  type="button"
+                  disabled={isOccupied}
+                  onClick={() => setSelectedTime(time)}
+                  className={`py-2 px-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer border flex flex-col items-center justify-center ${
+                    isOccupied
+                      ? 'bg-gray-100 text-gray-400 border-gray-200 line-through opacity-50 cursor-not-allowed'
+                      : selectedTime === time
+                      ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
+                      : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50'
+                  }`}
+                  title={isOccupied ? 'Horario no disponible / ocupado' : 'Disponible'}
+                >
+                  <span>{time}</span>
+                  {isOccupied && <span className="text-[8px] no-underline font-normal">Ocupado</span>}
+                </button>
+              )
+            })}
           </div>
         </div>
       </section>
