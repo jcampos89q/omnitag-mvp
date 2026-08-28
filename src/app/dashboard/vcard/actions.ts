@@ -130,11 +130,11 @@ export async function saveVCard(formData: FormData) {
 
     const payload = {
       card_type: cardType,
-      first_name: firstName,
-      last_name: lastName,
-      job_title: jobTitle,
-      company_name: companyName,
-      bio,
+      first_name: firstName || companyName || 'Perfil Digital',
+      last_name: lastName || null,
+      job_title: jobTitle || null,
+      company_name: companyName || null,
+      bio: bio || null,
       business_info,
       contact_info,
       theme,
