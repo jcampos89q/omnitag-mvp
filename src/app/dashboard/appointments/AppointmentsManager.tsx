@@ -442,8 +442,21 @@ export default function AppointmentsManager({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Duración Estimada (Minutos)</label>
-                  <input type="number" name="duration_minutes" defaultValue={45} className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Duración Estimada del Servicio *</label>
+                  <select
+                    name="duration_minutes"
+                    defaultValue={45}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                  >
+                    <option value={15}>⏱️ 15 min (Corte Express / Cejas / Perfilado)</option>
+                    <option value={30}>⏱️ 30 min (Corte Clásico / Arreglo de Barba)</option>
+                    <option value={45}>⏱️ 45 min (Corte Tradicional / Manicura)</option>
+                    <option value={60}>⏱️ 60 min - 1 Hora (Corte + Barba / Pedicura)</option>
+                    <option value={90}>⏱️ 90 min - 1.5 Horas (Uñas Acrílicas / Tratamiento)</option>
+                    <option value={120}>⏱️ 120 min - 2 Horas (Balayage / Alisado / Color)</option>
+                    <option value={180}>⏱️ 180 min - 3 Horas (Decoloración / Extensión)</option>
+                    <option value={240}>⏱️ 240 min - 4 Horas (Transformación / Paquete Novias)</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Descripción Breve</label>

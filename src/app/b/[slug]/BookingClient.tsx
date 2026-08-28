@@ -49,6 +49,25 @@ interface Review {
   created_at: string
 }
 
+function parseTimeToMinutes(timeStr: string): number {
+  if (!timeStr) return 0
+  const parts = timeStr.trim().split(' ')
+  const timePart = parts[0]
+  const modifier = parts[1] || 'AM'
+  let [hours, minutes] = timePart.split(':').map(Number)
+  if (modifier.toUpperCase() === 'PM' && hours < 12) hours += 12
+  if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0
+  return hours * 60 + (minutes || 0)
+}
+
+function formatDuration(minutes: number): string {
+  if (!minutes) return '45 min'
+  if (minutes < 60) return `${minutes} min`
+  const hrs = Math.floor(minutes / 60)
+  const rem = minutes % 60
+  return rem > 0 ? `${hrs}h ${rem}m` : `${hrs} ${hrs === 1 ? 'hora' : 'horas'}`
+}
+
 export default function BookingClient({
   business,
   specialists,
@@ -291,11 +310,9 @@ export default function BookingClient({
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <p className="font-bold text-sm text-gray-900">{service.name}</p>
-                    {service.duration_minutes && (
-                      <span className="text-[10px] text-gray-500 font-semibold bg-gray-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {service.duration_minutes} min
-                      </span>
-                    )}
+                    <span className="text-[10px] text-purple-700 font-bold bg-purple-50 px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-purple-100">
+                      <Clock className="w-3 h-3" /> {formatDuration(service.duration_minutes)}
+                    </span>
                   </div>
                   {service.description && (
                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{service.description}</p>
@@ -424,11 +441,22 @@ export default function BookingClient({
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {timeSlots.map((time) => {
-              const isOccupied = existingBookings.some((b: any) => 
-                b.booking_date === selectedDate && 
-                b.booking_time === time &&
-                (!selectedSpecialist || b.specialist_id === selectedSpecialist.id || !b.specialist_id)
-              )
+              const currentServiceDuration = selectedService?.duration_minutes || 45
+              const slotStart = parseTimeToMinutes(time)
+              const slotEnd = slotStart + currentServiceDuration
+
+              const isOccupied = existingBookings.some((b: any) => {
+                if (b.booking_date !== selectedDate) return false
+                if (b.status === 'cancelled') return false
+                if (selectedSpecialist && b.specialist_id && b.specialist_id !== selectedSpecialist.id) return false
+
+                const bStart = parseTimeToMinutes(b.booking_time)
+                const bDuration = b.appointment_services?.duration_minutes || 45
+                const bEnd = bStart + bDuration
+
+                // Overlap condition: intervals intersect
+                return (slotStart < bEnd && slotEnd > bStart)
+              })
 
               return (
                 <button
@@ -443,7 +471,7 @@ export default function BookingClient({
                       ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
                       : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50'
                   }`}
-                  title={isOccupied ? 'Horario no disponible / ocupado' : 'Disponible'}
+                  title={isOccupied ? 'Horario ocupado por la duración del servicio' : `Disponible (${formatDuration(currentServiceDuration)})`}
                 >
                   <span>{time}</span>
                   {isOccupied && <span className="text-[8px] no-underline font-normal">Ocupado</span>}
