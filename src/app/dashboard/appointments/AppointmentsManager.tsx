@@ -558,12 +558,14 @@ export default function AppointmentsManager({
               <input type="text" name="name" defaultValue={business.name} required className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Categoría</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Categoría del Negocio</label>
               <select name="category" defaultValue={business.category || 'barbershop'} className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none">
-                <option value="barbershop">💈 Barbería</option>
-                <option value="salon">✂️ Salón de Belleza / Peluquería</option>
-                <option value="spa">💆 Spa & Estética</option>
-                <option value="clinic">🦷 Clínica Médica / Dental</option>
+                <option value="dental">🦷 Clínica Dental & Odontología</option>
+                <option value="medical">🩺 Consultorio Médico / Especialidades</option>
+                <option value="barbershop">💈 Barbería & Peluquería Masculina</option>
+                <option value="salon">💇‍♀️ Salón de Belleza, Estilismo & Uñas</option>
+                <option value="spa">💆 Spa, Fisioterapia & Estética</option>
+                <option value="tattoo">🎨 Estudio de Tatuajes & Piercing</option>
               </select>
             </div>
           </div>

@@ -101,8 +101,12 @@ export default async function PublicBookingPage({
       {/* Cabecera del Negocio */}
       <header className="bg-white border-b border-gray-200 py-6 px-4">
         <div className="max-w-2xl mx-auto text-center space-y-2">
-          <div className="w-16 h-16 rounded-2xl bg-black text-white flex items-center justify-center mx-auto shadow-md">
-            <Scissors className="w-8 h-8" />
+          <div className="w-16 h-16 rounded-2xl bg-black text-white flex items-center justify-center mx-auto shadow-md text-2xl">
+            {business.category === 'dental' ? '🦷' :
+             business.category === 'medical' ? '🩺' :
+             business.category === 'spa' ? '💆' :
+             business.category === 'salon' ? '💇‍♀️' :
+             business.category === 'tattoo' ? '🎨' : '💈'}
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-900">
