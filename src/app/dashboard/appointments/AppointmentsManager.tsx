@@ -352,6 +352,31 @@ export default function AppointmentsManager({
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {/* Botón Ver Portal de Agenda del Especialista */}
+                    <a
+                      href={`/b/${business.slug}/staff/${s.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-extrabold transition flex items-center gap-1"
+                      title="Ver portal móvil de citas para este especialista"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Ver Agenda</span>
+                    </a>
+
+                    {/* Botón Enviar Agenda por WhatsApp al Especialista */}
+                    {s.phone && (
+                      <a
+                        href={`https://wa.me/${s.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`¡Hola ${s.name}! Aquí tienes tu enlace de acceso para consultar tus citas y turnos en ${business.name}:\n\n🔗 https://www.omnitag.site/b/${business.slug}/staff/${s.id}`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1.5 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white rounded-xl transition"
+                        title="Enviar enlace de agenda por WhatsApp al especialista"
+                      >
+                        <MessageCircle className="w-4 h-4 fill-current" />
+                      </a>
+                    )}
+
                     {/* Switch de Disponibilidad Inmediata */}
                     <form action={toggleSpecialistAvailability}>
                       <input type="hidden" name="specialist_id" value={s.id} />
