@@ -150,3 +150,26 @@ export async function createSpecialistReview(formData: FormData) {
 
   return { success: true }
 }
+
+export async function lookupCustomerBookings(businessId: string, phone: string) {
+  const supabase = await createClient()
+  const cleanPhone = phone.replace(/\D/g, '')
+
+  if (!cleanPhone || cleanPhone.length < 6) {
+    return { success: false, error: 'Por favor ingresa un número de WhatsApp válido.' }
+  }
+
+  const { data: bookings, error } = await supabase
+    .from('bookings')
+    .select('*, specialists(name, role_title), appointment_services(name, price, duration_minutes)')
+    .eq('business_id', businessId)
+    .ilike('customer_phone', `%${cleanPhone.slice(-8)}%`)
+    .order('booking_date', { ascending: false })
+    .limit(10)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  return { success: true, bookings: bookings || [] }
+}

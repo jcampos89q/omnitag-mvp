@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import ImageUploadInput from '@/components/ImageUploadInput'
-import { createOrUpdateBusiness, createSpecialist, deleteSpecialist, createService, deleteService, updateBookingStatus } from './actions'
+import { createOrUpdateBusiness, createSpecialist, deleteSpecialist, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability } from './actions'
 
 interface AppointmentsManagerProps {
   business: any
@@ -275,12 +275,32 @@ export default function AppointmentsManager({
                     </div>
                   </div>
 
-                  <form action={deleteSpecialist}>
-                    <input type="hidden" name="specialist_id" value={s.id} />
-                    <button type="submit" className="p-2 text-gray-400 hover:text-red-600 rounded-xl hover:bg-red-50 transition cursor-pointer" title="Eliminar">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </form>
+                  <div className="flex items-center gap-2">
+                    {/* Switch de Disponibilidad Inmediata */}
+                    <form action={toggleSpecialistAvailability}>
+                      <input type="hidden" name="specialist_id" value={s.id} />
+                      <input type="hidden" name="is_active" value={s.is_active ? 'false' : 'true'} />
+                      <button
+                        type="submit"
+                        className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
+                          s.is_active
+                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                            : 'bg-red-100 text-red-800 hover:bg-red-200'
+                        }`}
+                        title={s.is_active ? 'Marcar como ausente hoy / no disponible' : 'Marcar como activo y disponible'}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${s.is_active ? 'bg-emerald-600' : 'bg-red-600'}`} />
+                        <span>{s.is_active ? 'Activo' : 'Ausente'}</span>
+                      </button>
+                    </form>
+
+                    <form action={deleteSpecialist}>
+                      <input type="hidden" name="specialist_id" value={s.id} />
+                      <button type="submit" className="p-2 text-gray-400 hover:text-red-600 rounded-xl hover:bg-red-50 transition cursor-pointer" title="Eliminar definitivamente">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </form>
+                  </div>
                 </div>
               )
             })}

@@ -146,3 +146,22 @@ export async function updateBookingStatus(formData: FormData) {
   await supabase.from('bookings').update({ status }).eq('id', bookingId)
   revalidatePath('/dashboard/appointments')
 }
+
+export async function toggleSpecialistAvailability(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const specialistId = formData.get('specialist_id') as string
+  const isActive = formData.get('is_active') === 'true'
+
+  if (!specialistId) return
+
+  await supabase
+    .from('specialists')
+    .update({ is_active: isActive })
+    .eq('id', specialistId)
+
+  revalidatePath('/dashboard/appointments')
+  revalidatePath('/', 'layout')
+}

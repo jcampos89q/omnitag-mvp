@@ -16,9 +16,10 @@ import {
   ShieldCheck,
   Plus,
   X,
-  MessageSquare
+  MessageSquare,
+  Search
 } from 'lucide-react'
-import { createPublicBooking, createSpecialistReview } from './actions'
+import { createPublicBooking, createSpecialistReview, lookupCustomerBookings } from './actions'
 
 interface Specialist {
   id: string
@@ -229,8 +230,37 @@ export default function BookingClient({
     )
   }
 
+  // Modal para Consultar Mis Citas
+  const [showLookupModal, setShowLookupModal] = useState<boolean>(false)
+  const [lookupPhone, setLookupPhone] = useState<string>('')
+  const [lookupLoading, setLookupLoading] = useState<boolean>(false)
+  const [myBookings, setMyBookings] = useState<any[] | null>(null)
+
+  const handleLookupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!lookupPhone) return
+    setLookupLoading(true)
+    const res = await lookupCustomerBookings(business.id, lookupPhone)
+    setLookupLoading(false)
+    if (res.success) {
+      setMyBookings(res.bookings || [])
+    } else {
+      alert(res.error || 'No se encontraron citas')
+    }
+  }
+
   return (
-    <div className="max-w-2xl mx-auto space-y-8 pb-20">
+    <div className="max-w-2xl mx-auto space-y-6 pb-20">
+      {/* Botón Superior para Consultar Citas Existentes */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowLookupModal(true)}
+          className="text-xs font-extrabold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+        >
+          <span>🔍 ¿Ya tienes una cita agendada? Consultar</span>
+        </button>
+      </div>
       
       {/* 1. SELECCIONAR SERVICIO */}
       <section className="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-200 space-y-4">
@@ -541,6 +571,81 @@ export default function BookingClient({
                   Publicar Calificación
                 </button>
               </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PARA CONSULTAR CITAS EXISTENTES */}
+      {showLookupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-md w-full space-y-4 relative">
+            <button
+              onClick={() => {
+                setShowLookupModal(false)
+                setMyBookings(null)
+              }}
+              className="absolute top-4 right-4 p-1 text-gray-400 hover:text-black rounded-lg"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center mx-auto">
+                <Search className="w-6 h-6" />
+              </div>
+              <h3 className="font-extrabold text-gray-900 text-base">
+                Consultar Mis Citas Agendadas
+              </h3>
+              <p className="text-xs text-gray-500">
+                Ingresa tu número de WhatsApp para ver tus reservas en <b>{business.name}</b>.
+              </p>
+            </div>
+
+            <form onSubmit={handleLookupSubmit} className="space-y-3 pt-1">
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  required
+                  placeholder="Ej. 9988-6256"
+                  value={lookupPhone}
+                  onChange={(e) => setLookupPhone(e.target.value)}
+                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={lookupLoading}
+                  className="bg-black hover:bg-gray-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  {lookupLoading ? 'Buscando...' : 'Buscar'}
+                </button>
+              </div>
+            </form>
+
+            {/* Resultados de la Búsqueda */}
+            {myBookings !== null && (
+              <div className="space-y-2.5 max-h-64 overflow-y-auto pt-2">
+                {myBookings.length === 0 ? (
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 text-center text-xs text-gray-500">
+                    No encontramos citas registradas con ese número.
+                  </div>
+                ) : (
+                  myBookings.map((b) => (
+                    <div key={b.id} className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-1 text-xs text-left">
+                      <div className="flex justify-between items-start">
+                        <span className="font-extrabold text-gray-900">{b.appointment_services?.name || 'Servicio General'}</span>
+                        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                          b.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'
+                        }`}>
+                          {b.status === 'confirmed' ? 'Confirmada' : b.status}
+                        </span>
+                      </div>
+                      <p className="text-purple-700 font-bold">📅 {b.booking_date} a las {b.booking_time}</p>
+                      <p className="text-gray-500 text-[11px]">👤 Especialista: {b.specialists?.name || 'Cualquiera'}</p>
+                    </div>
+                  ))
+                )}
+              </div>
             )}
           </div>
         </div>
