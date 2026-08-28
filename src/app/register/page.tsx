@@ -1,5 +1,6 @@
 import { signup } from '@/app/auth/actions'
 import Link from 'next/link'
+import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 
 export default async function RegisterPage({
   searchParams,
@@ -61,9 +62,7 @@ export default async function RegisterPage({
           </div>
 
           {params?.error && (
-            <div className="text-red-600 text-sm text-center bg-red-50 border border-red-200 p-3 rounded-lg">
-              {params.error}
-            </div>
+            <FriendlyErrorAlert error={params.error} />
           )}
 
           {params?.message && (

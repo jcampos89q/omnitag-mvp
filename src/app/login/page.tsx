@@ -1,5 +1,6 @@
 import { login } from '@/app/auth/actions'
 import Link from 'next/link'
+import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 
 export default async function LoginPage({
   searchParams,
@@ -64,9 +65,7 @@ export default async function LoginPage({
           </div>
 
           {params?.error && (
-            <div className="text-red-600 text-xs text-center bg-red-50 border border-red-200 p-3 rounded-xl font-medium">
-              {params.error}
-            </div>
+            <FriendlyErrorAlert error={params.error} />
           )}
 
           {params?.message && (

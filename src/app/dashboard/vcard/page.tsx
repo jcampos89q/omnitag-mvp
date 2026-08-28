@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import VCardForm from './VCardForm'
 import { getUserPlanInfo } from '@/lib/plans'
+import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 
 export default async function VCardBuilderPage({
   searchParams,
@@ -46,8 +47,8 @@ export default async function VCardBuilderPage({
           )}
 
           {params?.error && (
-            <div className="mt-4 p-4 bg-red-50 text-red-800 rounded-xl border border-red-200 text-sm">
-              <strong>Error:</strong> {params.error}
+            <div className="mt-4">
+              <FriendlyErrorAlert error={params.error} />
             </div>
           )}
 
