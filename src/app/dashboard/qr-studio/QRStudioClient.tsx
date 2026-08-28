@@ -212,6 +212,43 @@ export default function QRStudioClient({
     logoUrl
   ])
 
+  // Función robusta para Guardar en Fototeca / Galería Móvil o Descargar en PC
+  const processSaveOrShare = async (blob: Blob, filename: string, isSvg: boolean = false) => {
+    const downloadUrl = URL.createObjectURL(blob)
+    const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+    // 1. Si es móvil y PNG, intentar Web Share API nativo directo a la fototeca
+    if (!isSvg && isMobile && typeof navigator !== 'undefined' && navigator.canShare) {
+      try {
+        const file = new File([blob], filename, { type: 'image/png' })
+        if (navigator.canShare({ files: [file] })) {
+          setPreviewDownloadImage(downloadUrl)
+          await navigator.share({
+            files: [file],
+            title: 'Guardar Código QR',
+            text: 'Código QR de OmniTag'
+          })
+          return
+        }
+      } catch (err: any) {
+        if (err.name === 'AbortError') return
+      }
+    }
+
+    // 2. Si es móvil, mostrar modal interactivo para guardar en fotos
+    if (isMobile && !isSvg) {
+      setPreviewDownloadImage(downloadUrl)
+    }
+
+    // 3. Descarga estándar de navegador
+    const a = document.createElement('a')
+    a.href = downloadUrl
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
   // Manejo de descarga estándar o PRO
   const handleDownload = async (format: 'png' | 'svg', forcePro: boolean = false) => {
     // Si intenta descargar función PRO sin plan
@@ -232,18 +269,7 @@ export default function QRStudioClient({
           const rawBlob = await qrCodeInstance.current.getRawData(format)
           if (rawBlob) {
             const filename = `omnitag_qr_${sourceType}_${isPro ? '2000px_hd' : '500px'}.${format}`
-            const downloadUrl = URL.createObjectURL(rawBlob as Blob)
-            
-            const a = document.createElement('a')
-            a.href = downloadUrl
-            a.download = filename
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-
-            if (format === 'png') {
-              setPreviewDownloadImage(downloadUrl)
-            }
+            await processSaveOrShare(rawBlob as Blob, filename, format === 'svg')
           }
         }
         return
@@ -355,16 +381,7 @@ export default function QRStudioClient({
       canvas.toBlob(async (blob) => {
         if (!blob) return
         const filename = `omnitag_qr_imprimible_${sourceType}_hd.png`
-        const downloadUrl = URL.createObjectURL(blob)
-
-        const a = document.createElement('a')
-        a.href = downloadUrl
-        a.download = filename
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-
-        setPreviewDownloadImage(downloadUrl)
+        await processSaveOrShare(blob, filename, false)
       }, 'image/png', 1.0)
 
     } catch (err) {
@@ -854,18 +871,41 @@ export default function QRStudioClient({
               />
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left text-xs text-amber-900 space-y-1">
-              <p className="font-bold">📱 Para guardarlo en tu Fototeca / Galería:</p>
-              <p className="text-[11px]">Mantén presionada la imagen de arriba y selecciona <b>"Guardar en Fotos"</b> o <b>"Descargar imagen"</b>.</p>
-            </div>
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(previewDownloadImage)
+                    const blob = await res.blob()
+                    const file = new File([blob], `omnitag_qr_${sourceType}.png`, { type: 'image/png' })
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                      await navigator.share({
+                        files: [file],
+                        title: 'Guardar Código QR',
+                        text: 'Código QR de OmniTag'
+                      })
+                    } else {
+                      alert('Mantén presionada la imagen arriba y selecciona "Guardar en Fotos".')
+                    }
+                  } catch {
+                    alert('Mantén presionada la imagen arriba y selecciona "Guardar en Fotos".')
+                  }
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>📲 Guardar en Carrete / Fotos</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setPreviewDownloadImage(null)}
-              className="w-full bg-black text-white font-bold py-2.5 rounded-xl text-xs"
-            >
-              Listo / Cerrar
-            </button>
+              <button
+                type="button"
+                onClick={() => setPreviewDownloadImage(null)}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 rounded-xl text-xs"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

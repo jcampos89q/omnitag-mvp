@@ -93,12 +93,37 @@ export default function TableQRGeneratorModal({
     qrImg.src = qrApiUrl
   }, [isOpen, selectedTable, tablePrefix, currentTableLabel, currentTableUrl, menuName])
 
-  const handleDownloadSingle = () => {
+  const handleDownloadSingle = async () => {
     if (!canvasRef.current) return
-    const link = document.createElement('a')
-    link.download = `QR_${menuSlug}_${tablePrefix.toLowerCase()}_${selectedTable}.png`
-    link.href = canvasRef.current.toDataURL('image/png')
-    link.click()
+    const filename = `QR_${menuSlug}_${tablePrefix.toLowerCase()}_${selectedTable}.png`
+
+    canvasRef.current.toBlob(async (blob) => {
+      if (!blob) return
+      const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (isMobile && typeof navigator !== 'undefined' && navigator.canShare) {
+        try {
+          const file = new File([blob], filename, { type: 'image/png' })
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              files: [file],
+              title: `QR ${currentTableLabel}`,
+              text: `Código QR para ${currentTableLabel} de ${menuName}`
+            })
+            return
+          }
+        } catch (err: any) {
+          if (err.name === 'AbortError') return
+        }
+      }
+
+      const downloadUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.download = filename
+      link.href = downloadUrl
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }, 'image/png', 1.0)
   }
 
   if (!isOpen) return null
