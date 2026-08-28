@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import BookingClient from './BookingClient'
-import { Scissors, MapPin, Phone, Sparkles } from 'lucide-react'
+import { Scissors, MapPin, Phone, Sparkles, ArrowLeft } from 'lucide-react'
 
 export async function generateMetadata({
   params
@@ -60,7 +61,15 @@ export default async function PublicBookingPage({
     notFound()
   }
 
-  // 2. Buscar especialistas, servicios y reseñas en paralelo
+  // 2. Buscar si el negocio tiene una vCard principal para navegación cruzada
+  const { data: ownerVcard } = await supabase
+    .from('vcards')
+    .select('slug, first_name, company_name')
+    .eq('user_id', business.user_id)
+    .eq('is_active', true)
+    .maybeSingle()
+
+  // 3. Buscar especialistas, servicios y reseñas en paralelo
   const [
     { data: specialists },
     { data: services },
@@ -73,6 +82,19 @@ export default async function PublicBookingPage({
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* Barra superior de regreso al Hub / vCard (si existe) */}
+      {ownerVcard && (
+        <div className="bg-white py-2 px-4 text-center border-b border-gray-200 shadow-2xs">
+          <Link
+            href={`/v/${ownerVcard.slug}`}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-700 hover:text-black hover:underline transition"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Ver Tarjeta & Contacto de {ownerVcard.company_name || ownerVcard.first_name || business.name}</span>
+          </Link>
+        </div>
+      )}
+
       {/* Cabecera del Negocio */}
       <header className="bg-white border-b border-gray-200 py-6 px-4">
         <div className="max-w-2xl mx-auto text-center space-y-2">

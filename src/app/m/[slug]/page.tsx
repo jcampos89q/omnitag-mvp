@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Link from 'next/link'
+import { ArrowLeft, UserCircle2 } from 'lucide-react'
 import PublicMenuClient from './PublicMenuClient'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
@@ -80,6 +82,14 @@ export default async function PublicMenuPage({
     notFound()
   }
 
+  // 2. Buscar si el negocio tiene una vCard principal para navegación cruzada
+  const { data: ownerVcard } = await supabase
+    .from('vcards')
+    .select('slug, first_name, company_name')
+    .eq('user_id', menu.user_id)
+    .eq('is_active', true)
+    .maybeSingle()
+
   // Registrar visita / escaneo del menú digital
   recordPageViewScan({
     menuId: menu.id,
@@ -87,7 +97,7 @@ export default async function PublicMenuPage({
     sourceType: 'menu'
   })
 
-  // 2. Buscar categorías e ítems
+  // 3. Buscar categorías e ítems
   const { data: categories } = await supabase
     .from('menu_categories')
     .select('*, menu_items(*)')
@@ -111,6 +121,20 @@ export default async function PublicMenuPage({
           fontFamily: fontFamilyCss
         }}
       >
+        {/* Barra superior de regreso al Hub / vCard (si existe) */}
+        {ownerVcard && (
+          <div className="bg-black/10 backdrop-blur-xs py-2 px-4 text-center border-b border-black/5">
+            <Link
+              href={`/v/${ownerVcard.slug}`}
+              className="inline-flex items-center gap-1.5 text-xs font-bold hover:underline opacity-80 hover:opacity-100 transition"
+              style={{ color: theme.text_color }}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Ver Tarjeta & Contacto de {ownerVcard.company_name || ownerVcard.first_name || menu.name}</span>
+            </Link>
+          </div>
+        )}
+
         {/* Cabecera del Menú */}
         <header 
           className="shadow-sm sticky top-0 z-20 border-b border-black/5 backdrop-blur-md"

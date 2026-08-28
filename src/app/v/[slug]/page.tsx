@@ -1,7 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { UserCircle2, Briefcase, Mail, Phone, Download, Building2, Clock, MapPin, ExternalLink, Sparkles } from 'lucide-react'
+import { 
+  UserCircle2, 
+  Briefcase, 
+  Mail, 
+  Phone, 
+  Download, 
+  Building2, 
+  Clock, 
+  MapPin, 
+  ExternalLink, 
+  Sparkles,
+  UtensilsCrossed,
+  Scissors,
+  Gift,
+  Star,
+  ChevronRight,
+  CalendarDays
+} from 'lucide-react'
 import ShareButtons from '@/components/ShareButtons'
 import LeadCaptureModal from './LeadCaptureModal'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
@@ -75,7 +92,7 @@ export default async function PublicVCardPage({
   const supabase = await createClient()
   const { slug } = await params
 
-  // Buscar la vCard por su slug (URL) de forma segura
+  // 1. Buscar la vCard por su slug (URL) de forma segura
   const { data: vcard } = await supabase
     .from('vcards')
     .select('*')
@@ -111,8 +128,21 @@ export default async function PublicVCardPage({
     lead_capture_enabled 
   } = vcard
 
-  // Comprobar si el dueño de la vCard es PRO
-  const { isPro: ownerIsPro } = await getUserPlanInfo(supabase, ownerId)
+  // 2. Comprobar si el dueño de la vCard es PRO y buscar sus módulos del ecosistema
+  const [
+    { isPro: ownerIsPro },
+    { data: activeMenu },
+    { data: activeAppointment },
+    { data: activeLoyalty },
+    { data: activeDevice }
+  ] = await Promise.all([
+    getUserPlanInfo(supabase, ownerId),
+    supabase.from('menus').select('id, slug, name, business_type').eq('user_id', ownerId).eq('is_active', true).maybeSingle(),
+    supabase.from('appointment_businesses').select('id, slug, name, category').eq('user_id', ownerId).eq('is_active', true).maybeSingle(),
+    supabase.from('loyalty_programs').select('id, slug, title, reward_text').eq('user_id', ownerId).eq('is_active', true).maybeSingle(),
+    supabase.from('devices').select('id, tag_id, name').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
+  ])
+
   const canCaptureLeads = ownerIsPro && lead_capture_enabled
 
   const businessInfo = business_info || {}
@@ -141,6 +171,13 @@ export default async function PublicVCardPage({
     : 'rounded-xl'
 
   const isGlass = theme.border_style === 'glass'
+
+  // Determinar módulos activos del ecosistema
+  const showMenu = activeMenu && businessInfo.show_menu !== false
+  const showAppointment = activeAppointment && businessInfo.show_appointments !== false
+  const showLoyalty = activeLoyalty && businessInfo.show_loyalty !== false
+  const showReviews = activeDevice && businessInfo.show_reviews !== false
+  const hasConnectedModules = showMenu || showAppointment || showLoyalty || showReviews
 
   return (
     <>
@@ -293,6 +330,114 @@ export default async function PublicVCardPage({
             </div>
           </div>
 
+          {/* ======================================================== */}
+          {/* 🌟 HUB DEL ECOSISTEMA: SERVICIOS & ACCIONES DEL NEGOCIO */}
+          {/* ======================================================== */}
+          {hasConnectedModules && (
+            <div className="p-5 sm:p-6 bg-black/5 border-b border-black/5 space-y-3">
+              <div className="text-left mb-2">
+                <p className="text-[11px] font-black uppercase tracking-wider opacity-60 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" style={{ color: theme.primary_color }} /> 
+                  Servicios & Accesos del Negocio
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                {/* 1. Módulo de Menú & Catálogo Digital */}
+                {showMenu && (
+                  <a
+                    href={`/m/${activeMenu.slug}`}
+                    className={`p-3.5 sm:p-4 bg-white/80 hover:bg-white border border-black/10 flex items-center justify-between gap-3 shadow-xs hover:shadow-md transition-all text-left ${cardRadiusClass}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <UtensilsCrossed className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-xs sm:text-sm" style={{ color: theme.text_color }}>
+                          {activeMenu.name || 'Menú Digital & Catálogo'}
+                        </p>
+                        <p className="text-[11px] opacity-70">
+                          Explora platillos, precios y pide por WhatsApp
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 opacity-40 shrink-0" />
+                  </a>
+                )}
+
+                {/* 2. Módulo de Agendas & Citas */}
+                {showAppointment && (
+                  <a
+                    href={`/b/${activeAppointment.slug}`}
+                    className={`p-3.5 sm:p-4 bg-white/80 hover:bg-white border border-black/10 flex items-center justify-between gap-3 shadow-xs hover:shadow-md transition-all text-left ${cardRadiusClass}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Scissors className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-xs sm:text-sm" style={{ color: theme.text_color }}>
+                          Reservar Cita / Apartar Turno
+                        </p>
+                        <p className="text-[11px] opacity-70">
+                          Elige tu especialista favorito y horario online
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 opacity-40 shrink-0" />
+                  </a>
+                )}
+
+                {/* 3. Módulo de Fidelización & Sellos */}
+                {showLoyalty && (
+                  <a
+                    href={`/l/${activeLoyalty.slug}`}
+                    className={`p-3.5 sm:p-4 bg-white/80 hover:bg-white border border-black/10 flex items-center justify-between gap-3 shadow-xs hover:shadow-md transition-all text-left ${cardRadiusClass}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-pink-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <Gift className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-xs sm:text-sm" style={{ color: theme.text_color }}>
+                          Club de Sellos & Recompensas
+                        </p>
+                        <p className="text-[11px] opacity-70">
+                          {activeLoyalty.reward_text ? `Gana: ${activeLoyalty.reward_text}` : 'Sella tu tarjeta y canjea premios'}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 opacity-40 shrink-0" />
+                  </a>
+                )}
+
+                {/* 4. Módulo de Calificación Google & Reseñas */}
+                {showReviews && (
+                  <a
+                    href={`/r/${activeDevice.tag_id}`}
+                    className={`p-3.5 sm:p-4 bg-white/80 hover:bg-white border border-black/10 flex items-center justify-between gap-3 shadow-xs hover:shadow-md transition-all text-left ${cardRadiusClass}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-400 text-black flex items-center justify-center shrink-0 shadow-xs">
+                        <Star className="w-5 h-5 fill-black" />
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-xs sm:text-sm" style={{ color: theme.text_color }}>
+                          Califícanos en Google Maps
+                        </p>
+                        <p className="text-[11px] opacity-70">
+                          Déjanos tus 5 estrellas en segundos
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 opacity-40 shrink-0" />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Botones de Acción Directa (WhatsApp, SMS, Guardar Contacto) */}
           <div className="p-6 sm:p-8 space-y-3">
             {contact_info?.phone && (
@@ -388,7 +533,7 @@ export default async function PublicVCardPage({
                   </a>
                 )}
 
-                {/* Email */}
+                {/* Correo Electrónico */}
                 {contact_info?.email && (
                   <a 
                     href={`mailto:${contact_info.email}`}
@@ -397,7 +542,7 @@ export default async function PublicVCardPage({
                     <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${theme.primary_color}20`, color: theme.primary_color }}>
                       <Mail className="w-4 h-4" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Correo Electrónico</p>
                       <p className="text-xs sm:text-sm font-medium truncate" style={{ color: theme.text_color }}>{contact_info.email}</p>
                     </div>
@@ -406,13 +551,13 @@ export default async function PublicVCardPage({
               </div>
             )}
           </div>
+        </div>
 
-          {/* Pie de Página */}
-          <div className="py-4 text-center border-t border-black/5 opacity-60">
-            <p className="text-xs font-medium">
-              Digitalizado por <span className="font-bold">OmniTag</span>
-            </p>
-          </div>
+        {/* Pie de Página */}
+        <div className="mt-6 text-center opacity-60">
+          <p className="text-xs font-semibold" style={{ color: theme.text_color }}>
+            Tarjeta Digital creada con <span className="font-bold">OmniTag</span>
+          </p>
         </div>
       </div>
     </>

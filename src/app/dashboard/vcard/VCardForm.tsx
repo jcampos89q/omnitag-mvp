@@ -418,6 +418,91 @@ export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
         </div>
       </div>
 
+      {/* 7. Ecosistema de Módulos Conectados del Negocio (Hub Central) */}
+      <div className="bg-linear-to-r from-gray-900 via-slate-900 to-black text-white p-6 rounded-2xl border border-white/10 shadow-lg space-y-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-black uppercase tracking-wider">
+            <Sparkles className="w-3 h-3 fill-black" /> Hub Central Unificado
+          </div>
+          <h3 className="font-extrabold text-base sm:text-lg">
+            🔗 Módulos y Accesos del Negocio en tu Tarjeta
+          </h3>
+          <p className="text-xs text-gray-300 leading-relaxed">
+            Tu tarjeta vCard funciona como el portal principal del negocio. Puedes elegir qué accesos rápidos verán tus clientes cuando la escaneen:
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          {/* Switch Menú Digital */}
+          <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">🍽️</span>
+              <div>
+                <p className="font-bold text-xs">Menú & Catálogo</p>
+                <p className="text-[10px] text-gray-400">Platos, precios y pedidos</p>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              name="show_menu"
+              defaultChecked={businessInfo?.show_menu !== false}
+              className="w-4 h-4 rounded text-yellow-400 focus:ring-yellow-400"
+            />
+          </label>
+
+          {/* Switch Agenda & Citas */}
+          <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">✂️</span>
+              <div>
+                <p className="font-bold text-xs">Agendas & Citas</p>
+                <p className="text-[10px] text-gray-400">Reserva con especialistas</p>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              name="show_appointments"
+              defaultChecked={businessInfo?.show_appointments !== false}
+              className="w-4 h-4 rounded text-purple-400 focus:ring-purple-400"
+            />
+          </label>
+
+          {/* Switch Fidelización */}
+          <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">🎁</span>
+              <div>
+                <p className="font-bold text-xs">Club de Sellos</p>
+                <p className="text-[10px] text-gray-400">Premios a clientes fieles</p>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              name="show_loyalty"
+              defaultChecked={businessInfo?.show_loyalty !== false}
+              className="w-4 h-4 rounded text-pink-400 focus:ring-pink-400"
+            />
+          </label>
+
+          {/* Switch Reseñas Google */}
+          <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">⭐</span>
+              <div>
+                <p className="font-bold text-xs">Reseñas Google & NFC</p>
+                <p className="text-[10px] text-gray-400">Multiplicador 5 estrellas</p>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              name="show_reviews"
+              defaultChecked={businessInfo?.show_reviews !== false}
+              className="w-4 h-4 rounded text-amber-400 focus:ring-amber-400"
+            />
+          </label>
+        </div>
+      </div>
+
       {/* Botón de Guardado */}
       <div className="flex justify-end pt-2">
         <button 
