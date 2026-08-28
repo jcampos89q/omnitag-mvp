@@ -15,7 +15,11 @@ import {
   Calendar, 
   Scissors, 
   Stethoscope, 
-  CheckCircle2 
+  CheckCircle2,
+  MapPin,
+  UtensilsCrossed,
+  User,
+  FileText
 } from 'lucide-react'
 import { ThemeConfig } from '@/lib/themes'
 
@@ -46,14 +50,22 @@ type CartItem = {
 export default function PublicMenuClient({ 
   menu, 
   categories,
-  theme
+  theme,
+  initialTable = ''
 }: { 
   menu: any, 
   categories: Category[],
-  theme?: ThemeConfig
+  theme?: ThemeConfig,
+  initialTable?: string
 }) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [tableNumber, setTableNumber] = useState<string>(initialTable)
+  const [orderType, setOrderType] = useState<'table' | 'takeout' | 'delivery'>(
+    initialTable ? 'table' : 'table'
+  )
+  const [customerName, setCustomerName] = useState<string>('')
+  const [orderNotes, setOrderNotes] = useState<string>('')
 
   const businessType = menu.business_type || 'restaurant'
   const isRestaurant = businessType === 'restaurant'
@@ -123,16 +135,39 @@ export default function PublicMenuClient({
     window.open(url, '_blank')
   }
 
-  // Pedido general del carrito (Restaurantes)
+  // Pedido estructurado con COMANDERA Y MESA para Restaurantes
   const sendWhatsAppOrder = () => {
     if (!menu.whatsapp_number) return
     const cleanPhone = menu.whatsapp_number.replace(/\D/g, '')
 
-    let text = `*NUEVO PEDIDO - ${menu.name}*%0A%0A`
+    const locationHeader = orderType === 'table'
+      ? tableNumber ? `📍 *MESA:* #${tableNumber}` : '📍 *MESA:* En el local'
+      : orderType === 'takeout'
+      ? '📦 *TIPO:* Para Llevar / Takeout'
+      : '🛵 *TIPO:* A Domicilio / Delivery'
+
+    let text = `===============================%0A`
+    text += `🍽️ *NUEVO PEDIDO DIGITAL - ${menu.name.toUpperCase()}*%0A`
+    text += `${locationHeader}%0A`
+    if (customerName.trim()) {
+      text += `👤 *Cliente:* ${customerName.trim()}%0A`
+    }
+    text += `===============================%0A%0A`
+
+    text += `*DETALLE DE LA ORDEN:*%0A`
     cart.forEach(c => {
-      text += `• ${c.quantity}x ${c.item.name} ($${(c.item.price * c.quantity).toFixed(2)})%0A`
+      text += `• ${c.quantity}x ${c.item.name} — $${(c.item.price * c.quantity).toFixed(2)}%0A`
     })
-    text += `%0A*Total a Pagar: $${totalPrice.toFixed(2)}*%0A%0A¿Podrían confirmar la recepción de mi pedido?`
+
+    if (orderNotes.trim()) {
+      text += `%0A📝 *Notas / Instrucciones:* ${orderNotes.trim()}%0A`
+    }
+
+    text += `%0A-------------------------------%0A`
+    text += `💰 *TOTAL A PAGAR: $${totalPrice.toFixed(2)}*%0A`
+    text += `⏰ *Hora:* ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}%0A`
+    text += `===============================%0A`
+    text += `¿Podrían confirmarme la recepción y tiempo estimado? ¡Muchas gracias!`
 
     const url = `https://wa.me/${cleanPhone}?text=${text}`
     window.open(url, '_blank')
@@ -140,8 +175,29 @@ export default function PublicMenuClient({
 
   return (
     <div className="pb-28">
-      <main className="max-w-3xl mx-auto px-4 mt-6 space-y-8">
+      <main className="max-w-3xl mx-auto px-4 mt-4 space-y-6">
         
+        {/* BANNER DE MESA (Si se escaneó desde una mesa con QR) */}
+        {tableNumber ? (
+          <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-2xl flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-sm shrink-0">
+                #{tableNumber}
+              </span>
+              <div>
+                <p className="font-bold text-gray-900">Estás en la Mesa #{tableNumber}</p>
+                <p className="text-[11px] opacity-75">Tus pedidos llegarán directo a esta mesa.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsCartOpen(true)}
+              className="text-xs font-bold text-amber-700 underline shrink-0 cursor-pointer"
+            >
+              Cambiar
+            </button>
+          </div>
+        ) : null}
+
         {/* BANNER DESTACADO: PLATO / ESPECIAL DEL DÍA */}
         {hasValidDailySpecial && (
           <section className="animate-in fade-in slide-in-from-top-4 duration-300">
@@ -158,95 +214,87 @@ export default function PublicMenuClient({
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-xs font-extrabold uppercase tracking-wider shadow-xs"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  <Sparkles className="w-3.5 h-3.5" /> ESPECIAL DEL DÍA (Solo por Hoy)
+                  <Sparkles className="w-3.5 h-3.5 fill-current" />
+                  {isSalon ? 'Especial de Hoy' : isDental ? 'Promoción del Día' : 'Plato del Día'}
                 </span>
+                <span className="text-xs opacity-60 font-medium">Solo por hoy</span>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
-                {dailySpecial.image_url && (
-                  <div className={`w-full sm:w-36 h-36 rounded-xl overflow-hidden shrink-0 shadow-md border border-black/5`}>
-                    <img src={dailySpecial.image_url} alt={dailySpecial.name} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-xl sm:text-2xl font-extrabold" style={{ color: textColor }}>
-                      {dailySpecial.name}
-                    </h3>
-                    <span className="text-xl sm:text-2xl font-extrabold ml-2" style={{ color: primaryColor }}>
+              <div className="flex flex-col sm:flex-row gap-5 items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="text-xl sm:text-2xl font-black tracking-tight mb-1" style={{ color: textColor }}>
+                    {dailySpecial.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm opacity-75 mb-4 leading-relaxed">
+                    {dailySpecial.description}
+                  </p>
+                  
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl font-black" style={{ color: primaryColor }}>
                       ${dailySpecial.price}
                     </span>
-                  </div>
-                  {dailySpecial.description && (
-                    <p className="opacity-75 text-xs sm:text-sm mt-1.5 leading-relaxed">
-                      {dailySpecial.description}
-                    </p>
-                  )}
-
-                  <div className="mt-4">
                     {menu.whatsapp_number && (
                       <button
-                        onClick={() => handleSingleServiceBooking({
+                        onClick={() => addToCart({
                           id: 'daily_special',
-                          name: `🔥 Plato del Día: ${dailySpecial.name}`,
-                          price: dailySpecial.price,
+                          name: `⭐ ${dailySpecial.title} (Especial del Día)`,
                           description: dailySpecial.description,
-                          image_url: dailySpecial.image_url,
+                          price: Number(dailySpecial.price) || 0,
+                          image_url: dailySpecial.image_url || '',
                           is_available: true,
                           is_featured: true,
                           allergens: []
                         })}
                         style={{ backgroundColor: primaryColor }}
-                        className={`text-white text-xs sm:text-sm font-bold px-5 py-2.5 flex items-center gap-2 hover:opacity-90 transition cursor-pointer shadow-md ${btnRadiusClass}`}
+                        className={`text-white text-xs sm:text-sm font-bold px-4 py-2.5 hover:opacity-90 transition cursor-pointer shadow-md flex items-center gap-1.5 ${btnRadiusClass}`}
                       >
-                        <MessageCircle className="w-4 h-4" /> Pedir Plato del Día por WhatsApp
+                        <Plus className="w-4 h-4" />
+                        Pedir Especial
                       </button>
                     )}
                   </div>
                 </div>
+
+                {dailySpecial.image_url && (
+                  <div className={`w-full sm:w-36 h-36 bg-black/5 rounded-xl overflow-hidden shrink-0 shadow-xs border border-black/5 ${cardRadiusClass}`}>
+                    <img src={dailySpecial.image_url} alt={dailySpecial.title} className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
             </div>
           </section>
         )}
 
-        {/* Catálogo / Categorías */}
-        {!categories || categories.length === 0 ? (
-          <div className="text-center py-16 opacity-60">
-            Este catálogo aún no tiene ítems disponibles.
+        {/* CATÁLOGO DE CATEGORÍAS E ÍTEMS */}
+        {categories.length === 0 ? (
+          <div className="text-center py-12 opacity-60">
+            <p className="text-sm font-semibold">El catálogo está en preparación...</p>
           </div>
         ) : (
           categories.map((category) => {
-            const items = category.menu_items || []
-            if (items.length === 0) return null
+            if (!category.menu_items || category.menu_items.length === 0) return null
 
             return (
-              <section key={category.id} className="scroll-mt-24">
-                <div className="flex items-center gap-3 mb-5">
-                  <h2 
-                    className="text-lg sm:text-xl font-extrabold pb-1 inline-block border-b-2"
-                    style={{ 
-                      color: textColor,
-                      borderColor: primaryColor 
-                    }}
-                  >
+              <section key={category.id} className="space-y-4">
+                <div className="flex items-center gap-2 border-b border-black/5 pb-2">
+                  <h2 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: textColor }}>
                     {category.name}
                   </h2>
-                  <div className="h-px flex-1 bg-black/5" />
+                  <span className="text-xs opacity-50 font-bold">({category.menu_items.length})</span>
                 </div>
 
-                <div className="space-y-4">
-                  {items.map((item) => {
-                    const cartItem = cart.find(c => c.item.id === item.id)
-                    const quantity = cartItem?.quantity || 0
+                <div className="grid grid-cols-1 gap-3.5">
+                  {category.menu_items.map((item) => {
+                    const inCart = cart.find(c => c.item.id === item.id)
+                    const quantity = inCart?.quantity || 0
 
                     return (
                       <article 
-                        key={item.id} 
-                        className={`p-4 shadow-sm border ${cardRadiusClass} flex gap-4 transition ${
-                          item.is_featured ? 'ring-2 ring-yellow-400/60' : 'border-black/5'
-                        } ${!item.is_available ? 'opacity-60' : ''}`}
+                        key={item.id}
+                        className={`p-4 sm:p-5 border transition-all flex gap-4 items-center justify-between shadow-xs hover:shadow-md ${cardRadiusClass}`}
                         style={{ 
                           backgroundColor: cardBg,
+                          borderColor: item.is_featured ? `${primaryColor}40` : 'rgba(0,0,0,0.06)',
                           color: textColor
                         }}
                       >
@@ -348,7 +396,9 @@ export default function PublicMenuClient({
             style={{ backgroundColor: '#0F172A' }}
           >
             <div className="flex flex-col pl-3">
-              <span className="text-xs font-medium text-gray-400">Total ({totalItems} productos)</span>
+              <span className="text-xs font-medium text-gray-400">
+                {tableNumber ? `Mesa #${tableNumber} • ` : ''}{totalItems} {totalItems === 1 ? 'producto' : 'productos'}
+              </span>
               <span className="font-extrabold text-base sm:text-lg">${totalPrice.toFixed(2)}</span>
             </div>
             <button 
@@ -362,7 +412,7 @@ export default function PublicMenuClient({
         </div>
       )}
 
-      {/* Modal del Carrito */}
+      {/* Modal / Comandera del Carrito */}
       {isCartOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs">
           <div 
@@ -372,41 +422,129 @@ export default function PublicMenuClient({
               color: textColor
             }}
           >
-            <div className="p-6 border-b border-black/5 flex justify-between items-center bg-black/5">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5" style={{ color: primaryColor }} /> Resumen del Pedido
+            {/* Cabecera del Pedido */}
+            <div className="p-5 border-b border-black/5 flex justify-between items-center bg-black/5">
+              <h2 className="text-lg font-extrabold flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5" style={{ color: primaryColor }} /> 
+                <span>Comanda de Pedido</span>
               </h2>
               <button onClick={() => setIsCartOpen(false)} className="opacity-70 hover:opacity-100 p-2 rounded-full cursor-pointer text-base">
                 ✕
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {cart.map((c) => (
-                <div key={c.item.id} className="flex justify-between items-center gap-4 border-b border-black/5 pb-3">
-                  <div className="flex-1">
-                    <p className="font-bold text-sm" style={{ color: textColor }}>{c.item.name}</p>
-                    <p className="opacity-60 text-xs font-medium">${c.item.price} c/u</p>
-                  </div>
-                  <div className="flex items-center gap-2 bg-black/5 p-1 rounded-xl">
-                    <button onClick={() => removeFromCart(c.item.id)} className="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-xs text-gray-700 cursor-pointer"><Minus className="w-3.5 h-3.5"/></button>
-                    <span className="font-bold text-xs w-4 text-center">{c.quantity}</span>
-                    <button onClick={() => addToCart(c.item)} className="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-xs text-gray-700 cursor-pointer"><Plus className="w-3.5 h-3.5"/></button>
+            <div className="flex-1 overflow-y-auto p-5 space-y-5 text-xs sm:text-sm">
+              {/* 1. Selección de Mesa / Modalidad */}
+              <div className="p-4 bg-black/5 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="font-extrabold text-xs uppercase tracking-wider flex items-center gap-1.5 opacity-80">
+                    <MapPin className="w-4 h-4" style={{ color: primaryColor }} /> Ubicación del Pedido
+                  </label>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setOrderType('table')}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                        orderType === 'table' ? 'bg-black text-white' : 'bg-white/80 text-gray-700'
+                      }`}
+                    >
+                      En Mesa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOrderType('takeout')}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                        orderType === 'takeout' ? 'bg-black text-white' : 'bg-white/80 text-gray-700'
+                      }`}
+                    >
+                      Llevar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOrderType('delivery')}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                        orderType === 'delivery' ? 'bg-black text-white' : 'bg-white/80 text-gray-700'
+                      }`}
+                    >
+                      Domicilio
+                    </button>
                   </div>
                 </div>
-              ))}
+
+                {orderType === 'table' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold opacity-70">Número / Nombre de Mesa:</span>
+                    <input
+                      type="text"
+                      placeholder="Ej. 4, Terraza 2, Barra"
+                      value={tableNumber}
+                      onChange={(e) => setTableNumber(e.target.value)}
+                      className="flex-1 px-3 py-1.5 rounded-xl border border-black/10 bg-white text-xs font-bold focus:outline-none focus:ring-1"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Datos del Cliente & Notas */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider opacity-70 mb-1 flex items-center gap-1">
+                    <User className="w-3.5 h-3.5" /> Tu Nombre (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Carlos Mendoza"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-black/10 bg-white text-xs font-medium focus:outline-none focus:ring-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider opacity-70 mb-1 flex items-center gap-1">
+                    <FileText className="w-3.5 h-3.5" /> Notas Especiales para la Cocina
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Ej. Sin cebolla, aderezo aparte, bien cocido..."
+                    value={orderNotes}
+                    onChange={(e) => setOrderNotes(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-black/10 bg-white text-xs font-medium focus:outline-none focus:ring-1 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* 3. Lista de Productos en el Carrito */}
+              <div className="space-y-3 pt-2">
+                <p className="font-extrabold text-xs uppercase tracking-wider opacity-60">Platos & Bebidas Seleccionados:</p>
+                {cart.map((c) => (
+                  <div key={c.item.id} className="flex justify-between items-center gap-4 border-b border-black/5 pb-3">
+                    <div className="flex-1">
+                      <p className="font-bold text-sm" style={{ color: textColor }}>{c.item.name}</p>
+                      <p className="opacity-60 text-xs font-medium">${c.item.price} c/u</p>
+                    </div>
+                    <div className="flex items-center gap-2 bg-black/5 p-1 rounded-xl">
+                      <button onClick={() => removeFromCart(c.item.id)} className="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-xs text-gray-700 cursor-pointer"><Minus className="w-3.5 h-3.5"/></button>
+                      <span className="font-bold text-xs w-4 text-center">{c.quantity}</span>
+                      <button onClick={() => addToCart(c.item)} className="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-xs text-gray-700 cursor-pointer"><Plus className="w-3.5 h-3.5"/></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="p-6 border-t border-black/5 bg-black/5">
-              <div className="flex justify-between items-center mb-6">
-                <span className="font-medium opacity-70 text-sm">Total del Pedido:</span>
-                <span className="font-extrabold text-2xl" style={{ color: primaryColor }}>${totalPrice.toFixed(2)}</span>
+            {/* Pie de Página / Enviar a Cocina y WhatsApp */}
+            <div className="p-5 border-t border-black/5 bg-black/5 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="font-medium opacity-70 text-xs sm:text-sm">Total a Pagar:</span>
+                <span className="font-extrabold text-xl sm:text-2xl" style={{ color: primaryColor }}>${totalPrice.toFixed(2)}</span>
               </div>
               <button 
                 onClick={sendWhatsAppOrder}
-                className={`w-full bg-[#25D366] hover:bg-[#1EBE57] text-white font-bold px-6 py-4 flex items-center justify-center gap-3 shadow-lg transition-all cursor-pointer ${btnRadiusClass}`}
+                className={`w-full bg-[#25D366] hover:bg-[#1EBE57] text-white font-extrabold px-6 py-3.5 flex items-center justify-center gap-2.5 shadow-lg transition-all cursor-pointer text-sm ${btnRadiusClass}`}
               >
-                <MessageCircle className="w-5 h-5" /> Enviar Pedido por WhatsApp
+                <MessageCircle className="w-5 h-5 fill-white" /> 
+                <span>Enviar Pedido a Cocina por WhatsApp</span>
               </button>
             </div>
           </div>

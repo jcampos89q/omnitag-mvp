@@ -1,13 +1,20 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { createClient } from '@/lib/supabase/server'
 import { createMenu } from './actions'
 import { Coffee, Scissors, Stethoscope, ShoppingBag } from 'lucide-react'
 import MenuManager from './MenuManager'
+import { getUserPlanInfo } from '@/lib/plans'
 
 export default async function MenusPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Buscar menú del usuario
+  // 1. Obtener estado del plan
+  const { isPro } = await getUserPlanInfo(supabase, user?.id)
+
+  // 2. Buscar menú del usuario
   const { data: menu } = await supabase
     .from('menus')
     .select('*')
@@ -92,7 +99,7 @@ export default async function MenusPage() {
             </form>
           </div>
         ) : (
-          <MenuManager menu={menu} categories={categories} />
+          <MenuManager menu={menu} categories={categories} isPro={isPro} />
         )}
       </div>
     </div>

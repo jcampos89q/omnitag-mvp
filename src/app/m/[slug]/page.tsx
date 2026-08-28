@@ -57,12 +57,16 @@ export async function generateMetadata({
 }
 
 export default async function PublicMenuPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ mesa?: string; table?: string }>
 }) {
   const supabase = await createClient()
   const { slug } = await params
+  const { mesa, table } = await searchParams
+  const initialTable = mesa || table || ''
 
   // 1. Buscar el menú de forma segura con maybeSingle
   const { data: menu } = await supabase
@@ -112,29 +116,34 @@ export default async function PublicMenuPage({
           className="shadow-sm sticky top-0 z-20 border-b border-black/5 backdrop-blur-md"
           style={{ backgroundColor: `${theme.card_bg}F0` }}
         >
-          <div className="max-w-3xl mx-auto px-4 py-6 text-center">
+          <div className="max-w-3xl mx-auto px-4 py-5 text-center">
             {menu.logo_url && (
               <div 
-                className="w-20 h-20 mx-auto mb-3 rounded-2xl overflow-hidden shadow-md border-2 bg-white flex items-center justify-center p-1"
+                className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2.5 rounded-2xl overflow-hidden shadow-md border-2 bg-white flex items-center justify-center p-1"
                 style={{ borderColor: theme.primary_color }}
               >
                 <img src={menu.logo_url} alt={menu.name} className="w-full h-full object-cover rounded-xl" />
               </div>
             )}
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={{ color: theme.text_color }}>
+            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight" style={{ color: theme.text_color }}>
               {menu.name}
             </h1>
             {menu.description && (
-              <p className="mt-1.5 text-xs sm:text-sm opacity-75 max-w-lg mx-auto" style={{ color: theme.text_color }}>
+              <p className="mt-1 text-xs sm:text-sm opacity-75 max-w-lg mx-auto" style={{ color: theme.text_color }}>
                 {menu.description}
               </p>
             )}
           </div>
         </header>
 
-        {/* Componente interactivo del catálogo y carrito */}
+        {/* Componente interactivo del catálogo, comandas y carrito */}
         <div className="flex-1">
-          <PublicMenuClient menu={menu} categories={categories || []} theme={theme} />
+          <PublicMenuClient 
+            menu={menu} 
+            categories={categories || []} 
+            theme={theme} 
+            initialTable={initialTable}
+          />
         </div>
 
         <footer className="mt-8 text-center pb-8 border-t border-black/5 pt-8 opacity-60">

@@ -21,11 +21,14 @@ import {
 } from 'lucide-react'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import ThemeSelector from '@/components/ThemeSelector'
+import TableQRGeneratorModal from './TableQRGeneratorModal'
+import { QrCode, UtensilsCrossed } from 'lucide-react'
 import { updateMenu, createCategory, deleteCategory, createMenuItem, deleteMenuItem, setDailySpecial, deleteDailySpecial } from './actions'
 
 interface MenuManagerProps {
   menu: any
   categories: any[]
+  isPro?: boolean
 }
 
 const BUSINESS_TYPES = [
@@ -35,9 +38,10 @@ const BUSINESS_TYPES = [
   { id: 'services', name: 'Tienda / Comercio / Servicios', icon: ShoppingBag, desc: 'Catálogo de productos, venta directa y cotizaciones.' },
 ]
 
-export default function MenuManager({ menu, categories }: MenuManagerProps) {
+export default function MenuManager({ menu, categories, isPro = false }: MenuManagerProps) {
   const [businessType, setBusinessType] = useState<string>(menu.business_type || 'restaurant')
   const [showDailySpecialForm, setShowDailySpecialForm] = useState(false)
+  const [showTableQRModal, setShowTableQRModal] = useState(false)
 
   const todayStr = new Date().toISOString().slice(0, 10)
   const isDailySpecialActive = menu.daily_special?.is_active && menu.daily_special?.date === todayStr
@@ -495,6 +499,15 @@ export default function MenuManager({ menu, categories }: MenuManagerProps) {
           </div>
         ))}
       </div>
+
+      {/* Modal Generador de Códigos QR por Mesa */}
+      <TableQRGeneratorModal
+        isOpen={showTableQRModal}
+        onClose={() => setShowTableQRModal(false)}
+        menuSlug={menu.slug}
+        menuName={menu.name}
+        isPro={isPro}
+      />
     </div>
   )
 }
