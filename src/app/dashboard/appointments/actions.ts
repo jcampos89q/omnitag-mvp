@@ -30,6 +30,31 @@ export async function createOrUpdateBusiness(formData: FormData) {
     ? existing.slug
     : `${name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-')}-${Math.random().toString(36).substring(2, 6)}`
 
+  const slotInterval = parseInt(formData.get('slot_interval') as string) || 30
+  const lunchEnabled = formData.get('lunch_break_enabled') === 'on'
+  const lunchStart = (formData.get('lunch_break_start') as string) || '12:00 PM'
+  const lunchEnd = (formData.get('lunch_break_end') as string) || '01:00 PM'
+
+  const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+  const daysConfig: Record<string, { enabled: boolean; open: string; close: string }> = {}
+
+  dayKeys.forEach(day => {
+    const enabled = formData.get(`${day}_enabled`) === 'on'
+    const open = (formData.get(`${day}_open`) as string) || '08:00 AM'
+    const close = (formData.get(`${day}_close`) as string) || '07:00 PM'
+    daysConfig[day] = { enabled, open, close }
+  })
+
+  const schedule_config = {
+    slot_interval: slotInterval,
+    lunch_break: {
+      enabled: lunchEnabled,
+      start: lunchStart,
+      end: lunchEnd
+    },
+    days: daysConfig
+  }
+
   const payload = {
     name,
     category,
@@ -37,6 +62,7 @@ export async function createOrUpdateBusiness(formData: FormData) {
     phone,
     whatsapp,
     instagram,
+    schedule_config,
     is_active: true,
     updated_at: new Date().toISOString()
   }

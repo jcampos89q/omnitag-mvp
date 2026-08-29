@@ -23,6 +23,7 @@ import {
 import Link from 'next/link'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import { createOrUpdateBusiness, createSpecialist, deleteSpecialist, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability, createManualBlockOrBooking, deleteBooking } from './actions'
+import { generateTimeSlotsForDate } from '@/lib/schedule'
 
 interface AppointmentsManagerProps {
   business: any
@@ -46,10 +47,13 @@ export default function AppointmentsManager({
   const [showAddService, setShowAddService] = useState(false)
   const [showAddBlock, setShowAddBlock] = useState(false)
 
-  const timeSlots = [
-    '09:00 AM', '09:45 AM', '10:30 AM', '11:15 AM',
-    '01:00 PM', '01:45 PM', '02:30 PM', '03:15 PM',
-    '04:00 PM', '04:45 PM', '05:30 PM', '06:15 PM'
+  const timeSlots = generateTimeSlotsForDate(
+    business?.schedule_config,
+    new Date().toISOString().slice(0, 10)
+  ).length > 0 ? generateTimeSlotsForDate(business?.schedule_config, new Date().toISOString().slice(0, 10)) : [
+    '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+    '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
+    '06:00 PM', '07:00 PM', '08:00 PM'
   ]
 
   return (
@@ -585,9 +589,152 @@ export default function AppointmentsManager({
             </div>
           </div>
 
-          <div className="flex justify-end pt-2">
+          {/* 6. HORARIOS DE ATENCIÓN Y APERTURA PERSONALIZADOS */}
+          <div className="pt-4 border-t border-gray-100 space-y-4">
+            <div className="space-y-1">
+              <h4 className="font-extrabold text-sm text-gray-900 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-purple-700" />
+                <span>Horarios de Atención & Días Laborables</span>
+              </h4>
+              <p className="text-xs text-gray-500">
+                Define qué días abre tu negocio, la hora de apertura y cierre, el intervalo entre turnos y si tienen pausa de almuerzo.
+              </p>
+            </div>
+
+            {/* Intervalo y Almuerzo */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                  Intervalo entre Turnos (Minutos)
+                </label>
+                <select
+                  name="slot_interval"
+                  defaultValue={business?.schedule_config?.slot_interval || 30}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                >
+                  <option value={15}>Cada 15 minutos (ej. 08:00, 08:15, 08:30)</option>
+                  <option value={30}>Cada 30 minutos (ej. 08:00, 08:30, 09:00)</option>
+                  <option value={45}>Cada 45 minutos (ej. 08:00, 08:45, 09:30)</option>
+                  <option value={60}>Cada 1 hora (ej. 08:00, 09:00, 10:00)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer pt-1">
+                  <input
+                    type="checkbox"
+                    name="lunch_break_enabled"
+                    defaultChecked={business?.schedule_config?.lunch_break?.enabled ?? true}
+                    className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                  />
+                  <span className="text-xs font-bold text-gray-800">Pausa General de Almuerzo / Comida</span>
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="block text-[10px] font-bold text-gray-500 uppercase">Inicio Almuerzo</span>
+                    <select
+                      name="lunch_break_start"
+                      defaultValue={business?.schedule_config?.lunch_break?.start || '12:00 PM'}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                    >
+                      {['11:30 AM', '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM', '02:00 PM'].map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-bold text-gray-500 uppercase">Fin Almuerzo</span>
+                    <select
+                      name="lunch_break_end"
+                      defaultValue={business?.schedule_config?.lunch_break?.end || '01:00 PM'}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                    >
+                      {['12:30 PM', '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM', '03:00 PM'].map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabla de Días de la Semana */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Horario por Día de la Semana
+              </label>
+
+              <div className="space-y-2">
+                {[
+                  { key: 'monday', label: 'Lunes' },
+                  { key: 'tuesday', label: 'Martes' },
+                  { key: 'wednesday', label: 'Miércoles' },
+                  { key: 'thursday', label: 'Jueves' },
+                  { key: 'friday', label: 'Viernes' },
+                  { key: 'saturday', label: 'Sábado' },
+                  { key: 'sunday', label: 'Domingo' }
+                ].map(({ key, label }) => {
+                  const dayData = business?.schedule_config?.days?.[key] || {
+                    enabled: key !== 'sunday',
+                    open: key === 'saturday' ? '09:00 AM' : '08:00 AM',
+                    close: key === 'saturday' ? '07:00 PM' : '07:00 PM'
+                  }
+
+                  const timeOptions = [
+                    '06:00 AM', '06:30 AM', '07:00 AM', '07:30 AM', '08:00 AM', '08:30 AM',
+                    '09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+                    '12:00 PM', '12:30 PM', '01:00 PM', '01:30 PM', '02:00 PM', '02:30 PM',
+                    '03:00 PM', '03:30 PM', '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM',
+                    '06:00 PM', '06:30 PM', '07:00 PM', '07:30 PM', '08:00 PM', '08:30 PM',
+                    '09:00 PM', '09:30 PM', '10:00 PM', '11:00 PM'
+                  ]
+
+                  return (
+                    <div key={key} className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                      <label className="flex items-center gap-2.5 font-bold text-gray-900 w-32 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name={`${key}_enabled`}
+                          defaultChecked={dayData.enabled}
+                          className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                        />
+                        <span>{label}</span>
+                      </label>
+
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <span className="text-[11px] text-gray-500">De</span>
+                        <select
+                          name={`${key}_open`}
+                          defaultValue={dayData.open || '08:00 AM'}
+                          className="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white font-medium focus:border-black focus:outline-none flex-1 sm:flex-none"
+                        >
+                          {timeOptions.map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+
+                        <span className="text-[11px] text-gray-500">a</span>
+                        <select
+                          name={`${key}_close`}
+                          defaultValue={dayData.close || '07:00 PM'}
+                          className="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white font-medium focus:border-black focus:outline-none flex-1 sm:flex-none"
+                        >
+                          {timeOptions.map(t => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-3">
             <button type="submit" className="bg-black text-white px-6 py-3 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-md">
-              Guardar Cambios
+              Guardar Configuración & Horarios
             </button>
           </div>
         </form>

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { updateBookingStatus } from '@/app/dashboard/appointments/actions'
 import { staffCreateScheduleBlock, staffDeleteBooking } from '@/app/b/[slug]/actions'
+import { generateTimeSlotsForDate } from '@/lib/schedule'
 
 interface Specialist {
   id: string
@@ -65,12 +66,7 @@ export default function StaffPortalClient({
   const [blockReason, setBlockReason] = useState<string>('🥗 Almuerzo / Comida')
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
 
-  const timeSlots = [
-    '09:00 AM', '09:45 AM', '10:30 AM', '11:15 AM',
-    '12:00 PM', '12:45 PM', '01:00 PM', '01:45 PM',
-    '02:30 PM', '03:15 PM', '04:00 PM', '04:45 PM',
-    '05:30 PM', '06:15 PM', '07:00 PM'
-  ]
+  const timeSlots = generateTimeSlotsForDate(business?.schedule_config, selectedDate)
 
   // Siguientes 7 días
   const nextDays = Array.from({ length: 7 }, (_, i) => {

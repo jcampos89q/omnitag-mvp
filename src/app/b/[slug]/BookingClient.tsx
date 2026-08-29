@@ -20,6 +20,7 @@ import {
   Search
 } from 'lucide-react'
 import { createPublicBooking, createSpecialistReview, lookupCustomerBookings } from './actions'
+import { generateTimeSlotsForDate, isDayOpen } from '@/lib/schedule'
 
 interface Specialist {
   id: string
@@ -111,19 +112,20 @@ export default function BookingClient({
   const nextDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() + i)
+    const dateStr = d.toISOString().slice(0, 10)
+    const isOpen = isDayOpen(business?.schedule_config, dateStr)
     return {
-      dateStr: d.toISOString().slice(0, 10),
+      dateStr,
       dayName: i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : d.toLocaleDateString('es-HN', { weekday: 'short' }),
       dayNumber: d.getDate(),
-      monthName: d.toLocaleDateString('es-HN', { month: 'short' })
+      monthName: d.toLocaleDateString('es-HN', { month: 'short' }),
+      isOpen
     }
   })
 
-  const timeSlots = [
-    '09:00 AM', '09:45 AM', '10:30 AM', '11:15 AM',
-    '01:00 PM', '01:45 PM', '02:30 PM', '03:15 PM',
-    '04:00 PM', '04:45 PM', '05:30 PM', '06:15 PM'
-  ]
+  // Generar horarios de atención dinámicos para la fecha seleccionada
+  const timeSlots = generateTimeSlotsForDate(business?.schedule_config, selectedDate)
+  const isSelectedDayOpen = isDayOpen(business?.schedule_config, selectedDate)
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -421,15 +423,20 @@ export default function BookingClient({
               key={d.dateStr}
               type="button"
               onClick={() => setSelectedDate(d.dateStr)}
-              className={`p-3 rounded-2xl text-center min-w-[72px] transition cursor-pointer border ${
+              className={`p-3 rounded-2xl text-center min-w-[72px] transition cursor-pointer border relative ${
                 selectedDate === d.dateStr
                   ? 'bg-black text-white border-black shadow-sm'
-                  : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                  : d.isOpen
+                  ? 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                  : 'bg-gray-100/70 text-gray-400 border-gray-200'
               }`}
             >
               <p className="text-[10px] uppercase font-bold opacity-75">{d.dayName}</p>
               <p className="text-lg font-black">{d.dayNumber}</p>
               <p className="text-[10px] uppercase opacity-75">{d.monthName}</p>
+              {!d.isOpen && (
+                <span className="text-[8px] font-bold text-red-500 block mt-0.5">Cerrado</span>
+              )}
             </button>
           ))}
         </div>
@@ -439,46 +446,59 @@ export default function BookingClient({
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
             Horas disponibles:
           </label>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {timeSlots.map((time) => {
-              const currentServiceDuration = selectedService?.duration_minutes || 45
-              const slotStart = parseTimeToMinutes(time)
-              const slotEnd = slotStart + currentServiceDuration
 
-              const isOccupied = existingBookings.some((b: any) => {
-                if (b.booking_date !== selectedDate) return false
-                if (b.status === 'cancelled') return false
-                if (selectedSpecialist && b.specialist_id && b.specialist_id !== selectedSpecialist.id) return false
+          {!isSelectedDayOpen ? (
+            <div className="p-6 bg-red-50 text-red-800 rounded-2xl border border-red-200 text-center text-xs font-semibold space-y-1">
+              <p className="font-extrabold text-sm">🚪 Negocio Cerrado este día</p>
+              <p className="text-red-600 font-normal">Este día no está habilitado para atención. Por favor selecciona otro día en el calendario.</p>
+            </div>
+          ) : timeSlots.length === 0 ? (
+            <div className="p-6 bg-gray-50 text-gray-600 rounded-2xl border border-gray-200 text-center text-xs space-y-1">
+              <p className="font-bold">No hay horarios disponibles configurados</p>
+              <p className="text-gray-400 font-normal">Por favor consulta directamente con el negocio.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {timeSlots.map((time) => {
+                const currentServiceDuration = selectedService?.duration_minutes || 45
+                const slotStart = parseTimeToMinutes(time)
+                const slotEnd = slotStart + currentServiceDuration
 
-                const bStart = parseTimeToMinutes(b.booking_time)
-                const bDuration = b.appointment_services?.duration_minutes || 45
-                const bEnd = bStart + bDuration
+                const isOccupied = existingBookings.some((b: any) => {
+                  if (b.booking_date !== selectedDate) return false
+                  if (b.status === 'cancelled') return false
+                  if (selectedSpecialist && b.specialist_id && b.specialist_id !== selectedSpecialist.id) return false
 
-                // Overlap condition: intervals intersect
-                return (slotStart < bEnd && slotEnd > bStart)
-              })
+                  const bStart = parseTimeToMinutes(b.booking_time)
+                  const bDuration = b.appointment_services?.duration_minutes || 45
+                  const bEnd = bStart + bDuration
 
-              return (
-                <button
-                  key={time}
-                  type="button"
-                  disabled={isOccupied}
-                  onClick={() => setSelectedTime(time)}
-                  className={`py-2 px-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer border flex flex-col items-center justify-center ${
-                    isOccupied
-                      ? 'bg-gray-100 text-gray-400 border-gray-200 line-through opacity-50 cursor-not-allowed'
-                      : selectedTime === time
-                      ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
-                      : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50'
-                  }`}
-                  title={isOccupied ? 'Horario ocupado por la duración del servicio' : `Disponible (${formatDuration(currentServiceDuration)})`}
-                >
-                  <span>{time}</span>
-                  {isOccupied && <span className="text-[8px] no-underline font-normal">Ocupado</span>}
-                </button>
-              )
-            })}
-          </div>
+                  // Overlap condition: intervals intersect
+                  return (slotStart < bEnd && slotEnd > bStart)
+                })
+
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    disabled={isOccupied}
+                    onClick={() => setSelectedTime(time)}
+                    className={`py-2 px-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer border flex flex-col items-center justify-center ${
+                      isOccupied
+                        ? 'bg-gray-100 text-gray-400 border-gray-200 line-through opacity-50 cursor-not-allowed'
+                        : selectedTime === time
+                        ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
+                        : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50'
+                    }`}
+                    title={isOccupied ? 'Horario ocupado por la duración del servicio' : `Disponible (${formatDuration(currentServiceDuration)})`}
+                  >
+                    <span>{time}</span>
+                    {isOccupied && <span className="text-[8px] no-underline font-normal">Ocupado</span>}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
 
