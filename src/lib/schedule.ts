@@ -144,22 +144,46 @@ export function formatScheduleSummaryText(config: ScheduleConfig | null | undefi
   const days = schedule.days
   if (!days) return ''
 
+  const mon = days.monday
+  const tue = days.tuesday
+  const wed = days.wednesday
+  const thu = days.thursday
+  const fri = days.friday
+  const sat = days.saturday
+  const sun = days.sunday
+
+  const weekdaySame = mon?.enabled && tue?.enabled && wed?.enabled && thu?.enabled && fri?.enabled &&
+    mon.open === tue.open && mon.close === tue.close &&
+    mon.open === wed.open && mon.close === wed.close &&
+    mon.open === thu.open && mon.close === thu.close &&
+    mon.open === fri.open && mon.close === fri.close
+
   const parts: string[] = []
-  if (days.monday?.enabled) {
-    parts.push(`Lun - Vie: ${days.monday.open} - ${days.monday.close}`)
-  }
-  if (days.saturday?.enabled) {
-    parts.push(`Sáb: ${days.saturday.open} - ${days.saturday.close}`)
+  if (weekdaySame) {
+    parts.push(`Lunes a Viernes de ${mon.open} a ${mon.close}`)
   } else {
-    parts.push(`Sáb: Cerrado`)
-  }
-  if (days.sunday?.enabled) {
-    parts.push(`Dom: ${days.sunday.open} - ${days.sunday.close}`)
-  } else {
-    parts.push(`Dom: Cerrado`)
+    const activeDays: string[] = []
+    if (mon?.enabled) activeDays.push(`Lun (${mon.open}-${mon.close})`)
+    if (tue?.enabled) activeDays.push(`Mar (${tue.open}-${tue.close})`)
+    if (wed?.enabled) activeDays.push(`Mié (${wed.open}-${wed.close})`)
+    if (thu?.enabled) activeDays.push(`Jue (${thu.open}-${thu.close})`)
+    if (fri?.enabled) activeDays.push(`Vie (${fri.open}-${fri.close})`)
+    if (activeDays.length > 0) parts.push(activeDays.join(', '))
   }
 
-  return parts.join(' | ')
+  if (sat?.enabled) {
+    parts.push(`Sábados de ${sat.open} a ${sat.close}`)
+  } else {
+    parts.push(`Sábados: Cerrado`)
+  }
+
+  if (sun?.enabled) {
+    parts.push(`Domingos de ${sun.open} a ${sun.close}`)
+  } else {
+    parts.push(`Domingos: Cerrado`)
+  }
+
+  return parts.join(' • ')
 }
 
 export function getBusinessLiveStatus(config: ScheduleConfig | null | undefined): BusinessLiveStatus {

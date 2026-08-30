@@ -493,7 +493,7 @@ export default async function PublicVCardPage({
 
                 {/* Dirección y Mapa */}
                 {businessInfo?.address && (
-                  <div className={`p-4 border border-black/5 flex items-start justify-between gap-3.5 ${btnRadiusClass}`} style={{ backgroundColor: theme.is_dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}>
+                  <div className={`p-4 border border-black/5 flex items-start justify-between gap-3.5 ${cardRadiusClass}`} style={{ backgroundColor: theme.is_dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}>
                     <div className="flex items-start gap-3.5 text-left">
                       <MapPin className="w-5 h-5 shrink-0 opacity-70 mt-0.5" style={{ color: theme.primary_color }} />
                       <div>
@@ -519,7 +519,7 @@ export default async function PublicVCardPage({
                 {contact_info?.phone && (
                   <a 
                     href={`tel:${contact_info.phone}`}
-                    className={`flex items-center gap-3.5 p-3.5 border border-black/5 hover:bg-black/5 transition-all text-left ${btnRadiusClass}`}
+                    className={`flex items-center gap-3.5 p-3.5 border border-black/5 hover:bg-black/5 transition-all text-left ${cardRadiusClass}`}
                   >
                     <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${theme.primary_color}20`, color: theme.primary_color }}>
                       <Phone className="w-4 h-4" />
@@ -535,7 +535,7 @@ export default async function PublicVCardPage({
                 {contact_info?.email && (
                   <a 
                     href={`mailto:${contact_info.email}`}
-                    className={`flex items-center gap-3.5 p-3.5 border border-black/5 hover:bg-black/5 transition-all text-left ${btnRadiusClass}`}
+                    className={`flex items-center gap-3.5 p-3.5 border border-black/5 hover:bg-black/5 transition-all text-left ${cardRadiusClass}`}
                   >
                     <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: `${theme.primary_color}20`, color: theme.primary_color }}>
                       <Mail className="w-4 h-4" />
