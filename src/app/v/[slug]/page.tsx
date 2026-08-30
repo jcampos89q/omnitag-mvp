@@ -481,15 +481,17 @@ export default async function PublicVCardPage({
             <ShareButtons slug={slug} name={titleName} isDark={theme.is_dark} />
 
             {/* Detalles Corporativos: Horario, Dirección y Ubicación */}
-            {(businessInfo?.hours || businessInfo?.address || contact_info?.phone || contact_info?.email) && (
+            {((businessInfo?.show_hours !== false && (businessInfo?.hours || businessInfo?.schedule_config)) || businessInfo?.address || contact_info?.phone || contact_info?.email) && (
               <div className="mt-8 pt-6 border-t border-black/5 space-y-3">
-                {/* Horario de Atención en Vivo */}
-                <BusinessHoursWidget
-                  scheduleConfig={businessInfo?.schedule_config}
-                  legacyHoursText={businessInfo?.hours}
-                  theme={theme}
-                  btnRadiusClass={btnRadiusClass}
-                />
+                {/* Horario de Atención en Vivo (Si está habilitado) */}
+                {businessInfo?.show_hours !== false && (businessInfo?.schedule_config || businessInfo?.hours) && (
+                  <BusinessHoursWidget
+                    scheduleConfig={businessInfo?.schedule_config}
+                    legacyHoursText={businessInfo?.hours}
+                    theme={theme}
+                    btnRadiusClass={btnRadiusClass}
+                  />
+                )}
 
                 {/* Dirección y Mapa */}
                 {businessInfo?.address && (

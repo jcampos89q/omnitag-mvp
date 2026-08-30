@@ -27,6 +27,7 @@ import {
 import ImageUploadInput from '@/components/ImageUploadInput'
 import ThemeSelector from '@/components/ThemeSelector'
 import ProFeatureModal from '@/components/ProFeatureModal'
+import SaveButton from '@/components/SaveButton'
 import { saveVCard } from './actions'
 
 interface VCardFormProps {
@@ -64,6 +65,7 @@ export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
 
   const businessInfo = vcard?.business_info || {}
   const savedSchedule = businessInfo?.schedule_config || {}
+  const [showHours, setShowHours] = useState<boolean>(businessInfo?.show_hours !== false)
 
   return (
     <form action={saveVCard} className="space-y-8 max-w-3xl">
@@ -412,8 +414,31 @@ export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
             <span>🕒</span> 5. Horario de Atención Semanal & Ubicación
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            Tus clientes podrán consultar tu horario semanal en vivo (Abierto/Cerrado) directamente en tu tarjeta digital.
+            Tus clientes podrán consultar tu horario semanal en vivo (Abierto/Cerrado) y ubicación en tu tarjeta digital.
           </p>
+        </div>
+
+        {/* Switch para Mostrar u Ocultar el Horario en la vCard */}
+        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <label htmlFor="show_hours" className="text-xs sm:text-sm font-bold text-gray-900 cursor-pointer flex items-center gap-2">
+              <Clock className="w-4 h-4 text-purple-600" />
+              Mostrar Horario de Atención en la Tarjeta Digital (vCard)
+            </label>
+            <p className="text-[11px] text-gray-500">
+              {showHours 
+                ? 'Visible para los visitantes de tu perfil digital.' 
+                : 'Oculto: Los visitantes no verán tu horario de atención en la vCard.'}
+            </p>
+          </div>
+          <input
+            type="checkbox"
+            id="show_hours"
+            name="show_hours"
+            checked={showHours}
+            onChange={(e) => setShowHours(e.target.checked)}
+            className="w-5 h-5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+          />
         </div>
 
         {/* Dirección y Google Maps */}
@@ -683,13 +708,10 @@ export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
 
       {/* Botón Flotante / Inferior de Guardado */}
       <div className="flex justify-end pt-4">
-        <button
-          type="submit"
-          className="bg-black hover:bg-gray-800 text-white font-bold py-3.5 px-8 rounded-xl shadow-md transition-all cursor-pointer text-sm flex items-center gap-2"
-        >
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>Guardar Cambios del Perfil</span>
-        </button>
+        <SaveButton
+          label="Guardar Cambios del Perfil"
+          loadingLabel="Guardando cambios del perfil..."
+        />
       </div>
 
       {/* Modal de Upgrade PRO */}

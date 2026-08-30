@@ -64,6 +64,7 @@ export async function saveVCard(formData: FormData) {
     const showAppointments = formData.get('show_appointments') === 'on'
     const showLoyalty = formData.get('show_loyalty') === 'on'
     const showReviews = formData.get('show_reviews') === 'on'
+    const showHours = formData.get('show_hours') === 'on'
 
     // Extracción estructurada del horario semanal si fue configurado
     const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
@@ -100,6 +101,7 @@ export async function saveVCard(formData: FormData) {
     const business_info = {
       category: businessCategory,
       hours: finalHours,
+      show_hours: showHours,
       schedule_config: schedule_config || null,
       address: businessAddress,
       maps_url: googleMapsUrl,

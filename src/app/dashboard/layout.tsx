@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import DashboardNavbar from '@/components/DashboardNavbar'
 import PushNotificationPrompt from '@/components/PushNotificationPrompt'
+import GlobalToast from '@/components/GlobalToast'
 
 export default async function DashboardLayout({
   children,
@@ -26,6 +27,9 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col md:flex-row">
+      {/* Notificaciones Flotantes Globales de Éxito / Error */}
+      <GlobalToast />
+
       {/* Navegación Responsive (TopBar + Drawer + Desktop Sidebar + Mobile Bottom Quick Bar) */}
       <DashboardNavbar userEmail={user?.email} userId={user?.id} isAdmin={isAdmin} />
 

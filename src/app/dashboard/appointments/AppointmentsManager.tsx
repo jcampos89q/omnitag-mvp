@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import ImageUploadInput from '@/components/ImageUploadInput'
+import SaveButton from '@/components/SaveButton'
 import { createOrUpdateBusiness, createSpecialist, deleteSpecialist, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability, createManualBlockOrBooking, deleteBooking } from './actions'
 import { generateTimeSlotsForDate } from '@/lib/schedule'
 
@@ -300,7 +301,11 @@ export default function AppointmentsManager({
 
               <div className="flex justify-end gap-2 pt-1">
                 <button type="button" onClick={() => setShowAddBlock(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer">Cancelar</button>
-                <button type="submit" className="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs">Bloquear Horario en Web</button>
+                <SaveButton
+                  label="Bloquear Horario en Web"
+                  loadingLabel="Bloqueando..."
+                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                />
               </div>
             </form>
           )}
@@ -427,7 +432,11 @@ export default function AppointmentsManager({
 
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setShowAddSpecialist(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer">Cancelar</button>
-                <button type="submit" className="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs">Guardar</button>
+                <SaveButton
+                  label={`Guardar ${meta.staffLabel.slice(0, -1)}`}
+                  loadingLabel="Guardando profesional..."
+                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                />
               </div>
             </form>
           )}
@@ -574,7 +583,11 @@ export default function AppointmentsManager({
 
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setShowAddService(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer">Cancelar</button>
-                <button type="submit" className="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs">Guardar {meta.serviceSingular}</button>
+                <SaveButton
+                  label={`Guardar ${meta.serviceSingular}`}
+                  loadingLabel="Guardando servicio..."
+                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                />
               </div>
             </form>
           )}
@@ -837,9 +850,11 @@ export default function AppointmentsManager({
           </div>
 
           <div className="flex justify-end pt-3">
-            <button type="submit" className="bg-black text-white px-6 py-3 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-md">
-              Guardar Configuración & Horarios
-            </button>
+            <SaveButton
+              label="Guardar Configuración & Horarios"
+              loadingLabel="Guardando configuración..."
+              className="bg-black text-white px-6 py-3 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-md flex items-center gap-2"
+            />
           </div>
         </form>
       )}
