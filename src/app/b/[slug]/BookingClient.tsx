@@ -97,6 +97,79 @@ export default function BookingClient({
   const [reviewRating, setReviewRating] = useState<number>(5)
   const [reviewerName, setReviewerName] = useState<string>('')
   const [reviewerComment, setReviewerComment] = useState<string>('')
+  const category = business?.category || 'barbershop'
+
+  const getCategoryMeta = (cat: string) => {
+    switch (cat) {
+      case 'dental':
+        return {
+          icon: '🦷',
+          name: 'Clínica Dental & Odontología',
+          staffLabel: 'Odontólogos & Doctores',
+          serviceSingular: 'Tratamiento',
+          clientLabel: 'Paciente',
+        }
+      case 'medical':
+        return {
+          icon: '🩺',
+          name: 'Consultorio Médico & Salud',
+          staffLabel: 'Médicos & Especialistas',
+          serviceSingular: 'Consulta Médica',
+          clientLabel: 'Paciente',
+        }
+      case 'spa':
+        return {
+          icon: '💆',
+          name: 'Spa, Masajes & Estética',
+          staffLabel: 'Terapeutas & Esteticistas',
+          serviceSingular: 'Terapia / Masaje',
+          clientLabel: 'Cliente',
+        }
+      case 'salon':
+        return {
+          icon: '💇‍♀️',
+          name: 'Salón de Belleza & Uñas',
+          staffLabel: 'Estilistas & Técnicas',
+          serviceSingular: 'Servicio de Belleza',
+          clientLabel: 'Cliente',
+        }
+      case 'professional':
+        return {
+          icon: '💼',
+          name: 'Servicios Profesionales & Consultoría',
+          staffLabel: 'Consultores & Asesores',
+          serviceSingular: 'Asesoría / Sesión',
+          clientLabel: 'Cliente',
+        }
+      case 'tattoo':
+        return {
+          icon: '🎨',
+          name: 'Estudio de Tatuajes & Piercing',
+          staffLabel: 'Artistas & Tatuadores',
+          serviceSingular: 'Sesión de Tatuaje',
+          clientLabel: 'Cliente',
+        }
+      case 'restaurant':
+        return {
+          icon: '🍽️',
+          name: 'Restaurante & Gastronomía',
+          staffLabel: 'Personal del Local',
+          serviceSingular: 'Servicio',
+          clientLabel: 'Comensal',
+        }
+      case 'barbershop':
+      default:
+        return {
+          icon: '💈',
+          name: 'Barbería & Cuidado Masculino',
+          staffLabel: 'Barberos & Estilistas',
+          serviceSingular: 'Servicio',
+          clientLabel: 'Cliente',
+        }
+    }
+  }
+
+  const meta = getCategoryMeta(category)
   const [reviewSuccess, setReviewSuccess] = useState<boolean>(false)
 
   // Calcular promedios de calificación por especialista
@@ -186,7 +259,7 @@ export default function BookingClient({
   if (bookingSuccess) {
     const specialistText = bookingSuccess.specialist ? bookingSuccess.specialist.name : 'Cualquiera disponible'
     const waText = encodeURIComponent(
-      `¡Hola *${business.name}*! Acabo de agendar una cita online para:\n\n✂️ *Servicio:* ${bookingSuccess.service.name}\n👤 *Especialista:* ${specialistText}\n📅 *Fecha:* ${bookingSuccess.date}\n⏰ *Hora:* ${bookingSuccess.time}\n👤 *Cliente:* ${bookingSuccess.customerName} (${bookingSuccess.customerPhone})\n\n¿Me confirman la recepción? ¡Gracias!`
+      `¡Hola *${business.name}*! Acabo de agendar mi cita online para:\n\n${meta.icon} *${meta.serviceSingular}:* ${bookingSuccess.service.name}\n👤 *Profesional:* ${specialistText}\n📅 *Fecha:* ${bookingSuccess.date}\n⏰ *Hora:* ${bookingSuccess.time}\n👤 *${meta.clientLabel}:* ${bookingSuccess.customerName} (${bookingSuccess.customerPhone})\n\n¿Me confirman la recepción? ¡Gracias!`
     )
     const waUrl = business.whatsapp 
       ? `https://wa.me/${business.whatsapp.replace(/\D/g, '')}?text=${waText}`
@@ -198,34 +271,29 @@ export default function BookingClient({
           <CheckCircle2 className="w-10 h-10" />
         </div>
 
-        <div>
-          <span className="text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">
-            ¡Turno Apartado Exitosamente!
-          </span>
-          <h2 className="text-xl sm:text-2xl font-black text-gray-900 mt-2">
-            ¡Tu cita está registrada!
-          </h2>
-          <p className="text-xs text-gray-500 mt-1">
-            Te esperamos en <b>{business.name}</b>.
+        <div className="space-y-1">
+          <h3 className="text-xl font-black text-gray-900">¡Cita Agendada con Éxito!</h3>
+          <p className="text-xs text-gray-500">
+            Tu turno ha sido apartado en {business.name}.
           </p>
         </div>
 
-        {/* Resumen del Turno */}
+        {/* Resumen del Ticket */}
         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 text-left space-y-2 text-xs">
-          <div className="flex justify-between">
-            <span className="text-gray-500 font-medium">Servicio:</span>
+          <div className="flex justify-between border-b border-gray-200 pb-2">
+            <span className="text-gray-500">{meta.serviceSingular}:</span>
             <span className="font-bold text-gray-900">{bookingSuccess.service.name} (${bookingSuccess.service.price})</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500 font-medium">Especialista:</span>
+          <div className="flex justify-between border-b border-gray-200 pb-2">
+            <span className="text-gray-500">Profesional:</span>
             <span className="font-bold text-gray-900">{specialistText}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500 font-medium">Fecha & Hora:</span>
+          <div className="flex justify-between border-b border-gray-200 pb-2">
+            <span className="text-gray-500">Fecha y Hora:</span>
             <span className="font-bold text-purple-700">{bookingSuccess.date} a las {bookingSuccess.time}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-500 font-medium">Cliente:</span>
+            <span className="text-gray-500">{meta.clientLabel}:</span>
             <span className="font-bold text-gray-900">{bookingSuccess.customerName}</span>
           </div>
         </div>
@@ -290,7 +358,7 @@ export default function BookingClient({
         <div className="flex items-center justify-between">
           <h2 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
             <span className="w-6 h-6 rounded-lg bg-black text-white text-xs flex items-center justify-center font-bold">1</span>
-            Elige tu Servicio
+            Elige tu {meta.serviceSingular}
           </h2>
           <span className="text-xs text-gray-400 font-medium">{services.length} disponibles</span>
         </div>
@@ -329,13 +397,13 @@ export default function BookingClient({
         </div>
       </section>
 
-      {/* 2. SELECCIONAR ESPECIALISTA / BARBERO (Con Fotos & Calificaciones) */}
+      {/* 2. SELECCIONAR PROFESIONAL (Con Fotos & Calificaciones) */}
       {specialistsWithRatings.length > 0 && (
         <section className="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-200 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
               <span className="w-6 h-6 rounded-lg bg-black text-white text-xs flex items-center justify-center font-bold">2</span>
-              Elige tu Especialista / Barbero
+              Elige a tu Profesional ({meta.staffLabel})
             </h2>
           </div>
 
@@ -506,7 +574,7 @@ export default function BookingClient({
       <form onSubmit={handleBookingSubmit} className="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-200 space-y-4">
         <h2 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
           <span className="w-6 h-6 rounded-lg bg-black text-white text-xs flex items-center justify-center font-bold">4</span>
-          Datos de Contacto
+          Datos de Contacto ({meta.clientLabel})
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

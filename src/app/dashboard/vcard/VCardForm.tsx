@@ -158,9 +158,9 @@ export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="company_name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Nombre Comercial de la Empresa *</label>
+                <label htmlFor="company_name" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Nombre Comercial *</label>
                 <input 
                   type="text" 
                   name="company_name" 
@@ -172,13 +172,33 @@ export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
                 />
               </div>
               <div>
-                <label htmlFor="job_title" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Rubro / Eslogan Corto</label>
+                <label htmlFor="business_category" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Tipo de Negocio / Rubro</label>
+                <select
+                  name="business_category"
+                  id="business_category"
+                  defaultValue={businessInfo.category || 'corporate'}
+                  className="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm shadow-xs focus:border-black focus:outline-none"
+                >
+                  <option value="restaurant">🍽️ Restaurante, Café & Bar</option>
+                  <option value="barbershop">💈 Barbería & Peluquería</option>
+                  <option value="salon">💇‍♀️ Salón de Belleza & Uñas</option>
+                  <option value="dental">🦷 Clínica Dental & Odontología</option>
+                  <option value="medical">🩺 Consultorio Médico & Salud</option>
+                  <option value="spa">💆 Spa, Masajes & Estética</option>
+                  <option value="professional">💼 Servicios Profesionales</option>
+                  <option value="tattoo">🎨 Estudio de Tatuajes & Arte</option>
+                  <option value="retail">🛍️ Tienda / Comercio Retail</option>
+                  <option value="corporate">🏢 Empresa / Corporativo</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="job_title" className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Eslogan Corto / Subtítulo</label>
                 <input 
                   type="text" 
                   name="job_title" 
                   id="job_title" 
                   defaultValue={vcard?.job_title || ''} 
-                  placeholder="Ej. Odontología Especializada & Estética"
+                  placeholder="Ej. Odontología Especializada"
                   className="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm shadow-xs focus:border-black focus:outline-none" 
                 />
               </div>

@@ -56,17 +56,123 @@ export default function AppointmentsManager({
     '06:00 PM', '07:00 PM', '08:00 PM'
   ]
 
+  const category = business?.category || 'barbershop'
+
+  const getCategoryMeta = (cat: string) => {
+    switch (cat) {
+      case 'dental':
+        return {
+          icon: '🦷',
+          name: 'Clínica Dental & Odontología',
+          staffLabel: 'Odontólogos & Doctores',
+          servicesLabel: 'Tratamientos & Procedimientos',
+          serviceSingular: 'Tratamiento',
+          clientLabel: 'Pacientes',
+          placeholderService: 'Ej. Limpieza Dental, Blanqueamiento, Diagnóstico',
+        }
+      case 'medical':
+        return {
+          icon: '🩺',
+          name: 'Consultorio Médico & Salud',
+          staffLabel: 'Médicos & Especialistas',
+          servicesLabel: 'Consultas & Tratamientos',
+          serviceSingular: 'Consulta Médica',
+          clientLabel: 'Pacientes',
+          placeholderService: 'Ej. Consulta General, Valoración, Chequeo',
+        }
+      case 'spa':
+        return {
+          icon: '💆',
+          name: 'Spa, Masajes & Estética',
+          staffLabel: 'Terapeutas & Esteticistas',
+          servicesLabel: 'Terapias & Masajes',
+          serviceSingular: 'Terapia / Masaje',
+          clientLabel: 'Clientes',
+          placeholderService: 'Ej. Masaje Relajante, Limpieza Facial Profunda',
+        }
+      case 'salon':
+        return {
+          icon: '💇‍♀️',
+          name: 'Salón de Belleza & Uñas',
+          staffLabel: 'Estilistas & Técnicas',
+          servicesLabel: 'Servicios de Belleza & Estilismo',
+          serviceSingular: 'Servicio de Belleza',
+          clientLabel: 'Clientas',
+          placeholderService: 'Ej. Manicura Rusa, Lavado y Secado, Color',
+        }
+      case 'professional':
+        return {
+          icon: '💼',
+          name: 'Servicios Profesionales & Consultoría',
+          staffLabel: 'Consultores & Asesores',
+          servicesLabel: 'Asesorías & Servicios',
+          serviceSingular: 'Sesión / Asesoría',
+          clientLabel: 'Clientes',
+          placeholderService: 'Ej. Asesoría Legal 1 a 1, Consultoría Financiera',
+        }
+      case 'tattoo':
+        return {
+          icon: '🎨',
+          name: 'Estudio de Tatuajes & Piercing',
+          staffLabel: 'Artistas & Tatuadores',
+          servicesLabel: 'Sesiones & Tatuajes',
+          serviceSingular: 'Sesión de Tatuaje',
+          clientLabel: 'Clientes',
+          placeholderService: 'Ej. Tatuaje Personalizado, Piercing',
+        }
+      case 'restaurant':
+        return {
+          icon: '🍽️',
+          name: 'Restaurante, Café & Bar',
+          staffLabel: 'Personal del Local',
+          servicesLabel: 'Servicios de Mesa',
+          serviceSingular: 'Servicio',
+          clientLabel: 'Comensales',
+          placeholderService: 'Ej. Reserva de Mesa',
+        }
+      case 'barbershop':
+      default:
+        return {
+          icon: '💈',
+          name: 'Barbería & Cuidado Masculino',
+          staffLabel: 'Barberos & Especialistas',
+          servicesLabel: 'Servicios de Barbería & Afeitado',
+          serviceSingular: 'Servicio',
+          clientLabel: 'Clientes',
+          placeholderService: 'Ej. Corte Degradado, Arreglo de Barba',
+        }
+    }
+  }
+
+  const meta = getCategoryMeta(category)
+
   return (
     <div className="space-y-6">
+      {/* Aviso si es Restaurante */}
+      {category === 'restaurant' && (
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex items-start gap-3 text-amber-900 text-xs">
+          <span className="text-xl">🍽️</span>
+          <div>
+            <p className="font-extrabold text-sm">Modo Gastronomía / Restaurante</p>
+            <p className="mt-0.5 text-amber-800">
+              Las reservas de citas por especialista están pensadas para salones, clínicas, spas y servicios profesionales. Para tu restaurante, gestiona tus <b>Mesas con QR y Menú Digital</b> en la sección de Menús. Si tu negocio ofrece citas o consultas, puedes cambiar tu categoría en la pestaña de <b>Configuración</b>.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Cabecera con Enlace Público */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 sm:p-6 bg-linear-to-r from-gray-900 via-purple-950 to-black text-white rounded-3xl shadow-xl">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-black uppercase tracking-wider">
-            <Sparkles className="w-3 h-3 fill-black" /> Módulo de Agendas & Especialistas
+            <Sparkles className="w-3 h-3 fill-black" /> Módulo de Reservas {meta.icon}
           </div>
-          <h2 className="text-xl sm:text-2xl font-black">{business.name}</h2>
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
+            <span>{business.name || 'Mi Negocio'}</span>
+            <span className="text-xs bg-white/10 px-2.5 py-0.5 rounded-full font-normal border border-white/10">{meta.name}</span>
+          </h2>
           <p className="text-xs text-purple-200">
-            {specialists.length} especialistas • {services.length} servicios activos • {bookings.length} citas registradas
+            Comparte tu enlace público para que tus {meta.clientLabel.toLowerCase()} agenden turnos en tiempo real.
           </p>
         </div>
 
@@ -74,9 +180,9 @@ export default function AppointmentsManager({
           href={`/b/${business.slug}`}
           target="_blank"
           rel="noreferrer"
-          className="bg-white hover:bg-gray-100 text-black font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-1.5 shrink-0"
+          className="bg-white text-black hover:bg-gray-100 font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 shrink-0 cursor-pointer"
         >
-          <span>Ver Enlace de Reservas</span>
+          <span>Abrir Agenda Pública</span>
           <ExternalLink className="w-3.5 h-3.5" />
         </a>
       </div>
@@ -100,7 +206,7 @@ export default function AppointmentsManager({
           }`}
         >
           <Users className="w-4 h-4" />
-          <span>Barberos & Especialistas ({specialists.length})</span>
+          <span>{meta.staffLabel} ({specialists.length})</span>
         </button>
 
         <button
@@ -109,8 +215,8 @@ export default function AppointmentsManager({
             activeTab === 'services' ? 'bg-white text-black shadow-xs' : 'text-gray-600 hover:text-black'
           }`}
         >
-          <Scissors className="w-4 h-4" />
-          <span>Servicios & Precios ({services.length})</span>
+          <span className="text-sm">{meta.icon}</span>
+          <span>{meta.servicesLabel} ({services.length})</span>
         </button>
 
         <button
@@ -120,7 +226,7 @@ export default function AppointmentsManager({
           }`}
         >
           <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
-          <span>Muro de Calificaciones ({reviews.length})</span>
+          <span>Opiniones ({reviews.length})</span>
         </button>
 
         <button
@@ -293,7 +399,7 @@ export default function AppointmentsManager({
           {showAddSpecialist && (
             <form action={createSpecialist} className="p-5 bg-gray-50 rounded-2xl border border-gray-200 space-y-4 animate-in fade-in">
               <input type="hidden" name="business_id" value={business.id} />
-              <h4 className="font-extrabold text-sm text-gray-900">Nuevo Especialista / Barbero</h4>
+              <h4 className="font-extrabold text-sm text-gray-900">Nuevo Miembro del Equipo ({meta.staffLabel})</h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -302,7 +408,7 @@ export default function AppointmentsManager({
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Cargo / Especialidad</label>
-                  <input type="text" name="role_title" placeholder="Ej. Master Barber, Colorista Pro" defaultValue="Especialista" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                  <input type="text" name="role_title" placeholder="Ej. Especialista Principal" defaultValue="Especialista" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp Directo</label>
@@ -313,7 +419,7 @@ export default function AppointmentsManager({
               <div>
                 <ImageUploadInput
                   name="avatar"
-                  label="Foto de Perfil del Especialista"
+                  label="Foto de Perfil del Profesional"
                   shape="circle"
                   helpText="Foto circular de buena calidad para inspirar confianza a los clientes."
                 />
@@ -321,7 +427,7 @@ export default function AppointmentsManager({
 
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setShowAddSpecialist(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer">Cancelar</button>
-                <button type="submit" className="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs">Guardar Especialista</button>
+                <button type="submit" className="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs">Guardar</button>
               </div>
             </form>
           )}
@@ -356,52 +462,47 @@ export default function AppointmentsManager({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* Botón Ver Portal de Agenda del Especialista */}
                     <a
                       href={`/b/${business.slug}/staff/${s.id}`}
                       target="_blank"
                       rel="noreferrer"
                       className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-extrabold transition flex items-center gap-1"
-                      title="Ver portal móvil de citas para este especialista"
+                      title="Abrir portal móvil de este especialista"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Ver Agenda</span>
+                      <span>Agenda Móvil</span>
+                      <ExternalLink className="w-3 h-3" />
                     </a>
 
-                    {/* Botón Enviar Agenda por WhatsApp al Especialista */}
-                    {s.phone && (
-                      <a
-                        href={`https://wa.me/${s.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`¡Hola ${s.name}! Aquí tienes tu enlace de acceso para consultar tus citas y turnos en ${business.name}:\n\n🔗 https://www.omnitag.site/b/${business.slug}/staff/${s.id}`)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white rounded-xl transition"
-                        title="Enviar enlace de agenda por WhatsApp al especialista"
-                      >
-                        <MessageCircle className="w-4 h-4 fill-current" />
-                      </a>
-                    )}
+                    <a
+                      href={`https://wa.me/${s.phone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(`¡Hola ${s.name}! Aquí tienes el enlace a tu portal móvil personal de agenda en ${business.name}: https://www.omnitag.site/b/${business.slug}/staff/${s.id}`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1"
+                      title="Enviar enlace de agenda al especialista por WhatsApp"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 fill-current" />
+                    </a>
 
-                    {/* Switch de Disponibilidad Inmediata */}
                     <form action={toggleSpecialistAvailability}>
                       <input type="hidden" name="specialist_id" value={s.id} />
-                      <input type="hidden" name="is_active" value={s.is_active ? 'false' : 'true'} />
+                      <input type="hidden" name="current_status" value={s.is_active !== false ? 'true' : 'false'} />
                       <button
                         type="submit"
-                        className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition cursor-pointer flex items-center gap-1.5 ${
-                          s.is_active
-                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                            : 'bg-red-100 text-red-800 hover:bg-red-200'
+                        className={`px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold transition cursor-pointer flex items-center gap-1 ${
+                          s.is_active !== false
+                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                            : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
                         }`}
-                        title={s.is_active ? 'Marcar como ausente hoy / no disponible' : 'Marcar como activo y disponible'}
+                        title={s.is_active !== false ? 'Click para marcar como Ausente temporalmente' : 'Click para marcar como Activo'}
                       >
-                        <span className={`w-2 h-2 rounded-full ${s.is_active ? 'bg-emerald-600' : 'bg-red-600'}`} />
-                        <span>{s.is_active ? 'Activo' : 'Ausente'}</span>
+                        <span className={`w-2 h-2 rounded-full ${s.is_active !== false ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+                        <span>{s.is_active !== false ? 'Activo' : 'Ausente'}</span>
                       </button>
                     </form>
 
                     <form action={deleteSpecialist}>
                       <input type="hidden" name="specialist_id" value={s.id} />
-                      <button type="submit" className="p-2 text-gray-400 hover:text-red-600 rounded-xl hover:bg-red-50 transition cursor-pointer" title="Eliminar definitivamente">
+                      <button type="submit" className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </form>
@@ -417,13 +518,13 @@ export default function AppointmentsManager({
       {activeTab === 'services' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-extrabold text-gray-900 text-base">Servicios Disponibles</h3>
+            <h3 className="font-extrabold text-gray-900 text-base">{meta.servicesLabel} Disponibles</h3>
             <button
               onClick={() => setShowAddService(!showAddService)}
               className="bg-black text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-gray-800 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <Plus className="w-4 h-4" />
-              <span>+ Agregar Servicio</span>
+              <span>+ Agregar {meta.serviceSingular}</span>
             </button>
           </div>
 
@@ -431,46 +532,49 @@ export default function AppointmentsManager({
           {showAddService && (
             <form action={createService} className="p-5 bg-gray-50 rounded-2xl border border-gray-200 space-y-4 animate-in fade-in">
               <input type="hidden" name="business_id" value={business.id} />
-              <h4 className="font-extrabold text-sm text-gray-900">Nuevo Servicio</h4>
+              <h4 className="font-extrabold text-sm text-gray-900">Nuevo {meta.serviceSingular}</h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre del Servicio *</label>
-                  <input type="text" name="name" required placeholder="Ej. Corte Degradado + Barba" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre del {meta.serviceSingular} *</label>
+                  <input type="text" name="name" required placeholder={meta.placeholderService} className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Precio ($ / Lempiras) *</label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Precio *</label>
                   <input type="number" step="0.01" name="price" required placeholder="150" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Duración Estimada del Servicio *</label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Tiempo Estimado / Duración *</label>
                   <select
                     name="duration_minutes"
                     defaultValue={45}
                     className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
                   >
-                    <option value={15}>⏱️ 15 min (Corte Express / Cejas / Perfilado)</option>
-                    <option value={30}>⏱️ 30 min (Corte Clásico / Arreglo de Barba)</option>
-                    <option value={45}>⏱️ 45 min (Corte Tradicional / Manicura)</option>
-                    <option value={60}>⏱️ 60 min - 1 Hora (Corte + Barba / Pedicura)</option>
-                    <option value={90}>⏱️ 90 min - 1.5 Horas (Uñas Acrílicas / Tratamiento)</option>
-                    <option value={120}>⏱️ 120 min - 2 Horas (Balayage / Alisado / Color)</option>
-                    <option value={180}>⏱️ 180 min - 3 Horas (Decoloración / Extensión)</option>
-                    <option value={240}>⏱️ 240 min - 4 Horas (Transformación / Paquete Novias)</option>
+                    <option value={15}>⏱️ 15 minutos</option>
+                    <option value={30}>⏱️ 30 minutos</option>
+                    <option value={45}>⏱️ 45 minutos</option>
+                    <option value={60}>⏱️ 60 minutos (1 Hora)</option>
+                    <option value={75}>⏱️ 75 minutos (1 Hora 15 min)</option>
+                    <option value={90}>⏱️ 90 minutos (1 Hora y media)</option>
+                    <option value={120}>⏱️ 120 minutos (2 Horas)</option>
+                    <option value={150}>⏱️ 150 minutos (2 Horas y media)</option>
+                    <option value={180}>⏱️ 180 minutos (3 Horas)</option>
+                    <option value={240}>⏱️ 240 minutos (4 Horas)</option>
+                    <option value={300}>⏱️ 300 minutos (5 Horas)</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Descripción Breve</label>
-                  <input type="text" name="description" placeholder="Incluye lavado, toalla caliente y peinado..." className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Descripción Opcional</label>
+                  <input type="text" name="description" placeholder="Detalles o qué incluye el servicio..." className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
                 </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setShowAddService(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer">Cancelar</button>
-                <button type="submit" className="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs">Guardar Servicio</button>
+                <button type="submit" className="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs">Guardar {meta.serviceSingular}</button>
               </div>
             </form>
           )}

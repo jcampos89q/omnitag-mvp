@@ -58,12 +58,14 @@ export async function saveVCard(formData: FormData) {
     const googleMapsUrl = (formData.get('google_maps_url') as string)?.trim() || ''
     const ctaText = (formData.get('cta_text') as string)?.trim() || ''
     const ctaUrl = (formData.get('cta_url') as string)?.trim() || ''
+    const businessCategory = (formData.get('business_category') as string)?.trim() || 'corporate'
     const showMenu = formData.get('show_menu') === 'on'
     const showAppointments = formData.get('show_appointments') === 'on'
     const showLoyalty = formData.get('show_loyalty') === 'on'
     const showReviews = formData.get('show_reviews') === 'on'
 
     const business_info = {
+      category: businessCategory,
       hours: businessHours,
       address: businessAddress,
       maps_url: googleMapsUrl,
