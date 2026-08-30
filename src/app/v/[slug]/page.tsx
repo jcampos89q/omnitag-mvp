@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import ShareButtons from '@/components/ShareButtons'
 import LeadCaptureModal from './LeadCaptureModal'
+import BusinessHoursWidget from './BusinessHoursWidget'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
 import { getUserPlanInfo } from '@/lib/plans'
@@ -482,16 +483,13 @@ export default async function PublicVCardPage({
             {/* Detalles Corporativos: Horario, Dirección y Ubicación */}
             {(businessInfo?.hours || businessInfo?.address || contact_info?.phone || contact_info?.email) && (
               <div className="mt-8 pt-6 border-t border-black/5 space-y-3">
-                {/* Horario de Atención */}
-                {businessInfo?.hours && (
-                  <div className={`p-4 border border-black/5 flex items-start gap-3.5 ${btnRadiusClass}`} style={{ backgroundColor: theme.is_dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}>
-                    <Clock className="w-5 h-5 shrink-0 opacity-70 mt-0.5" style={{ color: theme.primary_color }} />
-                    <div className="text-left">
-                      <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Horario de Atención</p>
-                      <p className="text-xs sm:text-sm font-medium mt-0.5" style={{ color: theme.text_color }}>{businessInfo.hours}</p>
-                    </div>
-                  </div>
-                )}
+                {/* Horario de Atención en Vivo */}
+                <BusinessHoursWidget
+                  scheduleConfig={businessInfo?.schedule_config}
+                  legacyHoursText={businessInfo?.hours}
+                  theme={theme}
+                  btnRadiusClass={btnRadiusClass}
+                />
 
                 {/* Dirección y Mapa */}
                 {businessInfo?.address && (

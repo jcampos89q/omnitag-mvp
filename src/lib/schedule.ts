@@ -11,8 +11,8 @@ export interface LunchBreakConfig {
 }
 
 export interface ScheduleConfig {
-  slot_interval: number // in minutes: 15, 30, 45, 60
-  lunch_break: LunchBreakConfig
+  slot_interval?: number // in minutes: 15, 30, 45, 60
+  lunch_break?: LunchBreakConfig
   days: {
     monday: DaySchedule
     tuesday: DaySchedule
@@ -22,6 +22,23 @@ export interface ScheduleConfig {
     saturday: DaySchedule
     sunday: DaySchedule
   }
+}
+
+export interface WeeklyScheduleDayItem {
+  key: string
+  label: string
+  enabled: boolean
+  open: string
+  close: string
+  isToday: boolean
+}
+
+export interface BusinessLiveStatus {
+  isOpenNow: boolean
+  statusBadgeText: string
+  statusDetailText: string
+  todayScheduleText: string
+  weeklySchedule: WeeklyScheduleDayItem[]
 }
 
 export const DEFAULT_SCHEDULE_CONFIG: ScheduleConfig = {
@@ -64,7 +81,17 @@ export function formatMinutesToTime(totalMinutes: number): string {
   return `${formattedHours}:${formattedMinutes} ${modifier}`
 }
 
-const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+export const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+
+const DAY_LABELS: Record<string, string> = {
+  monday: 'Lunes',
+  tuesday: 'Martes',
+  wednesday: 'Miércoles',
+  thursday: 'Jueves',
+  friday: 'Viernes',
+  saturday: 'Sábado',
+  sunday: 'Domingo'
+}
 
 export function getDayKeyForDate(dateStr: string): typeof DAY_KEYS[number] {
   // dateStr is YYYY-MM-DD
@@ -95,9 +122,9 @@ export function generateTimeSlotsForDate(
   const closeMin = parseTimeToMinutes(dayConfig.close || '07:00 PM')
   const interval = schedule.slot_interval || 30
 
-  const lunchEnabled = schedule.lunch_break?.enabled
-  const lunchStart = lunchEnabled ? parseTimeToMinutes(schedule.lunch_break.start) : -1
-  const lunchEnd = lunchEnabled ? parseTimeToMinutes(schedule.lunch_break.end) : -1
+  const lunchEnabled = !!schedule.lunch_break?.enabled
+  const lunchStart = lunchEnabled && schedule.lunch_break?.start ? parseTimeToMinutes(schedule.lunch_break.start) : -1
+  const lunchEnd = lunchEnabled && schedule.lunch_break?.end ? parseTimeToMinutes(schedule.lunch_break.end) : -1
 
   const slots: string[] = []
 
@@ -110,4 +137,92 @@ export function generateTimeSlotsForDate(
   }
 
   return slots
+}
+
+export function formatScheduleSummaryText(config: ScheduleConfig | null | undefined): string {
+  const schedule = config || DEFAULT_SCHEDULE_CONFIG
+  const days = schedule.days
+  if (!days) return ''
+
+  const parts: string[] = []
+  if (days.monday?.enabled) {
+    parts.push(`Lun - Vie: ${days.monday.open} - ${days.monday.close}`)
+  }
+  if (days.saturday?.enabled) {
+    parts.push(`Sáb: ${days.saturday.open} - ${days.saturday.close}`)
+  } else {
+    parts.push(`Sáb: Cerrado`)
+  }
+  if (days.sunday?.enabled) {
+    parts.push(`Dom: ${days.sunday.open} - ${days.sunday.close}`)
+  } else {
+    parts.push(`Dom: Cerrado`)
+  }
+
+  return parts.join(' | ')
+}
+
+export function getBusinessLiveStatus(config: ScheduleConfig | null | undefined): BusinessLiveStatus {
+  const schedule = config || DEFAULT_SCHEDULE_CONFIG
+  const now = new Date()
+  const currentDayIndex = now.getDay() // 0 = Sunday, 1 = Monday...
+  const currentDayKey = DAY_KEYS[currentDayIndex]
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+  const dayConfig = schedule.days?.[currentDayKey]
+  const isOpenToday = dayConfig?.enabled ?? false
+
+  let isOpenNow = false
+  let statusDetailText = ''
+
+  if (!isOpenToday) {
+    isOpenNow = false
+    statusDetailText = 'Cerrado hoy'
+  } else {
+    const openMin = parseTimeToMinutes(dayConfig.open || '08:00 AM')
+    const closeMin = parseTimeToMinutes(dayConfig.close || '07:00 PM')
+    const lunchEnabled = !!schedule.lunch_break?.enabled
+    const lunchStart = lunchEnabled && schedule.lunch_break?.start ? parseTimeToMinutes(schedule.lunch_break.start) : -1
+    const lunchEnd = lunchEnabled && schedule.lunch_break?.end ? parseTimeToMinutes(schedule.lunch_break.end) : -1
+
+    if (lunchEnabled && currentMinutes >= lunchStart && currentMinutes < lunchEnd) {
+      isOpenNow = false
+      statusDetailText = `En pausa de comida hasta las ${schedule.lunch_break?.end || ''}`
+    } else if (currentMinutes >= openMin && currentMinutes < closeMin) {
+      isOpenNow = true
+      statusDetailText = `Abierto hasta las ${dayConfig.close}`
+    } else if (currentMinutes < openMin) {
+      isOpenNow = false
+      statusDetailText = `Abre hoy a las ${dayConfig.open}`
+    } else {
+      isOpenNow = false
+      statusDetailText = `Cerró hoy a las ${dayConfig.close}`
+    }
+  }
+
+  const orderKeys: Array<typeof DAY_KEYS[number]> = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+
+  const weeklySchedule: WeeklyScheduleDayItem[] = orderKeys.map(key => {
+    const d = schedule.days?.[key] || { enabled: false, open: '08:00 AM', close: '07:00 PM' }
+    return {
+      key,
+      label: DAY_LABELS[key] || key,
+      enabled: d.enabled,
+      open: d.open || '08:00 AM',
+      close: d.close || '07:00 PM',
+      isToday: key === currentDayKey
+    }
+  })
+
+  const todayScheduleText = isOpenToday 
+    ? `${dayConfig?.open} - ${dayConfig?.close}`
+    : 'Cerrado'
+
+  return {
+    isOpenNow,
+    statusBadgeText: isOpenNow ? 'Abierto Ahora' : 'Cerrado Ahora',
+    statusDetailText,
+    todayScheduleText,
+    weeklySchedule
+  }
 }

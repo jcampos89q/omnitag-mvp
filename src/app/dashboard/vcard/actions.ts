@@ -5,6 +5,7 @@ import { uploadMediaFile } from '@/lib/supabase/storage'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getUserPlanInfo } from '@/lib/plans'
+import { formatScheduleSummaryText } from '@/lib/schedule'
 
 export async function saveVCard(formData: FormData) {
   const supabase = await createClient()
@@ -52,8 +53,8 @@ export async function saveVCard(formData: FormData) {
       }
     }
 
-    // Datos corporativos y de negocio
-    const businessHours = (formData.get('business_hours') as string)?.trim() || ''
+    // Datos corporativos, horarios y de negocio
+    const businessHoursInput = (formData.get('business_hours') as string)?.trim() || ''
     const businessAddress = (formData.get('business_address') as string)?.trim() || ''
     const googleMapsUrl = (formData.get('google_maps_url') as string)?.trim() || ''
     const ctaText = (formData.get('cta_text') as string)?.trim() || ''
@@ -64,9 +65,42 @@ export async function saveVCard(formData: FormData) {
     const showLoyalty = formData.get('show_loyalty') === 'on'
     const showReviews = formData.get('show_reviews') === 'on'
 
+    // Extracción estructurada del horario semanal si fue configurado
+    const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+    const daysConfig: Record<string, { enabled: boolean; open: string; close: string }> = {}
+    let hasWeeklyScheduleForm = false
+
+    dayKeys.forEach(day => {
+      if (formData.has(`${day}_open`)) {
+        hasWeeklyScheduleForm = true
+      }
+      const enabled = formData.get(`${day}_enabled`) === 'on'
+      const open = (formData.get(`${day}_open`) as string) || '08:00 AM'
+      const close = (formData.get(`${day}_close`) as string) || '07:00 PM'
+      daysConfig[day] = { enabled, open, close }
+    })
+
+    const lunchEnabled = formData.get('lunch_break_enabled') === 'on'
+    const lunchStart = (formData.get('lunch_break_start') as string) || '12:00 PM'
+    const lunchEnd = (formData.get('lunch_break_end') as string) || '01:00 PM'
+
+    const schedule_config = hasWeeklyScheduleForm ? {
+      slot_interval: 30,
+      lunch_break: {
+        enabled: lunchEnabled,
+        start: lunchStart,
+        end: lunchEnd
+      },
+      days: daysConfig
+    } : undefined
+
+    const calculatedSummary = schedule_config ? formatScheduleSummaryText(schedule_config as any) : ''
+    const finalHours = calculatedSummary || businessHoursInput
+
     const business_info = {
       category: businessCategory,
-      hours: businessHours,
+      hours: finalHours,
+      schedule_config: schedule_config || null,
       address: businessAddress,
       maps_url: googleMapsUrl,
       cta_text: ctaText,
@@ -75,6 +109,17 @@ export async function saveVCard(formData: FormData) {
       show_appointments: showAppointments,
       show_loyalty: showLoyalty,
       show_reviews: showReviews
+    }
+
+    // Sincronizar schedule_config con el módulo de citas si existe
+    if (schedule_config) {
+      await supabase
+        .from('appointment_businesses')
+        .update({
+          schedule_config,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id)
     }
 
     // Redes y contacto
