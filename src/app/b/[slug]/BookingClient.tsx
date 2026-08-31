@@ -252,7 +252,7 @@ export default function BookingClient({
     return slotStart <= clientDateState.currentMinutes
   }
 
-  // Helper para verificar si un horario está ocupado considerando capacidad de especialistas
+  // Helper para verificar si un horario está ocupado considerando capacidad total y de especialistas
   const checkSlotOccupied = (time: string, date: string) => {
     const currentServiceDuration = selectedService?.duration_minutes || 45
     const slotStart = parseTimeToMinutes(time)
@@ -273,18 +273,16 @@ export default function BookingClient({
 
     if (overlappingBookings.length === 0) return false
 
+    const totalCapacity = specialists.length > 0 ? specialists.length : 1
+
     if (selectedSpecialist) {
-      // Ocupado si el especialista seleccionado tiene cita asignada o hay reserva general
-      return overlappingBookings.some((b: any) => b.specialist_id === selectedSpecialist.id || !b.specialist_id)
+      // Ocupado si este especialista ya tiene cita O si todos los cupos del local están copados
+      const specHasBooking = overlappingBookings.some((b: any) => b.specialist_id === selectedSpecialist.id)
+      return specHasBooking || overlappingBookings.length >= totalCapacity
     }
 
-    // Si eligió "Cualquiera disponible":
-    if (specialists.length > 0) {
-      const bookedSpecIds = new Set(overlappingBookings.map((b: any) => b.specialist_id).filter(Boolean))
-      return bookedSpecIds.size >= specialists.length
-    }
-
-    return overlappingBookings.length > 0
+    // Si eligió "Cualquiera disponible": ocupado si el número total de reservas copó la capacidad del negocio
+    return overlappingBookings.length >= totalCapacity
   }
 
   // Auto-seleccionar primer horario solo si el actualmente seleccionado NO está disponible o al cambiar fecha
