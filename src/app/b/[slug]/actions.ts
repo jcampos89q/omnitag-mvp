@@ -33,16 +33,29 @@ export async function createPublicBooking(formData: FormData) {
     return { success: false, error: 'Por favor completa todos los campos requeridos.' }
   }
 
-  // Validación estricta para evitar agendar fechas u horas pasadas
-  const now = new Date()
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  if (bookingDate < todayStr) {
+  // Validación estricta usando la zona horaria del cliente
+  const clientOffsetStr = formData.get('client_timezone_offset') as string
+  const offsetMinutes = clientOffsetStr !== null && clientOffsetStr !== undefined && clientOffsetStr !== ''
+    ? parseInt(clientOffsetStr, 10) 
+    : 360 // Default a UTC-6 si no viniera offset
+
+  // Calcular la fecha y hora local del cliente independientemente del servidor (Vercel UTC)
+  const clientTimeMs = Date.now() - (offsetMinutes * 60 * 1000)
+  const clientDate = new Date(clientTimeMs)
+  const clientYear = clientDate.getUTCFullYear()
+  const clientMonth = String(clientDate.getUTCMonth() + 1).padStart(2, '0')
+  const clientDay = String(clientDate.getUTCDate()).padStart(2, '0')
+  const clientTodayStr = `${clientYear}-${clientMonth}-${clientDay}`
+  const clientCurrentMinutes = clientDate.getUTCHours() * 60 + clientDate.getUTCMinutes()
+
+  if (bookingDate < clientTodayStr) {
     return { success: false, error: 'No es posible agendar citas en fechas pasadas.' }
   }
-  if (bookingDate === todayStr) {
-    const currentMins = now.getHours() * 60 + now.getMinutes()
+
+  if (bookingDate === clientTodayStr) {
     const slotMins = parseTimeToMinutes(bookingTime)
-    if (slotMins <= currentMins) {
+    // Se permite agendar si el horario es posterior a la hora local actual
+    if (slotMins < clientCurrentMinutes) {
       return { success: false, error: 'La hora seleccionada ya ha transcurrido. Por favor elige un horario posterior.' }
     }
   }

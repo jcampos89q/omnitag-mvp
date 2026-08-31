@@ -229,7 +229,7 @@ export default function BookingClient({
   useEffect(() => {
     const firstAvailable = timeSlots.find((time) => {
       const slotStart = parseTimeToMinutes(time)
-      const isPast = isToday && (slotStart <= currentMinutes + 10)
+      const isPast = isToday && (slotStart <= currentMinutes)
       if (isPast) return false
 
       const currentServiceDuration = selectedService?.duration_minutes || 45
@@ -272,6 +272,7 @@ export default function BookingClient({
     formData.append('booking_time', selectedTime)
     formData.append('notes', customerNotes.trim())
     formData.append('slug', business.slug)
+    formData.append('client_timezone_offset', new Date().getTimezoneOffset().toString())
 
     const res = await createPublicBooking(formData)
     setIsSubmitting(false)
@@ -589,7 +590,7 @@ export default function BookingClient({
                 const slotStart = parseTimeToMinutes(time)
                 const slotEnd = slotStart + currentServiceDuration
 
-                const isPast = isToday && (slotStart <= currentMinutes + 10)
+                const isPast = isToday && (slotStart <= currentMinutes)
 
                 const isOccupied = existingBookings.some((b: any) => {
                   if (b.booking_date !== selectedDate) return false
