@@ -136,6 +136,7 @@ export default function BookingClient({
   const [reviewModalSpecialist, setReviewModalSpecialist] = useState<Specialist | null>(null)
   const [reviewRating, setReviewRating] = useState<number>(5)
   const [reviewerName, setReviewerName] = useState<string>('')
+  const [reviewerPhone, setReviewerPhone] = useState<string>('')
   const [reviewerComment, setReviewerComment] = useState<string>('')
   const category = business?.category || 'barbershop'
 
@@ -343,6 +344,7 @@ export default function BookingClient({
     formData.append('specialist_id', reviewModalSpecialist.id)
     formData.append('business_id', business.id)
     formData.append('customer_name', reviewerName.trim() || 'Cliente Satisfecho')
+    formData.append('customer_phone', reviewerPhone.trim())
     formData.append('rating', reviewRating.toString())
     formData.append('comment', reviewerComment.trim())
     formData.append('slug', business.slug)
@@ -353,6 +355,7 @@ export default function BookingClient({
       setReviewSuccess(false)
       setReviewModalSpecialist(null)
       setReviewerName('')
+      setReviewerPhone('')
       setReviewerComment('')
     }, 2000)
   }
@@ -790,10 +793,28 @@ export default function BookingClient({
                 </div>
 
                 <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                    WhatsApp / Teléfono {reviewRating <= 3 ? '(Para que la gerencia pueda contactarte)' : '(Opcional)'}
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="+504 9988-6256"
+                    value={reviewerPhone}
+                    onChange={(e) => setReviewerPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                  />
+                  {reviewRating <= 3 && (
+                    <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-xl border border-amber-200 mt-1">
+                      🛡️ Tu opinión será tratada en privado por la gerencia para ofrecerte una disculpa o solución.
+                    </p>
+                  )}
+                </div>
+
+                <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Comentario sobre la atención</label>
                   <textarea
                     rows={3}
-                    placeholder="Excelente corte y atención, muy profesional..."
+                    placeholder="Escribe tu experiencia..."
                     value={reviewerComment}
                     onChange={(e) => setReviewerComment(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none resize-none"

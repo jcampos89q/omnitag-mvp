@@ -201,6 +201,7 @@ export async function createSpecialistReview(formData: FormData) {
   const specialistId = (formData.get('specialist_id') as string)?.trim()
   const businessId = (formData.get('business_id') as string)?.trim()
   const customerName = (formData.get('customer_name') as string)?.trim() || 'Cliente'
+  const customerPhone = (formData.get('customer_phone') as string)?.trim() || null
   const rating = parseInt(formData.get('rating') as string) || 5
   const comment = (formData.get('comment') as string)?.trim() || ''
   const slug = (formData.get('slug') as string)?.trim()
@@ -215,6 +216,7 @@ export async function createSpecialistReview(formData: FormData) {
       specialist_id: specialistId,
       business_id: businessId,
       customer_name: customerName,
+      customer_phone: customerPhone,
       rating,
       comment: comment || null
     })

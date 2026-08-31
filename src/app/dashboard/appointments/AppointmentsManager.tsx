@@ -961,17 +961,32 @@ export default function AppointmentsManager({
               {reviews.map((r) => {
                 const spec = specialists.find(s => s.id === r.specialist_id)
                 const isPositive = r.rating >= 4
+                // Buscar si hay teléfono directo en la reseña o en reservas pasadas con ese nombre
+                const matchingBooking = bookings.find(b => b.customer_name?.trim().toLowerCase() === r.customer_name?.trim().toLowerCase())
+                const phone = r.customer_phone || matchingBooking?.customer_phone || null
+
+                const apologyMessage = encodeURIComponent(
+                  `¡Hola ${r.customer_name}! Te saluda cordialmente la gerencia de ${business.name}. Vimos tu opinión sobre tu atención con ${spec?.name || 'nuestro equipo'} y queremos ofrecerte una sincera disculpa por no brindarte la experiencia de calidad que mereces. Nos tomamos muy en serio tu satisfacción y queremos compensarte con una cortesía o solución en tu próxima visita. ¿Cómo podemos ayudarte a solucionarlo?`
+                )
+
+                const thankYouMessage = encodeURIComponent(
+                  `¡Hola ${r.customer_name}! Muchísimas gracias por calificar con ${r.rating}★ a ${spec?.name || 'nuestro equipo'} en ${business.name}. ¡Nos alegra mucho saber que disfrutaste tu atención y esperamos verte pronto de nuevo!`
+                )
+
+                const waMessage = !isPositive ? apologyMessage : thankYouMessage
 
                 return (
-                  <div key={r.id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs space-y-2.5">
+                  <div key={r.id} className={`p-4 rounded-2xl border shadow-xs space-y-3 ${
+                    !isPositive ? 'bg-amber-50/50 border-amber-200' : 'bg-white border-gray-200'
+                  }`}>
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-xs text-gray-900">{r.customer_name}</p>
                           <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
                             isPositive
                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-amber-50 text-amber-800 border border-amber-200'
+                              : 'bg-amber-100 text-amber-900 border border-amber-300'
                           }`}>
                             {isPositive ? '⭐ Pública (4-5★)' : '🛡️ Privada (Oportunidad)'}
                           </span>
@@ -1000,10 +1015,35 @@ export default function AppointmentsManager({
                     </div>
 
                     {r.comment && (
-                      <p className="text-xs text-gray-600 leading-relaxed italic">"{r.comment}"</p>
+                      <p className="text-xs text-gray-700 leading-relaxed italic bg-white/80 p-2 rounded-xl border border-gray-100">
+                        "{r.comment}"
+                      </p>
                     )}
 
-                    <p className="text-[10px] text-gray-400">{new Date(r.created_at).toLocaleDateString()}</p>
+                    <div className="flex items-center justify-between pt-1 flex-wrap gap-2 border-t border-gray-100">
+                      <span className="text-[10px] text-gray-400">{new Date(r.created_at).toLocaleDateString()}</span>
+
+                      {phone ? (
+                        <a
+                          href={`https://wa.me/${phone.replace(/\D/g, '')}?text=${waMessage}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs ${
+                            !isPositive
+                              ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                              : 'bg-[#25D366] hover:bg-[#1EBE57] text-white'
+                          }`}
+                          title={!isPositive ? 'Escribir disculpa privada y ofrecer cortesía' : 'Agradecer reseña'}
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 fill-white" />
+                          <span>{!isPositive ? '💬 Enviar Disculpa por WhatsApp' : '💬 Agradecer por WhatsApp'}</span>
+                        </a>
+                      ) : (
+                        <span className="text-[10px] text-gray-400 italic">
+                          🔒 Sin WhatsApp registrado
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )
               })}
