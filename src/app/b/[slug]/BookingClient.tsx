@@ -225,30 +225,55 @@ export default function BookingClient({
   const currentMinutes = getCurrentLocalMinutes()
   const isToday = selectedDate === todayStr
 
+  // Helper para verificar si una hora ya transcurrió (SOLO aplica si la fecha es hoy)
+  const isPastTimeSlot = (time: string, date: string) => {
+    if (date !== todayStr) return false
+    const slotStart = parseTimeToMinutes(time)
+    return slotStart <= currentMinutes
+  }
+
+  // Helper para verificar si un horario está ocupado considerando capacidad de especialistas
+  const checkSlotOccupied = (time: string, date: string) => {
+    const currentServiceDuration = selectedService?.duration_minutes || 45
+    const slotStart = parseTimeToMinutes(time)
+    const slotEnd = slotStart + currentServiceDuration
+
+    const overlappingBookings = existingBookings.filter((b: any) => {
+      if (b.booking_date !== date) return false
+      if (b.status === 'cancelled') return false
+
+      const bStart = parseTimeToMinutes(b.booking_time)
+      const bDuration = Array.isArray(b.appointment_services)
+        ? b.appointment_services[0]?.duration_minutes || 45
+        : b.appointment_services?.duration_minutes || 45
+      const bEnd = bStart + bDuration
+
+      return (slotStart < bEnd && slotEnd > bStart)
+    })
+
+    if (overlappingBookings.length === 0) return false
+
+    if (selectedSpecialist) {
+      // Ocupado si el especialista seleccionado tiene cita asignada o hay reserva general
+      return overlappingBookings.some((b: any) => b.specialist_id === selectedSpecialist.id || !b.specialist_id)
+    }
+
+    // Si eligió "Cualquiera disponible":
+    if (specialists.length > 0) {
+      const bookedSpecIds = new Set(overlappingBookings.map((b: any) => b.specialist_id).filter(Boolean))
+      return bookedSpecIds.size >= specialists.length
+    }
+
+    return overlappingBookings.length > 0
+  }
+
   // Auto-seleccionar el primer horario disponible y futuro
   useEffect(() => {
     const firstAvailable = timeSlots.find((time) => {
-      const slotStart = parseTimeToMinutes(time)
-      const isPast = isToday && (slotStart <= currentMinutes)
+      const isPast = isPastTimeSlot(time, selectedDate)
       if (isPast) return false
 
-      const currentServiceDuration = selectedService?.duration_minutes || 45
-      const slotEnd = slotStart + currentServiceDuration
-
-      const isOccupied = existingBookings.some((b: any) => {
-        if (b.booking_date !== selectedDate) return false
-        if (b.status === 'cancelled') return false
-        if (selectedSpecialist && b.specialist_id && b.specialist_id !== selectedSpecialist.id) return false
-
-        const bStart = parseTimeToMinutes(b.booking_time)
-        const bDuration = Array.isArray(b.appointment_services)
-          ? b.appointment_services[0]?.duration_minutes || 45
-          : b.appointment_services?.duration_minutes || 45
-        const bEnd = bStart + bDuration
-
-        return (slotStart < bEnd && slotEnd > bStart)
-      })
-
+      const isOccupied = checkSlotOccupied(time, selectedDate)
       return !isOccupied
     })
 
@@ -587,26 +612,8 @@ export default function BookingClient({
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {timeSlots.map((time) => {
                 const currentServiceDuration = selectedService?.duration_minutes || 45
-                const slotStart = parseTimeToMinutes(time)
-                const slotEnd = slotStart + currentServiceDuration
-
-                const isPast = isToday && (slotStart <= currentMinutes)
-
-                const isOccupied = existingBookings.some((b: any) => {
-                  if (b.booking_date !== selectedDate) return false
-                  if (b.status === 'cancelled') return false
-                  if (selectedSpecialist && b.specialist_id && b.specialist_id !== selectedSpecialist.id) return false
-
-                  const bStart = parseTimeToMinutes(b.booking_time)
-                  const bDuration = Array.isArray(b.appointment_services)
-                    ? b.appointment_services[0]?.duration_minutes || 45
-                    : b.appointment_services?.duration_minutes || 45
-                  const bEnd = bStart + bDuration
-
-                  // Overlap condition: intervals intersect
-                  return (slotStart < bEnd && slotEnd > bStart)
-                })
-
+                const isPast = isPastTimeSlot(time, selectedDate)
+                const isOccupied = checkSlotOccupied(time, selectedDate)
                 const isUnavailable = isOccupied || isPast
 
                 return (
