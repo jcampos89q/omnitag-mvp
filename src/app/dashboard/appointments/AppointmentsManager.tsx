@@ -729,7 +729,7 @@ export default function AppointmentsManager({
           {/* Listado de Especialistas */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {specialists.map((s) => {
-              const specReviews = reviews.filter(r => r.specialist_id === s.id)
+              const specReviews = reviews.filter(r => r.specialist_id === s.id && r.rating >= 4)
               const avg = specReviews.length > 0
                 ? (specReviews.reduce((sum, r) => sum + r.rating, 0) / specReviews.length).toFixed(1)
                 : '5.0'

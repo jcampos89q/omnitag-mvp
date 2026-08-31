@@ -132,9 +132,10 @@ export default function StaffPortalClient({
   // Filtrar citas del día seleccionado
   const dayBookings = initialBookings.filter(b => b.booking_date === selectedDate)
 
-  // Promedio de estrellas
-  const avgRating = reviews.length > 0
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+  // Promedio de estrellas públicas (solo 4 y 5 estrellas)
+  const publicReviews = reviews.filter(r => r.rating >= 4)
+  const avgRating = publicReviews.length > 0
+    ? (publicReviews.reduce((sum, r) => sum + r.rating, 0) / publicReviews.length).toFixed(1)
     : '5.0'
 
   const handleBlockSubmit = async (e: React.FormEvent) => {
@@ -315,7 +316,7 @@ export default function StaffPortalClient({
             <div className="flex items-center gap-1 mt-1">
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span className="font-extrabold text-xs text-white">{avgRating}</span>
-              <span className="text-[10px] text-gray-400">({reviews.length} opiniones)</span>
+              <span className="text-[10px] text-gray-400">({publicReviews.length} opiniones)</span>
             </div>
           </div>
         </div>
