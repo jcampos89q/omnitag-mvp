@@ -22,6 +22,7 @@ import {
 import ImageUploadInput from '@/components/ImageUploadInput'
 import ThemeSelector from '@/components/ThemeSelector'
 import TableQRGeneratorModal from './TableQRGeneratorModal'
+import SaveButton from '@/components/SaveButton'
 import { QrCode, UtensilsCrossed } from 'lucide-react'
 import { updateMenu, createCategory, deleteCategory, createMenuItem, deleteMenuItem, setDailySpecial, deleteDailySpecial } from './actions'
 
@@ -90,7 +91,35 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
         </div>
       </div>
 
-      {/* 2. PLATO / ESPECIAL DEL DÍA (Exclusivo para Restaurantes y Cafeterías) */}
+      {/* 2. GENERADOR DE CÓDIGOS QR POR MESA (Exclusivo para Restaurantes y Gastronomía) */}
+      {businessType === 'restaurant' && (
+        <div className="bg-slate-900 text-white p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-black uppercase tracking-wider">
+                <QrCode className="w-3 h-3" /> Comandas por Mesa
+              </div>
+              <h3 className="font-extrabold text-base sm:text-lg text-white">
+                🪑 Códigos QR para Mesas & Barra
+              </h3>
+              <p className="text-xs text-gray-300 max-w-xl leading-relaxed">
+                Genera e imprime códigos QR para cada mesa (ej. <b>Mesa #1, Mesa #2, Barra, Terraza</b>). Al escanear, el comensal enviará su pedido a WhatsApp con el número de mesa ya identificado.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowTableQRModal(true)}
+              className="bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold px-5 py-3 rounded-xl text-xs sm:text-sm transition flex items-center gap-2 shadow-md shrink-0 cursor-pointer"
+            >
+              <QrCode className="w-4 h-4" />
+              <span>Configurar & Generar Mesas QR</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 3. PLATO / ESPECIAL DEL DÍA (Exclusivo para Restaurantes y Cafeterías) */}
       {(businessType === 'restaurant' || businessType === 'services') && (
         <div className="bg-amber-50/70 border border-amber-200 p-5 sm:p-6 rounded-2xl space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -278,12 +307,11 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
           </div>
 
           <div className="pt-2">
-            <button 
-              type="submit" 
+            <SaveButton
+              label="Guardar Información y Tema"
+              loadingLabel="Guardando catálogo..."
               className="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition flex items-center gap-2 text-sm cursor-pointer shadow-sm"
-            >
-              <Save className="w-4 h-4" /> Guardar Información y Tema
-            </button>
+            />
           </div>
         </form>
       </div>
