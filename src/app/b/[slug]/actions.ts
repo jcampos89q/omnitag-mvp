@@ -69,11 +69,67 @@ export async function createPublicBooking(formData: FormData) {
     }
   }
 
+  let finalSpecialistId = specialistId
+  let assignedSpecialistName = ''
+
+  // Si el cliente eligió "Cualquiera disponible", auto-asignar inteligentemente al especialista libre con menor carga
+  if (!finalSpecialistId) {
+    const { data: activeSpecialists } = await supabase
+      .from('specialists')
+      .select('id, name')
+      .eq('business_id', businessId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+
+    if (activeSpecialists && activeSpecialists.length > 0) {
+      // Buscar citas existentes en este día para ver disponibilidad
+      const { data: dayBookings } = await supabase
+        .from('bookings')
+        .select('id, specialist_id, booking_time, appointment_services(duration_minutes)')
+        .eq('business_id', businessId)
+        .eq('booking_date', bookingDate)
+        .neq('status', 'cancelled')
+
+      const slotStart = parseTimeToMinutes(bookingTime)
+      const slotEnd = slotStart + 45 // duración estimada
+
+      // Filtrar especialistas que NO tengan conflicto de horario
+      const availableSpecialists = activeSpecialists.filter(spec => {
+        const hasOverlap = (dayBookings || []).some((b: any) => {
+          if (b.specialist_id !== spec.id) return false
+          const bStart = parseTimeToMinutes(b.booking_time)
+          const bDuration = Array.isArray(b.appointment_services)
+            ? b.appointment_services[0]?.duration_minutes || 45
+            : b.appointment_services?.duration_minutes || 45
+          const bEnd = bStart + bDuration
+          return (slotStart < bEnd && slotEnd > bStart)
+        })
+        return !hasOverlap
+      })
+
+      if (availableSpecialists.length > 0) {
+        // Contar carga de trabajo del día para balance equitativo
+        const workloadMap: Record<string, number> = {}
+        availableSpecialists.forEach(s => { workloadMap[s.id] = 0 })
+        ;(dayBookings || []).forEach((b: any) => {
+          if (b.specialist_id && workloadMap[b.specialist_id] !== undefined) {
+            workloadMap[b.specialist_id]++
+          }
+        })
+
+        // Ordenar por el especialista libre con menor número de citas en el día
+        availableSpecialists.sort((a, b) => workloadMap[a.id] - workloadMap[b.id])
+        finalSpecialistId = availableSpecialists[0].id
+        assignedSpecialistName = availableSpecialists[0].name
+      }
+    }
+  }
+
   const { data: booking, error } = await supabase
     .from('bookings')
     .insert({
       business_id: businessId,
-      specialist_id: specialistId,
+      specialist_id: finalSpecialistId,
       service_id: serviceId,
       customer_name: customerName,
       customer_phone: customerPhone,
@@ -99,7 +155,7 @@ export async function createPublicBooking(formData: FormData) {
       .eq('id', businessId)
       .maybeSingle()
 
-    let specialistName = 'Cualquiera disponible'
+    let specialistName = assignedSpecialistName || 'Cualquiera disponible'
     if (specialistId) {
       const { data: spec } = await supabase
         .from('specialists')
@@ -136,7 +192,7 @@ export async function createPublicBooking(formData: FormData) {
     console.error('Error revalidando ruta:', revErr)
   }
 
-  return { success: true, booking }
+  return { success: true, booking, assignedSpecialistName }
 }
 
 export async function createSpecialistReview(formData: FormData) {

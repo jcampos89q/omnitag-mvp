@@ -324,7 +324,7 @@ export default function BookingClient({
     if (res.success) {
       setBookingSuccess({
         service: selectedService,
-        specialist: selectedSpecialist,
+        specialist: selectedSpecialist || (res.assignedSpecialistName ? { name: res.assignedSpecialistName } : null),
         date: selectedDate,
         time: selectedTime,
         customerName,
