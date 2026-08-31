@@ -23,7 +23,7 @@ import {
 import Link from 'next/link'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import SaveButton from '@/components/SaveButton'
-import { createOrUpdateBusiness, createSpecialist, deleteSpecialist, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability, createManualBlockOrBooking, deleteBooking } from './actions'
+import { createOrUpdateBusiness, createSpecialist, updateSpecialistPin, deleteSpecialist, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability, createManualBlockOrBooking, deleteBooking } from './actions'
 import { generateTimeSlotsForDate } from '@/lib/schedule'
 
 interface AppointmentsManagerProps {
@@ -47,6 +47,7 @@ export default function AppointmentsManager({
   const [showAddSpecialist, setShowAddSpecialist] = useState(false)
   const [showAddService, setShowAddService] = useState(false)
   const [showAddBlock, setShowAddBlock] = useState(false)
+  const [editingPinSpecialistId, setEditingPinSpecialistId] = useState<string | null>(null)
 
   const timeSlots = generateTimeSlotsForDate(
     business?.schedule_config,
@@ -419,6 +420,10 @@ export default function AppointmentsManager({
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp Directo</label>
                   <input type="tel" name="phone" placeholder="+504 9988-6256" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
                 </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">PIN de Seguridad (4 dígitos)</label>
+                  <input type="text" name="access_pin" maxLength={6} placeholder="Ej. 1234" defaultValue="1234" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                </div>
               </div>
 
               <div>
@@ -450,7 +455,7 @@ export default function AppointmentsManager({
                 : '5.0'
 
               return (
-                <div key={s.id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between gap-3">
+                <div key={s.id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
                       {s.avatar_url ? (
@@ -462,15 +467,50 @@ export default function AppointmentsManager({
                     <div>
                       <p className="font-bold text-sm text-gray-900">{s.name}</p>
                       <p className="text-xs text-gray-500">{s.role_title}</p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        <span className="font-black text-xs text-gray-800">{avg}</span>
-                        <span className="text-[10px] text-gray-400">({specReviews.length} opiniones)</span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <span className="font-black text-xs text-gray-800">{avg}</span>
+                          <span className="text-[10px] text-gray-400">({specReviews.length})</span>
+                        </div>
+                        <span className="text-gray-300">•</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                            🔒 PIN: <b>{s.access_pin || '1234'}</b>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setEditingPinSpecialistId(editingPinSpecialistId === s.id ? null : s.id)}
+                            className="text-[10px] text-purple-700 hover:underline font-bold cursor-pointer"
+                          >
+                            {editingPinSpecialistId === s.id ? 'Cerrar' : 'Cambiar'}
+                          </button>
+                        </div>
                       </div>
+
+                      {editingPinSpecialistId === s.id && (
+                        <form action={updateSpecialistPin} className="mt-2 flex items-center gap-1.5 animate-in fade-in">
+                          <input type="hidden" name="specialist_id" value={s.id} />
+                          <input
+                            type="text"
+                            name="access_pin"
+                            defaultValue={s.access_pin || '1234'}
+                            maxLength={6}
+                            required
+                            className="w-20 px-2 py-1 rounded-lg border border-gray-300 text-xs font-bold"
+                          />
+                          <button
+                            type="submit"
+                            className="bg-black text-white text-[10px] font-bold px-2 py-1 rounded-lg hover:bg-gray-800 cursor-pointer"
+                          >
+                            Guardar
+                          </button>
+                        </form>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 self-end sm:self-center">
                     <a
                       href={`/b/${business.slug}/staff/${s.id}`}
                       target="_blank"
@@ -483,11 +523,11 @@ export default function AppointmentsManager({
                     </a>
 
                     <a
-                      href={`https://wa.me/${s.phone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(`¡Hola ${s.name}! Aquí tienes el enlace a tu portal móvil personal de agenda en ${business.name}: https://www.omnitag.site/b/${business.slug}/staff/${s.id}`)}`}
+                      href={`https://wa.me/${s.phone?.replace(/\D/g, '') || ''}?text=${encodeURIComponent(`¡Hola ${s.name}! Aquí tienes el enlace a tu portal móvil personal de agenda en ${business.name}:\n🔗 https://www.omnitag.site/b/${business.slug}/staff/${s.id}\n🔒 Tu PIN de acceso es: ${s.access_pin || '1234'}`)}`}
                       target="_blank"
                       rel="noreferrer"
                       className="p-2 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1"
-                      title="Enviar enlace de agenda al especialista por WhatsApp"
+                      title="Enviar enlace y PIN al especialista por WhatsApp"
                     >
                       <MessageCircle className="w-3.5 h-3.5 fill-current" />
                     </a>

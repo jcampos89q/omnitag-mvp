@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Scissors, 
   Calendar, 
@@ -18,7 +18,10 @@ import {
   Trash2,
   X,
   Coffee,
-  Utensils
+  Utensils,
+  KeyRound,
+  ShieldCheck,
+  LogOut
 } from 'lucide-react'
 import { updateBookingStatus } from '@/app/dashboard/appointments/actions'
 import { staffCreateScheduleBlock, staffDeleteBooking } from '@/app/b/[slug]/actions'
@@ -31,6 +34,8 @@ interface Specialist {
   avatar_url?: string | null
   phone?: string | null
   business_id: string
+  access_pin?: string | null
+  is_active?: boolean
 }
 
 interface Booking {
@@ -60,11 +65,43 @@ export default function StaffPortalClient({
   initialBookings: Booking[]
   reviews: any[]
 }) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [isAuthChecked, setIsAuthChecked] = useState<boolean>(false)
+  const [inputPin, setInputPin] = useState<string>('')
+  const [pinError, setPinError] = useState<string | null>(null)
+
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10))
   const [showBlockModal, setShowBlockModal] = useState<boolean>(false)
   const [blockTime, setBlockTime] = useState<string>('01:00 PM')
   const [blockReason, setBlockReason] = useState<string>('🥗 Almuerzo / Comida')
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+
+  useEffect(() => {
+    const savedPin = localStorage.getItem(`staff_pin_${specialist.id}`)
+    const correctPin = specialist.access_pin || '1234'
+    if (savedPin === correctPin) {
+      setIsAuthenticated(true)
+    }
+    setIsAuthChecked(true)
+  }, [specialist.id, specialist.access_pin])
+
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const correctPin = specialist.access_pin || '1234'
+    if (inputPin.trim() === correctPin) {
+      localStorage.setItem(`staff_pin_${specialist.id}`, correctPin)
+      setIsAuthenticated(true)
+      setPinError(null)
+    } else {
+      setPinError('PIN incorrecto. Intenta de nuevo o consulta con tu administrador.')
+    }
+  }
+
+  const handleLockSession = () => {
+    localStorage.removeItem(`staff_pin_${specialist.id}`)
+    setIsAuthenticated(false)
+    setInputPin('')
+  }
 
   const timeSlots = generateTimeSlotsForDate(business?.schedule_config, selectedDate)
 
@@ -104,15 +141,115 @@ export default function StaffPortalClient({
     setShowBlockModal(false)
   }
 
+  // 1. Cargando verificación de PIN
+  if (!isAuthChecked) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+        <div className="w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  // 2. Si el especialista está inactivo
+  if (specialist.is_active === false) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6 text-center">
+        <div className="max-w-xs space-y-4">
+          <div className="w-16 h-16 bg-red-500/20 text-red-400 rounded-3xl flex items-center justify-center mx-auto border border-red-500/30">
+            <Lock className="w-8 h-8" />
+          </div>
+          <h2 className="text-lg font-black">Acceso Deshabilitado</h2>
+          <p className="text-xs text-gray-400">
+            Tu acceso a la agenda móvil ha sido pausado por la administración de {business.name}.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // 3. Pantalla de Bloqueo por PIN
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white flex flex-col justify-between p-6">
+        <div className="max-w-xs mx-auto w-full pt-10 space-y-6 text-center animate-in fade-in zoom-in-95">
+          {/* Avatar del Especialista */}
+          <div className="relative mx-auto w-24 h-24">
+            <div className="w-24 h-24 rounded-3xl bg-gray-800 overflow-hidden border-2 border-yellow-400/50 shadow-2xl shadow-yellow-400/10">
+              {specialist.avatar_url ? (
+                <img src={specialist.avatar_url} alt={specialist.name} className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-full h-full p-6 text-gray-400" />
+              )}
+            </div>
+            <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-black p-1.5 rounded-xl shadow-md">
+              <KeyRound className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[10px] font-black uppercase tracking-wider bg-white/10 text-yellow-400 px-2.5 py-0.5 rounded-full border border-white/10">
+              {business.name}
+            </span>
+            <h2 className="text-xl font-black">{specialist.name}</h2>
+            <p className="text-xs text-gray-400">{specialist.role_title}</p>
+          </div>
+
+          {/* Formulario de PIN */}
+          <form onSubmit={handlePinSubmit} className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-gray-300">Ingresa tu PIN de Seguridad (4 dígitos)</label>
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                autoFocus
+                placeholder="••••"
+                value={inputPin}
+                onChange={(e) => setInputPin(e.target.value)}
+                className="w-full text-center text-2xl tracking-[0.4em] font-black py-3 px-4 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20"
+              />
+              {pinError && (
+                <p className="text-xs text-red-400 font-semibold animate-in fade-in">
+                  {pinError}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-3.5 px-4 rounded-2xl text-sm transition shadow-lg shadow-yellow-400/20 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Desbloquear Mi Agenda</span>
+            </button>
+          </form>
+        </div>
+
+        <p className="text-center text-[11px] text-gray-500 pb-4">
+          OmniTag Security • Consulta tu PIN con la administración
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-md mx-auto min-h-screen bg-gray-50 pb-16">
       {/* Cabecera del Especialista */}
-      <header className="bg-linear-to-b from-gray-900 to-black text-white p-6 rounded-b-3xl shadow-xl space-y-4">
+      <header className="bg-gradient-to-b from-gray-900 to-black text-white p-6 rounded-b-3xl shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-400 text-black px-2.5 py-0.5 rounded-full">
             Portal del Especialista
           </span>
-          <span className="text-xs text-gray-400 font-bold">{business.name}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 font-bold">{business.name}</span>
+            <button
+              onClick={handleLockSession}
+              title="Bloquear sesión con PIN"
+              className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3.5 pt-1">

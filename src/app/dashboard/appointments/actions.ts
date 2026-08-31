@@ -99,6 +99,7 @@ export async function createSpecialist(formData: FormData) {
     const phone = (formData.get('phone') as string)?.trim() || ''
     const bio = (formData.get('bio') as string)?.trim() || ''
     const avatarUrl = (formData.get('avatar_url') as string)?.trim() || null
+    const accessPin = (formData.get('access_pin') as string)?.trim() || Math.floor(1000 + Math.random() * 9000).toString()
 
     if (!name || !businessId) throw new Error("Nombre requerido")
 
@@ -109,11 +110,36 @@ export async function createSpecialist(formData: FormData) {
       phone,
       bio,
       avatar_url: avatarUrl,
+      access_pin: accessPin,
       is_active: true
     })
 
     revalidatePath('/dashboard/appointments')
     redirect('/dashboard/appointments?success=' + encodeURIComponent('¡Especialista agregado con éxito!'))
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    throw err
+  }
+}
+
+export async function updateSpecialistPin(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  try {
+    const specialistId = formData.get('specialist_id') as string
+    const accessPin = (formData.get('access_pin') as string)?.trim()
+
+    if (!specialistId || !accessPin) return
+
+    await supabase
+      .from('specialists')
+      .update({ access_pin: accessPin })
+      .eq('id', specialistId)
+
+    revalidatePath('/dashboard/appointments')
+    redirect('/dashboard/appointments?success=' + encodeURIComponent('PIN de seguridad actualizado'))
   } catch (err: any) {
     if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
     throw err
