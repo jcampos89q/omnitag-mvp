@@ -263,9 +263,9 @@ export default function BookingClient({
       if (b.status === 'cancelled') return false
 
       const bStart = parseTimeToMinutes(b.booking_time)
-      const bDuration = Array.isArray(b.appointment_services)
+      const bDuration = b.duration_minutes || (Array.isArray(b.appointment_services)
         ? b.appointment_services[0]?.duration_minutes || 45
-        : b.appointment_services?.duration_minutes || 45
+        : b.appointment_services?.duration_minutes || 45)
       const bEnd = bStart + bDuration
 
       return (slotStart < bEnd && slotEnd > bStart)

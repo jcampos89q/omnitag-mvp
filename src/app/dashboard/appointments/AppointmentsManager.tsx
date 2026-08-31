@@ -18,12 +18,13 @@ import {
   ShieldCheck,
   User,
   Building2,
-  Lock
+  Lock,
+  X
 } from 'lucide-react'
 import Link from 'next/link'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import SaveButton from '@/components/SaveButton'
-import { createOrUpdateBusiness, createSpecialist, updateSpecialistPin, deleteSpecialist, deleteSpecialistReview, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability, createManualBlockOrBooking, deleteBooking } from './actions'
+import { createOrUpdateBusiness, createSpecialist, updateSpecialistPin, deleteSpecialist, deleteSpecialistReview, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability, createManualBlockOrBooking, deleteBooking, createManualAppointment, updateAppointment, extendAppointmentDuration } from './actions'
 import { generateTimeSlotsForDate } from '@/lib/schedule'
 
 interface AppointmentsManagerProps {
@@ -47,6 +48,9 @@ export default function AppointmentsManager({
   const [showAddSpecialist, setShowAddSpecialist] = useState(false)
   const [showAddService, setShowAddService] = useState(false)
   const [showAddBlock, setShowAddBlock] = useState(false)
+  const [showManualBooking, setShowManualBooking] = useState(false)
+  const [editingBooking, setEditingBooking] = useState<any | null>(null)
+  const [extendingBookingId, setExtendingBookingId] = useState<string | null>(null)
   const [editingPinSpecialistId, setEditingPinSpecialistId] = useState<string | null>(null)
 
   const timeSlots = generateTimeSlotsForDate(
@@ -250,15 +254,115 @@ export default function AppointmentsManager({
               <h3 className="font-extrabold text-gray-900 text-base">Agenda de Turnos & Citas</h3>
               <span className="text-xs text-gray-500 font-medium">Sincronizado en tiempo real</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAddBlock(!showAddBlock)}
-              className="bg-black text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-gray-800 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Lock className="w-3.5 h-3.5 text-yellow-400" />
-              <span>{showAddBlock ? 'Cerrar' : '+ Bloquear Horario / Salida Temprana'}</span>
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowManualBooking(!showManualBooking)
+                  setShowAddBlock(false)
+                }}
+                className="bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>{showManualBooking ? 'Cerrar' : '+ Nueva Cita Manual (Teléfono / Presencial)'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddBlock(!showAddBlock)
+                  setShowManualBooking(false)
+                }}
+                className="bg-black text-white text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-gray-800 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Lock className="w-3.5 h-3.5 text-yellow-400" />
+                <span>{showAddBlock ? 'Cerrar' : '+ Bloquear Horario / Salida'}</span>
+              </button>
+            </div>
           </div>
+
+          {/* Formulario de Registrar Cita Manual (Teléfono / Walk-in) */}
+          {showManualBooking && (
+            <form action={createManualAppointment} className="p-5 bg-purple-50/70 border border-purple-200 rounded-2xl space-y-4 animate-in fade-in">
+              <input type="hidden" name="business_id" value={business.id} />
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-lg bg-purple-200 text-purple-900 flex items-center justify-center font-bold text-xs">📞</span>
+                <h4 className="font-extrabold text-sm text-purple-950">Registrar Cita Manual (Por Teléfono, WhatsApp o Presencial)</h4>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre del Cliente *</label>
+                  <input type="text" name="customer_name" required placeholder="Ej. Mario Rivera" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp / Teléfono *</label>
+                  <input type="tel" name="customer_phone" required placeholder="+504 9988-6256" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Especialista</label>
+                  <select name="specialist_id" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none">
+                    <option value="">Cualquiera disponible</option>
+                    {specialists.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Servicio</label>
+                  <select name="service_id" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none">
+                    <option value="">Servicio General</option>
+                    {services.map(serv => (
+                      <option key={serv.id} value={serv.id}>{serv.name} (${serv.price})</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha *</label>
+                  <input type="date" name="booking_date" required defaultValue={new Date().toISOString().slice(0, 10)} className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Hora *</label>
+                  <select name="booking_time" required className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none">
+                    {timeSlots.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Duración Estimada</label>
+                  <select name="duration_minutes" defaultValue={45} className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none">
+                    <option value={15}>⏱️ 15 min</option>
+                    <option value={30}>⏱️ 30 min</option>
+                    <option value={45}>⏱️ 45 min</option>
+                    <option value={60}>⏱️ 60 min (1 Hora)</option>
+                    <option value={90}>⏱️ 90 min (1h 30m)</option>
+                    <option value={120}>⏱️ 120 min (2 Horas)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nota Especial</label>
+                  <input type="text" name="notes" placeholder="Ej. Pidió corte especial, cita por teléfono..." className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-1">
+                <button type="button" onClick={() => setShowManualBooking(false)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer">Cancelar</button>
+                <SaveButton
+                  label="Apartar Cita Manualmente"
+                  loadingLabel="Guardando..."
+                  className="bg-purple-700 hover:bg-purple-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                />
+              </div>
+            </form>
+          )}
 
           {/* Formulario de Bloqueo de Horario o Cita Presencial */}
           {showAddBlock && (
@@ -311,6 +415,132 @@ export default function AppointmentsManager({
             </form>
           )}
 
+          {/* Modal / Formulario de Editar / Reasignar Cita */}
+          {editingBooking && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+              <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg w-full space-y-4 relative max-h-[90vh] overflow-y-auto">
+                <button
+                  onClick={() => setEditingBooking(null)}
+                  className="absolute top-4 right-4 p-1 text-gray-400 hover:text-black rounded-lg cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <h3 className="font-extrabold text-gray-900 text-base flex items-center gap-2">
+                  <span>✏️ Editar / Reasignar Cita de</span>
+                  <span className="text-purple-700">{editingBooking.customer_name}</span>
+                </h3>
+
+                <form action={updateAppointment} className="space-y-3">
+                  <input type="hidden" name="booking_id" value={editingBooking.id} />
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Reasignar Especialista</label>
+                      <select
+                        name="specialist_id"
+                        defaultValue={editingBooking.specialist_id || ''}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                      >
+                        <option value="">Cualquiera disponible</option>
+                        {specialists.map(s => (
+                          <option key={s.id} value={s.id}>{s.name} ({s.role_title})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Servicio</label>
+                      <select
+                        name="service_id"
+                        defaultValue={editingBooking.service_id || ''}
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                      >
+                        <option value="">Servicio General</option>
+                        {services.map(serv => (
+                          <option key={serv.id} value={serv.id}>{serv.name} (${serv.price})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha</label>
+                      <input
+                        type="date"
+                        name="booking_date"
+                        defaultValue={editingBooking.booking_date}
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Hora</label>
+                      <select
+                        name="booking_time"
+                        defaultValue={editingBooking.booking_time}
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                      >
+                        {timeSlots.map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre Cliente</label>
+                      <input
+                        type="text"
+                        name="customer_name"
+                        defaultValue={editingBooking.customer_name}
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp / Teléfono</label>
+                      <input
+                        type="tel"
+                        name="customer_phone"
+                        defaultValue={editingBooking.customer_phone}
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Notas / Observaciones</label>
+                    <input
+                      type="text"
+                      name="notes"
+                      defaultValue={editingBooking.notes || ''}
+                      placeholder="Notas del servicio..."
+                      className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingBooking(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <SaveButton
+                      label="Guardar Cambios"
+                      loadingLabel="Actualizando..."
+                      className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-gray-800 transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                    />
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {bookings.length === 0 ? (
             <div className="p-12 text-center bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
               <Calendar className="w-10 h-10 text-gray-300 mx-auto" />
@@ -322,16 +552,20 @@ export default function AppointmentsManager({
               {bookings.map((b) => {
                 const spec = specialists.find(s => s.id === b.specialist_id)
                 const serv = services.find(s => s.id === b.service_id)
+                const duration = b.duration_minutes || serv?.duration_minutes || 45
 
                 return (
                   <div key={b.id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                    <div className="space-y-1.5 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-extrabold text-sm text-gray-900">{b.customer_name}</span>
                         <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
                           b.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : b.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
                         }`}>
                           {b.status === 'confirmed' ? 'Confirmada' : b.status === 'completed' ? 'Completada' : b.status}
+                        </span>
+                        <span className="text-[10px] font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md border border-purple-200">
+                          ⏱️ {duration} min
                         </span>
                       </div>
 
@@ -342,13 +576,59 @@ export default function AppointmentsManager({
                       </div>
 
                       {b.notes && (
-                        <p className="text-xs text-gray-400 italic">"{b.notes}"</p>
+                        <p className="text-xs text-gray-500 italic bg-gray-50 p-1.5 rounded-lg border border-gray-100 inline-block">
+                          "{b.notes}"
+                        </p>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 self-end sm:self-center">
+                    <div className="flex items-center gap-2 self-end sm:self-center flex-wrap">
+                      {/* Botón Extender Tiempo */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setExtendingBookingId(extendingBookingId === b.id ? null : b.id)}
+                          className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                          title="Extender tiempo de la cita (+15m, +30m, +45m, +60m)"
+                        >
+                          <Clock className="w-3.5 h-3.5 text-amber-700" />
+                          <span>+Tiempo</span>
+                        </button>
+
+                        {extendingBookingId === b.id && (
+                          <div className="absolute right-0 top-full mt-1 w-56 p-3 bg-white rounded-2xl shadow-xl border border-gray-200 z-30 space-y-2 animate-in fade-in zoom-in-95">
+                            <p className="text-[11px] font-extrabold text-gray-800">⏱️ Extender Duración:</p>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {[15, 30, 45, 60].map((mins) => (
+                                <form key={mins} action={extendAppointmentDuration}>
+                                  <input type="hidden" name="booking_id" value={b.id} />
+                                  <input type="hidden" name="additional_minutes" value={mins} />
+                                  <button
+                                    type="submit"
+                                    onClick={() => setExtendingBookingId(null)}
+                                    className="w-full py-1 px-2 rounded-lg bg-amber-50 hover:bg-amber-200 text-amber-900 text-xs font-black border border-amber-200 cursor-pointer text-center"
+                                  >
+                                    +{mins} min
+                                  </button>
+                                </form>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Botón Editar / Reasignar */}
+                      <button
+                        type="button"
+                        onClick={() => setEditingBooking(b)}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer"
+                        title="Reasignar especialista o cambiar fecha/hora"
+                      >
+                        Editar
+                      </button>
+
                       <a
-                        href={`https://wa.me/${b.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`¡Hola ${b.customer_name}! Te saludamos de ${business.name}. Te recordamos tu cita para el ${b.booking_date} a las ${b.booking_time}. ¿Confirmas tu asistencia?`)}`}
+                        href={`https://wa.me/${b.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`¡Hola ${b.customer_name}! Te saludamos de ${business.name}. Te recordamos tu cita para el ${b.booking_date} a las ${b.booking_time} (${duration} min). ¿Confirmas tu asistencia?`)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="bg-[#25D366] text-white px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-[#1EBE57] transition flex items-center gap-1"

@@ -24,7 +24,7 @@ import {
   LogOut
 } from 'lucide-react'
 import { updateBookingStatus } from '@/app/dashboard/appointments/actions'
-import { staffCreateScheduleBlock, staffDeleteBooking } from '@/app/b/[slug]/actions'
+import { staffCreateScheduleBlock, staffDeleteBooking, staffExtendBookingDuration, staffCreateManualBooking, staffUpdateBooking } from '@/app/b/[slug]/actions'
 import { generateTimeSlotsForDate } from '@/lib/schedule'
 
 interface Specialist {
@@ -45,6 +45,7 @@ interface Booking {
   customer_email?: string | null
   booking_date: string
   booking_time: string
+  duration_minutes?: number
   status: string
   notes?: string | null
   appointment_services?: {
@@ -75,6 +76,17 @@ export default function StaffPortalClient({
   const [blockTime, setBlockTime] = useState<string>('01:00 PM')
   const [blockReason, setBlockReason] = useState<string>('🥗 Almuerzo / Comida')
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+
+  const [showManualModal, setShowManualModal] = useState<boolean>(false)
+  const [showExtendModalBooking, setShowExtendModalBooking] = useState<Booking | null>(null)
+  const [extendMinutes, setExtendMinutes] = useState<number>(30)
+  const [extendReason, setExtendReason] = useState<string>('Servicio extra / Barba')
+  
+  const [manualCustomerName, setManualCustomerName] = useState<string>('')
+  const [manualCustomerPhone, setManualCustomerPhone] = useState<string>('')
+  const [manualTime, setManualTime] = useState<string>('10:00 AM')
+  const [manualDuration, setManualDuration] = useState<number>(45)
+  const [manualNotes, setManualNotes] = useState<string>('Cliente presencial (Walk-in)')
 
   useEffect(() => {
     const savedPin = localStorage.getItem(`staff_pin_${specialist.id}`)
@@ -139,6 +151,43 @@ export default function StaffPortalClient({
     await staffCreateScheduleBlock(formData)
     setIsSubmitting(false)
     setShowBlockModal(false)
+  }
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    const formData = new FormData()
+    formData.append('business_id', business.id)
+    formData.append('specialist_id', specialist.id)
+    formData.append('customer_name', manualCustomerName)
+    formData.append('customer_phone', manualCustomerPhone || '00000000')
+    formData.append('booking_date', selectedDate)
+    formData.append('booking_time', manualTime)
+    formData.append('duration_minutes', manualDuration.toString())
+    formData.append('notes', manualNotes)
+    formData.append('slug', business.slug)
+
+    await staffCreateManualBooking(formData)
+    setIsSubmitting(false)
+    setShowManualModal(false)
+    setManualCustomerName('')
+    setManualCustomerPhone('')
+  }
+
+  const handleExtendSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!showExtendModalBooking) return
+    setIsSubmitting(true)
+    const formData = new FormData()
+    formData.append('booking_id', showExtendModalBooking.id)
+    formData.append('specialist_id', specialist.id)
+    formData.append('additional_minutes', extendMinutes.toString())
+    formData.append('reason', extendReason)
+    formData.append('slug', business.slug)
+
+    await staffExtendBookingDuration(formData)
+    setIsSubmitting(false)
+    setShowExtendModalBooking(null)
   }
 
   // 1. Cargando verificación de PIN
@@ -293,20 +342,31 @@ export default function StaffPortalClient({
           ))}
         </div>
 
-        {/* Botón para Bloquear Horario / Almuerzo */}
-        <div className="flex items-center justify-between gap-2 px-1">
+        {/* Botones de Acción Rápida */}
+        <div className="flex items-center justify-between gap-2 px-1 flex-wrap">
           <h2 className="font-extrabold text-sm text-gray-900">
             Agenda de {selectedDate === new Date().toISOString().slice(0, 10) ? 'Hoy' : selectedDate}
           </h2>
 
-          <button
-            type="button"
-            onClick={() => setShowBlockModal(true)}
-            className="text-xs font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>Bloquear Turno / Almuerzo</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowManualModal(true)}
+              className="text-xs font-bold bg-purple-100 text-purple-900 hover:bg-purple-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ Cita en Local</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowBlockModal(true)}
+              className="text-xs font-bold bg-amber-100 text-amber-900 hover:bg-amber-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Bloquear Almuerzo</span>
+            </button>
+          </div>
         </div>
 
         {/* Lista de Citas */}
@@ -320,6 +380,7 @@ export default function StaffPortalClient({
           <div className="space-y-3">
             {dayBookings.map((b) => {
               const isBlock = b.customer_name.startsWith('🔒')
+              const duration = b.duration_minutes || b.appointment_services?.duration_minutes || 45
               const waMessage = encodeURIComponent(
                 `¡Hola ${b.customer_name}! Te saluda ${specialist.name} de ${business.name}. Te recordamos tu cita hoy a las ${b.booking_time} para ${b.appointment_services?.name || 'tu servicio'}. ¡Te esperamos!`
               )
@@ -336,7 +397,7 @@ export default function StaffPortalClient({
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={`text-xs font-black px-2.5 py-0.5 rounded-lg ${
                           isBlock ? 'bg-amber-200 text-amber-950' : 'bg-purple-100 text-purple-800'
                         }`}>
@@ -351,6 +412,11 @@ export default function StaffPortalClient({
                         }`}>
                           {isBlock ? 'Horario Bloqueado' : b.status === 'confirmed' ? 'Confirmada' : b.status}
                         </span>
+                        {!isBlock && (
+                          <span className="text-[10px] font-bold bg-amber-50 text-amber-900 px-2 py-0.5 rounded-md border border-amber-200">
+                            ⏱️ {duration} min
+                          </span>
+                        )}
                       </div>
 
                       <h3 className="font-black text-base text-gray-900 mt-2">{b.customer_name}</h3>
@@ -371,7 +437,7 @@ export default function StaffPortalClient({
                   </div>
 
                   {/* Acciones para el Barbero / Especialista */}
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 flex-wrap gap-2">
                     {isBlock ? (
                       <form action={staffDeleteBooking}>
                         <input type="hidden" name="booking_id" value={b.id} />
@@ -387,29 +453,41 @@ export default function StaffPortalClient({
                       </form>
                     ) : (
                       <>
-                        <a
-                          href={waUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bg-[#25D366] hover:bg-[#1EBE57] text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-                        >
-                          <MessageCircle className="w-4 h-4 fill-white" />
-                          <span>WhatsApp Cliente</span>
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowExtendModalBooking(b)}
+                            className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                            title="Agregar tiempo a esta cita por servicio extra o corte tardado"
+                          >
+                            <Clock className="w-3.5 h-3.5 text-amber-700" />
+                            <span>+Tiempo Extra</span>
+                          </button>
+
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-[#25D366] hover:bg-[#1EBE57] text-white px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 fill-white" />
+                            <span>WhatsApp</span>
+                          </a>
+                        </div>
 
                         <form action={updateBookingStatus}>
                           <input type="hidden" name="booking_id" value={b.id} />
                           <input type="hidden" name="status" value={b.status === 'completed' ? 'confirmed' : 'completed'} />
                           <button
                             type="submit"
-                            className={`px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
                               b.status === 'completed' 
                                 ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
                                 : 'bg-black text-white hover:bg-gray-800'
                             }`}
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>{b.status === 'completed' ? 'Reabrir' : 'Completado'}</span>
+                            <span>{b.status === 'completed' ? 'Reabrir' : 'Listo'}</span>
                           </button>
                         </form>
                       </>
@@ -422,13 +500,191 @@ export default function StaffPortalClient({
         )}
       </main>
 
+      {/* Modal para Extender Tiempo de Cita */}
+      {showExtendModalBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full space-y-4 relative">
+            <button
+              onClick={() => setShowExtendModalBooking(null)}
+              className="absolute top-4 right-4 p-1 text-gray-400 hover:text-black rounded-lg"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                <Clock className="w-6 h-6" />
+              </div>
+              <h3 className="font-extrabold text-gray-900 text-base">
+                Extender Tiempo de Atención
+              </h3>
+              <p className="text-xs text-gray-500">
+                Para: <b>{showExtendModalBooking.customer_name}</b>. Esto bloqueará los siguientes horarios en la web para que nadie te interrumpa.
+              </p>
+            </div>
+
+            <form onSubmit={handleExtendSubmit} className="space-y-3.5 pt-1">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Tiempo Extra a Agregar</label>
+                <select
+                  value={extendMinutes}
+                  onChange={(e) => setExtendMinutes(parseInt(e.target.value, 10))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-bold focus:border-black focus:outline-none"
+                >
+                  <option value={15}>⏱️ +15 Minutos Extra</option>
+                  <option value={30}>⏱️ +30 Minutos Extra (Recomendado)</option>
+                  <option value={45}>⏱️ +45 Minutos Extra</option>
+                  <option value={60}>⏱️ +60 Minutos Extra (1 Hora)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Motivo / Servicio Extra</label>
+                <input
+                  type="text"
+                  value={extendReason}
+                  onChange={(e) => setExtendReason(e.target.value)}
+                  placeholder="Ej. Pidió Barba extra, Corte tardado de niño..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowExtendModalBooking(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Guardando...' : 'Aplicar Tiempo Extra'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Registrar Cita Presencial (Walk-in) */}
+      {showManualModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full space-y-4 relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowManualModal(false)}
+              className="absolute top-4 right-4 p-1 text-gray-400 hover:text-black rounded-lg"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-1">
+              <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center mx-auto">
+                <Plus className="w-6 h-6" />
+              </div>
+              <h3 className="font-extrabold text-gray-900 text-base">
+                Apartar Cita Presencial (Walk-in)
+              </h3>
+              <p className="text-xs text-gray-500">
+                Registra un cliente que llegó directo al local o te llamó por WhatsApp para bloquear tu horario en la web.
+              </p>
+            </div>
+
+            <form onSubmit={handleManualSubmit} className="space-y-3 pt-1">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre del Cliente *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Mario Rivera"
+                  value={manualCustomerName}
+                  onChange={(e) => setManualCustomerName(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp / Teléfono (Opcional)</label>
+                <input
+                  type="tel"
+                  placeholder="+504 9988-6256"
+                  value={manualCustomerPhone}
+                  onChange={(e) => setManualCustomerPhone(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Hora de Atención</label>
+                <select
+                  value={manualTime}
+                  onChange={(e) => setManualTime(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                >
+                  {timeSlots.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Duración Estimada</label>
+                <select
+                  value={manualDuration}
+                  onChange={(e) => setManualDuration(parseInt(e.target.value, 10))}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                >
+                  <option value={15}>⏱️ 15 minutos</option>
+                  <option value={30}>⏱️ 30 minutos</option>
+                  <option value={45}>⏱️ 45 minutos</option>
+                  <option value={60}>⏱️ 60 minutos (1 Hora)</option>
+                  <option value={90}>⏱️ 90 minutos (1h 30m)</option>
+                  <option value={120}>⏱️ 120 minutos (2 Horas)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Notas / Detalles</label>
+                <input
+                  type="text"
+                  placeholder="Ej. Corte clásico + barba..."
+                  value={manualNotes}
+                  onChange={(e) => setManualNotes(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowManualModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-purple-700 hover:bg-purple-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Guardando...' : 'Apartar Cita'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal para Bloquear Horario / Almuerzo */}
       {showBlockModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
           <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full space-y-4 relative">
             <button
               onClick={() => setShowBlockModal(false)}
-              className="absolute top-4 right-4 p-1 text-gray-400 hover:text-black rounded-lg"
+              className="absolute top-4 right-4 p-1 text-gray-400 hover:text-black rounded-lg cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -474,11 +730,18 @@ export default function StaffPortalClient({
                 </select>
               </div>
 
-              <div className="pt-2">
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBlockModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-black cursor-pointer"
+                >
+                  Cancelar
+                </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-black hover:bg-gray-800 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition cursor-pointer shadow-md disabled:opacity-50"
+                  className="bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? 'Bloqueando...' : 'Confirmar Bloqueo'}
                 </button>

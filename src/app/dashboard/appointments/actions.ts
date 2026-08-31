@@ -325,3 +325,126 @@ export async function deleteSpecialistReview(formData: FormData) {
     throw err
   }
 }
+
+export async function createManualAppointment(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  try {
+    const businessId = (formData.get('business_id') as string)?.trim()
+    const specialistId = (formData.get('specialist_id') as string)?.trim() || null
+    const serviceId = (formData.get('service_id') as string)?.trim() || null
+    const customerName = (formData.get('customer_name') as string)?.trim()
+    const customerPhone = (formData.get('customer_phone') as string)?.trim() || '00000000'
+    const bookingDate = (formData.get('booking_date') as string)?.trim()
+    const bookingTime = (formData.get('booking_time') as string)?.trim()
+    const durationMinutes = parseInt(formData.get('duration_minutes') as string, 10) || 45
+    const notes = (formData.get('notes') as string)?.trim() || 'Cita manual registrada desde el panel'
+
+    if (!businessId || !customerName || !bookingDate || !bookingTime) {
+      throw new Error("Nombre, fecha y hora son obligatorios")
+    }
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    const validSpecialistId = specialistId && uuidRegex.test(specialistId) ? specialistId : null
+    const validServiceId = serviceId && uuidRegex.test(serviceId) ? serviceId : null
+
+    await supabase.from('bookings').insert({
+      business_id: businessId,
+      specialist_id: validSpecialistId,
+      service_id: validServiceId,
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      booking_date: bookingDate,
+      booking_time: bookingTime,
+      duration_minutes: durationMinutes,
+      notes: notes,
+      status: 'confirmed'
+    })
+
+    revalidatePath('/dashboard/appointments')
+    revalidatePath('/', 'layout')
+    redirect('/dashboard/appointments?success=' + encodeURIComponent('¡Cita manual registrada con éxito!'))
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    throw err
+  }
+}
+
+export async function updateAppointment(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  try {
+    const bookingId = (formData.get('booking_id') as string)?.trim()
+    const specialistId = (formData.get('specialist_id') as string)?.trim() || null
+    const serviceId = (formData.get('service_id') as string)?.trim() || null
+    const bookingDate = (formData.get('booking_date') as string)?.trim()
+    const bookingTime = (formData.get('booking_time') as string)?.trim()
+    const customerName = (formData.get('customer_name') as string)?.trim()
+    const customerPhone = (formData.get('customer_phone') as string)?.trim()
+    const notes = (formData.get('notes') as string)?.trim()
+
+    if (!bookingId) return
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    const payload: any = {}
+    if (specialistId !== undefined) payload.specialist_id = (specialistId && uuidRegex.test(specialistId)) ? specialistId : null
+    if (serviceId !== undefined) payload.service_id = (serviceId && uuidRegex.test(serviceId)) ? serviceId : null
+    if (bookingDate) payload.booking_date = bookingDate
+    if (bookingTime) payload.booking_time = bookingTime
+    if (customerName) payload.customer_name = customerName
+    if (customerPhone) payload.customer_phone = customerPhone
+    if (notes !== undefined) payload.notes = notes
+
+    await supabase.from('bookings').update(payload).eq('id', bookingId)
+
+    revalidatePath('/dashboard/appointments')
+    redirect('/dashboard/appointments?success=' + encodeURIComponent('Cita actualizada correctamente'))
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    throw err
+  }
+}
+
+export async function extendAppointmentDuration(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  try {
+    const bookingId = (formData.get('booking_id') as string)?.trim()
+    const additionalMinutes = parseInt(formData.get('additional_minutes') as string, 10) || 30
+    const reason = (formData.get('reason') as string)?.trim() || 'Servicio Extra / Atención Prolongada'
+
+    if (!bookingId) return
+
+    const { data: current } = await supabase
+      .from('bookings')
+      .select('duration_minutes, notes')
+      .eq('id', bookingId)
+      .maybeSingle()
+
+    const currentDuration = current?.duration_minutes || 45
+    const newDuration = currentDuration + additionalMinutes
+    const newNotes = current?.notes 
+      ? `${current.notes} | ⏱️ +${additionalMinutes}m (${reason})`
+      : `⏱️ +${additionalMinutes}m (${reason})`
+
+    await supabase
+      .from('bookings')
+      .update({
+        duration_minutes: newDuration,
+        notes: newNotes
+      })
+      .eq('id', bookingId)
+
+    revalidatePath('/dashboard/appointments')
+    redirect('/dashboard/appointments?success=' + encodeURIComponent(`¡Tiempo extendido (+${additionalMinutes} min)! Horarios bloqueados en web.`))
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    throw err
+  }
+}

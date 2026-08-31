@@ -335,3 +335,135 @@ export async function staffDeleteBooking(formData: FormData) {
   }
   revalidatePath('/dashboard/appointments')
 }
+
+export async function staffExtendBookingDuration(formData: FormData) {
+  const supabase = await createClient()
+  const bookingId = (formData.get('booking_id') as string)?.trim()
+  const specialistId = (formData.get('specialist_id') as string)?.trim()
+  const additionalMinutes = parseInt(formData.get('additional_minutes') as string, 10) || 30
+  const reason = (formData.get('reason') as string)?.trim() || 'Servicio extra / Atención prolongada'
+  const slug = (formData.get('slug') as string)?.trim()
+
+  if (!bookingId) return { success: false, error: 'ID de reserva requerido' }
+
+  // Obtener reserva actual
+  const { data: current } = await supabase
+    .from('bookings')
+    .select('duration_minutes, notes')
+    .eq('id', bookingId)
+    .maybeSingle()
+
+  const currentDuration = current?.duration_minutes || 45
+  const newDuration = currentDuration + additionalMinutes
+  const newNotes = current?.notes 
+    ? `${current.notes} | ⏱️ +${additionalMinutes}m (${reason})`
+    : `⏱️ +${additionalMinutes}m (${reason})`
+
+  const { error } = await supabase
+    .from('bookings')
+    .update({
+      duration_minutes: newDuration,
+      notes: newNotes
+    })
+    .eq('id', bookingId)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  if (slug) {
+    revalidatePath(`/b/${slug}`)
+    if (specialistId) revalidatePath(`/b/${slug}/staff/${specialistId}`)
+  }
+  revalidatePath('/dashboard/appointments')
+
+  return { success: true, newDuration }
+}
+
+export async function staffCreateManualBooking(formData: FormData) {
+  const supabase = await createClient()
+  const businessId = (formData.get('business_id') as string)?.trim()
+  const specialistId = (formData.get('specialist_id') as string)?.trim() || null
+  const serviceId = (formData.get('service_id') as string)?.trim() || null
+  const customerName = (formData.get('customer_name') as string)?.trim()
+  const customerPhone = (formData.get('customer_phone') as string)?.trim() || '00000000'
+  const bookingDate = (formData.get('booking_date') as string)?.trim()
+  const bookingTime = (formData.get('booking_time') as string)?.trim()
+  const durationMinutes = parseInt(formData.get('duration_minutes') as string, 10) || 45
+  const notes = (formData.get('notes') as string)?.trim() || 'Cita manual / En local'
+  const slug = (formData.get('slug') as string)?.trim()
+
+  if (!businessId || !customerName || !bookingDate || !bookingTime) {
+    return { success: false, error: 'Completa nombre, fecha y hora.' }
+  }
+
+  const { data: booking, error } = await supabase
+    .from('bookings')
+    .insert({
+      business_id: businessId,
+      specialist_id: isValidUUID(specialistId) ? specialistId : null,
+      service_id: isValidUUID(serviceId) ? serviceId : null,
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      booking_date: bookingDate,
+      booking_time: bookingTime,
+      duration_minutes: durationMinutes,
+      notes: notes,
+      status: 'confirmed'
+    })
+    .select()
+    .single()
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  if (slug) {
+    revalidatePath(`/b/${slug}`)
+    if (specialistId) revalidatePath(`/b/${slug}/staff/${specialistId}`)
+  }
+  revalidatePath('/dashboard/appointments')
+
+  return { success: true, booking }
+}
+
+export async function staffUpdateBooking(formData: FormData) {
+  const supabase = await createClient()
+  const bookingId = (formData.get('booking_id') as string)?.trim()
+  const specialistId = (formData.get('specialist_id') as string)?.trim() || null
+  const serviceId = (formData.get('service_id') as string)?.trim() || null
+  const bookingDate = (formData.get('booking_date') as string)?.trim()
+  const bookingTime = (formData.get('booking_time') as string)?.trim()
+  const customerName = (formData.get('customer_name') as string)?.trim()
+  const customerPhone = (formData.get('customer_phone') as string)?.trim()
+  const notes = (formData.get('notes') as string)?.trim()
+  const slug = (formData.get('slug') as string)?.trim()
+
+  if (!bookingId) return { success: false, error: 'ID de reserva requerido' }
+
+  const payload: any = {}
+  if (isValidUUID(specialistId)) payload.specialist_id = specialistId
+  if (isValidUUID(serviceId)) payload.service_id = serviceId
+  if (bookingDate) payload.booking_date = bookingDate
+  if (bookingTime) payload.booking_time = bookingTime
+  if (customerName) payload.customer_name = customerName
+  if (customerPhone) payload.customer_phone = customerPhone
+  if (notes !== undefined) payload.notes = notes
+
+  const { error } = await supabase
+    .from('bookings')
+    .update(payload)
+    .eq('id', bookingId)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  if (slug) {
+    revalidatePath(`/b/${slug}`)
+    if (specialistId) revalidatePath(`/b/${slug}/staff/${specialistId}`)
+  }
+  revalidatePath('/dashboard/appointments')
+
+  return { success: true }
+}
