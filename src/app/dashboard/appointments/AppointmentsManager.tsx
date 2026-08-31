@@ -23,7 +23,7 @@ import {
 import Link from 'next/link'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import SaveButton from '@/components/SaveButton'
-import { createOrUpdateBusiness, createSpecialist, updateSpecialistPin, deleteSpecialist, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability, createManualBlockOrBooking, deleteBooking } from './actions'
+import { createOrUpdateBusiness, createSpecialist, updateSpecialistPin, deleteSpecialist, deleteSpecialistReview, createService, deleteService, updateBookingStatus, toggleSpecialistAvailability, createManualBlockOrBooking, deleteBooking } from './actions'
 import { generateTimeSlotsForDate } from '@/lib/schedule'
 
 interface AppointmentsManagerProps {
@@ -680,18 +680,42 @@ export default function AppointmentsManager({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {reviews.map((r) => {
                 const spec = specialists.find(s => s.id === r.specialist_id)
+                const isPositive = r.rating >= 4
 
                 return (
-                  <div key={r.id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs space-y-2">
+                  <div key={r.id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs space-y-2.5">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-bold text-xs text-gray-900">{r.customer_name}</p>
-                        <p className="text-[10px] text-purple-700 font-semibold">Atendido por {spec?.name || 'Especialista'}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-xs text-gray-900">{r.customer_name}</p>
+                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                            isPositive
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-amber-50 text-amber-800 border border-amber-200'
+                          }`}>
+                            {isPositive ? '⭐ Pública (4-5★)' : '🛡️ Privada (Oportunidad)'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-purple-700 font-semibold mt-0.5">Atendido por {spec?.name || 'Especialista'}</p>
                       </div>
-                      <div className="flex items-center gap-0.5">
-                        {Array.from({ length: r.rating }).map((_, i) => (
-                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                        ))}
+
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: r.rating }).map((_, i) => (
+                            <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          ))}
+                        </div>
+
+                        <form action={deleteSpecialistReview}>
+                          <input type="hidden" name="review_id" value={r.id} />
+                          <button
+                            type="submit"
+                            className="p-1 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer"
+                            title="Eliminar opinión permanentemente"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </form>
                       </div>
                     </div>
 

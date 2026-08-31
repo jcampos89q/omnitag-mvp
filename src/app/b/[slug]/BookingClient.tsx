@@ -212,9 +212,9 @@ export default function BookingClient({
   const meta = getCategoryMeta(category)
   const [reviewSuccess, setReviewSuccess] = useState<boolean>(false)
 
-  // Calcular promedios de calificación por especialista
+  // Calcular promedios de calificación por especialista (solo 4 y 5 estrellas públicas)
   const specialistsWithRatings = specialists.map(s => {
-    const specReviews = reviews.filter(r => (r as any).specialist_id === s.id)
+    const specReviews = reviews.filter(r => (r as any).specialist_id === s.id && r.rating >= 4)
     const avg = specReviews.length > 0
       ? specReviews.reduce((sum, r) => sum + r.rating, 0) / specReviews.length
       : 5.0

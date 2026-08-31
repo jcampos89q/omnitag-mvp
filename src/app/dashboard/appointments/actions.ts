@@ -307,3 +307,21 @@ export async function deleteBooking(formData: FormData) {
     throw err
   }
 }
+
+export async function deleteSpecialistReview(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  try {
+    const reviewId = formData.get('review_id') as string
+    if (!reviewId) return
+
+    await supabase.from('specialist_reviews').delete().eq('id', reviewId)
+    revalidatePath('/dashboard/appointments')
+    redirect('/dashboard/appointments?success=' + encodeURIComponent('Opinión eliminada correctamente'))
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    throw err
+  }
+}
