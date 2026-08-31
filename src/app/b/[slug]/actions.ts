@@ -131,7 +131,6 @@ export async function createPublicBooking(formData: FormData) {
   }
 
   try {
-    if (slug) revalidatePath(`/b/${slug}`)
     revalidatePath('/dashboard/appointments')
   } catch (revErr) {
     console.error('Error revalidando ruta:', revErr)

@@ -359,11 +359,16 @@ export default function BookingClient({
 
   // Si la cita fue agendada exitosamente
   if (bookingSuccess) {
-    const specialistText = bookingSuccess.specialist ? bookingSuccess.specialist.name : 'Cualquiera disponible'
+    const specialistText = bookingSuccess.specialist?.name || 'Cualquiera disponible'
+    const serviceName = bookingSuccess.service?.name || 'Atención General / Cita'
+    const servicePrice = bookingSuccess.service?.price !== undefined && bookingSuccess.service?.price !== null
+      ? `$${bookingSuccess.service.price}`
+      : 'Sin costo'
+
     const waText = encodeURIComponent(
-      `¡Hola *${business.name}*! Acabo de agendar mi cita online para:\n\n${meta.icon} *${meta.serviceSingular}:* ${bookingSuccess.service.name}\n👤 *Profesional:* ${specialistText}\n📅 *Fecha:* ${bookingSuccess.date}\n⏰ *Hora:* ${bookingSuccess.time}\n👤 *${meta.clientLabel}:* ${bookingSuccess.customerName} (${bookingSuccess.customerPhone})\n\n¿Me confirman la recepción? ¡Gracias!`
+      `¡Hola *${business?.name || 'Negocio'}*! Acabo de agendar mi cita online para:\n\n${meta.icon} *${meta.serviceSingular}:* ${serviceName}\n👤 *Profesional:* ${specialistText}\n📅 *Fecha:* ${bookingSuccess.date}\n⏰ *Hora:* ${bookingSuccess.time}\n👤 *${meta.clientLabel}:* ${bookingSuccess.customerName || ''} (${bookingSuccess.customerPhone || ''})\n\n¿Me confirman la recepción? ¡Gracias!`
     )
-    const waUrl = business.whatsapp 
+    const waUrl = business?.whatsapp 
       ? `https://wa.me/${business.whatsapp.replace(/\D/g, '')}?text=${waText}`
       : `https://wa.me/?text=${waText}`
 
@@ -376,7 +381,7 @@ export default function BookingClient({
         <div className="space-y-1">
           <h3 className="text-xl font-black text-gray-900">¡Cita Agendada con Éxito!</h3>
           <p className="text-xs text-gray-500">
-            Tu turno ha sido apartado en {business.name}.
+            Tu turno ha sido apartado en {business?.name || 'el negocio'}.
           </p>
         </div>
 
@@ -384,7 +389,7 @@ export default function BookingClient({
         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-200 text-left space-y-2 text-xs">
           <div className="flex justify-between border-b border-gray-200 pb-2">
             <span className="text-gray-500">{meta.serviceSingular}:</span>
-            <span className="font-bold text-gray-900">{bookingSuccess.service.name} (${bookingSuccess.service.price})</span>
+            <span className="font-bold text-gray-900">{serviceName} ({servicePrice})</span>
           </div>
           <div className="flex justify-between border-b border-gray-200 pb-2">
             <span className="text-gray-500">Profesional:</span>
