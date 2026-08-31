@@ -88,7 +88,7 @@ export default function DashboardNavbar({
         </Link>
 
         <div className="flex items-center gap-1.5">
-          <NotificationBell userId={userId} />
+          <NotificationBell userId={userId} position="topbar" />
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -198,7 +198,7 @@ export default function DashboardNavbar({
             <span className="text-2xl font-bold tracking-tight text-gray-900">OmniTag</span>
           </Link>
 
-          <NotificationBell userId={userId} />
+          <NotificationBell userId={userId} position="sidebar" />
         </div>
 
         {userEmail && (
