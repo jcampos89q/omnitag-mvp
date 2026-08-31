@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { 
   Scissors, 
   Clock, 
@@ -237,7 +237,10 @@ export default function BookingClient({
   })
 
   // Generar horarios de atención dinámicos para la fecha seleccionada
-  const timeSlots = generateTimeSlotsForDate(business?.schedule_config, selectedDate)
+  const timeSlots = useMemo(
+    () => generateTimeSlotsForDate(business?.schedule_config, selectedDate),
+    [business?.schedule_config, selectedDate]
+  )
   const isSelectedDayOpen = isDayOpen(business?.schedule_config, selectedDate)
 
   // Helper para verificar si una hora ya transcurrió (SOLO aplica si la fecha es hoy)
@@ -284,20 +287,21 @@ export default function BookingClient({
     return overlappingBookings.length > 0
   }
 
-  // Auto-seleccionar el primer horario disponible y futuro
+  // Auto-seleccionar primer horario solo si el actualmente seleccionado NO está disponible o al cambiar fecha
   useEffect(() => {
-    const firstAvailable = timeSlots.find((time) => {
-      const isPast = isPastTimeSlot(time, selectedDate)
-      if (isPast) return false
+    const isCurrentValid = timeSlots.includes(selectedTime) &&
+      !isPastTimeSlot(selectedTime, selectedDate) &&
+      !checkSlotOccupied(selectedTime, selectedDate)
 
-      const isOccupied = checkSlotOccupied(time, selectedDate)
-      return !isOccupied
-    })
-
-    if (firstAvailable) {
-      setSelectedTime(firstAvailable)
+    if (!isCurrentValid) {
+      const firstAvailable = timeSlots.find((time) => {
+        return !isPastTimeSlot(time, selectedDate) && !checkSlotOccupied(time, selectedDate)
+      })
+      if (firstAvailable) {
+        setSelectedTime(firstAvailable)
+      }
     }
-  }, [selectedDate, selectedService, selectedSpecialist, timeSlots, isMounted, clientDateState])
+  }, [selectedDate, selectedService?.id, selectedSpecialist?.id, timeSlots, isMounted, clientDateState.todayStr])
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
