@@ -4,6 +4,17 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushNotificationToUser } from '@/lib/push'
 
+function parseTimeToMinutes(timeStr: string): number {
+  if (!timeStr) return 0
+  const parts = timeStr.trim().split(' ')
+  const timePart = parts[0]
+  const modifier = parts[1] || 'AM'
+  let [hours, minutes] = timePart.split(':').map(Number)
+  if (modifier.toUpperCase() === 'PM' && hours < 12) hours += 12
+  if (modifier.toUpperCase() === 'AM' && hours === 12) hours = 0
+  return hours * 60 + (minutes || 0)
+}
+
 export async function createPublicBooking(formData: FormData) {
   const supabase = await createClient()
 
@@ -20,6 +31,20 @@ export async function createPublicBooking(formData: FormData) {
 
   if (!businessId || !customerName || !customerPhone || !bookingDate || !bookingTime) {
     return { success: false, error: 'Por favor completa todos los campos requeridos.' }
+  }
+
+  // Validación estricta para evitar agendar fechas u horas pasadas
+  const now = new Date()
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  if (bookingDate < todayStr) {
+    return { success: false, error: 'No es posible agendar citas en fechas pasadas.' }
+  }
+  if (bookingDate === todayStr) {
+    const currentMins = now.getHours() * 60 + now.getMinutes()
+    const slotMins = parseTimeToMinutes(bookingTime)
+    if (slotMins <= currentMins) {
+      return { success: false, error: 'La hora seleccionada ya ha transcurrido. Por favor elige un horario posterior.' }
+    }
   }
 
   const { data: booking, error } = await supabase

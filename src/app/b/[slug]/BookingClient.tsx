@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Scissors, 
   Clock, 
@@ -69,11 +69,23 @@ function formatDuration(minutes: number): string {
   return rem > 0 ? `${hrs}h ${rem}m` : `${hrs} ${hrs === 1 ? 'hora' : 'horas'}`
 }
 
+function getLocalDateStr(date: Date = new Date()): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function getCurrentLocalMinutes(): number {
+  const now = new Date()
+  return now.getHours() * 60 + now.getMinutes()
+}
+
 export default function BookingClient({
   business,
-  specialists,
-  services,
-  reviews,
+  specialists = [],
+  services = [],
+  reviews = [],
   existingBookings = []
 }: {
   business: any
@@ -82,9 +94,20 @@ export default function BookingClient({
   reviews: Review[]
   existingBookings?: any[]
 }) {
-  const [selectedService, setSelectedService] = useState<Service | null>(services[0] || null)
+  const effectiveServices: Service[] = services && services.length > 0 ? services : [
+    {
+      id: 'general-consultation',
+      name: 'Atención General / Consulta',
+      description: 'Cita general presencial en el local.',
+      price: 0,
+      duration_minutes: 45
+    }
+  ]
+
+  const todayStr = getLocalDateStr()
+  const [selectedService, setSelectedService] = useState<Service | null>(effectiveServices[0] || null)
   const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null) // null = cualquiera
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10))
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr)
   const [selectedTime, setSelectedTime] = useState<string>('10:00 AM')
   const [customerName, setCustomerName] = useState<string>('')
   const [customerPhone, setCustomerPhone] = useState<string>('')
@@ -181,11 +204,11 @@ export default function BookingClient({
     return { ...s, reviews: specReviews, avgRating: avg }
   })
 
-  // Generar siguientes 7 días
-  const nextDays = Array.from({ length: 7 }, (_, i) => {
+  // Generar siguientes 14 días en hora local
+  const nextDays = Array.from({ length: 14 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() + i)
-    const dateStr = d.toISOString().slice(0, 10)
+    const dateStr = getLocalDateStr(d)
     const isOpen = isDayOpen(business?.schedule_config, dateStr)
     return {
       dateStr,
@@ -199,6 +222,40 @@ export default function BookingClient({
   // Generar horarios de atención dinámicos para la fecha seleccionada
   const timeSlots = generateTimeSlotsForDate(business?.schedule_config, selectedDate)
   const isSelectedDayOpen = isDayOpen(business?.schedule_config, selectedDate)
+  const currentMinutes = getCurrentLocalMinutes()
+  const isToday = selectedDate === todayStr
+
+  // Auto-seleccionar el primer horario disponible y futuro
+  useEffect(() => {
+    const firstAvailable = timeSlots.find((time) => {
+      const slotStart = parseTimeToMinutes(time)
+      const isPast = isToday && (slotStart <= currentMinutes + 10)
+      if (isPast) return false
+
+      const currentServiceDuration = selectedService?.duration_minutes || 45
+      const slotEnd = slotStart + currentServiceDuration
+
+      const isOccupied = existingBookings.some((b: any) => {
+        if (b.booking_date !== selectedDate) return false
+        if (b.status === 'cancelled') return false
+        if (selectedSpecialist && b.specialist_id && b.specialist_id !== selectedSpecialist.id) return false
+
+        const bStart = parseTimeToMinutes(b.booking_time)
+        const bDuration = Array.isArray(b.appointment_services)
+          ? b.appointment_services[0]?.duration_minutes || 45
+          : b.appointment_services?.duration_minutes || 45
+        const bEnd = bStart + bDuration
+
+        return (slotStart < bEnd && slotEnd > bStart)
+      })
+
+      return !isOccupied
+    })
+
+    if (firstAvailable) {
+      setSelectedTime(firstAvailable)
+    }
+  }, [selectedDate, selectedService, selectedSpecialist, timeSlots, isToday, currentMinutes])
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -360,11 +417,11 @@ export default function BookingClient({
             <span className="w-6 h-6 rounded-lg bg-black text-white text-xs flex items-center justify-center font-bold">1</span>
             Elige tu {meta.serviceSingular}
           </h2>
-          <span className="text-xs text-gray-400 font-medium">{services.length} disponibles</span>
+          <span className="text-xs text-gray-400 font-medium">{effectiveServices.length} disponibles</span>
         </div>
 
         <div className="grid grid-cols-1 gap-2.5">
-          {services.map((service) => {
+          {effectiveServices.map((service) => {
             const isSelected = selectedService?.id === service.id
             return (
               <button
@@ -532,36 +589,52 @@ export default function BookingClient({
                 const slotStart = parseTimeToMinutes(time)
                 const slotEnd = slotStart + currentServiceDuration
 
+                const isPast = isToday && (slotStart <= currentMinutes + 10)
+
                 const isOccupied = existingBookings.some((b: any) => {
                   if (b.booking_date !== selectedDate) return false
                   if (b.status === 'cancelled') return false
                   if (selectedSpecialist && b.specialist_id && b.specialist_id !== selectedSpecialist.id) return false
 
                   const bStart = parseTimeToMinutes(b.booking_time)
-                  const bDuration = b.appointment_services?.duration_minutes || 45
+                  const bDuration = Array.isArray(b.appointment_services)
+                    ? b.appointment_services[0]?.duration_minutes || 45
+                    : b.appointment_services?.duration_minutes || 45
                   const bEnd = bStart + bDuration
 
                   // Overlap condition: intervals intersect
                   return (slotStart < bEnd && slotEnd > bStart)
                 })
 
+                const isUnavailable = isOccupied || isPast
+
                 return (
                   <button
                     key={time}
                     type="button"
-                    disabled={isOccupied}
+                    disabled={isUnavailable}
                     onClick={() => setSelectedTime(time)}
                     className={`py-2 px-2.5 rounded-xl text-xs font-extrabold transition cursor-pointer border flex flex-col items-center justify-center ${
-                      isOccupied
-                        ? 'bg-gray-100 text-gray-400 border-gray-200 line-through opacity-50 cursor-not-allowed'
+                      isUnavailable
+                        ? 'bg-gray-100 text-gray-400 border-gray-200 line-through opacity-40 cursor-not-allowed'
                         : selectedTime === time
                         ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
                         : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50'
                     }`}
-                    title={isOccupied ? 'Horario ocupado por la duración del servicio' : `Disponible (${formatDuration(currentServiceDuration)})`}
+                    title={
+                      isPast 
+                        ? 'Este horario ya transcurrió hoy' 
+                        : isOccupied 
+                        ? 'Horario ocupado' 
+                        : `Disponible (${formatDuration(currentServiceDuration)})`
+                    }
                   >
                     <span>{time}</span>
-                    {isOccupied && <span className="text-[8px] no-underline font-normal">Ocupado</span>}
+                    {isPast ? (
+                      <span className="text-[8px] no-underline font-semibold text-gray-400">Pasado</span>
+                    ) : isOccupied ? (
+                      <span className="text-[8px] no-underline font-semibold text-red-500">Ocupado</span>
+                    ) : null}
                   </button>
                 )
               })}

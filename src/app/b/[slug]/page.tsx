@@ -49,13 +49,34 @@ export default async function PublicBookingPage({
   const supabase = await createClient()
   const { slug } = await params
 
-  // 1. Buscar negocio de citas
-  const { data: business } = await supabase
+  // 1. Buscar negocio de citas por su slug
+  let { data: business } = await supabase
     .from('appointment_businesses')
     .select('*')
     .eq('slug', slug)
     .eq('is_active', true)
     .maybeSingle()
+
+  // Si no se encuentra por slug directo, intentar buscar por el slug de la vCard del usuario
+  if (!business) {
+    const { data: vcard } = await supabase
+      .from('vcards')
+      .select('user_id, company_name, first_name')
+      .eq('slug', slug)
+      .maybeSingle()
+
+    if (vcard?.user_id) {
+      const { data: bByUser } = await supabase
+        .from('appointment_businesses')
+        .select('*')
+        .eq('user_id', vcard.user_id)
+        .eq('is_active', true)
+        .maybeSingle()
+      if (bByUser) {
+        business = bByUser
+      }
+    }
+  }
 
   if (!business) {
     notFound()
@@ -77,8 +98,8 @@ export default async function PublicBookingPage({
     { data: reviews },
     { data: existingBookings }
   ] = await Promise.all([
-    supabase.from('specialists').select('*').eq('business_id', business.id).eq('is_active', true).order('order_index'),
-    supabase.from('appointment_services').select('*').eq('business_id', business.id).eq('is_active', true),
+    supabase.from('specialists').select('*').eq('business_id', business.id).eq('is_active', true).order('created_at', { ascending: true }),
+    supabase.from('appointment_services').select('*').eq('business_id', business.id).eq('is_active', true).order('created_at', { ascending: true }),
     supabase.from('specialist_reviews').select('*').eq('business_id', business.id).order('created_at', { ascending: false }).limit(30),
     supabase.from('bookings').select('id, specialist_id, service_id, booking_date, booking_time, status, appointment_services(duration_minutes)').eq('business_id', business.id).gte('booking_date', todayStr).neq('status', 'cancelled')
   ])
