@@ -104,7 +104,24 @@ export default function BookingClient({
     }
   ]
 
-  const todayStr = getLocalDateStr()
+  const [isMounted, setIsMounted] = useState(false)
+  const [clientDateState, setClientDateState] = useState<{ todayStr: string; currentMinutes: number }>({
+    todayStr: getLocalDateStr(),
+    currentMinutes: 0
+  })
+
+  useEffect(() => {
+    setIsMounted(true)
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const todayStr = `${year}-${month}-${day}`
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+    setClientDateState({ todayStr, currentMinutes })
+  }, [])
+
+  const todayStr = clientDateState.todayStr || getLocalDateStr()
   const [selectedService, setSelectedService] = useState<Service | null>(effectiveServices[0] || null)
   const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null) // null = cualquiera
   const [selectedDate, setSelectedDate] = useState<string>(todayStr)
@@ -222,14 +239,14 @@ export default function BookingClient({
   // Generar horarios de atención dinámicos para la fecha seleccionada
   const timeSlots = generateTimeSlotsForDate(business?.schedule_config, selectedDate)
   const isSelectedDayOpen = isDayOpen(business?.schedule_config, selectedDate)
-  const currentMinutes = getCurrentLocalMinutes()
-  const isToday = selectedDate === todayStr
 
   // Helper para verificar si una hora ya transcurrió (SOLO aplica si la fecha es hoy)
   const isPastTimeSlot = (time: string, date: string) => {
-    if (date !== todayStr) return false
+    // Si aún no está montado en cliente o la fecha no es hoy, NUNCA está pasado
+    if (!isMounted || !clientDateState.todayStr) return false
+    if (date !== clientDateState.todayStr) return false
     const slotStart = parseTimeToMinutes(time)
-    return slotStart <= currentMinutes
+    return slotStart <= clientDateState.currentMinutes
   }
 
   // Helper para verificar si un horario está ocupado considerando capacidad de especialistas
@@ -280,7 +297,7 @@ export default function BookingClient({
     if (firstAvailable) {
       setSelectedTime(firstAvailable)
     }
-  }, [selectedDate, selectedService, selectedSpecialist, timeSlots, isToday, currentMinutes])
+  }, [selectedDate, selectedService, selectedSpecialist, timeSlots, isMounted, clientDateState])
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
