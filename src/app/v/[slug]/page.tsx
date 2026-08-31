@@ -182,7 +182,9 @@ export default async function PublicVCardPage({
 
   return (
     <>
-      {/* Inyección de fuente de Google Fonts */}
+      {/* Pre-conexión DNS y optimización de carga para Google Fonts */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href={fontUrl} />
 
       <div 
@@ -211,7 +213,7 @@ export default async function PublicVCardPage({
           >
             <div className="absolute inset-0 bg-black/15 pointer-events-none" />
 
-            {/* Avatar / Logotipo superpuesto */}
+            {/* Avatar / Logotipo superpuesto (Elemento LCP Crítico) */}
             <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 z-10">
               <div 
                 className={`w-24 h-24 p-1 shadow-xl flex items-center justify-center overflow-hidden border-2 ${
@@ -226,6 +228,8 @@ export default async function PublicVCardPage({
                   <img 
                     src={avatar_url} 
                     alt={titleName} 
+                    fetchPriority="high"
+                    decoding="async"
                     className={`w-full h-full object-cover ${isBusiness ? 'rounded-xl' : 'rounded-full'}`} 
                   />
                 ) : isBusiness ? (

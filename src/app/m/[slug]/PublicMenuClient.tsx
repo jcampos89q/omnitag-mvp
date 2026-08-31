@@ -263,7 +263,13 @@ export default function PublicMenuClient({
 
                 {dailySpecial.image_url && (
                   <div className={`w-full sm:w-36 h-36 bg-black/5 rounded-xl overflow-hidden shrink-0 shadow-xs border border-black/5 ${cardRadiusClass}`}>
-                    <img src={dailySpecial.image_url} alt={dailySpecial.title} className="w-full h-full object-cover" />
+                    <img 
+                      src={dailySpecial.image_url} 
+                      alt={dailySpecial.title} 
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                 )}
               </div>

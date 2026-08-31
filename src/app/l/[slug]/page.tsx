@@ -88,6 +88,9 @@ export default async function PublicLoyaltyPage({
 
   return (
     <>
+      {/* Pre-conexión DNS y optimización de fuentes Google Fonts */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href={fontUrl} />
 
       <div 

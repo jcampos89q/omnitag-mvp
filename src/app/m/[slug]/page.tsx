@@ -110,7 +110,9 @@ export default async function PublicMenuPage({
 
   return (
     <>
-      {/* Inyección de fuente Google Fonts */}
+      {/* Pre-conexión DNS y optimización de fuentes Google Fonts */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href={fontUrl} />
 
       <div 
@@ -146,7 +148,13 @@ export default async function PublicMenuPage({
                 className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2.5 rounded-2xl overflow-hidden shadow-md border-2 bg-white flex items-center justify-center p-1"
                 style={{ borderColor: theme.primary_color }}
               >
-                <img src={menu.logo_url} alt={menu.name} className="w-full h-full object-cover rounded-xl" />
+                <img 
+                  src={menu.logo_url} 
+                  alt={menu.name} 
+                  fetchPriority="high"
+                  decoding="async"
+                  className="w-full h-full object-cover rounded-xl" 
+                />
               </div>
             )}
             <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight" style={{ color: theme.text_color }}>
