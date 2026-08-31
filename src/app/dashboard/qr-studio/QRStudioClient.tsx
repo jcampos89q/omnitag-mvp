@@ -26,6 +26,8 @@ import {
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType, GradientType } from 'qr-code-styling'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import ProFeatureModal from '@/components/ProFeatureModal'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 interface QRStudioClientProps {
   vcard?: any
@@ -66,10 +68,17 @@ export default function QRStudioClient({
   devices = [], 
   isPro = false 
 }: QRStudioClientProps) {
+  const searchParams = useSearchParams()
+  const urlSource = searchParams?.get('source') as any
+  const urlTable = searchParams?.get('table') || ''
+
   // 1. Tipo de Destino
   const [sourceType, setSourceType] = useState<'vcard' | 'menu' | 'loyalty' | 'device' | 'custom'>(
-    vcard ? 'vcard' : menu ? 'menu' : loyalty ? 'loyalty' : 'custom'
+    urlSource && ['vcard', 'menu', 'loyalty', 'device', 'custom'].includes(urlSource)
+      ? urlSource
+      : vcard ? 'vcard' : menu ? 'menu' : loyalty ? 'loyalty' : 'custom'
   )
+  const [selectedTable, setSelectedTable] = useState<string>(urlTable)
   const [customUrl, setCustomUrl] = useState('https://')
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>(devices[0]?.id || '')
 
@@ -83,7 +92,7 @@ export default function QRStudioClient({
 
   // 3. Logo en el Centro
   const [logoUrl, setLogoUrl] = useState<string>('')
-  const [frameStyle, setFrameStyle] = useState<string>(isPro ? 'instagram_nametag' : 'none')
+  const [frameStyle, setFrameStyle] = useState<string>(isPro ? (urlTable ? 'table_tent' : 'instagram_nametag') : 'none')
   const [frameText, setFrameText] = useState<string>('ESCANÉAME CON TU CÁMARA')
   const [frameTitle, setFrameTitle] = useState<string>('')
   const [isDownloading, setIsDownloading] = useState<boolean>(false)
@@ -103,8 +112,13 @@ export default function QRStudioClient({
     switch (sourceType) {
       case 'vcard':
         return vcard ? `${origin}/v/${vcard.slug}` : `${origin}`
-      case 'menu':
-        return menu ? `${origin}/m/${menu.slug}` : `${origin}`
+      case 'menu': {
+        if (!menu) return `${origin}`
+        if (selectedTable) {
+          return `${origin}/m/${menu.slug}?mesa=${encodeURIComponent(selectedTable)}`
+        }
+        return `${origin}/m/${menu.slug}`
+      }
       case 'loyalty':
         return loyalty ? `${origin}/l/${loyalty.slug}` : `${origin}`
       case 'device': {
@@ -125,8 +139,14 @@ export default function QRStudioClient({
       setFrameText('GUARDA MI CONTACTO')
     } else if (sourceType === 'menu' && menu) {
       if (isPro) setLogoUrl(menu.logo_url || '')
-      setFrameTitle(menu.name || 'Menú Digital')
-      setFrameText('ESCANEA PARA VER EL MENÚ')
+      if (selectedTable) {
+        setFrameTitle(`${menu.name} • ${selectedTable}`)
+        setFrameText('ESCANEA PARA ORDENAR')
+        if (isPro) setFrameStyle('table_tent')
+      } else {
+        setFrameTitle(menu.name || 'Menú Digital')
+        setFrameText('ESCANEA PARA VER EL MENÚ')
+      }
     } else if (sourceType === 'loyalty' && loyalty) {
       if (isPro) setLogoUrl(loyalty.logo_url || '')
       setFrameTitle(loyalty.name || 'Club de Premios')
@@ -135,7 +155,7 @@ export default function QRStudioClient({
       setFrameTitle('Google Reviews')
       setFrameText('TOCA O ESCANEA PARA CALIFICAR')
     }
-  }, [sourceType, vcard, menu, loyalty, isPro])
+  }, [sourceType, selectedTable, vcard, menu, loyalty, isPro])
 
   // Inicializar y actualizar QRCodeStyling para vista previa responsiva
   useEffect(() => {
@@ -514,6 +534,68 @@ export default function QRStudioClient({
                   placeholder="https://tu-sitio-web.com"
                   className="w-full rounded-xl border border-gray-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-black"
                 />
+              </div>
+            )}
+
+            {/* Si elige Menú: Selector de Mesa o Ubicación */}
+            {sourceType === 'menu' && menu && (
+              <div className="pt-2 p-4 bg-slate-900 text-white rounded-xl border border-slate-800 space-y-3 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-yellow-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <QrCode className="w-3.5 h-3.5" /> Mesa o Ubicación para este QR
+                  </span>
+                  <Link href="/dashboard/menus" className="text-[11px] text-gray-400 hover:text-white underline">
+                    + Administrar lista de mesas &rarr;
+                  </Link>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTable('')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                      !selectedTable
+                        ? 'bg-yellow-400 text-black shadow-xs'
+                        : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span>🌟 Menú General (Sin Mesa)</span>
+                    {!selectedTable && <Check className="w-3 h-3" />}
+                  </button>
+
+                  {Array.isArray(menu.tables) && menu.tables.map((t: any) => (
+                    <button
+                      key={t.id || t.name}
+                      type="button"
+                      onClick={() => setSelectedTable(t.name)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                        selectedTable === t.name
+                          ? 'bg-yellow-400 text-black shadow-xs'
+                          : 'bg-slate-800 text-gray-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      <span>🪑 {t.name}</span>
+                      {selectedTable === t.name && <Check className="w-3 h-3" />}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="pt-1 flex items-center gap-2">
+                  <span className="text-[11px] text-gray-400 whitespace-nowrap">O escribir mesa personalizada:</span>
+                  <input
+                    type="text"
+                    value={selectedTable}
+                    onChange={(e) => setSelectedTable(e.target.value)}
+                    placeholder="Ej. Mesa 4 / Barra / Terraza VIP"
+                    className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:border-yellow-400 focus:outline-none"
+                  />
+                </div>
+
+                {selectedTable && (
+                  <p className="text-[11px] text-yellow-300/90 font-medium">
+                    ✨ El comensal que escanee este QR abrirá el menú con la <b>{selectedTable}</b> preseleccionada y su pedido llegará a WhatsApp con esta ubicación.
+                  </p>
+                )}
               </div>
             )}
 

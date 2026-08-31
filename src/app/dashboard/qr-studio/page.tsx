@@ -20,10 +20,10 @@ export default async function QRStudioPage() {
     .eq('user_id', user?.id)
     .maybeSingle()
 
-  // 3. Buscar Menú del usuario
+  // 3. Buscar Menú del usuario (con sus mesas)
   const { data: menu } = await supabase
     .from('menus')
-    .select('id, slug, name, logo_url')
+    .select('id, slug, name, logo_url, tables')
     .eq('user_id', user?.id)
     .maybeSingle()
 

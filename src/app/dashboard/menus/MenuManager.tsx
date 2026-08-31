@@ -24,7 +24,8 @@ import ThemeSelector from '@/components/ThemeSelector'
 import TableQRGeneratorModal from './TableQRGeneratorModal'
 import SaveButton from '@/components/SaveButton'
 import { QrCode, UtensilsCrossed } from 'lucide-react'
-import { updateMenu, createCategory, deleteCategory, createMenuItem, deleteMenuItem, setDailySpecial, deleteDailySpecial } from './actions'
+import Link from 'next/link'
+import { updateMenu, createCategory, deleteCategory, createMenuItem, deleteMenuItem, setDailySpecial, deleteDailySpecial, addMenuTable, generateBatchTables, deleteMenuTable } from './actions'
 
 interface MenuManagerProps {
   menu: any
@@ -91,35 +92,151 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
         </div>
       </div>
 
-      {/* 2. GENERADOR DE CÓDIGOS QR POR MESA (Exclusivo para Restaurantes y Gastronomía) */}
+      {/* 2. CONFIGURACIÓN DE MESAS, ZONAS & COMANDAS (Exclusivo para Restaurantes y Gastronomía) */}
       {businessType === 'restaurant' && (
-        <div className="bg-slate-900 text-white p-5 sm:p-6 rounded-2xl border border-slate-800 space-y-4 shadow-lg">
+        <div className="bg-slate-900 text-white p-5 sm:p-7 rounded-2xl border border-slate-800 space-y-6 shadow-xl">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-yellow-400 text-black text-[10px] font-black uppercase tracking-wider">
-                <QrCode className="w-3 h-3" /> Comandas por Mesa
+                <QrCode className="w-3 h-3" /> Mesas & Zonas
               </div>
               <h3 className="font-extrabold text-base sm:text-lg text-white">
-                🪑 Códigos QR para Mesas & Barra
+                🪑 Configuración de Mesas & Zonas del Restaurante
               </h3>
               <p className="text-xs text-gray-300 max-w-xl leading-relaxed">
-                Genera e imprime códigos QR para cada mesa (ej. <b>Mesa #1, Mesa #2, Barra, Terraza</b>). Al escanear, el comensal enviará su pedido a WhatsApp con el número de mesa ya identificado.
+                Asigna nombres o números a tus mesas (ej. <b>Mesa 1, Mesa 2, Barra, Terraza VIP, Patio</b>). Los códigos QR personalizados se diseñan y descargan en el <b>QR Studio Imprimible</b> con todas las plantillas y colores.
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setShowTableQRModal(true)}
+            <Link
+              href={`/dashboard/qr-studio?source=menu`}
               className="bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold px-5 py-3 rounded-xl text-xs sm:text-sm transition flex items-center gap-2 shadow-md shrink-0 cursor-pointer"
             >
-              <QrCode className="w-4 h-4" />
-              <span>Configurar & Generar Mesas QR</span>
-            </button>
+              <Palette className="w-4 h-4" />
+              <span>Ir a QR Studio Imprimible</span>
+            </Link>
+          </div>
+
+          {/* Formularios para Agregar Mesas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            {/* Agregar Mesa Individual */}
+            <form action={addMenuTable} className="bg-slate-800/80 p-4 rounded-xl border border-slate-700 space-y-3">
+              <input type="hidden" name="menu_id" value={menu.id} />
+              <label className="block text-xs font-bold text-gray-200">
+                + Agregar Mesa o Zona Individual
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  name="table_name"
+                  required
+                  placeholder="Ej. Mesa 1 / Barra / Terraza VIP"
+                  className="flex-1 rounded-xl border border-slate-600 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder-gray-400 focus:border-yellow-400 focus:outline-none"
+                />
+                <SaveButton
+                  label="Agregar"
+                  loadingLabel="Agregando..."
+                  className="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer shadow-xs whitespace-nowrap flex items-center gap-1"
+                />
+              </div>
+            </form>
+
+            {/* Generar Lote Rápido */}
+            <form action={generateBatchTables} className="bg-slate-800/80 p-4 rounded-xl border border-slate-700 space-y-3">
+              <input type="hidden" name="menu_id" value={menu.id} />
+              <label className="block text-xs font-bold text-gray-200">
+                ⚡ Generar Lote Automático de Mesas
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  name="prefix"
+                  defaultValue="Mesa"
+                  placeholder="Prefijo (ej. Mesa)"
+                  className="w-28 rounded-xl border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-white placeholder-gray-400 focus:border-yellow-400 focus:outline-none"
+                />
+                <select
+                  name="count"
+                  defaultValue="5"
+                  className="rounded-xl border border-slate-600 bg-slate-900 px-2.5 py-2 text-xs text-white focus:border-yellow-400 focus:outline-none font-bold"
+                >
+                  <option value="3">3 mesas</option>
+                  <option value="5">5 mesas</option>
+                  <option value="10">10 mesas</option>
+                  <option value="15">15 mesas</option>
+                  <option value="20">20 mesas</option>
+                </select>
+                <SaveButton
+                  label="Generar"
+                  loadingLabel="Generando..."
+                  className="bg-white/10 hover:bg-white/20 text-white font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer border border-white/20 whitespace-nowrap flex items-center gap-1"
+                />
+              </div>
+            </form>
+          </div>
+
+          {/* Listado de Mesas Creadas */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between text-xs text-gray-400 font-bold uppercase tracking-wider">
+              <span>Mesas Registradas ({Array.isArray(menu.tables) ? menu.tables.length : 0})</span>
+              <span>Acción en QR Studio</span>
+            </div>
+
+            {(!Array.isArray(menu.tables) || menu.tables.length === 0) ? (
+              <div className="p-8 rounded-xl bg-slate-800/40 border border-slate-700/60 text-center space-y-2">
+                <p className="text-sm font-bold text-gray-300">No has registrado mesas todavía</p>
+                <p className="text-xs text-gray-400">
+                  Agrega una mesa individual arriba o genera un lote automático para diseñar sus QRs imprimibles.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {menu.tables.map((t: any) => (
+                  <div
+                    key={t.id || t.name}
+                    className="p-3.5 bg-slate-800/90 rounded-xl border border-slate-700 flex items-center justify-between gap-3 shadow-xs hover:border-slate-600 transition"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                        <p className="font-extrabold text-sm text-white truncate">{t.name}</p>
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-mono truncate mt-0.5">
+                        /m/{menu.slug}?mesa={encodeURIComponent(t.name)}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Link
+                        href={`/dashboard/qr-studio?source=menu&table=${encodeURIComponent(t.name)}`}
+                        className="bg-yellow-400/15 text-yellow-300 hover:bg-yellow-400 hover:text-black border border-yellow-400/30 px-2.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1"
+                        title="Personalizar e imprimir QR para esta mesa"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>Diseñar QR</span>
+                      </Link>
+
+                      <form action={deleteMenuTable}>
+                        <input type="hidden" name="menu_id" value={menu.id} />
+                        <input type="hidden" name="table_id" value={t.id} />
+                        <button
+                          type="submit"
+                          className="p-1.5 text-gray-400 hover:text-red-400 rounded-lg hover:bg-white/5 transition cursor-pointer"
+                          title="Eliminar mesa"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* 3. PLATO / ESPECIAL DEL DÍA (Exclusivo para Restaurantes y Cafeterías) */}
+      {/* 3. PLATO / ESPECIAL DEL DÍA (Exclusivo para RestaurANTES Y CAFETERÍAS) */}
       {(businessType === 'restaurant' || businessType === 'services') && (
         <div className="bg-amber-50/70 border border-amber-200 p-5 sm:p-6 rounded-2xl space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
