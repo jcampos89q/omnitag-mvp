@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, Mail, Phone, Calendar, Download, MessageSquare, Search, FileSpreadsheet, UserPlus, Gift, UserCircle, Sparkles, Lock, ArrowRight, Building2, Zap } from 'lucide-react'
+import { Users, Mail, Phone, Calendar, Download, MessageSquare, Search, FileSpreadsheet, UserPlus, Gift, UserCircle, Sparkles, Lock, ArrowRight, Building2, Zap, Scissors, Coffee, Star } from 'lucide-react'
 import Link from 'next/link'
 import ProFeatureModal from '@/components/ProFeatureModal'
 
@@ -11,9 +11,11 @@ export interface Lead {
   email?: string | null
   phone?: string | null
   created_at: string
-  vcard_id: string
-  source?: 'vcard' | 'loyalty'
+  vcard_id?: string | null
+  source?: 'vcard' | 'loyalty' | 'appointment' | 'menu' | 'review'
   loyaltyStamps?: number
+  serviceName?: string
+  notes?: string | null
 }
 
 export default function LeadsClient({ 
@@ -31,7 +33,8 @@ export default function LeadsClient({
     return (
       lead.name.toLowerCase().includes(term) ||
       (lead.email && lead.email.toLowerCase().includes(term)) ||
-      (lead.phone && lead.phone.includes(term))
+      (lead.phone && lead.phone.includes(term)) ||
+      (lead.notes && lead.notes.toLowerCase().includes(term))
     )
   })
 
@@ -43,6 +46,12 @@ export default function LeadsClient({
 
     const note = lead.source === 'loyalty'
       ? `Cliente del Club de Fidelización OmniTag (${lead.loyaltyStamps || 1} sellos)`
+      : lead.source === 'appointment'
+      ? `Cliente de Citas (${lead.notes || 'Agendamiento'})`
+      : lead.source === 'menu'
+      ? `Cliente Menú Digital (${lead.notes || 'Pedido'})`
+      : lead.source === 'review'
+      ? `Cliente de Opiniones (${lead.notes || 'Calificación'})`
       : 'Contacto capturado vía OmniTag vCard'
 
     const vcfLines = [
@@ -76,13 +85,13 @@ export default function LeadsClient({
 
     if (leads.length === 0) return
 
-    const headers = ['Nombre', 'Teléfono', 'Email', 'Origen', 'Detalle', 'Fecha']
+    const headers = ['Nombre', 'Teléfono', 'Email', 'Origen', 'Detalle / Notas', 'Fecha']
     const rows = leads.map(l => [
       `"${l.name.replace(/"/g, '""')}"`,
       `"${(l.phone || '').replace(/"/g, '""')}"`,
       `"${(l.email || '').replace(/"/g, '""')}"`,
-      `"${l.source === 'loyalty' ? 'Fidelización' : 'vCard'}"`,
-      `"${l.source === 'loyalty' ? `${l.loyaltyStamps || 1} Sellos` : 'Intercambio vCard'}"`,
+      `"${l.source === 'loyalty' ? 'Fidelización' : l.source === 'appointment' ? 'Citas' : l.source === 'menu' ? 'Menú Digital' : l.source === 'review' ? 'Calificación' : 'vCard'}"`,
+      `"${(l.notes || (l.source === 'loyalty' ? `${l.loyaltyStamps || 1} Sellos` : 'Intercambio directo')).replace(/"/g, '""')}"`,
       `"${new Date(l.created_at).toLocaleString()}"`
     ])
 
@@ -189,16 +198,35 @@ export default function LeadsClient({
           <div className="block md:hidden space-y-3">
             {filteredLeads.map((lead) => {
               const cleanPhone = lead.phone ? lead.phone.replace(/\D/g, '') : null
+              const waText = lead.source === 'appointment'
+                ? `¡Hola ${lead.name}! Te saludamos de tu cita en nuestro negocio. ¿Cómo podemos ayudarte?`
+                : lead.source === 'loyalty'
+                ? `¡Hola ${lead.name}! Tienes ${lead.loyaltyStamps || 1} sellos acumulados en nuestro Club de Fidelización. ¡Te esperamos para tu próxima visita!`
+                : lead.source === 'menu'
+                ? `¡Hola ${lead.name}! Gracias por visitar nuestro Menú Digital. ¿Te gustaría ordenar algo hoy?`
+                : `¡Hola ${lead.name}! Gracias por conectar conmigo a través de mi tarjeta digital. ¿Cómo puedo ayudarte hoy?`
 
               return (
                 <div key={lead.id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-bold text-gray-900 text-base">{lead.name}</h3>
                         {lead.source === 'loyalty' ? (
                           <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                             <Gift className="w-3 h-3" /> {lead.loyaltyStamps || 1} sellos
+                          </span>
+                        ) : lead.source === 'appointment' ? (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Scissors className="w-3 h-3" /> Cita
+                          </span>
+                        ) : lead.source === 'menu' ? (
+                          <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Coffee className="w-3 h-3" /> Menú
+                          </span>
+                        ) : lead.source === 'review' ? (
+                          <span className="text-[10px] bg-yellow-100 text-yellow-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <Star className="w-3 h-3" /> Opinión
                           </span>
                         ) : (
                           <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -214,15 +242,15 @@ export default function LeadsClient({
                     <button
                       onClick={() => handleSaveToPhone(lead)}
                       title="Guardar en agenda del móvil"
-                      className="p-2 rounded-xl bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 transition flex items-center gap-1.5 text-xs font-bold shadow-xs cursor-pointer"
+                      className="p-2 rounded-xl bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 transition flex items-center gap-1.5 text-xs font-bold shadow-xs cursor-pointer shrink-0"
                     >
                       <UserPlus className="w-4 h-4 text-blue-600" />
                       <span>Guardar</span>
                     </button>
                   </div>
 
-                  {/* Contact Info */}
-                  <div className="space-y-1.5 text-xs">
+                  {/* Contact Info & Notes */}
+                  <div className="space-y-1 text-xs">
                     {lead.phone && (
                       <p className="flex items-center gap-2 text-gray-800 font-medium font-mono">
                         <Phone className="w-3.5 h-3.5 text-gray-400" /> {lead.phone}
@@ -233,13 +261,18 @@ export default function LeadsClient({
                         <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" /> {lead.email}
                       </a>
                     )}
+                    {lead.notes && (
+                      <p className="text-[11px] text-gray-500 italic bg-gray-50 p-2 rounded-xl border border-gray-100 mt-1">
+                        {lead.notes}
+                      </p>
+                    )}
                   </div>
 
                   {/* Botones de Acción Directa */}
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200">
                     {cleanPhone ? (
                       <a
-                        href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(`¡Hola ${lead.name}! Gracias por conectar conmigo a través de mi tarjeta digital. ¿Cómo puedo ayudarte hoy?`)}`}
+                        href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="flex items-center justify-center gap-1.5 bg-[#25D366] text-white py-2.5 px-3 rounded-xl font-bold text-xs shadow-xs hover:bg-[#1EBE57] transition"
@@ -284,7 +317,7 @@ export default function LeadsClient({
                   <th className="px-6 py-3.5">Nombre</th>
                   <th className="px-6 py-3.5">Teléfono / WhatsApp</th>
                   <th className="px-6 py-3.5">Correo Electrónico</th>
-                  <th className="px-6 py-3.5">Origen</th>
+                  <th className="px-6 py-3.5">Origen / Detalle</th>
                   <th className="px-6 py-3.5">Fecha</th>
                   <th className="px-6 py-3.5 text-right">Acciones Directas</th>
                 </tr>
@@ -292,6 +325,13 @@ export default function LeadsClient({
               <tbody className="divide-y divide-gray-100">
                 {filteredLeads.map((lead) => {
                   const cleanPhone = lead.phone ? lead.phone.replace(/\D/g, '') : null
+                  const waText = lead.source === 'appointment'
+                    ? `¡Hola ${lead.name}! Te saludamos de tu cita en nuestro negocio. ¿Cómo podemos ayudarte?`
+                    : lead.source === 'loyalty'
+                    ? `¡Hola ${lead.name}! Tienes ${lead.loyaltyStamps || 1} sellos acumulados en nuestro Club de Fidelización. ¡Te esperamos para tu próxima visita!`
+                    : lead.source === 'menu'
+                    ? `¡Hola ${lead.name}! Gracias por visitar nuestro Menú Digital. ¿Te gustaría ordenar algo hoy?`
+                    : `¡Hola ${lead.name}! Gracias por conectar conmigo a través de mi tarjeta digital. ¿Cómo puedo ayudarte hoy?`
 
                   return (
                     <tr key={lead.id} className="hover:bg-gray-50/80 transition-colors">
@@ -320,15 +360,35 @@ export default function LeadsClient({
                       </td>
 
                       <td className="px-6 py-4">
-                        {lead.source === 'loyalty' ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100">
-                            <Gift className="w-3 h-3" /> {lead.loyaltyStamps || 1} sellos
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
-                            <UserCircle className="w-3 h-3" /> vCard
-                          </span>
-                        )}
+                        <div className="space-y-1">
+                          {lead.source === 'loyalty' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100">
+                              <Gift className="w-3 h-3" /> {lead.loyaltyStamps || 1} sellos
+                            </span>
+                          ) : lead.source === 'appointment' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                              <Scissors className="w-3 h-3" /> Cita / Reserva
+                            </span>
+                          ) : lead.source === 'menu' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100">
+                              <Coffee className="w-3 h-3" /> Menú Digital
+                            </span>
+                          ) : lead.source === 'review' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-yellow-800 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-200">
+                              <Star className="w-3 h-3" /> Opinión
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                              <UserCircle className="w-3 h-3" /> vCard
+                            </span>
+                          )}
+
+                          {lead.notes && (
+                            <p className="text-[11px] text-gray-500 italic max-w-xs truncate" title={lead.notes}>
+                              {lead.notes}
+                            </p>
+                          )}
+                        </div>
                       </td>
 
                       <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
@@ -348,7 +408,7 @@ export default function LeadsClient({
 
                           {cleanPhone && (
                             <a
-                              href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(`¡Hola ${lead.name}! Gracias por conectar conmigo a través de mi tarjeta digital. ¿Cómo puedo ayudarte hoy?`)}`}
+                              href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(waText)}`}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#25D366] text-white text-xs font-bold hover:bg-[#1EBE57] transition shadow-2xs"

@@ -166,7 +166,23 @@ export async function createPublicBooking(formData: FormData) {
     }
 
     if (business?.user_id) {
-      // 1. Notificación en Base de Datos
+      // 1. Guardar permanentemente en CRM (Leads)
+      if (customerPhone) {
+        try {
+          await supabase.from('leads').insert({
+            user_id: business.user_id,
+            name: customerName,
+            phone: customerPhone,
+            email: customerEmail || null,
+            source: 'appointment',
+            notes: `Cita: ${bookingDate} ${bookingTime} (${specialistName})`
+          })
+        } catch (leadErr) {
+          console.error('Error guardando lead en CRM:', leadErr)
+        }
+      }
+
+      // 2. Notificación en Base de Datos
       await supabase.from('notifications').insert({
         user_id: business.user_id,
         title: '📅 ¡Nueva Cita Agendada!',
@@ -175,7 +191,7 @@ export async function createPublicBooking(formData: FormData) {
         link: '/dashboard/appointments'
       })
 
-      // 2. Notificación Push Flotante
+      // 3. Notificación Push Flotante
       await sendPushNotificationToUser(business.user_id, {
         title: '📅 ¡Nueva Cita Agendada en OmniTag!',
         body: `${customerName} reservó para el ${bookingDate} (${bookingTime}) con ${specialistName}.`,
@@ -188,6 +204,7 @@ export async function createPublicBooking(formData: FormData) {
 
   try {
     revalidatePath('/dashboard/appointments')
+    revalidatePath('/dashboard/leads')
   } catch (revErr) {
     console.error('Error revalidando ruta:', revErr)
   }
@@ -241,6 +258,20 @@ export async function createSpecialistReview(formData: FormData) {
       .maybeSingle()
 
     if (business?.user_id) {
+      if (customerPhone) {
+        try {
+          await supabase.from('leads').insert({
+            user_id: business.user_id,
+            name: customerName,
+            phone: customerPhone,
+            source: 'review',
+            notes: `Calificación ${rating}★ a ${spec?.name || 'Especialista'}`
+          })
+        } catch (leadErr) {
+          console.error('Error guardando lead en CRM:', leadErr)
+        }
+      }
+
       await supabase.from('notifications').insert({
         user_id: business.user_id,
         title: `⭐ ¡Nueva Calificación para ${spec?.name || 'Especialista'}!`,
@@ -255,6 +286,7 @@ export async function createSpecialistReview(formData: FormData) {
 
   if (slug) revalidatePath(`/b/${slug}`)
   revalidatePath('/dashboard/appointments')
+  revalidatePath('/dashboard/leads')
 
   return { success: true }
 }
@@ -420,11 +452,33 @@ export async function staffCreateManualBooking(formData: FormData) {
     return { success: false, error: error.message }
   }
 
+  // Guardar en CRM (Leads)
+  try {
+    const { data: bData } = await supabase
+      .from('appointment_businesses')
+      .select('user_id')
+      .eq('id', businessId)
+      .maybeSingle()
+
+    if (bData?.user_id && customerPhone) {
+      await supabase.from('leads').insert({
+        user_id: bData.user_id,
+        name: customerName,
+        phone: customerPhone,
+        source: 'appointment',
+        notes: `Cita presencial / local (${bookingDate} ${bookingTime})`
+      })
+    }
+  } catch (leadErr) {
+    console.error('Error guardando lead en CRM:', leadErr)
+  }
+
   if (slug) {
     revalidatePath(`/b/${slug}`)
     if (specialistId) revalidatePath(`/b/${slug}/staff/${specialistId}`)
   }
   revalidatePath('/dashboard/appointments')
+  revalidatePath('/dashboard/leads')
 
   return { success: true, booking }
 }

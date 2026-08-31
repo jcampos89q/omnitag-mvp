@@ -363,7 +363,22 @@ export async function createManualAppointment(formData: FormData) {
       status: 'confirmed'
     })
 
+    if (customerPhone) {
+      try {
+        await supabase.from('leads').insert({
+          user_id: user.id,
+          name: customerName,
+          phone: customerPhone,
+          source: 'appointment',
+          notes: `Cita manual panel: ${bookingDate} a las ${bookingTime}`
+        })
+      } catch (leadErr) {
+        console.error('Error guardando lead en CRM:', leadErr)
+      }
+    }
+
     revalidatePath('/dashboard/appointments')
+    revalidatePath('/dashboard/leads')
     revalidatePath('/', 'layout')
     redirect('/dashboard/appointments?success=' + encodeURIComponent('¡Cita manual registrada con éxito!'))
   } catch (err: any) {
