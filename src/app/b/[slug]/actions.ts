@@ -15,12 +15,21 @@ function parseTimeToMinutes(timeStr: string): number {
   return hours * 60 + (minutes || 0)
 }
 
+function isValidUUID(str: string | null | undefined): boolean {
+  if (!str) return false
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return uuidRegex.test(str.trim())
+}
+
 export async function createPublicBooking(formData: FormData) {
   const supabase = await createClient()
 
   const businessId = (formData.get('business_id') as string)?.trim()
-  const specialistId = (formData.get('specialist_id') as string)?.trim() || null
-  const serviceId = (formData.get('service_id') as string)?.trim() || null
+  const rawSpecialistId = (formData.get('specialist_id') as string)?.trim()
+  const rawServiceId = (formData.get('service_id') as string)?.trim()
+  const specialistId = isValidUUID(rawSpecialistId) ? rawSpecialistId : null
+  const serviceId = isValidUUID(rawServiceId) ? rawServiceId : null
+
   const customerName = (formData.get('customer_name') as string)?.trim()
   const customerPhone = (formData.get('customer_phone') as string)?.trim()
   const customerEmail = (formData.get('customer_email') as string)?.trim() || null
@@ -29,7 +38,7 @@ export async function createPublicBooking(formData: FormData) {
   const notes = (formData.get('notes') as string)?.trim() || null
   const slug = (formData.get('slug') as string)?.trim()
 
-  if (!businessId || !customerName || !customerPhone || !bookingDate || !bookingTime) {
+  if (!businessId || !isValidUUID(businessId) || !customerName || !customerPhone || !bookingDate || !bookingTime) {
     return { success: false, error: 'Por favor completa todos los campos requeridos.' }
   }
 
@@ -64,8 +73,8 @@ export async function createPublicBooking(formData: FormData) {
     .from('bookings')
     .insert({
       business_id: businessId,
-      specialist_id: specialistId || null,
-      service_id: serviceId || null,
+      specialist_id: specialistId,
+      service_id: serviceId,
       customer_name: customerName,
       customer_phone: customerPhone,
       customer_email: customerEmail,
@@ -121,8 +130,12 @@ export async function createPublicBooking(formData: FormData) {
     console.error('Error enviando notificacion de reserva:', notifErr)
   }
 
-  if (slug) revalidatePath(`/b/${slug}`)
-  revalidatePath('/dashboard/appointments')
+  try {
+    if (slug) revalidatePath(`/b/${slug}`)
+    revalidatePath('/dashboard/appointments')
+  } catch (revErr) {
+    console.error('Error revalidando ruta:', revErr)
+  }
 
   return { success: true, booking }
 }
