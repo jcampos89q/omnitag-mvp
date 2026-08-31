@@ -101,7 +101,7 @@ export default async function PublicBookingPage({
     supabase.from('specialists').select('*').eq('business_id', business.id).eq('is_active', true).order('created_at', { ascending: true }),
     supabase.from('appointment_services').select('*').eq('business_id', business.id).eq('is_active', true).order('created_at', { ascending: true }),
     supabase.from('specialist_reviews').select('*').eq('business_id', business.id).order('created_at', { ascending: false }).limit(30),
-    supabase.from('bookings').select('id, specialist_id, service_id, booking_date, booking_time, status, appointment_services(duration_minutes)').eq('business_id', business.id).gte('booking_date', todayStr).neq('status', 'cancelled')
+    supabase.from('bookings').select('id, specialist_id, service_id, booking_date, booking_time, status, duration_minutes, appointment_services(duration_minutes)').eq('business_id', business.id).gte('booking_date', todayStr).neq('status', 'cancelled')
   ])
 
   return (
