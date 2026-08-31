@@ -140,8 +140,14 @@ export default function PublicMenuClient({
     if (!menu.whatsapp_number) return
     const cleanPhone = menu.whatsapp_number.replace(/\D/g, '')
 
+    const currencySymbol = menu.currency === 'HNL' ? 'L. ' : menu.currency === 'EUR' ? '€' : menu.currency === 'MXN' ? 'MX$' : menu.currency === 'GTQ' ? 'Q ' : '$'
+
     const locationHeader = orderType === 'table'
-      ? tableNumber ? `📍 *MESA:* #${tableNumber}` : '📍 *MESA:* En el local'
+      ? tableNumber 
+        ? (tableNumber.toLowerCase().startsWith('mesa') || tableNumber.toLowerCase().startsWith('barra') || tableNumber.toLowerCase().startsWith('terraza') || tableNumber.toLowerCase().startsWith('patio'))
+          ? `📍 *UBICACIÓN:* ${tableNumber}`
+          : `📍 *MESA:* #${tableNumber}`
+        : '📍 *UBICACIÓN:* En el local'
       : orderType === 'takeout'
       ? '📦 *TIPO:* Para Llevar / Takeout'
       : '🛵 *TIPO:* A Domicilio / Delivery'
@@ -156,7 +162,7 @@ export default function PublicMenuClient({
 
     text += `*DETALLE DE LA ORDEN:*%0A`
     cart.forEach(c => {
-      text += `• ${c.quantity}x ${c.item.name} — $${(c.item.price * c.quantity).toFixed(2)}%0A`
+      text += `• ${c.quantity}x ${c.item.name} — ${currencySymbol}${(c.item.price * c.quantity).toFixed(2)}%0A`
     })
 
     if (orderNotes.trim()) {
@@ -164,7 +170,7 @@ export default function PublicMenuClient({
     }
 
     text += `%0A-------------------------------%0A`
-    text += `💰 *TOTAL A PAGAR: $${totalPrice.toFixed(2)}*%0A`
+    text += `💰 *TOTAL A PAGAR: ${currencySymbol}${totalPrice.toFixed(2)}*%0A`
     text += `⏰ *Hora:* ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}%0A`
     text += `===============================%0A`
     text += `¿Podrían confirmarme la recepción y tiempo estimado? ¡Muchas gracias!`
