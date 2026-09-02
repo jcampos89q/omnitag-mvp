@@ -18,7 +18,8 @@ import {
   Gift,
   Globe,
   ArrowRight,
-  Zap
+  Zap,
+  Wifi
 } from 'lucide-react'
 import { createDevice, deleteDevice } from './actions'
 import Link from 'next/link'
@@ -207,6 +208,21 @@ export default function DevicesManager({
                 </span>
                 <span className="text-[10px] opacity-75 font-normal truncate mt-1">{loyalty?.name || 'Tarjeta sellos'}</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setDeviceType('wifi')}
+                className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                  deviceType === 'wifi'
+                    ? 'border-black bg-black text-white shadow-xs'
+                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Wifi className="w-4 h-4 text-purple-600" /> Conexión Wi-Fi
+                </span>
+                <span className="text-[10px] opacity-75 font-normal truncate mt-1">Placa NFC para clientes</span>
+              </button>
             </div>
 
             <input type="hidden" name="device_type" value={deviceType} />
@@ -301,6 +317,78 @@ export default function DevicesManager({
             <input type="hidden" name="redirect_url" value={loyalty ? `https://www.omnitag.site/l/${loyalty.slug}` : 'https://www.omnitag.site'} />
           )}
 
+          {deviceType === 'wifi' && (
+            <div className="p-4 sm:p-5 bg-purple-50/70 border border-purple-200 rounded-2xl space-y-4 animate-in fade-in">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-purple-950 uppercase tracking-wider flex items-center gap-1.5">
+                  <Wifi className="w-4 h-4 text-purple-700" /> Parámetros de la Placa NFC Wi-Fi
+                </span>
+                <span className="text-[10px] bg-purple-200 text-purple-900 font-extrabold px-2.5 py-0.5 rounded-full">
+                  Compatible con iPhone & Android
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Nombre de la Red (SSID):</label>
+                  <input
+                    type="text"
+                    name="wifi_ssid"
+                    required
+                    placeholder="Ej. MiLocal_Clientes"
+                    className="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs shadow-xs focus:border-black focus:outline-none font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Contraseña del Wi-Fi:</label>
+                  <input
+                    type="text"
+                    name="wifi_password"
+                    placeholder="Contraseña de la red"
+                    className="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs shadow-xs focus:border-black focus:outline-none font-mono font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Nombre Comercial a mostrar:</label>
+                  <input
+                    type="text"
+                    name="wifi_name"
+                    defaultValue={vcard?.company_name || menu?.name || 'Nuestro Negocio'}
+                    placeholder="Ej. Restaurante Bella Italia"
+                    className="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs shadow-xs focus:border-black focus:outline-none font-medium"
+                  />
+                </div>
+
+                {menu && (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Mostrar acceso al Menú Digital:</label>
+                    <select
+                      name="wifi_menu_slug"
+                      defaultValue={menu.slug}
+                      className="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-xs shadow-xs focus:border-black focus:outline-none font-medium"
+                    >
+                      <option value="">No mostrar menú</option>
+                      <option value={menu.slug}>Vincular al Menú: {menu.name}</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white/90 p-3 rounded-xl border border-purple-100 text-[11px] text-gray-600 space-y-1">
+                <p className="font-bold text-purple-950 flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600" /> ¿Cómo funciona la conexión por NFC?
+                </p>
+                <p>
+                  Al acercar cualquier smartphone a la placa NFC, se abre de inmediato la pantalla de tu comercio con el botón para <b>copiar la contraseña con 1 toque</b>, el código QR en pantalla y acceso directo a tu menú o catálogo.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="pt-2 flex justify-end">
             <button 
               type="submit" 
@@ -338,6 +426,7 @@ export default function DevicesManager({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {devices.map((device) => {
               const isGoogle = device.device_type === 'tap_to_rate'
+              const isWifi = device.device_type === 'wifi'
 
               return (
                 <div key={device.id} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-xs flex flex-col justify-between hover:border-gray-300 transition space-y-4">
@@ -345,14 +434,18 @@ export default function DevicesManager({
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                          isGoogle ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-blue-50 text-blue-600 border border-blue-200'
+                          isGoogle ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                          isWifi ? 'bg-purple-50 text-purple-600 border border-purple-200' :
+                          'bg-blue-50 text-blue-600 border border-blue-200'
                         }`}>
-                          {isGoogle ? <Star className="w-6 h-6 fill-amber-500" /> : <Globe className="w-6 h-6" />}
+                          {isGoogle ? <Star className="w-6 h-6 fill-amber-500" /> : 
+                           isWifi ? <Wifi className="w-6 h-6 text-purple-600" /> : 
+                           <Globe className="w-6 h-6" />}
                         </div>
                         <div>
                           <h4 className="font-extrabold text-gray-900 text-sm">Placa Tag: {device.tag_id}</h4>
                           <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md mt-0.5 bg-gray-100 text-gray-700">
-                            {device.device_type.replace('_', ' ')}
+                            {isWifi ? 'Wi-Fi Clientes' : device.device_type.replace('_', ' ')}
                           </span>
                         </div>
                       </div>

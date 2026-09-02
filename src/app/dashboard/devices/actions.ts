@@ -61,6 +61,15 @@ export async function createDevice(formData: FormData) {
     }
   }
 
+  // Si es vincular a Wi-Fi
+  if (deviceType === 'wifi') {
+    const wifiSsid = (formData.get('wifi_ssid') as string)?.trim() || 'MiNegocio_WiFi'
+    const wifiPass = (formData.get('wifi_password') as string)?.trim() || ''
+    const wifiName = (formData.get('wifi_name') as string)?.trim() || ''
+    const menuSlug = (formData.get('wifi_menu_slug') as string)?.trim() || ''
+    redirectUrl = `https://www.omnitag.site/wifi?ssid=${encodeURIComponent(wifiSsid)}&pass=${encodeURIComponent(wifiPass)}&name=${encodeURIComponent(wifiName)}&menu=${encodeURIComponent(menuSlug)}`
+  }
+
   if (!redirectUrl) {
     redirect('/dashboard/devices?error=missing_url')
   }

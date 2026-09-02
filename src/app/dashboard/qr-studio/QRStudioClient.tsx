@@ -21,7 +21,8 @@ import {
   X,
   Zap,
   ArrowRight,
-  Printer
+  Printer,
+  Wifi
 } from 'lucide-react'
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType, GradientType } from 'qr-code-styling'
 import ImageUploadInput from '@/components/ImageUploadInput'
@@ -73,14 +74,21 @@ export default function QRStudioClient({
   const urlTable = searchParams?.get('table') || ''
 
   // 1. Tipo de Destino
-  const [sourceType, setSourceType] = useState<'vcard' | 'menu' | 'loyalty' | 'device' | 'custom'>(
-    urlSource && ['vcard', 'menu', 'loyalty', 'device', 'custom'].includes(urlSource)
+  const [sourceType, setSourceType] = useState<'vcard' | 'menu' | 'loyalty' | 'device' | 'wifi' | 'custom'>(
+    urlSource && ['vcard', 'menu', 'loyalty', 'device', 'wifi', 'custom'].includes(urlSource)
       ? urlSource
       : vcard ? 'vcard' : menu ? 'menu' : loyalty ? 'loyalty' : 'custom'
   )
   const [selectedTable, setSelectedTable] = useState<string>(urlTable)
   const [customUrl, setCustomUrl] = useState('https://')
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>(devices[0]?.id || '')
+
+  // 1.5. Datos de Conexión Wi-Fi
+  const [wifiSsid, setWifiSsid] = useState<string>('Clientes_WiFi')
+  const [wifiPassword, setWifiPassword] = useState<string>('bienvenido2026')
+  const [wifiEncryption, setWifiEncryption] = useState<'WPA' | 'WEP' | 'nopass'>('WPA')
+  const [wifiHidden, setWifiHidden] = useState<boolean>(false)
+  const [showWifiPassword, setShowWifiPassword] = useState<boolean>(false)
 
   // 2. Personalización de Estilo
   const [dotStyle, setDotStyle] = useState<DotType>('dots')
@@ -125,6 +133,12 @@ export default function QRStudioClient({
         const dev = devices.find(d => d.id === selectedDeviceId)
         return dev ? `${origin}/r/${dev.tag_id}` : `${origin}`
       }
+      case 'wifi': {
+        const enc = wifiEncryption === 'nopass' ? 'nopass' : wifiEncryption
+        const pass = wifiEncryption === 'nopass' ? '' : wifiPassword
+        const hidden = wifiHidden ? 'H:true;' : ''
+        return `WIFI:S:${wifiSsid};T:${enc};P:${pass};${hidden};`
+      }
       case 'custom':
       default:
         return customUrl || `${origin}`
@@ -154,6 +168,10 @@ export default function QRStudioClient({
     } else if (sourceType === 'device') {
       setFrameTitle('Google Reviews')
       setFrameText('TOCA O ESCANEA PARA CALIFICAR')
+    } else if (sourceType === 'wifi') {
+      setFrameTitle('WI-FI GRATIS')
+      setFrameText('CONÉCTATE CON TU CÁMARA')
+      if (isPro) setFrameStyle('table_tent')
     }
   }, [sourceType, selectedTable, vcard, menu, loyalty, isPro])
 
@@ -229,7 +247,11 @@ export default function QRStudioClient({
     colorPreset, 
     customColor, 
     useGradient, 
-    logoUrl
+    logoUrl,
+    wifiSsid,
+    wifiPassword,
+    wifiEncryption,
+    wifiHidden
   ])
 
   // Función robusta para Guardar en Fototeca / Galería Móvil o Descargar en PC
@@ -512,6 +534,19 @@ export default function QRStudioClient({
 
               <button
                 type="button"
+                onClick={() => setSourceType('wifi')}
+                className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                  sourceType === 'wifi'
+                    ? 'border-black bg-black text-white shadow-xs'
+                    : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span>📶 Conexión Wi-Fi</span>
+                <span className="text-[10px] opacity-75 font-normal mt-1">Conexión automática</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setSourceType('custom')}
                 className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
                   sourceType === 'custom'
@@ -523,6 +558,82 @@ export default function QRStudioClient({
                 <span className="text-[10px] opacity-75 font-normal mt-1">Cualquier URL</span>
               </button>
             </div>
+
+            {sourceType === 'wifi' && (
+              <div className="pt-2 p-4 bg-purple-50/80 border border-purple-200 rounded-2xl space-y-3 animate-in fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-purple-950 uppercase tracking-wider flex items-center gap-1.5">
+                    <Wifi className="w-4 h-4 text-purple-700" /> Parámetros de la Red Wi-Fi
+                  </span>
+                  <span className="text-[10px] bg-purple-200/80 text-purple-900 font-bold px-2 py-0.5 rounded-full">
+                    Conexión directa en iPhone y Android
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Nombre de la Red (SSID):</label>
+                    <input
+                      type="text"
+                      value={wifiSsid}
+                      onChange={(e) => setWifiSsid(e.target.value)}
+                      placeholder="Ej. MiNegocio_Clientes"
+                      className="w-full text-xs font-medium px-3.5 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Tipo de Seguridad:</label>
+                    <select
+                      value={wifiEncryption}
+                      onChange={(e) => setWifiEncryption(e.target.value as any)}
+                      className="w-full text-xs font-medium px-3 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none"
+                    >
+                      <option value="WPA">WPA / WPA2 / WPA3 (Recomendada)</option>
+                      <option value="WEP">WEP (Antigua)</option>
+                      <option value="nopass">Sin contraseña (Red Abierta)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {wifiEncryption !== 'nopass' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold text-gray-700">Contraseña de la Red Wi-Fi:</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowWifiPassword(!showWifiPassword)}
+                        className="text-[11px] font-bold text-purple-700 hover:underline cursor-pointer"
+                      >
+                        {showWifiPassword ? 'Ocultar clave' : 'Mostrar clave'}
+                      </button>
+                    </div>
+                    <input
+                      type={showWifiPassword ? 'text' : 'password'}
+                      value={wifiPassword}
+                      onChange={(e) => setWifiPassword(e.target.value)}
+                      placeholder="Contraseña del router"
+                      className="w-full text-xs font-mono font-medium px-3.5 py-2 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-black"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-1 text-xs text-gray-600">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={wifiHidden}
+                      onChange={(e) => setWifiHidden(e.target.checked)}
+                      className="w-3.5 h-3.5 rounded text-black focus:ring-black"
+                    />
+                    <span className="text-[11px] font-medium">¿Es una red oculta?</span>
+                  </label>
+                  <span className="text-[10px] text-gray-400">
+                    Estándar oficial WIFI:S:...
+                  </span>
+                </div>
+              </div>
+            )}
 
             {sourceType === 'custom' && (
               <div className="pt-2">

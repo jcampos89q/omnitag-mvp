@@ -21,7 +21,8 @@ import {
   Layers,
   Palette,
   RefreshCw,
-  Download
+  Download,
+  Wifi
 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -130,19 +131,19 @@ export default function LandingPage() {
     },
     {
       id: 'qr-studio',
-      badge: 'Estudio QR',
+      badge: 'Estudio QR & Wi-Fi',
       badgeColor: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
       icon: QrCode,
       iconColor: 'text-fuchsia-600 bg-fuchsia-100',
-      title: 'QRs Dinámicos con Diseños Exclusivos',
-      description: 'Genera códigos QR profesionales con degradados estilo Instagram, puntos redondeados, marcos para mostradores y tu logotipo. Cambia su destino en cualquier momento sin reimprimir.',
+      title: 'QRs Dinámicos & Conexión Wi-Fi NFC',
+      description: 'Genera códigos QR profesionales con degradados estilo Instagram, puntos redondeados, marcos para mostradores y autoconexión Wi-Fi. Cambia su destino en cualquier momento sin reimprimir.',
       highlights: [
         'QRs 100% Dinámicos: cambia el enlace o menú sin reimprimir',
+        'Conexión Wi-Fi Instantánea: por escaneo QR o toque NFC',
         'Diseños exclusivos: degradados, puntos modernos y tu logo al centro',
-        'Marcos listos para imprimir para acrílicos de mesa y vitrinas',
         'Exportación en Ultra HD (2000px) y vectorial (SVG para imprenta)'
       ],
-      linkText: 'Diseñar QRs para mi negocio',
+      linkText: 'Diseñar QRs y Wi-Fi para mi negocio',
       href: '/register'
     }
   ]
@@ -327,6 +328,21 @@ export default function LandingPage() {
                     </div>
                     <p className="text-xs text-gray-400 leading-relaxed">
                       Descargas en resolución de 2000px y archivos SVG vectoriales listos para imprentas, serigrafía y acrílicos.
+                    </p>
+                  </div>
+
+                  <div className="sm:col-span-2 bg-gradient-to-r from-purple-900/50 via-indigo-900/40 to-black/50 border border-purple-400/30 p-4 rounded-2xl space-y-1.5 backdrop-blur-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-yellow-300 font-extrabold text-sm">
+                        <Wifi className="w-4 h-4 text-yellow-400" />
+                        <span>Conexión Wi-Fi Instantánea (QR + Placas NFC de Mesa)</span>
+                      </div>
+                      <span className="text-[10px] bg-yellow-400/20 text-yellow-300 font-bold px-2 py-0.5 rounded-full border border-yellow-400/30">
+                        Nuevo
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-300 leading-relaxed">
+                      Conecta a tus clientes a tu Wi-Fi sin dictar contraseñas: pueden escanear el QR con la cámara de su móvil o acercar el teléfono a una <b>placa física NFC en su mesa</b>, abriendo la pantalla de tu comercio con copia rápida y acceso directo a tu menú digital.
                     </p>
                   </div>
                 </div>
