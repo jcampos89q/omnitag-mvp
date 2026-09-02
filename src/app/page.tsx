@@ -18,9 +18,11 @@ import {
   ChevronRight,
   TrendingUp,
   Clock,
-  Layers
+  Layers,
+  Palette,
+  RefreshCw,
+  Download
 } from 'lucide-react'
-import HomeDynamicQRGenerator from '@/components/HomeDynamicQRGenerator'
 
 export default function LandingPage() {
   const features = [
@@ -124,6 +126,23 @@ export default function LandingPage() {
         'Exportación completa a Excel (CSV) para campañas'
       ],
       linkText: 'Gestionar clientes en el CRM',
+      href: '/register'
+    },
+    {
+      id: 'qr-studio',
+      badge: 'Estudio QR',
+      badgeColor: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
+      icon: QrCode,
+      iconColor: 'text-fuchsia-600 bg-fuchsia-100',
+      title: 'QRs Dinámicos con Diseños Exclusivos',
+      description: 'Genera códigos QR profesionales con degradados estilo Instagram, puntos redondeados, marcos para mostradores y tu logotipo. Cambia su destino en cualquier momento sin reimprimir.',
+      highlights: [
+        'QRs 100% Dinámicos: cambia el enlace o menú sin reimprimir',
+        'Diseños exclusivos: degradados, puntos modernos y tu logo al centro',
+        'Marcos listos para imprimir para acrílicos de mesa y vitrinas',
+        'Exportación en Ultra HD (2000px) y vectorial (SVG para imprenta)'
+      ],
+      linkText: 'Diseñar QRs para mi negocio',
       href: '/register'
     }
   ]
@@ -246,21 +265,159 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 2.5. SECCIÓN INTERACTIVA: GENERADOR DINÁMICO DE QRS CON DISEÑOS EXCLUSIVOS */}
-        <section id="estudio-qr" className="py-14 sm:py-20 px-4 sm:px-6 max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto space-y-2 mb-10">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-[11px] font-black uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 fill-purple-600" /> Generador Interactivo Gratuito
-            </div>
-            <h2 className="text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
-              Generador de Códigos QR con Diseños Exclusivos
-            </h2>
-            <p className="text-sm sm:text-base text-gray-500 font-medium">
-              Escribe cualquier enlace, personaliza colores degradados, puntos redondeados, marcos para impresión y descarga tu QR en alta resolución.
-            </p>
-          </div>
+        {/* 2.5. SECCIÓN INFORMATIVA: ESTUDIO QR & CÓDIGOS DINÁMICOS CON DISEÑOS EXCLUSIVOS */}
+        <section id="estudio-qr" className="py-16 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto">
+          <div className="bg-gradient-to-br from-purple-950 via-slate-900 to-black text-white rounded-3xl p-6 sm:p-12 lg:p-16 shadow-2xl relative overflow-hidden">
+            {/* Luces decorativas de fondo */}
+            <div className="absolute top-0 right-0 -mt-16 -mr-16 w-80 h-80 bg-purple-600/25 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
 
-          <HomeDynamicQRGenerator />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+              {/* Columna Izquierda: Información Detallada */}
+              <div className="lg:col-span-7 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 text-yellow-300 text-xs font-black uppercase tracking-wider border border-white/10">
+                  <Sparkles className="w-3.5 h-3.5 fill-yellow-300" />
+                  <span>Estudio QR Profesional para Imprenta</span>
+                </div>
+
+                <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+                  Generación de Códigos QR Dinámicos con Diseños Exclusivos
+                </h2>
+
+                <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium">
+                  Olvídate de los códigos QR genéricos, cuadrados y aburridos en blanco y negro. En OmniTag creas <b>piezas de diseño listas para imprenta</b> con degradados modernos, puntos estilizados, tu logotipo oficial y marcos con llamados a la acción para mesas y mostradores.
+                </p>
+
+                {/* 4 Superpoderes del Estudio QR */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-1.5 backdrop-blur-xs">
+                    <div className="flex items-center gap-2 text-purple-300 font-extrabold text-sm">
+                      <RefreshCw className="w-4 h-4 text-purple-400" />
+                      <span>100% Dinámicos</span>
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      Cambia el destino, menú o número cuando quieras. <b>El QR impreso nunca caduca ni necesita ser reimpreso</b>.
+                    </p>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-1.5 backdrop-blur-xs">
+                    <div className="flex items-center gap-2 text-pink-300 font-extrabold text-sm">
+                      <Palette className="w-4 h-4 text-pink-400" />
+                      <span>Degradados & Puntos VIP</span>
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      Paletas Sunset, Luxury Gold, Esmeralda, esquinas redondeadas y el logo de tu empresa perfectamente centrado.
+                    </p>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-1.5 backdrop-blur-xs">
+                    <div className="flex items-center gap-2 text-amber-300 font-extrabold text-sm">
+                      <Layers className="w-4 h-4 text-amber-400" />
+                      <span>Marcos para Acrílicos</span>
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      Plantillas para placas de mesa, habladores y mostradores con textos persuasivos como <i>"Escanea para ordenar"</i>.
+                    </p>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-2xl space-y-1.5 backdrop-blur-xs">
+                    <div className="flex items-center gap-2 text-emerald-300 font-extrabold text-sm">
+                      <Download className="w-4 h-4 text-emerald-400" />
+                      <span>Ultra HD & SVG Vectorial</span>
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      Descargas en resolución de 2000px y archivos SVG vectoriales listos para imprentas, serigrafía y acrílicos.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                  <Link
+                    href="/register"
+                    className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-black px-7 py-3.5 rounded-2xl text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <span>Crear mis QRs Exclusivos</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="w-full sm:w-auto text-xs sm:text-sm font-bold text-gray-300 hover:text-white px-4 py-3 text-center"
+                  >
+                    Ya tengo una cuenta
+                  </Link>
+                </div>
+              </div>
+
+              {/* Columna Derecha: Mockup Visual Exclusivo del QR */}
+              <div className="lg:col-span-5 flex justify-center">
+                <div className="w-full max-w-[320px] bg-gradient-to-b from-[#833AB4] via-[#FD1D1D] to-[#FCB045] p-5 rounded-3xl shadow-2xl space-y-4 text-center transform hover:scale-[1.02] transition-transform duration-300">
+                  <div className="text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-1.5">
+                    <Sparkles className="w-4 h-4 fill-white" />
+                    <span>TU NEGOCIO VIP</span>
+                  </div>
+
+                  {/* Tarjeta interior blanca */}
+                  <div className="bg-white p-5 rounded-2xl shadow-inner flex flex-col items-center justify-center space-y-3">
+                    <div className="w-48 h-48 bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 p-2.5 rounded-2xl shadow-md flex items-center justify-center relative">
+                      <div className="w-full h-full bg-white rounded-xl p-2 flex items-center justify-center relative overflow-hidden">
+                        <div className="w-full h-full grid grid-cols-5 gap-1.5 p-1 items-center justify-center">
+                          <div className="w-6 h-6 rounded-lg border-4 border-purple-600 flex items-center justify-center"><div className="w-2 h-2 bg-purple-600 rounded-sm" /></div>
+                          <div className="w-2.5 h-2.5 rounded-full bg-pink-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-purple-500 mx-auto" />
+                          <div className="w-6 h-6 rounded-lg border-4 border-purple-600 flex items-center justify-center"><div className="w-2 h-2 bg-purple-600 rounded-sm" /></div>
+                          
+                          <div className="w-2.5 h-2.5 rounded-full bg-pink-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-purple-600 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-pink-600 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-pink-500 mx-auto" />
+
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-pink-500 mx-auto" />
+                          <div className="w-8 h-8 bg-black text-white rounded-xl shadow-md flex items-center justify-center font-black text-xs mx-auto border-2 border-white">
+                            O
+                          </div>
+                          <div className="w-2.5 h-2.5 rounded-full bg-pink-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-purple-500 mx-auto" />
+
+                          <div className="w-2.5 h-2.5 rounded-full bg-purple-600 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-pink-600 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-purple-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mx-auto" />
+
+                          <div className="w-6 h-6 rounded-lg border-4 border-purple-600 flex items-center justify-center"><div className="w-2 h-2 bg-purple-600 rounded-sm" /></div>
+                          <div className="w-2.5 h-2.5 rounded-full bg-pink-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-purple-600 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mx-auto" />
+                          <div className="w-2.5 h-2.5 rounded-full bg-pink-600 mx-auto" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/95 py-2 px-4 rounded-xl shadow-md">
+                    <p className="text-black font-black text-xs uppercase tracking-wider">
+                      ESCANÉAME CON TU CÁMARA
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap pt-1">
+                    <span className="text-[10px] font-bold bg-black/30 text-white px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+                      Degradado Sunset
+                    </span>
+                    <span className="text-[10px] font-bold bg-black/30 text-white px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+                      SVG Vectorial
+                    </span>
+                    <span className="text-[10px] font-bold bg-black/30 text-white px-2.5 py-0.5 rounded-full backdrop-blur-xs">
+                      Marco Acrílico
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* 3. SECCIÓN DE FUNCIONES PRINCIPALES (GRID DETALLADO) */}
