@@ -37,89 +37,13 @@ export default function NfcCardWriterModal({
   const [status, setStatus] = useState<'idle' | 'waiting' | 'success' | 'error'>('idle')
   const [statusMessage, setStatusMessage] = useState<string>('')
   const [copied, setCopied] = useState<boolean>(false)
-  const [activeTab, setActiveTab] = useState<'write' | 'read' | 'guide'>('write')
   const [scannedInfo, setScannedInfo] = useState<{ serialNumber?: string, records?: string[] } | null>(null)
-  const [wifiMode, setWifiMode] = useState<'native' | 'web'>('native')
+  const [activeTab, setActiveTab] = useState<'write' | 'read' | 'guide'>('write')
 
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  // Función para construir el payload binario oficial Wi-Fi Alliance WSC (TLV Big-Endian)
-  const buildWfaWscPayload = (ssid: string, password: string, encryption: string = 'WPA'): Uint8Array => {
-    const encoder = new TextEncoder()
-    const ssidBytes = encoder.encode(ssid)
-    const passBytes = encoder.encode(password)
-    const isWpa = encryption !== 'nopass'
-    const isWep = encryption === 'WEP'
-
-    const parts: number[] = []
-
-    // 1. Network Index (0x1026, len 1, val 1)
-    parts.push(0x10, 0x26, 0x00, 0x01, 0x01)
-
-    // 2. SSID (0x1045)
-    parts.push(0x10, 0x45, (ssidBytes.length >> 8) & 0xff, ssidBytes.length & 0xff, ...Array.from(ssidBytes))
-
-    // 3. Authentication Type (0x1003, len 2)
-    // WPA2-Personal = 0x0020, WPA-Personal = 0x0002, Open = 0x0001
-    const authVal = isWpa ? 0x0020 : isWep ? 0x0002 : 0x0001
-    parts.push(0x10, 0x03, 0x00, 0x02, (authVal >> 8) & 0xff, authVal & 0xff)
-
-    // 4. Encryption Type (0x100F, len 2)
-    // AES = 0x0008, TKIP = 0x0004, None = 0x0001
-    const encVal = isWpa ? 0x0008 : isWep ? 0x0004 : 0x0001
-    parts.push(0x10, 0x0F, 0x00, 0x02, (encVal >> 8) & 0xff, encVal & 0xff)
-
-    // 5. Network Key (0x1027)
-    if (isWpa || isWep) {
-      parts.push(0x10, 0x27, (passBytes.length >> 8) & 0xff, passBytes.length & 0xff, ...Array.from(passBytes))
-    }
-
-    // 6. MAC Address (0x1020, len 6, broadcast)
-    parts.push(0x10, 0x20, 0x00, 0x06, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff)
-
-    return new Uint8Array(parts)
-  }
-
-  const getWifiDetails = () => {
-    let raw = url || initialUrl || ''
-    if (raw.startsWith('WIFI:')) {
-      const ssid = raw.match(/S:([^;]+)/)?.[1] || 'WiFi'
-      const pass = raw.match(/P:([^;]+)/)?.[1] || ''
-      const enc = raw.match(/T:([^;]+)/)?.[1] || 'WPA'
-      return { isWifi: true, ssid, pass, enc }
-    }
-    if (raw.includes('/wifi?')) {
-      try {
-        const query = raw.split('?')[1] || ''
-        const params = new URLSearchParams(query)
-        const ssid = params.get('ssid') || 'WiFi'
-        const pass = params.get('pass') || ''
-        const enc = params.get('enc') || 'WPA'
-        return { isWifi: true, ssid, pass, enc }
-      } catch {
-        return { isWifi: false, ssid: '', pass: '', enc: '' }
-      }
-    }
-    return { isWifi: false, ssid: '', pass: '', enc: '' }
-  }
-
-  const normalizeNfcUrl = (raw: string): string => {
-    let clean = (raw || '').trim()
-    if (clean.startsWith('WIFI:')) {
-      const ssidMatch = clean.match(/S:([^;]+)/)
-      const passMatch = clean.match(/P:([^;]+)/)
-      const encMatch = clean.match(/T:([^;]+)/)
-      const ssid = ssidMatch ? ssidMatch[1] : 'WiFi'
-      const pass = passMatch ? passMatch[1] : ''
-      const enc = encMatch ? encMatch[1] : 'WPA'
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.omnitag.site'
-      return `${origin}/wifi?ssid=${encodeURIComponent(ssid)}&pass=${encodeURIComponent(pass)}&enc=${encodeURIComponent(enc)}`
-    }
-    return clean
-  }
-
   useEffect(() => {
-    setUrl(normalizeNfcUrl(initialUrl))
+    setUrl(initialUrl || '')
   }, [initialUrl])
 
   useEffect(() => {
@@ -148,10 +72,10 @@ export default function NfcCardWriterModal({
 
   // 1. Grabar Tarjeta NFC vía Web NFC API
   const handleWriteNFC = async () => {
-    const cleanUrl = normalizeNfcUrl(url)
-    if (!cleanUrl) {
+    const textToWrite = (url || '').trim()
+    if (!textToWrite) {
       setStatus('error')
-      setStatusMessage('Por favor introduce o selecciona una URL válida.')
+      setStatusMessage('Por favor introduce o selecciona un enlace o dato válido.')
       return
     }
 
@@ -169,37 +93,12 @@ export default function NfcCardWriterModal({
       const ndef = new NDEFReaderClass()
       abortControllerRef.current = new AbortController()
 
-      const wifi = getWifiDetails()
-      if (wifi.isWifi && wifiMode === 'native') {
-        const payload = buildWfaWscPayload(wifi.ssid, wifi.pass, wifi.enc)
-        await ndef.write(
-          {
-            records: [
-              {
-                recordType: 'mime',
-                mediaType: 'application/vnd.wfa.wsc',
-                data: payload
-              }
-            ]
-          },
-          { signal: abortControllerRef.current.signal }
-        )
-
-        if (typeof navigator !== 'undefined' && navigator.vibrate) {
-          navigator.vibrate([100, 50, 150])
-        }
-
-        setStatus('success')
-        setStatusMessage(`🎉 ¡Chip NFC grabado en modo Wi-Fi Nativo Offline (${wifi.ssid})! Los teléfonos Android se conectarán automáticamente al tocarlo sin necesidad de datos móviles ni internet previo.`)
-        return
-      }
-
       await ndef.write(
         {
           records: [
             {
-              recordType: 'url',
-              data: cleanUrl
+              recordType: textToWrite.startsWith('http') ? 'url' : 'text',
+              data: textToWrite
             }
           ]
         },
@@ -212,7 +111,7 @@ export default function NfcCardWriterModal({
       }
 
       setStatus('success')
-      setStatusMessage('🎉 ¡Tarjeta NFC grabada con éxito! Ya está lista para ser tocada por tus clientes.')
+      setStatusMessage('🎉 ¡Tarjeta NFC grabada con éxito! Ya está lista para ser usada.')
     } catch (err: any) {
       if (err.name === 'AbortError') {
         setStatus('idle')
@@ -411,60 +310,9 @@ export default function NfcCardWriterModal({
                   </button>
                 </div>
                 <p className="text-[11px] text-gray-500 mt-1">
-                  Este es el enlace que se abrirá en el teléfono de cualquier cliente al aproximarse.
+                  Este es el enlace o contenido que se grabará en el chip NFC físico.
                 </p>
               </div>
-
-              {/* Selector de Modo Wi-Fi para NFC */}
-              {getWifiDetails().isWifi && (
-                <div className="p-4 bg-purple-50/80 border border-purple-200 rounded-2xl space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-purple-950 flex items-center gap-1.5 uppercase tracking-wider">
-                      <Wifi className="w-3.5 h-3.5 text-purple-600" /> Red Wi-Fi Detectada: {getWifiDetails().ssid}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setWifiMode('native')}
-                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                        wifiMode === 'native'
-                          ? 'border-purple-600 bg-white shadow-xs'
-                          : 'border-purple-200 bg-purple-50/50 hover:bg-white text-gray-600'
-                      }`}
-                    >
-                      <p className="text-xs font-bold text-purple-950 flex items-center gap-1">
-                        <span>⚡ Wi-Fi Nativo Offline</span>
-                      </p>
-                      <p className="text-[10px] text-gray-500 mt-1 leading-tight">
-                        Para Android: conecta <b>100% sin internet ni datos móviles</b> con 1 toque al chip.
-                      </p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setWifiMode('web')}
-                      className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                        wifiMode === 'web'
-                          ? 'border-purple-600 bg-white shadow-xs'
-                          : 'border-purple-200 bg-purple-50/50 hover:bg-white text-gray-600'
-                      }`}
-                    >
-                      <p className="text-xs font-bold text-purple-950 flex items-center gap-1">
-                        <span>🌐 Tarjeta Web Wi-Fi</span>
-                      </p>
-                      <p className="text-[10px] text-gray-500 mt-1 leading-tight">
-                        Abre la página web con copia de clave y enlace a tu menú digital.
-                      </p>
-                    </button>
-                  </div>
-
-                  <p className="text-[11px] text-purple-900 leading-relaxed bg-white/90 p-2.5 rounded-xl border border-purple-100">
-                    💡 <b>¿Tienes clientes con iPhone sin internet?</b> Apple no permite que chips NFC conecten a Wi-Fi en segundo plano. Para conectar iPhones sin datos móviles, la solución oficial e infalible es el <b>Código QR impreso</b> (lo escanean con la cámara y conecta de inmediato de forma 100% offline).
-                  </p>
-                </div>
-              )}
 
               {/* Estado de compatibilidad */}
               {!isSupported && (

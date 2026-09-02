@@ -148,19 +148,6 @@ export default function QRStudioClient({
     }
   }
 
-  // URL específica para NFC (Garantiza https:// para compatibilidad total con teléfonos)
-  const getNfcUrl = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.omnitag.site'
-    if (sourceType === 'wifi') {
-      const enc = wifiEncryption === 'nopass' ? 'nopass' : wifiEncryption
-      const pass = wifiEncryption === 'nopass' ? '' : wifiPassword
-      const title = frameTitle || 'Red Wi-Fi'
-      const menuSlug = menu?.slug || ''
-      return `${origin}/wifi?ssid=${encodeURIComponent(wifiSsid)}&pass=${encodeURIComponent(pass)}&enc=${encodeURIComponent(enc)}&name=${encodeURIComponent(title)}&menu=${encodeURIComponent(menuSlug)}`
-    }
-    return getTargetUrl()
-  }
-
   // Pre-cargar valores según origen
   useEffect(() => {
     if (sourceType === 'vcard' && vcard) {
@@ -1141,7 +1128,7 @@ export default function QRStudioClient({
       <NfcCardWriterModal
         isOpen={showNfcWriter}
         onClose={() => setShowNfcWriter(false)}
-        initialUrl={getNfcUrl()}
+        initialUrl={getTargetUrl()}
         initialTitle={`QR ${sourceType}`}
       />
     </div>
