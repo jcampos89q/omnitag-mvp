@@ -20,6 +20,7 @@ import {
   Clock,
   Layers
 } from 'lucide-react'
+import HomeDynamicQRGenerator from '@/components/HomeDynamicQRGenerator'
 
 export default function LandingPage() {
   const features = [
@@ -148,6 +149,10 @@ export default function LandingPage() {
           </Link>
 
           <div className="hidden md:flex items-center gap-6 text-xs font-bold text-gray-600">
+            <a href="#estudio-qr" className="text-purple-700 hover:text-purple-900 transition flex items-center gap-1 font-extrabold">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Generador QR</span>
+            </a>
             <a href="#funciones" className="hover:text-black transition">Funcionalidades</a>
             <a href="#soluciones" className="hover:text-black transition">Sectores</a>
             <a href="#como-funciona" className="hover:text-black transition">¿Cómo Funciona?</a>
@@ -196,7 +201,7 @@ export default function LandingPage() {
               Todo en un solo lugar: <b>Citas con especialistas</b>, <b>Menús QR para restaurantes</b>, <b>Club de Sellos de Fidelización</b>, <b>Reseñas Google</b> y <b>vCards NFC</b> con CRM integrado.
             </p>
 
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-md mx-auto">
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-xl mx-auto">
               <Link 
                 href="/register" 
                 className="w-full sm:w-auto bg-black text-white px-8 py-4 rounded-2xl font-black text-sm sm:text-base hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl cursor-pointer"
@@ -205,10 +210,17 @@ export default function LandingPage() {
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <a 
-                href="#funciones" 
-                className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-4 rounded-2xl font-bold text-sm sm:text-base transition text-center"
+                href="#estudio-qr" 
+                className="w-full sm:w-auto bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 px-6 py-4 rounded-2xl font-black text-sm sm:text-base transition flex items-center justify-center gap-2"
               >
-                Explorar Módulos
+                <QrCode className="w-4 h-4 text-purple-700" />
+                <span>Diseñar QR Gratis</span>
+              </a>
+              <a 
+                href="#funciones" 
+                className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-4 rounded-2xl font-bold text-sm sm:text-base transition text-center"
+              >
+                Módulos
               </a>
             </div>
 
@@ -234,8 +246,25 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* 2.5. SECCIÓN INTERACTIVA: GENERADOR DINÁMICO DE QRS CON DISEÑOS EXCLUSIVOS */}
+        <section id="estudio-qr" className="py-14 sm:py-20 px-4 sm:px-6 max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto space-y-2 mb-10">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-[11px] font-black uppercase tracking-wider">
+              <Sparkles className="w-3.5 h-3.5 fill-purple-600" /> Generador Interactivo Gratuito
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
+              Generador de Códigos QR con Diseños Exclusivos
+            </h2>
+            <p className="text-sm sm:text-base text-gray-500 font-medium">
+              Escribe cualquier enlace, personaliza colores degradados, puntos redondeados, marcos para impresión y descarga tu QR en alta resolución.
+            </p>
+          </div>
+
+          <HomeDynamicQRGenerator />
+        </section>
+
         {/* 3. SECCIÓN DE FUNCIONES PRINCIPALES (GRID DETALLADO) */}
-        <section id="funciones" className="py-20 sm:py-28 px-4 sm:px-6 max-w-7xl mx-auto">
+        <section id="funciones" className="py-20 sm:py-28 px-4 sm:px-6 max-w-7xl mx-auto border-t border-gray-100">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-16 sm:mb-20">
             <h2 className="text-xs font-black uppercase tracking-wider text-purple-700">Módulos Potentes</h2>
             <h3 className="text-3xl sm:text-5xl font-black tracking-tight text-gray-950">
