@@ -20,7 +20,8 @@ import {
   ArrowRight,
   Zap,
   Wifi,
-  Radio
+  Radio,
+  AlertCircle
 } from 'lucide-react'
 import { createDevice, deleteDevice } from './actions'
 import Link from 'next/link'
@@ -347,9 +348,25 @@ export default function DevicesManager({
                 <span className="text-xs font-black text-purple-950 uppercase tracking-wider flex items-center gap-1.5">
                   <Wifi className="w-4 h-4 text-purple-700" /> Parámetros de la Placa NFC Wi-Fi
                 </span>
-                <span className="text-[10px] bg-purple-200 text-purple-900 font-extrabold px-2.5 py-0.5 rounded-full">
-                  Compatible con iPhone & Android
+                <span className="text-[10px] bg-amber-100 text-amber-900 border border-amber-300 font-extrabold px-2.5 py-0.5 rounded-full">
+                  NFC: Android • QR: iPhone & Android
                 </span>
+              </div>
+
+              {/* Advertencia explícita sobre iPhone y tarjetas NFC Wi-Fi */}
+              <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-[11px] text-amber-900 leading-relaxed space-y-1">
+                  <p className="font-extrabold text-amber-950">
+                    ⚠️ Advertencia importante sobre tarjetas NFC y Wi-Fi (iPhone vs. Android):
+                  </p>
+                  <p>
+                    Por restricciones del sistema operativo de Apple (iOS), <b>en iPhone no funcionan las tarjetas NFC para conectarse a Wi-Fi</b>. Por lo tanto, las tarjetas o chips NFC generados para conexiones Wi-Fi <b>solo se leerán en dispositivos Android</b>.
+                  </p>
+                  <p className="text-amber-950 font-bold">
+                    📲 Los usuarios con iPhone usarán el Código QR con su cámara para conectarse. Te recomendamos colocar siempre el Código QR visible en tu acrílico o mesa.
+                  </p>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

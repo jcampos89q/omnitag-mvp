@@ -23,7 +23,8 @@ import {
   ArrowRight,
   Printer,
   Wifi,
-  Radio
+  Radio,
+  AlertCircle
 } from 'lucide-react'
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType, GradientType } from 'qr-code-styling'
 import ImageUploadInput from '@/components/ImageUploadInput'
@@ -634,6 +635,22 @@ export default function QRStudioClient({
                   <span className="text-[10px] text-gray-400">
                     Estándar oficial WIFI:S:...
                   </span>
+                </div>
+
+                {/* Advertencia explícita sobre iPhone y tarjetas NFC Wi-Fi */}
+                <div className="p-3.5 bg-amber-500/10 border border-amber-300/80 rounded-xl flex items-start gap-2.5 mt-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-amber-900 leading-relaxed space-y-1">
+                    <p className="font-extrabold text-amber-950">
+                      ⚠️ Nota de compatibilidad para Wi-Fi (iPhone vs. Android):
+                    </p>
+                    <p>
+                      Por restricciones del sistema de Apple (iOS), <b>en iPhone no funcionan las tarjetas NFC para conectarse a Wi-Fi</b>. Por lo tanto, si grabas este Wi-Fi en un chip NFC físico, <b>solo se leerá en dispositivos Android</b>.
+                    </p>
+                    <p className="text-amber-950 font-bold">
+                      📲 Los usuarios con iPhone usarán el Código QR con su cámara para conectarse (funciona 100% automático y offline).
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

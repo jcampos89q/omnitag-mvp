@@ -314,6 +314,24 @@ export default function NfcCardWriterModal({
                 </p>
               </div>
 
+              {/* Advertencia si se detecta configuración Wi-Fi en NFC */}
+              {url.trim().toUpperCase().includes('WIFI:') && (
+                <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-amber-900 leading-relaxed space-y-1">
+                    <p className="font-extrabold text-amber-950">
+                      ⚠️ Advertencia sobre tarjetas NFC para Wi-Fi:
+                    </p>
+                    <p>
+                      En <b>iPhone no funcionan las tarjetas NFC para conectarse a Wi-Fi</b> por restricciones de Apple. Por lo tanto, las tarjetas NFC grabadas para Wi-Fi <b>solo se leerán en dispositivos Android</b>.
+                    </p>
+                    <p className="text-amber-950 font-bold">
+                      📲 Los usuarios con iPhone deberán conectarse escaneando el Código QR con su cámara.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Estado de compatibilidad */}
               {!isSupported && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl space-y-2">
