@@ -11,11 +11,25 @@ export default async function ForgotPasswordPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+      {/* Botón para regresar al inicio de la web */}
+      <div className="w-full max-w-md mb-3 flex items-center justify-between">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black transition bg-white hover:bg-gray-100 px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Volver al Inicio</span>
+        </Link>
+        <span className="text-xs font-medium text-gray-400">OmniTag Web</span>
+      </div>
+
       <div className="w-full max-w-md space-y-6 rounded-2xl bg-white p-8 shadow-lg border border-gray-100">
         <div className="text-center">
-          <div className="w-12 h-12 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs">
-            <KeyRound className="w-6 h-6" />
-          </div>
+          <Link href="/" title="Volver a la página principal" className="inline-block hover:scale-105 transition-transform">
+            <div className="w-12 h-12 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs">
+              <KeyRound className="w-6 h-6" />
+            </div>
+          </Link>
           <h2 className="text-2xl font-extrabold tracking-tight text-gray-900">
             Recuperar Contraseña
           </h2>

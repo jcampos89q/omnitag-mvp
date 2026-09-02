@@ -20,7 +20,9 @@ import {
   ShieldCheck,
   Star,
   Sparkles,
-  Scissors
+  Scissors,
+  Globe,
+  ExternalLink
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 import NotificationBell from './NotificationBell'
@@ -87,7 +89,15 @@ export default function DashboardNavbar({
           )}
         </Link>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
+          <Link
+            href="/"
+            className="p-2 rounded-xl text-gray-700 hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
+            title="Ir a la página principal de la web"
+          >
+            <Globe className="w-5 h-5" />
+          </Link>
+
           <NotificationBell userId={userId} position="topbar" />
 
           <button
@@ -173,7 +183,20 @@ export default function DashboardNavbar({
               })}
             </nav>
 
-            <div className="pt-3 border-t border-gray-100 mt-auto">
+            <div className="pt-3 border-t border-gray-100 mt-auto space-y-1">
+              <Link
+                href="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-gray-700 hover:text-black hover:bg-gray-100 rounded-xl transition"
+                title="Ir a la página principal de la web"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Globe className="w-4 h-4 text-purple-600" />
+                  <span>Página Principal (Web)</span>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+              </Link>
+
               <form action={logout}>
                 <button 
                   type="submit" 
@@ -198,7 +221,16 @@ export default function DashboardNavbar({
             <span className="text-2xl font-bold tracking-tight text-gray-900">OmniTag</span>
           </Link>
 
-          <NotificationBell userId={userId} position="sidebar" />
+          <div className="flex items-center gap-1">
+            <Link
+              href="/"
+              className="p-2 text-gray-500 hover:text-black rounded-xl hover:bg-gray-100 transition cursor-pointer"
+              title="Ver Página Principal (Web)"
+            >
+              <Globe className="w-5 h-5" />
+            </Link>
+            <NotificationBell userId={userId} position="sidebar" />
+          </div>
         </div>
 
         {userEmail && (
@@ -248,7 +280,19 @@ export default function DashboardNavbar({
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-200 mt-auto">
+        <div className="p-4 border-t border-gray-200 mt-auto space-y-1">
+          <Link
+            href="/"
+            className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition"
+            title="Ver la página de inicio principal de OmniTag"
+          >
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-purple-600" />
+              <span>Página Principal (Web)</span>
+            </div>
+            <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+          </Link>
+
           <form action={logout}>
             <button 
               type="submit" 
