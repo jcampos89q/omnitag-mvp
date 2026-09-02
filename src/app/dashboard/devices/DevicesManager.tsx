@@ -19,11 +19,13 @@ import {
   Globe,
   ArrowRight,
   Zap,
-  Wifi
+  Wifi,
+  Radio
 } from 'lucide-react'
 import { createDevice, deleteDevice } from './actions'
 import Link from 'next/link'
 import ProFeatureModal from '@/components/ProFeatureModal'
+import NfcCardWriterModal from '@/components/NfcCardWriterModal'
 
 interface DevicesManagerProps {
   devices: any[]
@@ -45,6 +47,17 @@ export default function DevicesManager({
   const [showGoogleHelp, setShowGoogleHelp] = useState<boolean>(false)
   const [showProModal, setShowProModal] = useState<boolean>(false)
   const [proModalFeature, setProModalFeature] = useState({ name: '', desc: '' })
+
+  // Estado del Grabador Web NFC
+  const [showNfcWriter, setShowNfcWriter] = useState<boolean>(false)
+  const [nfcWriterUrl, setNfcWriterUrl] = useState<string>('')
+  const [nfcWriterTitle, setNfcWriterTitle] = useState<string>('')
+
+  const openNfcWriter = (targetUrl: string, title: string) => {
+    setNfcWriterUrl(targetUrl)
+    setNfcWriterTitle(title)
+    setShowNfcWriter(true)
+  }
 
   const handleCreateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     // Si no es PRO y ya tiene 1 dispositivo registrado
@@ -134,11 +147,22 @@ export default function DevicesManager({
             </p>
           </div>
 
-          {!isPro && (
-            <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-              Límite Básico: {devices.length}/1 Placa
-            </span>
-          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => openNfcWriter(vcard ? `https://www.omnitag.site/v/${vcard.slug}` : 'https://www.omnitag.site', 'Mi Tarjeta NFC')}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Radio className="w-3.5 h-3.5" />
+              <span>📲 Grabar Chip NFC</span>
+            </button>
+
+            {!isPro && (
+              <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-2 rounded-xl">
+                Límite: {devices.length}/1 Placa
+              </span>
+            )}
+          </div>
         </div>
 
         <form action={createDevice} onSubmit={handleCreateSubmit} className="space-y-5">
@@ -476,13 +500,23 @@ export default function DevicesManager({
                     </a>
 
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => openNfcWriter(device.tag_id ? `https://www.omnitag.site/r/${device.tag_id}` : device.redirect_url, `Placa Tag: ${device.tag_id}`)}
+                        className="px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition flex items-center gap-1 cursor-pointer"
+                        title="Grabar este enlace en un chip NFC físico"
+                      >
+                        <Radio className="w-3.5 h-3.5" />
+                        <span>Grabar NFC</span>
+                      </button>
+
                       <Link
                         href="/dashboard/qr-studio"
-                        className="px-3 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition flex items-center gap-1.5"
+                        className="px-2.5 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition flex items-center gap-1"
                         title="Diseñar e imprimir QR"
                       >
                         <QrCode className="w-3.5 h-3.5" />
-                        <span>Imprimir QR</span>
+                        <span>QR</span>
                       </Link>
 
                       <form action={deleteDevice}>
@@ -510,6 +544,14 @@ export default function DevicesManager({
         onClose={() => setShowProModal(false)}
         featureName={proModalFeature.name}
         featureDescription={proModalFeature.desc}
+      />
+
+      {/* Modal del Grabador Web NFC */}
+      <NfcCardWriterModal
+        isOpen={showNfcWriter}
+        onClose={() => setShowNfcWriter(false)}
+        initialUrl={nfcWriterUrl}
+        initialTitle={nfcWriterTitle}
       />
     </div>
   )

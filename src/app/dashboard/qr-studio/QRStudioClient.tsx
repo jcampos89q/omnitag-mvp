@@ -22,11 +22,13 @@ import {
   Zap,
   ArrowRight,
   Printer,
-  Wifi
+  Wifi,
+  Radio
 } from 'lucide-react'
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType, GradientType } from 'qr-code-styling'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import ProFeatureModal from '@/components/ProFeatureModal'
+import NfcCardWriterModal from '@/components/NfcCardWriterModal'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
@@ -109,6 +111,7 @@ export default function QRStudioClient({
   const [previewDownloadImage, setPreviewDownloadImage] = useState<string | null>(null)
   const [showProModal, setShowProModal] = useState<boolean>(false)
   const [proModalInfo, setProModalInfo] = useState({ name: '', desc: '' })
+  const [showNfcWriter, setShowNfcWriter] = useState<boolean>(false)
 
   // Referencias
   const qrRef = useRef<HTMLDivElement>(null)
@@ -1024,6 +1027,16 @@ export default function QRStudioClient({
                   <span>Descargar en SVG Vectorial (Imprenta)</span>
                 </button>
               )}
+
+              {/* Botón 4: Grabar este enlace en tarjeta NFC física */}
+              <button
+                type="button"
+                onClick={() => setShowNfcWriter(true)}
+                className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-extrabold py-3 px-4 rounded-xl transition flex items-center justify-center gap-2 text-xs cursor-pointer shadow-xs"
+              >
+                <Radio className="w-4 h-4 text-emerald-600" />
+                <span>Grabar este Enlace en Tarjeta NFC</span>
+              </button>
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-100 text-left text-[11px] text-gray-500 space-y-1">
@@ -1109,6 +1122,14 @@ export default function QRStudioClient({
         onClose={() => setShowProModal(false)}
         featureName={proModalInfo.name}
         featureDescription={proModalInfo.desc}
+      />
+
+      {/* Modal del Grabador Web NFC */}
+      <NfcCardWriterModal
+        isOpen={showNfcWriter}
+        onClose={() => setShowNfcWriter(false)}
+        initialUrl={getTargetUrl()}
+        initialTitle={`QR ${sourceType}`}
       />
     </div>
   )
