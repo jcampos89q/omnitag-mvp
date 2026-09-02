@@ -12,7 +12,7 @@ export async function createDevice(formData: FormData) {
 
   const deviceType = (formData.get('device_type') as string) || 'tap_to_rate'
   let redirectUrl = (formData.get('redirect_url') as string)?.trim() || ''
-  const reviewFilter = formData.get('review_filter') === 'on' || deviceType === 'tap_to_rate'
+  const reviewFilter = deviceType === 'tap_to_rate' && (formData.get('review_filter') === 'on' || formData.get('review_filter') !== 'off')
   const tagId = Math.random().toString(36).substring(2, 8).toUpperCase() // ej: X7F9A2
 
   let vcardId: string | null = null

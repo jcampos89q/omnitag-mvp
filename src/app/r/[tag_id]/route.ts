@@ -29,8 +29,8 @@ export async function GET(
     sourceType: 'nfc_device'
   })
 
-  // Si tiene el filtro inteligente, lo enviamos primero a la pantalla de estrellitas
-  if (device.review_filter_enabled) {
+  // Si es tap_to_rate y tiene el filtro inteligente, lo enviamos primero a la pantalla de estrellitas
+  if (device.device_type === 'tap_to_rate' && device.review_filter_enabled) {
     return NextResponse.redirect(new URL(`/r/${tag_id}/filter`, request.url))
   }
 

@@ -37,19 +37,19 @@ export default function WifiConnectClient({
   reviewUrl
 }: WifiConnectClientProps) {
   const [copied, setCopied] = useState<boolean>(false)
-  const [showQR, setShowQR] = useState<boolean>(false)
+  const [showQR, setShowQR] = useState<boolean>(true)
   const qrRef = useRef<HTMLDivElement>(null)
   const qrInstance = useRef<QRCodeStyling | null>(null)
 
   const wifiPayload = `WIFI:S:${ssid};T:${encryption};P:${password};;`
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !showQR) return
+    if (typeof window === 'undefined') return
 
     if (!qrInstance.current) {
       qrInstance.current = new QRCodeStyling({
-        width: 220,
-        height: 220,
+        width: 200,
+        height: 200,
         data: wifiPayload,
         margin: 6,
         qrOptions: { errorCorrectionLevel: 'Q' },
@@ -73,7 +73,7 @@ export default function WifiConnectClient({
         qrInstance.current.append(qrRef.current)
       }
     }
-  }, [showQR, wifiPayload])
+  }, [wifiPayload])
 
   const copyPassword = () => {
     if (!password) return
@@ -99,7 +99,7 @@ export default function WifiConnectClient({
             {businessName}
           </h1>
           <p className="text-xs text-purple-200 mt-1">
-            Conéctate a nuestra red Wi-Fi de alta velocidad gratis.
+            Conéctate a nuestra red Wi-Fi de alta velocidad.
           </p>
         </div>
 
@@ -118,14 +118,14 @@ export default function WifiConnectClient({
 
           {/* Contraseña y botón de copia */}
           {password ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Contraseña
+                  Contraseña de la Red
                 </span>
                 {copied && (
                   <span className="text-xs font-bold text-emerald-600 flex items-center gap-1 animate-in fade-in">
-                    <Check className="w-3.5 h-3.5" /> ¡Copiada al portapapeles!
+                    <Check className="w-3.5 h-3.5" /> ¡Copiada!
                   </span>
                 )}
               </div>
@@ -137,7 +137,7 @@ export default function WifiConnectClient({
                 <button
                   type="button"
                   onClick={copyPassword}
-                  className="bg-black hover:bg-gray-800 text-white p-3 rounded-2xl font-bold text-xs transition flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
+                  className="bg-black hover:bg-gray-800 text-white px-4 py-3 rounded-2xl font-bold text-xs transition flex items-center gap-1.5 shadow-md shrink-0 cursor-pointer"
                   title="Copiar contraseña"
                 >
                   {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -145,9 +145,14 @@ export default function WifiConnectClient({
                 </button>
               </div>
 
-              <p className="text-[11px] text-gray-500 text-center pt-1">
-                Toca <b>Copiar</b>, abre tus ajustes de Wi-Fi y pega la clave.
-              </p>
+              {/* Botón 1-Clic para iOS */}
+              <a
+                href={`/api/wifi/mobileconfig?ssid=${encodeURIComponent(ssid)}&pass=${encodeURIComponent(password)}&enc=${encodeURIComponent(encryption)}`}
+                className="w-full bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 font-extrabold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2 text-center"
+              >
+                <Smartphone className="w-4 h-4 text-purple-700" />
+                <span>¿Tienes iPhone? Conectar en 1 Clic (Perfil Wi-Fi)</span>
+              </a>
             </div>
           ) : (
             <div className="p-3 bg-emerald-50 text-emerald-800 rounded-xl text-xs font-bold text-center border border-emerald-200">
@@ -155,25 +160,17 @@ export default function WifiConnectClient({
             </div>
           )}
 
-          {/* Alternativa: Ver Código QR para acompañantes */}
+          {/* Código QR Visible para Conexión con Cámara */}
           <div className="pt-2 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => setShowQR(!showQR)}
-              className="w-full py-2.5 px-4 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-900 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer border border-purple-200"
-            >
-              <QrCode className="w-4 h-4 text-purple-700" />
-              <span>{showQR ? 'Ocultar Código QR' : 'Mostrar Código QR para auto-conexión'}</span>
-            </button>
-
-            {showQR && (
-              <div className="mt-4 p-4 bg-white rounded-2xl border border-gray-200 shadow-inner flex flex-col items-center justify-center space-y-2 animate-in fade-in">
-                <div ref={qrRef} className="flex items-center justify-center" />
-                <p className="text-[11px] text-gray-500 text-center">
-                  Apunta con la cámara de otro móvil para conectarse al instante.
-                </p>
-              </div>
-            )}
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 flex flex-col items-center justify-center space-y-2">
+              <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider flex items-center gap-1">
+                <QrCode className="w-3.5 h-3.5 text-purple-600" /> Escaneo directo con la cámara
+              </span>
+              <div ref={qrRef} className="flex items-center justify-center bg-white p-2 rounded-xl shadow-xs" />
+              <p className="text-[11px] text-gray-500 text-center">
+                Apunta con la cámara de tu móvil para auto-conectarte sin escribir la clave.
+              </p>
+            </div>
           </div>
 
           {/* Enlaces de marketing del comercio */}

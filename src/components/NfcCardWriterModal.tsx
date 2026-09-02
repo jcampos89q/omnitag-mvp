@@ -41,8 +41,23 @@ export default function NfcCardWriterModal({
 
   const abortControllerRef = useRef<AbortController | null>(null)
 
+  const normalizeNfcUrl = (raw: string): string => {
+    let clean = (raw || '').trim()
+    if (clean.startsWith('WIFI:')) {
+      const ssidMatch = clean.match(/S:([^;]+)/)
+      const passMatch = clean.match(/P:([^;]+)/)
+      const encMatch = clean.match(/T:([^;]+)/)
+      const ssid = ssidMatch ? ssidMatch[1] : 'WiFi'
+      const pass = passMatch ? passMatch[1] : ''
+      const enc = encMatch ? encMatch[1] : 'WPA'
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.omnitag.site'
+      return `${origin}/wifi?ssid=${encodeURIComponent(ssid)}&pass=${encodeURIComponent(pass)}&enc=${encodeURIComponent(enc)}`
+    }
+    return clean
+  }
+
   useEffect(() => {
-    setUrl(initialUrl)
+    setUrl(normalizeNfcUrl(initialUrl))
   }, [initialUrl])
 
   useEffect(() => {
@@ -71,7 +86,8 @@ export default function NfcCardWriterModal({
 
   // 1. Grabar Tarjeta NFC vía Web NFC API
   const handleWriteNFC = async () => {
-    if (!url.trim()) {
+    const cleanUrl = normalizeNfcUrl(url)
+    if (!cleanUrl) {
       setStatus('error')
       setStatusMessage('Por favor introduce o selecciona una URL válida.')
       return
@@ -96,7 +112,7 @@ export default function NfcCardWriterModal({
           records: [
             {
               recordType: 'url',
-              data: url.trim()
+              data: cleanUrl
             }
           ]
         },
