@@ -37,6 +37,7 @@ interface QRStudioClientProps {
   vcard?: any
   menu?: any
   loyalty?: any
+  wheel?: any
   devices?: any[]
   isPro?: boolean
 }
@@ -69,6 +70,7 @@ export default function QRStudioClient({
   vcard, 
   menu, 
   loyalty, 
+  wheel,
   devices = [], 
   isPro = false 
 }: QRStudioClientProps) {
@@ -77,10 +79,10 @@ export default function QRStudioClient({
   const urlTable = searchParams?.get('table') || ''
 
   // 1. Tipo de Destino
-  const [sourceType, setSourceType] = useState<'vcard' | 'menu' | 'loyalty' | 'device' | 'wifi' | 'custom'>(
-    urlSource && ['vcard', 'menu', 'loyalty', 'device', 'wifi', 'custom'].includes(urlSource)
+  const [sourceType, setSourceType] = useState<'vcard' | 'menu' | 'loyalty' | 'wheel' | 'device' | 'wifi' | 'custom'>(
+    urlSource && ['vcard', 'menu', 'loyalty', 'wheel', 'device', 'wifi', 'custom'].includes(urlSource)
       ? urlSource
-      : vcard ? 'vcard' : menu ? 'menu' : loyalty ? 'loyalty' : 'custom'
+      : vcard ? 'vcard' : menu ? 'menu' : loyalty ? 'loyalty' : wheel ? 'wheel' : 'custom'
   )
   const [selectedTable, setSelectedTable] = useState<string>(urlTable)
   const [customUrl, setCustomUrl] = useState('https://')
@@ -133,6 +135,8 @@ export default function QRStudioClient({
       }
       case 'loyalty':
         return loyalty ? `${origin}/l/${loyalty.slug}` : `${origin}`
+      case 'wheel':
+        return wheel ? `${origin}/w/${wheel.slug}` : `${origin}`
       case 'device': {
         const dev = devices.find(d => d.id === selectedDeviceId)
         return dev ? `${origin}/r/${dev.tag_id}` : `${origin}`
@@ -169,6 +173,10 @@ export default function QRStudioClient({
       if (isPro) setLogoUrl(loyalty.logo_url || '')
       setFrameTitle(loyalty.name || 'Club de Premios')
       setFrameText('ACUMULA SELLOS Y GANA PREMIOS')
+    } else if (sourceType === 'wheel' && wheel) {
+      setFrameTitle(wheel.name || 'Ruleta de la Fortuna')
+      setFrameText('GIRA Y GANA PREMIOS')
+      if (isPro) setFrameStyle('table_tent')
     } else if (sourceType === 'device') {
       setFrameTitle('Google Reviews')
       setFrameText('TOCA O ESCANEA PARA CALIFICAR')
@@ -177,7 +185,7 @@ export default function QRStudioClient({
       setFrameText('CONÉCTATE CON TU CÁMARA')
       if (isPro) setFrameStyle('table_tent')
     }
-  }, [sourceType, selectedTable, vcard, menu, loyalty, isPro])
+  }, [sourceType, selectedTable, vcard, menu, loyalty, wheel, isPro])
 
   // Inicializar y actualizar QRCodeStyling para vista previa responsiva
   useEffect(() => {
@@ -519,6 +527,19 @@ export default function QRStudioClient({
               >
                 <span>🎁 Fidelización / Sellos</span>
                 <span className="text-[10px] opacity-75 font-normal truncate mt-1">{loyalty?.name || 'No creado'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSourceType('wheel')}
+                className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                  sourceType === 'wheel'
+                    ? 'border-black bg-black text-white shadow-xs'
+                    : 'border-gray-200 bg-gray-50/60 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <span>🎰 Ruleta de Premios</span>
+                <span className="text-[10px] opacity-75 font-normal truncate mt-1">{wheel?.name || 'Ruleta VIP'}</span>
               </button>
 
               {devices.length > 0 && (

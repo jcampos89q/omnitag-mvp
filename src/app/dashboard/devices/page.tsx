@@ -25,15 +25,17 @@ export default async function DevicesPage({
     .eq('user_id', user?.id)
     .order('created_at', { ascending: false })
 
-  // 3. Obtener vCard, Menú y Fidelización para vinculación rápida
+  // 3. Obtener vCard, Menú, Fidelización y Ruleta para vinculación rápida
   const [
     { data: vcard },
     { data: menu },
-    { data: loyalty }
+    { data: loyalty },
+    { data: wheel }
   ] = await Promise.all([
     supabase.from('vcards').select('id, slug, first_name, company_name').eq('user_id', user?.id).maybeSingle(),
     supabase.from('menus').select('id, slug, name').eq('user_id', user?.id).maybeSingle(),
-    supabase.from('loyalty_programs').select('id, slug, name').eq('user_id', user?.id).maybeSingle()
+    supabase.from('loyalty_programs').select('id, slug, name').eq('user_id', user?.id).maybeSingle(),
+    supabase.from('prize_wheels').select('id, slug, name').eq('user_id', user?.id).maybeSingle()
   ])
 
   return (
@@ -68,6 +70,7 @@ export default async function DevicesPage({
           vcard={vcard}
           menu={menu}
           loyalty={loyalty}
+          wheel={wheel}
           isPro={isPro}
         />
       </div>

@@ -21,7 +21,8 @@ import {
   Zap,
   Wifi,
   Radio,
-  AlertCircle
+  AlertCircle,
+  Disc
 } from 'lucide-react'
 import { createDevice, deleteDevice } from './actions'
 import Link from 'next/link'
@@ -33,6 +34,7 @@ interface DevicesManagerProps {
   vcard?: any
   menu?: any
   loyalty?: any
+  wheel?: any
   isPro?: boolean
 }
 
@@ -41,6 +43,7 @@ export default function DevicesManager({
   vcard,
   menu,
   loyalty,
+  wheel,
   isPro = false
 }: DevicesManagerProps) {
   const [deviceType, setDeviceType] = useState<string>('tap_to_rate')
@@ -236,6 +239,21 @@ export default function DevicesManager({
 
               <button
                 type="button"
+                onClick={() => setDeviceType('wheel')}
+                className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
+                  deviceType === 'wheel'
+                    ? 'border-black bg-black text-white shadow-xs'
+                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Disc className="w-4 h-4 text-amber-500" /> Ruleta de Premios
+                </span>
+                <span className="text-[10px] opacity-75 font-normal truncate mt-1">{wheel?.name || 'Gira y Gana'}</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setDeviceType('wifi')}
                 className={`p-3 rounded-xl border text-xs font-bold text-left transition cursor-pointer flex flex-col justify-between ${
                   deviceType === 'wifi'
@@ -340,6 +358,9 @@ export default function DevicesManager({
           )}
           {deviceType === 'loyalty' && (
             <input type="hidden" name="redirect_url" value={loyalty ? `https://www.omnitag.site/l/${loyalty.slug}` : 'https://www.omnitag.site'} />
+          )}
+          {deviceType === 'wheel' && (
+            <input type="hidden" name="redirect_url" value={wheel ? `https://www.omnitag.site/w/${wheel.slug}` : 'https://www.omnitag.site'} />
           )}
 
           {deviceType === 'wifi' && (

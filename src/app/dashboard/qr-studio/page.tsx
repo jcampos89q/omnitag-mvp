@@ -41,6 +41,13 @@ export default async function QRStudioPage() {
     .eq('user_id', user?.id)
     .order('created_at', { ascending: false })
 
+  // 6. Buscar Ruleta de Premios del usuario
+  const { data: wheel } = await supabase
+    .from('prize_wheels')
+    .select('id, slug, name')
+    .eq('user_id', user?.id)
+    .maybeSingle()
+
   return (
     <div className="space-y-8">
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 sm:p-8">
@@ -63,6 +70,7 @@ export default async function QRStudioPage() {
           vcard={vcard}
           menu={menu}
           loyalty={loyalty}
+          wheel={wheel}
           devices={devices || []}
           isPro={isPro}
         />

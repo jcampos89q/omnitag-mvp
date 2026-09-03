@@ -22,7 +22,8 @@ import {
   Sparkles,
   Scissors,
   Globe,
-  ExternalLink
+  ExternalLink,
+  Disc
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 import NotificationBell from './NotificationBell'
@@ -45,6 +46,7 @@ const baseNavItems: NavItem[] = [
   { name: 'Menú & Catálogo', href: '/dashboard/menus', icon: Coffee, section: 'creaciones' },
   { name: 'Agendas & Citas', href: '/dashboard/appointments', icon: Scissors, badge: 'Nuevo', section: 'creaciones' },
   { name: 'Fidelización & Sellos', href: '/dashboard/loyalty', icon: Gift, section: 'creaciones' },
+  { name: 'Ruleta de Premios', href: '/dashboard/ruleta', icon: Disc, badge: 'VIP', section: 'creaciones' },
   { name: 'Contactos (CRM)', href: '/dashboard/leads', icon: Users, section: 'gestion' },
   { name: 'Quejas Privadas', href: '/dashboard/feedback', icon: MessageSquareWarning, section: 'gestion' },
   { name: 'Estadísticas', href: '/dashboard/analytics', icon: BarChart3, section: 'gestion' },
