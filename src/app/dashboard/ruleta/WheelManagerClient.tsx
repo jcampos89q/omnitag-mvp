@@ -50,6 +50,27 @@ export default function WheelManagerClient({
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [copiedLink, setCopiedLink] = useState(false)
 
+  const [activeEmojiIndex, setActiveEmojiIndex] = useState<number | null>(null)
+
+  // Categorías de Emojis para Premios
+  const EMOJI_CATEGORIES = [
+    { name: '☕ Bebidas & Café', emojis: ['☕', '🍹', '🍸', '🍺', '🥤', '🧃', '🧉', '🧋', '🥂', '🍷', '🥛', '🫖'] },
+    { name: '🍰 Postres & Dulces', emojis: ['🍰', '🍦', '🍩', '🧁', '🍪', '🥐', '🥞', '🍫', '🍮', '🍯', '🥧', '🍧'] },
+    { name: '🍔 Comida & Platos', emojis: ['🍔', '🍕', '🌮', '🌯', '🍟', '🌭', '🥪', '🍣', '🍜', '🥩', '🍗', '🍤', '🥘'] },
+    { name: '🏷️ Descuentos & Ofertas', emojis: ['🏷️', '💰', '💵', '💳', '💸', '🪙', '🧾', '📉', '%', '💲', '🛒'] },
+    { name: '⭐ Fidelización & VIP', emojis: ['⭐', '🌟', '👑', '💎', '🏆', '🥇', '🥈', '🥉', '🎖️', '✨', '⚜️'] },
+    { name: '🎟️ Cupones & Eventos', emojis: ['🎟️', '🎫', '🎪', '🎬', '🎳', '🎯', '🎲', '🎰', '🎮', '🍿'] },
+    { name: '🎁 Regalos & Sorpresas', emojis: ['🎁', '🎈', '🎉', '🎊', '🪄', '📦', '🛍️', '🧸', '💌'] },
+    { name: '💈 Belleza & Cuidado', emojis: ['✂️', '💈', '💅', '💄', '🧖‍♀️', '💆‍♂️', '🧴', '🌸', '🪮', '💆‍♀️'] }
+  ]
+
+  const selectEmoji = (emoji: string) => {
+    if (activeEmojiIndex !== null) {
+      updateItem(activeEmojiIndex, 'icon', emoji)
+      setActiveEmojiIndex(null)
+    }
+  }
+
   // Estados de Configuración
   const [scheduleMode, setScheduleMode] = useState(wheel.schedule_mode || 'always')
   const [activeDays, setActiveDays] = useState<string[]>(
@@ -407,13 +428,14 @@ export default function WheelManagerClient({
                 >
                   {/* Emoji & Texto */}
                   <div className="flex items-center gap-2 flex-1">
-                    <input 
-                      type="text" 
-                      value={item.icon || '🎁'} 
-                      onChange={(e) => updateItem(index, 'icon', e.target.value)}
-                      title="Emoji o Icono"
-                      className="w-10 text-center bg-white border border-gray-200 rounded-xl py-1.5 text-base shadow-2xs"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setActiveEmojiIndex(index)}
+                      title="Haz clic para elegir un ícono para este premio"
+                      className="w-11 h-9 rounded-xl bg-white border-2 border-gray-200 hover:border-amber-500 hover:bg-amber-50/50 flex items-center justify-center text-lg shadow-2xs transition cursor-pointer shrink-0"
+                    >
+                      <span>{item.icon || '🎁'}</span>
+                    </button>
                     <input 
                       type="text" 
                       value={item.label} 
@@ -792,6 +814,79 @@ export default function WheelManagerClient({
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* MODAL SELECTOR VISUAL DE EMOJIS / ÍCONOS */}
+      {activeEmojiIndex !== null && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white border border-gray-200 rounded-3xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">✨</span>
+                <div>
+                  <h3 className="text-sm font-black text-gray-900">Seleccionar Ícono para el Premio</h3>
+                  <p className="text-[11px] text-gray-500">
+                    Premio: <b>{items[activeEmojiIndex]?.label || 'Premio'}</b>
+                  </p>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setActiveEmojiIndex(null)}
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Categorías de Emojis */}
+            <div className="space-y-3.5 max-h-80 overflow-y-auto pr-1">
+              {EMOJI_CATEGORIES.map((cat, cIdx) => (
+                <div key={cIdx} className="space-y-1.5">
+                  <p className="text-[11px] font-black uppercase tracking-wider text-gray-400">
+                    {cat.name}
+                  </p>
+                  <div className="grid grid-cols-6 gap-2">
+                    {cat.emojis.map((em, eIdx) => (
+                      <button
+                        key={eIdx}
+                        type="button"
+                        onClick={() => selectEmoji(em)}
+                        className={`w-12 h-12 rounded-2xl text-2xl flex items-center justify-center transition cursor-pointer border ${
+                          items[activeEmojiIndex]?.icon === em
+                            ? 'bg-amber-100 border-amber-500 scale-105 shadow-xs'
+                            : 'bg-gray-50 border-gray-200 hover:bg-amber-50 hover:border-amber-300 hover:scale-105'
+                        }`}
+                      >
+                        <span>{em}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Input personalizado manual */}
+            <div className="pt-3 border-t border-gray-100 flex items-center gap-2">
+              <span className="text-[11px] text-gray-500 font-bold whitespace-nowrap">O escribe uno:</span>
+              <input 
+                type="text" 
+                maxLength={4}
+                placeholder="Ej. 🎁 o ☕"
+                value={items[activeEmojiIndex]?.icon || ''}
+                onChange={(e) => updateItem(activeEmojiIndex, 'icon', e.target.value)}
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-center font-bold text-gray-900 focus:outline-none focus:border-amber-500"
+              />
+              <button
+                type="button"
+                onClick={() => setActiveEmojiIndex(null)}
+                className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs transition cursor-pointer"
+              >
+                Listo
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

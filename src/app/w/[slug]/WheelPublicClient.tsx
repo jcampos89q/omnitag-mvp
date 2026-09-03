@@ -240,23 +240,101 @@ export default function WheelPublicClient({
     drawWheel(currentRotation, ledBlinkPhase)
   }, [items, currentRotation, ledBlinkPhase])
 
-  // Iniciar flujo de Giro: Si no tiene datos, pedir WhatsApp
+  // Iniciar flujo de Giro: Gira INMEDIATAMENTE sin pedir datos antes
   const handleInitiateSpin = () => {
     if (isClosed || isSpinning) return
-    if (!name.trim() || !phone.trim()) {
-      setShowLeadModal(true)
-      return
-    }
     executeSpin()
   }
 
-  // Ejecución segura del giro comunicando con API
-  const executeSpin = async () => {
-    if (isSpinning) return
+  // Ejecución del giro inmediato con animación y cálculo
+  const executeSpin = () => {
+    if (isSpinning || items.length === 0) return
     setIsSpinning(true)
     setErrorMsg('')
-    setShowLeadModal(false)
     setSpinStatus('⚡ Girando ruleta...')
+
+    // 1. Selección ponderada inicial para animación fluida
+    const totalWeight = items.reduce((sum, it) => sum + (parseInt(it.probability_weight as any) || 1), 0)
+    let randomVal = Math.random() * Math.max(totalWeight, 1)
+    let winningIndex = 0
+    for (let i = 0; i < items.length; i++) {
+      const weight = parseInt(items[i].probability_weight as any) || 1
+      if (randomVal < weight) {
+        winningIndex = i
+        break
+      }
+      randomVal -= weight
+    }
+
+    const wonItem = items[winningIndex]
+
+    // 2. Animación con física Quintic Ease-Out
+    const numSegments = items.length
+    const arcSize = (2 * Math.PI) / numSegments
+    // Puntero arriba en 3*PI/2 (270 grados)
+    const targetAngle = (3 * Math.PI / 2) - (winningIndex * arcSize + arcSize / 2)
+    
+    const totalSpins = 7 + Math.floor(Math.random() * 2)
+    const startRotation = currentRotation % (2 * Math.PI)
+    const endRotation = startRotation + totalSpins * (2 * Math.PI) + (targetAngle - startRotation)
+
+    const duration = 5200
+    const startTime = performance.now()
+    let lastSegment = -1
+
+    const easeOutQuint = (t: number) => 1 - Math.pow(1 - t, 5)
+
+    const animate = (time: number) => {
+      const elapsed = time - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const easeProgress = easeOutQuint(progress)
+
+      const newRot = startRotation + (endRotation - startRotation) * easeProgress
+      setCurrentRotation(newRot)
+      setLedBlinkPhase(Math.floor(time / 200))
+      drawWheel(newRot, Math.floor(time / 200))
+
+      // Tick del puntero
+      const normalizedAngle = newRot % (2 * Math.PI)
+      const currentSegment = Math.floor((normalizedAngle / (2 * Math.PI)) * (numSegments * 2))
+      if (currentSegment !== lastSegment) {
+        lastSegment = currentSegment
+        playTickSound()
+        if (pointerRef.current) {
+          pointerRef.current.style.transform = 'rotate(-24deg)'
+          setTimeout(() => {
+            if (pointerRef.current) pointerRef.current.style.transform = 'rotate(0deg)'
+          }, 45)
+        }
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate)
+      } else {
+        setIsSpinning(false)
+        setSpinStatus('🎉 ¡Has desbloqueado un premio!')
+        playWinFanfare()
+        launchConfetti()
+        
+        // Guardar premio pendiente y abrir modal para que el cliente ingrese su WhatsApp y reclame
+        setPendingPrize(wonItem)
+        setShowLeadModal(true)
+      }
+    }
+
+    requestAnimationFrame(animate)
+  }
+
+  // Estado del premio pendiente por reclamar tras el giro
+  const [pendingPrize, setPendingPrize] = useState<WheelItem | null>(null)
+  const [isClaiming, setIsClaiming] = useState(false)
+
+  // Reclamar premio y generar cupón oficial en base de datos
+  const handleClaimPrize = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim() || !phone.trim() || !pendingPrize) return
+    setIsClaiming(true)
+    setErrorMsg('')
 
     try {
       const res = await fetch('/api/wheel/spin', {
@@ -273,71 +351,20 @@ export default function WheelPublicClient({
       const data = await res.json()
 
       if (!res.ok) {
-        setIsSpinning(false)
-        setErrorMsg(data.error || 'No se pudo girar la ruleta.')
-        setSpinStatus('⚠️ No fue posible girar')
+        setIsClaiming(false)
+        setErrorMsg(data.error || 'No se pudo generar el cupón.')
         return
       }
 
-      // Animación con física Quintic Ease-Out
-      const winningIndex = data.winningIndex
-      const numSegments = items.length
-      const arcSize = (2 * Math.PI) / numSegments
-      // Puntero arriba en 3*PI/2 (270 grados)
-      const targetAngle = (3 * Math.PI / 2) - (winningIndex * arcSize + arcSize / 2)
-      
-      const totalSpins = 7 + Math.floor(Math.random() * 2)
-      const startRotation = currentRotation % (2 * Math.PI)
-      const endRotation = startRotation + totalSpins * (2 * Math.PI) + (targetAngle - startRotation)
-
-      const duration = 5200
-      const startTime = performance.now()
-      let lastSegment = -1
-
-      const easeOutQuint = (t: number) => 1 - Math.pow(1 - t, 5)
-
-      const animate = (time: number) => {
-        const elapsed = time - startTime
-        const progress = Math.min(elapsed / duration, 1)
-        const easeProgress = easeOutQuint(progress)
-
-        const newRot = startRotation + (endRotation - startRotation) * easeProgress
-        setCurrentRotation(newRot)
-        setLedBlinkPhase(Math.floor(time / 200))
-        drawWheel(newRot, Math.floor(time / 200))
-
-        // Tick del puntero
-        const normalizedAngle = newRot % (2 * Math.PI)
-        const currentSegment = Math.floor((normalizedAngle / (2 * Math.PI)) * (numSegments * 2))
-        if (currentSegment !== lastSegment) {
-          lastSegment = currentSegment
-          playTickSound()
-          if (pointerRef.current) {
-            pointerRef.current.style.transform = 'rotate(-24deg)'
-            setTimeout(() => {
-              if (pointerRef.current) pointerRef.current.style.transform = 'rotate(0deg)'
-            }, 45)
-          }
-        }
-
-        if (progress < 1) {
-          requestAnimationFrame(animate)
-        } else {
-          setIsSpinning(false)
-          setSpinStatus('🎉 ¡Felicidades! Has desbloqueado tu premio')
-          playWinFanfare()
-          launchConfetti()
-          setWonPrize({
-            prize: data.prize,
-            couponCode: data.couponCode,
-            expiresAt: data.expiresAt
-          })
-        }
-      }
-
-      requestAnimationFrame(animate)
+      setIsClaiming(false)
+      setShowLeadModal(false)
+      setWonPrize({
+        prize: data.prize || pendingPrize,
+        couponCode: data.couponCode,
+        expiresAt: data.expiresAt
+      })
     } catch (err: any) {
-      setIsSpinning(false)
+      setIsClaiming(false)
       setErrorMsg(err.message || 'Error de conexión.')
     }
   }
@@ -574,28 +601,33 @@ export default function WheelPublicClient({
         </div>
       )}
 
-      {/* MODAL DE CAPTURA DE DATOS (ANTES DE GIRAR) */}
-      {showLeadModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-slate-900 border border-amber-500/40 rounded-3xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🎰</span>
-                <h3 className="text-base font-black text-white">¡Casi listo para girar!</h3>
+      {/* MODAL DE RECLAMO DE PREMIO (TRAS COMPLETAR EL GIRO) */}
+      {showLeadModal && pendingPrize && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-slate-900 border border-amber-500/50 rounded-3xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
+            <div className="text-center space-y-2">
+              <div className="w-14 h-14 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-inner animate-bounce">
+                {pendingPrize.icon || '🎁'}
               </div>
-              <button 
-                type="button" 
-                onClick={() => setShowLeadModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-3 py-0.5 rounded-full">
+                ¡Felicidades, eres ganador!
+              </span>
+              <h3 className="text-xl font-black text-white">
+                {pendingPrize.label}
+              </h3>
+              <p className="text-xs text-slate-300">
+                Ingresa tu nombre y WhatsApp para guardar y activar tu cupón digital antes de que expire.
+              </p>
             </div>
-            <p className="text-xs text-slate-300">
-              Ingresa tu nombre y WhatsApp para guardar tu cupón y no perder tu premio.
-            </p>
 
-            <form onSubmit={(e) => { e.preventDefault(); executeSpin(); }} className="space-y-3 pt-1">
+            {errorMsg && (
+              <div className="p-2.5 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center gap-2 text-rose-300 text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <p>{errorMsg}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleClaimPrize} className="space-y-3 pt-1">
               <div>
                 <label className="block text-[11px] font-bold text-slate-300 mb-1">Tu Nombre:</label>
                 <input 
@@ -633,10 +665,10 @@ export default function WheelPublicClient({
 
               <button
                 type="submit"
-                disabled={isSpinning}
+                disabled={isClaiming}
                 className="w-full bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
-                <span>🎲 ¡GIRAR MI RULETA AHORA!</span>
+                <span>{isClaiming ? 'Generando Cupón...' : '🚀 GUARDAR MI PREMIO & GENERAR CUPÓN'}</span>
               </button>
             </form>
           </div>
