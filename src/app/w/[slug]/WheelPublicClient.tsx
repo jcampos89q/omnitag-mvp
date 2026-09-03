@@ -56,6 +56,43 @@ export default function WheelPublicClient({
   const pointerRef = useRef<HTMLDivElement>(null)
   const [currentRotation, setCurrentRotation] = useState(0)
   const [ledBlinkPhase, setLedBlinkPhase] = useState(0)
+  const [hasSpunSession, setHasSpunSession] = useState(false)
+
+  // 1. Verificar si ya giró hoy o si tiene un premio pendiente tras recargar la página
+  useEffect(() => {
+    try {
+      const storageKey = `omnitag_wheel_${wheel.slug}`
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        const ageHours = (Date.now() - (parsed.timestamp || 0)) / (1000 * 3600)
+        
+        // Si la sesión tiene menos de 24 horas
+        if (ageHours < (wheel.cooldown_hours || 24)) {
+          setHasSpunSession(true)
+          if (parsed.status === 'claimed' && parsed.wonPrize) {
+            setWonPrize(parsed.wonPrize)
+            setSpinStatus('🎁 Ya reclamaste tu cupón de hoy')
+          } else if (parsed.status === 'pending_claim' && parsed.prize) {
+            setPendingPrize(parsed.prize)
+            setShowLeadModal(true)
+            setSpinStatus(`🎉 Tienes un premio pendiente: ${parsed.prize.label}`)
+            // Calcular ángulo para apuntar al premio guardado
+            if (items.length > 0 && parsed.winningIndex !== undefined) {
+              const arcSize = (2 * Math.PI) / items.length
+              const target = (3 * Math.PI / 2) - (parsed.winningIndex * arcSize + arcSize / 2)
+              setCurrentRotation(target)
+            }
+          }
+        } else {
+          // Sesión caducada (+24h), limpiar para permitir nuevo giro
+          localStorage.removeItem(storageKey)
+        }
+      }
+    } catch {
+      // Ignorar errores de localStorage privado
+    }
+  }, [wheel.slug, wheel.cooldown_hours, items.length])
 
   // Web Audio Context para sonidos de Tick y Fanfarria
   const audioCtxRef = useRef<AudioContext | null>(null)
@@ -240,9 +277,17 @@ export default function WheelPublicClient({
     drawWheel(currentRotation, ledBlinkPhase)
   }, [items, currentRotation, ledBlinkPhase])
 
-  // Iniciar flujo de Giro: Gira INMEDIATAMENTE sin pedir datos antes
+  // Iniciar flujo de Giro: Protegido contra recargas (F5)
   const handleInitiateSpin = () => {
     if (isClosed || isSpinning) return
+    if (wonPrize) {
+      setErrorMsg('Ya has reclamado tu cupón de hoy. ¡Muestra tu pantalla en caja!')
+      return
+    }
+    if (hasSpunSession && pendingPrize) {
+      setShowLeadModal(true)
+      return
+    }
     executeSpin()
   }
 
@@ -268,7 +313,18 @@ export default function WheelPublicClient({
 
     const wonItem = items[winningIndex]
 
-    // 2. Animación con física Quintic Ease-Out
+    // 2. Guardar sesión inmediatamente en localStorage para evitar fraudes de recarga (F5)
+    try {
+      localStorage.setItem(`omnitag_wheel_${wheel.slug}`, JSON.stringify({
+        status: 'pending_claim',
+        prize: wonItem,
+        winningIndex,
+        timestamp: Date.now()
+      }))
+      setHasSpunSession(true)
+    } catch {}
+
+    // 3. Animación con física Quintic Ease-Out
     const numSegments = items.length
     const arcSize = (2 * Math.PI) / numSegments
     // Puntero arriba en 3*PI/2 (270 grados)
@@ -312,7 +368,7 @@ export default function WheelPublicClient({
         requestAnimationFrame(animate)
       } else {
         setIsSpinning(false)
-        setSpinStatus('🎉 ¡Has desbloqueado un premio!')
+        setSpinStatus(`🎉 ¡Ganaste ${wonItem.icon || '🎁'} ${wonItem.label}!`)
         playWinFanfare()
         launchConfetti()
         
@@ -356,13 +412,25 @@ export default function WheelPublicClient({
         return
       }
 
-      setIsClaiming(false)
-      setShowLeadModal(false)
-      setWonPrize({
+      const generatedPrize = {
         prize: data.prize || pendingPrize,
         couponCode: data.couponCode,
         expiresAt: data.expiresAt
-      })
+      }
+
+      // Guardar estado de cupón reclamado en localStorage
+      try {
+        localStorage.setItem(`omnitag_wheel_${wheel.slug}`, JSON.stringify({
+          status: 'claimed',
+          wonPrize: generatedPrize,
+          timestamp: Date.now()
+        }))
+      } catch {}
+
+      setIsClaiming(false)
+      setShowLeadModal(false)
+      setWonPrize(generatedPrize)
+      setSpinStatus('🎁 ¡Cupón generado con éxito!')
     } catch (err: any) {
       setIsClaiming(false)
       setErrorMsg(err.message || 'Error de conexión.')
@@ -529,9 +597,25 @@ export default function WheelPublicClient({
             onClick={handleInitiateSpin}
             className="absolute z-20 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-b from-yellow-300 via-amber-500 to-amber-700 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-widest shadow-2xl border-4 border-slate-950 flex flex-col items-center justify-center hover:scale-105 active:scale-95 transition-transform cursor-pointer select-none disabled:opacity-80"
           >
-            <span className="text-base sm:text-lg">🎲</span>
-            <span className="tracking-tighter font-extrabold leading-none mt-0.5">GIRAR</span>
-            <span className="text-[8px] font-black opacity-80 mt-0.5">GRATIS</span>
+            {wonPrize ? (
+              <>
+                <span className="text-base sm:text-lg">🎟️</span>
+                <span className="tracking-tighter font-extrabold leading-none mt-0.5 text-[10px] sm:text-xs">CUPÓN</span>
+                <span className="text-[7px] sm:text-[8px] font-black opacity-80 mt-0.5">LISTO</span>
+              </>
+            ) : hasSpunSession && pendingPrize ? (
+              <>
+                <span className="text-base sm:text-lg">🎁</span>
+                <span className="tracking-tighter font-extrabold leading-none mt-0.5 text-[10px] sm:text-xs">PREMIO</span>
+                <span className="text-[7px] sm:text-[8px] font-black opacity-80 mt-0.5">GUARDAR</span>
+              </>
+            ) : (
+              <>
+                <span className="text-base sm:text-lg">🎲</span>
+                <span className="tracking-tighter font-extrabold leading-none mt-0.5">GIRAR</span>
+                <span className="text-[8px] font-black opacity-80 mt-0.5">GRATIS</span>
+              </>
+            )}
           </button>
         </div>
 
