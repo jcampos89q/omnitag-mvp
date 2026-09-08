@@ -57,16 +57,38 @@ export default function DashboardNavbar({
   userEmail,
   userId,
   isAdmin = false,
+  userIndustry = 'general',
 }: { 
   userEmail?: string 
   userId?: string
   isAdmin?: boolean
+  userIndustry?: string
 }) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  // Filter base items based on industry
+  const filteredBaseItems = baseNavItems.filter(item => {
+    if (userIndustry === 'health') {
+      // Hide menus and loyalty for health industry
+      if (item.href === '/dashboard/menus' || item.href === '/dashboard/loyalty' || item.href === '/dashboard/leads') return false
+    } else {
+      // For general industry, hide patients (if we add it to baseNavItems)
+      if (item.href === '/dashboard/patients') return false
+    }
+    return true
+  })
+
+  // Add Patients for health industry
+  if (userIndustry === 'health') {
+    filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Users, badge: 'Salud', section: 'gestion' })
+  }
+  
+  // Add Settings to the end
+  filteredBaseItems.push({ name: 'Configuración', href: '/dashboard/settings', icon: UserCircle, section: 'cuenta' })
+
   const navItems = [
-    ...baseNavItems,
+    ...filteredBaseItems,
     ...(isAdmin ? [{ name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true, section: 'admin' }] : [])
   ]
 

@@ -12,16 +12,19 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   let isAdmin = false
+  let userIndustry = 'general'
   if (user) {
     try {
       const { data: profile } = await supabase
         .from('users')
-        .select('is_admin')
+        .select('is_admin, industry')
         .eq('id', user.id)
         .maybeSingle()
       isAdmin = Boolean(profile?.is_admin)
+      userIndustry = profile?.industry || 'general'
     } catch {
       isAdmin = false
+      userIndustry = 'general'
     }
   }
 
@@ -31,7 +34,7 @@ export default async function DashboardLayout({
       <GlobalToast />
 
       {/* Navegación Responsive (TopBar + Drawer + Desktop Sidebar + Mobile Bottom Quick Bar) */}
-      <DashboardNavbar userEmail={user?.email} userId={user?.id} isAdmin={isAdmin} />
+      <DashboardNavbar userEmail={user?.email} userId={user?.id} isAdmin={isAdmin} userIndustry={userIndustry} />
 
       {/* Contenido Principal */}
       <main className="flex-1 p-4 sm:p-6 md:p-8 pb-24 md:pb-8 w-full overflow-x-hidden">

@@ -11,6 +11,7 @@ CREATE TABLE public.users (
   stripe_subscription_id TEXT,
   plan_status TEXT,
   current_period_end TIMESTAMP WITH TIME ZONE,
+  industry TEXT DEFAULT 'general',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -89,3 +90,43 @@ CREATE TABLE public.scans (
   os TEXT, -- iOS, Android, etc.
   country TEXT
 );
+
+-- 7. Tabla de Pacientes (CRM Médico)
+CREATE TABLE public.patients (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  clinic_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  first_name TEXT NOT NULL,
+  last_name TEXT,
+  email TEXT,
+  phone TEXT,
+  birth_date DATE,
+  blood_type TEXT,
+  allergies TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Los médicos pueden ver a sus propios pacientes" ON public.patients FOR SELECT USING (auth.uid() = clinic_id);
+CREATE POLICY "Los médicos pueden insertar pacientes" ON public.patients FOR INSERT WITH CHECK (auth.uid() = clinic_id);
+CREATE POLICY "Los médicos pueden actualizar sus pacientes" ON public.patients FOR UPDATE USING (auth.uid() = clinic_id);
+CREATE POLICY "Los médicos pueden eliminar sus pacientes" ON public.patients FOR DELETE USING (auth.uid() = clinic_id);
+
+-- 8. Tabla de Consultas Médicas (Fichas)
+CREATE TABLE public.medical_consultations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id UUID REFERENCES public.patients(id) ON DELETE CASCADE,
+  clinic_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  reason TEXT,
+  symptoms TEXT,
+  diagnosis TEXT,
+  prescription TEXT,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.medical_consultations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Los médicos pueden ver consultas de sus pacientes" ON public.medical_consultations FOR SELECT USING (auth.uid() = clinic_id);
+CREATE POLICY "Los médicos pueden crear consultas" ON public.medical_consultations FOR INSERT WITH CHECK (auth.uid() = clinic_id);
+CREATE POLICY "Los médicos pueden editar consultas" ON public.medical_consultations FOR UPDATE USING (auth.uid() = clinic_id);
+CREATE POLICY "Los médicos pueden eliminar consultas" ON public.medical_consultations FOR DELETE USING (auth.uid() = clinic_id);
+
