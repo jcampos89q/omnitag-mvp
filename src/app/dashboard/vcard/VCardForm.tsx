@@ -59,7 +59,7 @@ export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
     vcard?.card_type === 'business' ? 'business' : 'personal'
   )
   const [leadCaptureEnabled, setLeadCaptureEnabled] = useState<boolean>(
-    isPro ? (vcard?.lead_capture_enabled ?? true) : false
+    vcard?.lead_capture_enabled ?? true
   )
   const [showProModal, setShowProModal] = useState<boolean>(false)
 
@@ -663,45 +663,30 @@ export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
         <ThemeSelector initialTheme={vcard?.theme} fieldNamePrefix="theme" />
       </div>
 
-      {/* 8. Modo Captura de Contactos (Exclusivo PRO) */}
-      <div className={`p-5 rounded-2xl border flex items-start gap-3.5 transition ${
-        isPro ? 'bg-blue-50/80 border-blue-200' : 'bg-gray-50 border-gray-200'
-      }`}>
+      {/* 8. Modo Captura de Contactos (Disponible en Plan Gratis y PRO) */}
+      <div className="p-5 rounded-2xl border flex items-start gap-3.5 transition bg-blue-50/80 border-blue-200">
         <input
           id="lead_capture_enabled"
           name="lead_capture_enabled"
           type="checkbox"
           checked={leadCaptureEnabled}
-          onChange={(e) => {
-            if (!isPro) {
-              setShowProModal(true)
-              return
-            }
-            setLeadCaptureEnabled(e.target.checked)
-          }}
+          onChange={(e) => setLeadCaptureEnabled(e.target.checked)}
           className="w-5 h-5 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
         />
         <div className="flex-1">
           <div className="flex items-center justify-between gap-2">
             <label 
               htmlFor="lead_capture_enabled" 
-              onClick={() => {
-                if (!isPro) setShowProModal(true)
-              }}
               className="font-bold text-gray-900 block text-sm sm:text-base cursor-pointer"
             >
               8. Activar Formulario "Intercambiar Contacto / Capturar Leads"
             </label>
-            {!isPro && (
-              <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-                <Crown className="w-3 h-3 text-purple-600" /> PRO
-              </span>
-            )}
+            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+              ✓ Incluido
+            </span>
           </div>
           <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
-            {isPro
-              ? 'Permite que los visitantes de tu perfil puedan dejarte sus datos (Nombre, Teléfono, Correo) con un solo toque y los verás organizados en tu sección de Contactos (CRM).'
-              : 'Función exclusiva de OmniTag PRO. Permite que tus clientes te dejen sus datos de contacto para sincronizarlos con tu CRM y WhatsApp.'}
+            Permite que los visitantes de tu perfil digital puedan dejarte sus datos (Nombre, Teléfono, Correo) con un solo toque y los verás organizados en tu sección de <b>Contactos (CRM)</b>.
           </p>
         </div>
       </div>

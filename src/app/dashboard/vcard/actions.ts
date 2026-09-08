@@ -131,8 +131,8 @@ export async function saveVCard(formData: FormData) {
     const facebook = (formData.get('facebook') as string)?.trim()
     const tiktok = (formData.get('tiktok') as string)?.trim()
 
-    // REGLA FREEMIUM: La captura de leads sólo se activa si el usuario es PRO
-    const leadCaptureEnabled = isPro ? (formData.get('lead_capture_enabled') === 'on') : false
+    // Captura de contactos en vCard (Disponible en Plan Gratis y PRO)
+    const leadCaptureEnabled = formData.get('lead_capture_enabled') === 'on'
 
     // Tema visual, tipografía y paleta de colores
     const themePreset = (formData.get('theme_preset') as string) || 'minimal_white'

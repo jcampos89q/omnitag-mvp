@@ -144,7 +144,8 @@ export default async function PublicVCardPage({
     supabase.from('devices').select('id, tag_id, name').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
   ])
 
-  const canCaptureLeads = ownerIsPro && lead_capture_enabled
+  // La captura de contactos en vCard está habilitada para todos los usuarios que la activen
+  const canCaptureLeads = Boolean(lead_capture_enabled)
 
   const businessInfo = business_info || {}
   const isBusiness = card_type === 'business'

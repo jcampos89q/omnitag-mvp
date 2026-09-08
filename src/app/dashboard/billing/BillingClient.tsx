@@ -208,7 +208,7 @@ export default function BillingClient({
             <ul className="space-y-2.5 text-xs text-gray-600 mb-6">
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span><b>1 vCard Digital</b> activa</span>
+                <span><b>1 vCard Digital</b> con Captura de Contactos</span>
               </li>
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
