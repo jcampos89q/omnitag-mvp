@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   }
 
   // 1. Obtener plan, contador de días restantes y privilegios del usuario
-  const { isPro, isAdmin, expiresAt, daysLeft, isExpired } = await getUserPlanInfo(supabase, user.id)
+  const { isPro, isAdmin, expiresAt, daysLeft, isExpired, isTrial, isDiscountEligible, discountDaysLeft } = await getUserPlanInfo(supabase, user.id)
 
   // 2. Obtener conteos básicos para KPIs rápidos
   const [
@@ -42,9 +42,15 @@ export default async function DashboardPage() {
                 ¡Hola! 👋
               </h1>
               {isPro ? (
-                <span className="bg-linear-to-r from-purple-600 to-indigo-600 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5 text-yellow-300" /> PLAN PRO ILIMITADO
-                </span>
+                isTrial ? (
+                  <span className="bg-linear-to-r from-amber-500 to-orange-500 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-yellow-200" /> PRUEBA GRATUITA ({daysLeft} {daysLeft === 1 ? 'DÍA' : 'DÍAS'})
+                  </span>
+                ) : (
+                  <span className="bg-linear-to-r from-purple-600 to-indigo-600 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-yellow-300" /> PLAN PRO ILIMITADO
+                  </span>
+                )
               ) : (
                 <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-gray-200">
                   Plan Básico ($0)
@@ -53,10 +59,20 @@ export default async function DashboardPage() {
             </div>
             <p className="text-xs sm:text-sm text-gray-500">
               Bienvenido a tu suite digital de OmniTag, <span className="font-semibold text-gray-800">{user.email}</span>.
+              {isTrial && ' Estás disfrutando de 7 días de acceso completo a todas las herramientas.'}
             </p>
           </div>
 
-          {!isPro && (
+          {isDiscountEligible ? (
+            <Link
+              href="/dashboard/billing#metodos-pago"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
+              <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300" />
+              <span>50% OFF: Primer mes por L. 275</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          ) : !isPro && (
             <Link
               href="/dashboard/billing#metodos-pago"
               className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
@@ -68,35 +84,39 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* CONTADOR DE TIEMPO / ESTADO MENSUAL PRO */}
+        {/* CONTADOR DE TIEMPO / ESTADO MENSUAL PRO O PRUEBA */}
         {isPro && !isAdmin && expiresAt && (
           <div className={`mb-6 p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-            daysLeft <= 5 
+            isTrial 
+              ? 'bg-amber-50/90 border-amber-200 text-amber-950'
+              : daysLeft <= 5 
               ? 'bg-amber-50 border-amber-200 text-amber-950' 
               : 'bg-purple-50/80 border-purple-200 text-purple-950'
           }`}>
             <div className="flex items-center gap-2.5">
-              <Clock className={`w-5 h-5 shrink-0 ${daysLeft <= 5 ? 'text-amber-600' : 'text-purple-600'}`} />
+              <Clock className={`w-5 h-5 shrink-0 ${isTrial || daysLeft <= 5 ? 'text-amber-600' : 'text-purple-600'}`} />
               <div>
                 <p className="font-extrabold text-sm">
-                  {daysLeft > 0 
+                  {isTrial 
+                    ? `Periodo de Prueba Activo: ${daysLeft} ${daysLeft === 1 ? 'día restante' : 'días restantes'} con herramientas completas`
+                    : daysLeft > 0 
                     ? `Suscripción Activa: ${daysLeft} ${daysLeft === 1 ? 'día restante' : 'días restantes'}`
                     : 'Suscripción por vencer hoy'}
                 </p>
                 <p className="text-[11px] opacity-80 mt-0.5">
-                  Vence el <b>{new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}</b>. Se renueva con tu pago mensual por transferencia BAC o efectivo.
+                  {isTrial 
+                    ? `Tu prueba gratuita de 7 días concluye el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. ${isDiscountEligible ? `¡Aprovecha el 50% de descuento (L. 275) durante tus primeros 3 días!` : ''}`
+                    : `Vence el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. Se renueva con tu pago mensual por depósito o transferencia BAC.`}
                 </p>
               </div>
             </div>
 
-            {daysLeft <= 7 && (
-              <Link
-                href="/dashboard/billing#metodos-pago"
-                className="bg-black text-white font-bold px-3 py-1.5 rounded-xl text-xs shrink-0 hover:bg-gray-800 transition shadow-2xs"
-              >
-                Renovar con BAC →
-              </Link>
-            )}
+            <Link
+              href="/dashboard/billing#metodos-pago"
+              className="bg-black text-white font-bold px-3.5 py-2 rounded-xl text-xs shrink-0 hover:bg-gray-800 transition shadow-2xs"
+            >
+              {isDiscountEligible ? 'Pagar con 50% OFF (L. 275) →' : 'Datos para Transferir con BAC →'}
+            </Link>
           </div>
         )}
 
@@ -106,8 +126,8 @@ export default async function DashboardPage() {
             <div className="flex items-center gap-2.5">
               <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
               <div>
-                <p className="font-bold">Tu periodo mensual de Plan PRO ha finalizado</p>
-                <p className="text-[11px] opacity-80">Realiza tu transferencia por BAC o paga en efectivo para reactivar tus herramientas PRO de inmediato.</p>
+                <p className="font-bold">Tu periodo de prueba de 7 días ha finalizado</p>
+                <p className="text-[11px] opacity-80">Realiza tu depósito o transferencia por BAC para mantener todas las herramientas PRO activas.</p>
               </div>
             </div>
             <Link

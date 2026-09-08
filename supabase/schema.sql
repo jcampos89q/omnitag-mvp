@@ -6,6 +6,11 @@ CREATE TABLE public.users (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   full_name TEXT,
   avatar_url TEXT,
+  is_admin BOOLEAN DEFAULT false,
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  plan_status TEXT,
+  current_period_end TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

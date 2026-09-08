@@ -26,6 +26,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Flujo real de Stripe
+    
+    // Verificar si está dentro de los 3 días de haberse registrado para el 50% de descuento
+    const createdAt = new Date(user.created_at);
+    const now = new Date();
+    const threeDaysLater = new Date(createdAt.getTime() + 3 * 24 * 60 * 60 * 1000);
+    
+    let discounts = undefined;
+    if (now <= threeDaysLater) {
+      try {
+        await stripe.coupons.retrieve('EARLYBIRD_50');
+      } catch (e: any) {
+        if (e.code === 'resource_missing') {
+          await stripe.coupons.create({
+            id: 'EARLYBIRD_50',
+            percent_off: 50,
+            duration: 'once',
+            name: '50% Descuento Primer Mes (Early Bird)'
+          });
+        }
+      }
+      discounts = [{ coupon: 'EARLYBIRD_50' }];
+    }
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -36,12 +59,13 @@ export async function POST(request: NextRequest) {
               name: 'Suscripción PRO - OmniTag',
               description: 'Acceso ilimitado a todas las funciones premium.',
             },
-            unit_amount: 2900, // $29.00
+            unit_amount: 2000, // $20.00
           },
           quantity: 1,
         },
       ],
       mode: 'subscription',
+      discounts: discounts,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL || request.headers.get('origin')}/dashboard/billing?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || request.headers.get('origin')}/dashboard/billing?canceled=true`,
       customer_email: user.email,

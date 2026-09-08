@@ -17,8 +17,8 @@ export default async function BillingPage({
 
   if (!user) redirect('/login')
 
-  // 1. Obtener plan del usuario (Admins siempre son PRO)
-  const { plan: currentPlan } = await getUserPlanInfo(supabase, user.id)
+  // 1. Obtener plan del usuario (Admins siempre son PRO, incluye prueba gratis y descuento)
+  const planInfo = await getUserPlanInfo(supabase, user.id)
 
   // 2. Obtener transferencias enviadas por el usuario
   const { data: transfersData } = await supabase
@@ -35,17 +35,18 @@ export default async function BillingPage({
         <div className="mb-6">
           <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 flex items-center gap-2.5">
             <CreditCard className="w-6 h-6 text-gray-900" />
-            Suscripción, Pagos y Facturación
+            Suscripción y Pagos por Depósito Bancario
           </h1>
           <p className="text-gray-500 text-xs sm:text-sm mt-1">
-            Gestiona tu plan, consulta los métodos de pago disponibles (Transferencia BAC / Tarjeta) y accede a todas las funciones PRO de OmniTag.
+            Gestiona tu plan, consulta los datos bancarios para depósito o transferencia BAC y notifica tu pago para activar tu Plan PRO de OmniTag.
           </p>
         </div>
 
         <BillingClient 
-          currentPlan={currentPlan}
+          currentPlan={planInfo.plan}
           userEmail={user.email || ''}
           transfers={transfers}
+          planInfo={planInfo}
         />
       </div>
     </div>
