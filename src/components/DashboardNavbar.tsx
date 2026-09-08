@@ -70,8 +70,8 @@ export default function DashboardNavbar({
   // Filter base items based on industry
   const filteredBaseItems = baseNavItems.filter(item => {
     if (userIndustry === 'health') {
-      // Hide menus and loyalty for health industry
-      if (item.href === '/dashboard/menus' || item.href === '/dashboard/loyalty' || item.href === '/dashboard/leads') return false
+      // Hide menus and basic leads for health industry (they use patients instead)
+      if (item.href === '/dashboard/menus' || item.href === '/dashboard/leads') return false
     } else {
       // For general industry, hide patients (if we add it to baseNavItems)
       if (item.href === '/dashboard/patients') return false
