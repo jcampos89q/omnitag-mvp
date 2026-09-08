@@ -22,7 +22,9 @@ import {
   Palette,
   RefreshCw,
   Download,
-  Wifi
+  Wifi,
+  Tag,
+  Check
 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -158,6 +160,23 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col selection:bg-black selection:text-white">
+      {/* 0. CINTILLO SUPERIOR DE OFERTA */}
+      <div className="bg-gradient-to-r from-purple-700 via-indigo-600 to-emerald-600 text-white py-2 px-4 text-center text-xs font-bold flex items-center justify-center gap-2 shadow-xs">
+        <span className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+          OFERTA DE LANZAMIENTO
+        </span>
+        <span>
+          🎁 <b>7 Días de Prueba Gratis</b> con herramientas PRO + <b>50% OFF (L. 275 / $10)</b> si pagas en tus primeros 3 días.
+        </span>
+        <Link 
+          href="/register" 
+          className="hidden sm:inline-flex items-center gap-1 underline font-black text-yellow-300 hover:text-white transition ml-1"
+        >
+          <span>Activar cuenta gratis</span>
+          <ArrowRight className="w-3 h-3" />
+        </Link>
+      </div>
+
       {/* 1. NAVEGACIÓN SUPERIOR */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
         <nav className="flex items-center justify-between px-4 sm:px-6 py-3.5 max-w-7xl mx-auto w-full">
@@ -189,7 +208,7 @@ export default function LandingPage() {
               href="/register" 
               className="bg-black text-white text-xs sm:text-sm px-4 sm:px-5 py-2.5 rounded-xl font-extrabold hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5"
             >
-              <span>Empezar Gratis</span>
+              <span>7 Días Gratis PRO</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -205,9 +224,9 @@ export default function LandingPage() {
           </div>
 
           <div className="max-w-4xl mx-auto text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/5 border border-black/10 text-gray-900 text-xs font-black tracking-wide">
-              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-              <span>PLATAFORMA INTEGRAL PARA COMERCIOS & PROFESIONALES</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black tracking-wide">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>7 DÍAS DE PRUEBA PRO GRATIS • SIN TARJETA DE CRÉDITO</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-gray-950 leading-[1.1]">
@@ -226,7 +245,7 @@ export default function LandingPage() {
                 href="/register" 
                 className="w-full sm:w-auto bg-black text-white px-8 py-4 rounded-2xl font-black text-sm sm:text-base hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl cursor-pointer"
               >
-                <span>Crear Cuenta Gratis</span>
+                <span>Probar 7 Días Gratis</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <a 
@@ -242,6 +261,22 @@ export default function LandingPage() {
               >
                 Módulos
               </a>
+            </div>
+
+            {/* Banner de beneficios de apertura de cuenta y descuento */}
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 text-xs font-semibold text-gray-600">
+              <span className="flex items-center gap-1.5 text-emerald-700">
+                <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                <b>7 días</b> con todas las herramientas PRO activas
+              </span>
+              <span className="flex items-center gap-1.5 text-gray-700">
+                <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                Sin tarjeta de crédito requerida
+              </span>
+              <span className="flex items-center gap-1.5 text-purple-700 font-bold bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+                <Tag className="w-3.5 h-3.5 text-purple-600" />
+                50% de descuento (L. 275 / $10) si pagas antes de 3 días
+              </span>
             </div>
 
             {/* Micro métricas / Ventajas */}
@@ -575,14 +610,14 @@ export default function LandingPage() {
             <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl" />
 
             <div className="relative space-y-3">
-              <span className="text-[11px] font-black uppercase tracking-wider bg-white/10 text-purple-300 px-3 py-1 rounded-full border border-white/10">
-                Pruébalo sin compromiso
+              <span className="text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30">
+                7 Días Gratis • Sin Tarjeta
               </span>
               <h3 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
                 Empieza a digitalizar tu negocio hoy mismo
               </h3>
               <p className="text-xs sm:text-base text-gray-300 max-w-lg mx-auto font-medium">
-                Únete a barberías, salones, restaurantes y clínicas que ya están ahorrando tiempo y atrayendo más clientes con OmniTag.
+                Crea tu cuenta gratis y obtén <b>7 días de acceso ilimitado PRO</b>. Además, si confirmas tu plan por depósito o transferencia en tus primeros 3 días, tu primer mes te queda con <b>50% de descuento (L. 275 HNL / $10 USD)</b>.
               </p>
             </div>
 
@@ -591,7 +626,7 @@ export default function LandingPage() {
                 href="/register" 
                 className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-black px-8 py-4 rounded-2xl text-sm sm:text-base transition shadow-xl cursor-pointer"
               >
-                Comenzar Prueba Gratuita
+                Comenzar 7 Días de Prueba Gratis
               </Link>
               <Link 
                 href="/login" 
