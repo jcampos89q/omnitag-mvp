@@ -142,6 +142,14 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               const expiresDate = u.out_expires_at ? new Date(u.out_expires_at) : null
               const isExpired = expiresDate ? expiresDate < new Date() : false
               const daysLeft = expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null
+              
+              // Calcular trial y descuento
+              const createdDate = new Date(u.out_created_at)
+              const daysSinceCreation = Math.ceil(Math.abs(new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
+              const isTrial = daysSinceCreation <= 7
+              const trialDaysLeft = Math.max(0, 7 - daysSinceCreation + 1)
+              const isDiscountEligible = daysSinceCreation <= 3
+              const discountDaysLeft = Math.max(0, 3 - daysSinceCreation + 1)
 
               return (
                 <div key={u.out_user_id} className="p-4 bg-white rounded-2xl border border-gray-200 shadow-xs space-y-3">
@@ -152,13 +160,22 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                         <Mail className="w-3.5 h-3.5 text-gray-400" /> {u.out_email}
                       </p>
                     </div>
-                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                      isPro 
-                        ? 'bg-black text-yellow-400 border border-yellow-500/40' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {isPro ? '★ PRO' : 'Gratis'}
-                    </span>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                        isPro 
+                          ? 'bg-black text-yellow-400 border border-yellow-500/40' 
+                          : isTrial
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {isPro ? '★ PRO' : isTrial ? `Prueba (${trialDaysLeft}d)` : 'Gratis'}
+                      </span>
+                      {!isPro && isDiscountEligible && (
+                        <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 rounded-sm">
+                          50% OFF ({discountDaysLeft}d)
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Estado de Vencimiento Mensual */}
@@ -264,6 +281,14 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                   const expiresDate = u.out_expires_at ? new Date(u.out_expires_at) : null
                   const isExpired = expiresDate ? expiresDate < new Date() : false
                   const daysLeft = expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null
+                  
+                  // Calcular trial y descuento
+                  const createdDate = new Date(u.out_created_at)
+                  const daysSinceCreation = Math.ceil(Math.abs(new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
+                  const isTrial = daysSinceCreation <= 7
+                  const trialDaysLeft = Math.max(0, 7 - daysSinceCreation + 1)
+                  const isDiscountEligible = daysSinceCreation <= 3
+                  const discountDaysLeft = Math.max(0, 3 - daysSinceCreation + 1)
 
                   return (
                     <tr key={u.out_user_id} className="hover:bg-gray-50/80 transition-colors">
@@ -279,10 +304,17 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                           <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
                             isPro 
                               ? 'bg-black text-yellow-400 border border-yellow-500/30' 
+                              : isTrial
+                              ? 'bg-purple-100 text-purple-700 border border-purple-200'
                               : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {isPro ? <><Sparkles className="w-3 h-3 text-yellow-400" /> PRO ACTIVO</> : 'Plan Básico'}
+                            {isPro ? <><Sparkles className="w-3 h-3 text-yellow-400" /> PRO ACTIVO</> : 
+                             isTrial ? `Prueba Gratis (${trialDaysLeft}d)` : 'Plan Básico'}
                           </span>
+
+                          {!isPro && isDiscountEligible && (
+                            <p className="text-[10px] text-green-600 font-bold mt-1">Oferta 50% ({discountDaysLeft}d restantes)</p>
+                          )}
 
                           {isPro && expiresDate && (
                             <p className="text-[11px] text-gray-500 flex items-center gap-1 font-mono">
