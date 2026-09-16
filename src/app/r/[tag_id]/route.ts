@@ -7,18 +7,19 @@ export async function GET(
   { params }: { params: Promise<{ tag_id: string }> }
 ) {
   const supabase = await createClient()
-  const { tag_id } = await params
+  const rawTagId = (await params).tag_id
+  const cleanTagId = decodeURIComponent(rawTagId || '').trim()
 
-  // 1. Buscar el dispositivo de forma segura con maybeSingle
+  // 1. Buscar el dispositivo de forma segura soportando formato normal o URL-encoded
   const { data: device } = await supabase
     .from('devices')
     .select('*')
-    .eq('tag_id', tag_id)
+    .or(`tag_id.eq.${cleanTagId},tag_id.eq.${encodeURIComponent(cleanTagId)}`)
     .maybeSingle()
 
   // Si no existe o no tiene enlace de destino configurado, enviarlo a la pantalla de activación
   if (!device || !device.redirect_url || !device.user_id) {
-    return NextResponse.redirect(new URL(`/r/${tag_id}/activate`, request.url))
+    return NextResponse.redirect(new URL(`/r/${encodeURIComponent(cleanTagId)}/activate`, request.url))
   }
 
   // 2. Registrar el escaneo asíncronamente
@@ -30,7 +31,7 @@ export async function GET(
 
   // Si es tap_to_rate y tiene el filtro inteligente, lo enviamos primero a la pantalla de estrellitas
   if (device.device_type === 'tap_to_rate' && device.review_filter_enabled) {
-    return NextResponse.redirect(new URL(`/r/${tag_id}/filter`, request.url))
+    return NextResponse.redirect(new URL(`/r/${encodeURIComponent(device.tag_id)}/filter`, request.url))
   }
 
   // 3. Redirección en milisegundos

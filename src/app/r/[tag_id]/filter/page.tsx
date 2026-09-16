@@ -9,14 +9,15 @@ export default async function ReviewFilterPage({
   params: Promise<{ tag_id: string }>
 }) {
   const supabase = await createClient()
-  const { tag_id } = await params
+  const rawTagId = (await params).tag_id
+  const cleanTagId = decodeURIComponent(rawTagId || '').trim()
 
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: device } = await supabase
     .from('devices')
     .select('id, user_id, redirect_url, review_filter_enabled, theme, business_name')
-    .eq('tag_id', tag_id)
+    .or(`tag_id.eq.${cleanTagId},tag_id.eq.${encodeURIComponent(cleanTagId)}`)
     .maybeSingle()
 
   if (!device || !device.review_filter_enabled) {
