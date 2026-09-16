@@ -125,6 +125,17 @@ export default function AdminNfcBatches({
 
   const selectedBatch = batches.find(b => b.id === selectedBatchId) || batches[0]
 
+  // Mapa normalizado de usuarios para consulta instantánea por ID
+  const userMap = new Map<string, { id: string; full_name: string; email: string }>()
+  users.forEach((u: any) => {
+    const id = u.out_user_id || u.id
+    const email = u.out_email || u.email || ''
+    const fullName = u.out_full_name || u.full_name || 'Sin nombre'
+    if (id) {
+      userMap.set(id, { id, full_name: fullName, email })
+    }
+  })
+
   // Actualizar previsualización de QR en el modal de creación
   useEffect(() => {
     if (!isCreateModalOpen || !previewDivRef.current) return
@@ -249,6 +260,11 @@ export default function AdminNfcBatches({
         minute: '2-digit'
       })
 
+      const owner = c.users || (c.claimed_by_user_id ? userMap.get(c.claimed_by_user_id) : null)
+      const ownerText = owner 
+        ? `${owner.full_name || 'Usuario'} (${owner.email})` 
+        : (isClaimed ? 'Activada por Cliente' : 'Sin asignar (Pendiente)')
+
       return `
         <tr>
           <td style="text-align:center;mso-number-format:'\\@';">${i + 1}</td>
@@ -256,7 +272,7 @@ export default function AdminNfcBatches({
           <td style="color:#2563eb;text-decoration:underline;">${baseUrl}/t/${c.card_token}</td>
           <td style="text-align:center;font-weight:bold;color:${statusColor};background:${statusBg};">${formatStatus(c.status)}</td>
           <td style="text-align:center;">${c.plan_duration_days} Días (1 Año)</td>
-          <td>${c.users?.email ? `${c.users?.full_name || 'Usuario'} (${c.users.email})` : 'Sin asignar (Pendiente)'}</td>
+          <td>${ownerText}</td>
           <td style="text-align:center;">${dateFormatted}</td>
         </tr>
       `
@@ -585,14 +601,26 @@ export default function AdminNfcBatches({
                           </td>
 
                           <td className="py-3 px-3">
-                            {isClaimed && card.users ? (
-                              <div>
-                                <div className="font-bold text-gray-900">{card.users.full_name || 'Sin nombre'}</div>
-                                <div className="text-[10px] text-gray-500">{card.users.email}</div>
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 italic">Esperando cliente...</span>
-                            )}
+                            {(() => {
+                              const owner = card.users || (card.claimed_by_user_id ? userMap.get(card.claimed_by_user_id) : null)
+                              if (isClaimed && owner) {
+                                return (
+                                  <div>
+                                    <div className="font-bold text-gray-900">{owner.full_name || 'Sin nombre'}</div>
+                                    <div className="text-[10px] text-gray-500">{owner.email}</div>
+                                  </div>
+                                )
+                              }
+                              if (isClaimed) {
+                                return (
+                                  <div>
+                                    <div className="font-bold text-emerald-700">Activada por Cliente</div>
+                                    <div className="text-[10px] text-gray-400">Usuario registrado</div>
+                                  </div>
+                                )
+                              }
+                              return <span className="text-gray-400 italic">Esperando cliente...</span>
+                            })()}
                           </td>
 
                           <td className="py-3 px-3 text-right">
@@ -869,16 +897,16 @@ export default function AdminNfcBatches({
               />
 
               <div className="max-h-52 overflow-y-auto divide-y divide-gray-100 border border-gray-200 rounded-xl">
-                {users
-                  .filter((u: any) => {
+                {Array.from(userMap.values())
+                  .filter((u) => {
                     const q = userSearchQuery.toLowerCase()
                     return (
                       (u.email && u.email.toLowerCase().includes(q)) ||
                       (u.full_name && u.full_name.toLowerCase().includes(q))
                     )
                   })
-                  .slice(0, 10)
-                  .map((u: any) => (
+                  .slice(0, 15)
+                  .map((u) => (
                     <button
                       key={u.id}
                       type="button"
