@@ -20,11 +20,15 @@ import {
   Eye,
   CheckCircle2,
   X,
-  Smartphone
+  Smartphone,
+  Printer,
+  FileDown,
+  Loader2
 } from 'lucide-react'
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling'
 import { createNfcBatch, deleteNfcBatch, toggleNfcCardStatus, assignNfcCardToUser } from './nfcActions'
 import NfcCardWriterModal from '@/components/NfcCardWriterModal'
+import { generateNfcCardsSheetPdf } from '@/lib/nfcPdfGenerator'
 
 interface NfcCard {
   id: string
@@ -237,6 +241,25 @@ export default function AdminNfcBatches({
     document.body.removeChild(link)
   }
 
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const [pdfProgress, setPdfProgress] = useState<{ current: number; total: number } | null>(null)
+
+  const handleExportSheetPdf = async () => {
+    if (!selectedBatch || !selectedBatch.nfc_cards?.length) return
+    setExportingPdf(true)
+    setPdfProgress({ current: 0, total: selectedBatch.nfc_cards.length })
+    try {
+      await generateNfcCardsSheetPdf(selectedBatch, baseUrl, (current, total) => {
+        setPdfProgress({ current, total })
+      })
+    } catch (err: any) {
+      alert('Error generando plantilla de impresión PDF: ' + (err.message || 'Error desconocido'))
+    } finally {
+      setExportingPdf(false)
+      setPdfProgress(null)
+    }
+  }
+
   const downloadSingleQr = (card: NfcCard) => {
     const style = selectedBatch.qr_style || {}
     const qr = new QRCodeStyling({
@@ -386,6 +409,25 @@ export default function AdminNfcBatches({
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
                     <span>Exportar CSV</span>
+                  </button>
+
+                  <button
+                    onClick={handleExportSheetPdf}
+                    disabled={exportingPdf}
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                    title="Descargar plantilla A4 lista para imprenta con las tarjetas vinil en escala 100% y líneas de corte"
+                  >
+                    {exportingPdf ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Generando PDF ({pdfProgress ? `${pdfProgress.current}/${pdfProgress.total}` : 'Procesando'}...)</span>
+                      </>
+                    ) : (
+                      <>
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>Descargar Viniles PDF (A4)</span>
+                      </>
+                    )}
                   </button>
 
                   <button
