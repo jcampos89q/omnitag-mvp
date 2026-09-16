@@ -21,7 +21,8 @@ export default async function DashboardPage() {
     supabase.from('users').select('full_name, account_type, business_name').eq('id', user.id).maybeSingle()
   ])
 
-  const isReviewPlateUser = profile?.account_type === 'review_plate'
+  const accountType = profile?.account_type || 'professional'
+  const isReviewPlateUser = accountType === 'review_plate'
 
   // Si es un cliente exclusivo de Placa de Reseñas de Google, mostrar su panel especializado
   if (isReviewPlateUser) {
@@ -412,7 +413,7 @@ export default async function DashboardPage() {
           </Link>
 
           {/* Menú Digital */}
-          {profile?.account_type !== 'professional' && (
+          {accountType !== 'professional' && (
             <Link 
               href="/dashboard/menus" 
               className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
@@ -431,7 +432,7 @@ export default async function DashboardPage() {
           )}
 
           {/* Fidelización & Sellos */}
-          {profile?.account_type !== 'professional' && (
+          {accountType !== 'professional' && (
             <Link 
               href="/dashboard/loyalty" 
               className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
@@ -450,7 +451,7 @@ export default async function DashboardPage() {
           )}
 
           {/* Agendas & Citas (Barberías / Salones) */}
-          {profile?.account_type !== 'professional' && (
+          {accountType !== 'professional' && (
             <Link 
               href="/dashboard/appointments" 
               className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
@@ -472,7 +473,7 @@ export default async function DashboardPage() {
           )}
 
           {/* Ruleta de Premios & Gamificación */}
-          {profile?.account_type !== 'professional' && (
+          {accountType !== 'professional' && (
             <Link 
               href="/dashboard/ruleta" 
               className="group p-5 border border-amber-200/80 rounded-2xl bg-amber-50/40 hover:bg-amber-50 hover:border-amber-300 transition-all flex flex-col justify-between"

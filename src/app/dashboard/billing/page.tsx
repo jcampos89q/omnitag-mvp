@@ -23,6 +23,8 @@ export default async function BillingPage({
     supabase.from('users').select('account_type').eq('id', user.id).maybeSingle()
   ])
 
+  const accountType = profile?.account_type || 'professional'
+
   // 2. Obtener transferencias enviadas por el usuario
   const { data: transfersData } = await supabase
     .from('bank_transfers')
@@ -50,7 +52,7 @@ export default async function BillingPage({
           userEmail={user.email || ''}
           transfers={transfers}
           planInfo={planInfo}
-          accountType={profile?.account_type}
+          accountType={accountType}
         />
       </div>
     </div>
