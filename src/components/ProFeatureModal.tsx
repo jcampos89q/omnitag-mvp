@@ -82,7 +82,7 @@ export default function ProFeatureModal({
               <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">L. 550</span>
               <span className="text-xs text-gray-500 font-medium">HNL / mes</span>
             </div>
-            <p className="text-[11px] text-gray-400 mt-0.5">Transferencia Bancaria BAC Credomatic o Pago Directo</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">Transferencia Bancaria BAC Credomatic o Pago en Efectivo</p>
           </div>
 
           <div className="space-y-2">
