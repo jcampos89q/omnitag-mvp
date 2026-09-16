@@ -76,6 +76,15 @@ export default function DashboardNavbar({
     // EL SUPERADMINISTRADOR TIENE ACCESO TOTAL A TODAS LAS HERRAMIENTAS SIN LÍMITES
     filteredBaseItems = [...baseNavItems]
     filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Users, badge: 'Salud', section: 'gestion' })
+  } else if (accountType === 'review_plate') {
+    // Clientes exclusivos de Placas NFC de Reseñas de Google
+    // Únicamente tienen acceso a su Placa, Quejas Privadas y Métricas
+    filteredBaseItems = [
+      { name: 'Inicio', href: '/dashboard', icon: Home, section: 'principal' },
+      { name: 'Mi Placa de Reseñas', href: '/dashboard/devices', icon: Star, section: 'principal' },
+      { name: 'Quejas Privadas', href: '/dashboard/feedback', icon: MessageSquareWarning, section: 'gestion' },
+      { name: 'Métricas de Escaneos', href: '/dashboard/analytics', icon: BarChart3, section: 'gestion' },
+    ]
   } else if (accountType === 'professional') {
     // Solo los clientes profesionales individuales ven su vCard, CRM y estadísticas
     const allowedHrefs = [
@@ -352,53 +361,157 @@ export default function DashboardNavbar({
 
       {/* 4. BARRA DE ACCIONES RÁPIDAS INFERIOR MÓVIL */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 py-1.5 flex items-center justify-around shadow-lg">
-        <Link 
-          href="/dashboard"
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-            pathname === '/dashboard' ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
-          }`}
-        >
-          <Home className={`w-5 h-5 ${pathname === '/dashboard' ? 'stroke-[2.5]' : ''}`} />
-          <span className="text-[10px] mt-0.5">Inicio</span>
-        </Link>
+        {accountType === 'review_plate' ? (
+          <>
+            <Link 
+              href="/dashboard"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname === '/dashboard' ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <Home className={`w-5 h-5 ${pathname === '/dashboard' ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Inicio</span>
+            </Link>
 
-        <Link 
-          href="/dashboard/vcard"
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-            pathname.startsWith('/dashboard/vcard') ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'
-          }`}
-        >
-          <UserCircle className={`w-5 h-5 ${pathname.startsWith('/dashboard/vcard') ? 'stroke-[2.5]' : ''}`} />
-          <span className="text-[10px] mt-0.5">vCard</span>
-        </Link>
+            <Link 
+              href="/dashboard/devices"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname.startsWith('/dashboard/devices') ? 'text-amber-500 font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <Star className={`w-5 h-5 ${pathname.startsWith('/dashboard/devices') ? 'fill-amber-400 stroke-amber-500' : ''}`} />
+              <span className="text-[10px] mt-0.5">Mi Placa</span>
+            </Link>
 
-        <Link 
-          href="/dashboard/qr-studio"
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-            pathname.startsWith('/dashboard/qr-studio') ? 'text-purple-600 font-bold' : 'text-gray-500 hover:text-gray-900'
-          }`}
-        >
-          <QrCode className={`w-5 h-5 ${pathname.startsWith('/dashboard/qr-studio') ? 'stroke-[2.5]' : ''}`} />
-          <span className="text-[10px] mt-0.5">Estudio QR</span>
-        </Link>
+            <Link 
+              href="/dashboard/feedback"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname.startsWith('/dashboard/feedback') ? 'text-red-600 font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <MessageSquareWarning className={`w-5 h-5 ${pathname.startsWith('/dashboard/feedback') ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Quejas</span>
+            </Link>
 
-        <Link 
-          href="/dashboard/devices"
-          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-            pathname.startsWith('/dashboard/devices') ? 'text-amber-500 font-bold' : 'text-gray-500 hover:text-gray-900'
-          }`}
-        >
-          <Star className={`w-5 h-5 ${pathname.startsWith('/dashboard/devices') ? 'fill-amber-400 stroke-amber-500' : ''}`} />
-          <span className="text-[10px] mt-0.5">Reseñas</span>
-        </Link>
+            <Link 
+              href="/dashboard/analytics"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname.startsWith('/dashboard/analytics') ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <BarChart3 className={`w-5 h-5 ${pathname.startsWith('/dashboard/analytics') ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Métricas</span>
+            </Link>
 
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition"
-        >
-          <MenuIcon className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5 font-bold">Más</span>
-        </button>
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition cursor-pointer"
+            >
+              <MenuIcon className="w-5 h-5" />
+              <span className="text-[10px] mt-0.5 font-bold">Menú</span>
+            </button>
+          </>
+        ) : accountType === 'professional' ? (
+          <>
+            <Link 
+              href="/dashboard"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname === '/dashboard' ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <Home className={`w-5 h-5 ${pathname === '/dashboard' ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Inicio</span>
+            </Link>
+
+            <Link 
+              href="/dashboard/vcard"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname.startsWith('/dashboard/vcard') ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <UserCircle className={`w-5 h-5 ${pathname.startsWith('/dashboard/vcard') ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">vCard</span>
+            </Link>
+
+            <Link 
+              href="/dashboard/leads"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname.startsWith('/dashboard/leads') ? 'text-emerald-600 font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <Users className={`w-5 h-5 ${pathname.startsWith('/dashboard/leads') ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Contactos</span>
+            </Link>
+
+            <Link 
+              href="/dashboard/analytics"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname.startsWith('/dashboard/analytics') ? 'text-purple-600 font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <BarChart3 className={`w-5 h-5 ${pathname.startsWith('/dashboard/analytics') ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Métricas</span>
+            </Link>
+
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition cursor-pointer"
+            >
+              <MenuIcon className="w-5 h-5" />
+              <span className="text-[10px] mt-0.5 font-bold">Más</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <Link 
+              href="/dashboard"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname === '/dashboard' ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <Home className={`w-5 h-5 ${pathname === '/dashboard' ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Inicio</span>
+            </Link>
+
+            <Link 
+              href="/dashboard/vcard"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname.startsWith('/dashboard/vcard') ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <UserCircle className={`w-5 h-5 ${pathname.startsWith('/dashboard/vcard') ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">vCard</span>
+            </Link>
+
+            <Link 
+              href="/dashboard/qr-studio"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname.startsWith('/dashboard/qr-studio') ? 'text-purple-600 font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <QrCode className={`w-5 h-5 ${pathname.startsWith('/dashboard/qr-studio') ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5">Estudio QR</span>
+            </Link>
+
+            <Link 
+              href="/dashboard/devices"
+              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
+                pathname.startsWith('/dashboard/devices') ? 'text-amber-500 font-bold' : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              <Star className={`w-5 h-5 ${pathname.startsWith('/dashboard/devices') ? 'fill-amber-400 stroke-amber-500' : ''}`} />
+              <span className="text-[10px] mt-0.5">Reseñas</span>
+            </Link>
+
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition cursor-pointer"
+            >
+              <MenuIcon className="w-5 h-5" />
+              <span className="text-[10px] mt-0.5 font-bold">Más</span>
+            </button>
+          </>
+        )}
       </nav>
     </>
   )

@@ -24,7 +24,8 @@ import {
   Radio,
   AlertCircle,
   Disc,
-  Building2
+  Building2,
+  BarChart3
 } from 'lucide-react'
 import { createDevice, deleteDevice } from './actions'
 import ProFeatureModal from '@/components/ProFeatureModal'
@@ -38,6 +39,7 @@ interface DevicesManagerProps {
   loyalty?: any
   wheel?: any
   isPro?: boolean
+  accountType?: string
 }
 
 export default function DevicesManager({ 
@@ -46,7 +48,8 @@ export default function DevicesManager({
   menu,
   loyalty,
   wheel,
-  isPro = false
+  isPro = false,
+  accountType = 'business'
 }: DevicesManagerProps) {
   const [deviceType, setDeviceType] = useState<string>('tap_to_rate')
   const [reviewFilter, setReviewFilter] = useState<boolean>(true)
@@ -144,8 +147,9 @@ export default function DevicesManager({
         </div>
       </div>
 
-      {/* 2. FORMULARIO PARA REGISTRAR O VINCULAR UNA PLACA NFC */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-6">
+      {/* 2. FORMULARIO PARA REGISTRAR O VINCULAR UNA PLACA NFC (Solo para Administradores y Empresas generales) */}
+      {accountType !== 'review_plate' && (
+        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-6">
         <div className="flex items-center justify-between border-b border-gray-100 pb-4">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -470,20 +474,23 @@ export default function DevicesManager({
           </div>
         </form>
       </div>
+      )}
 
       {/* 3. LISTADO DE PLACAS FÍSICAS ACTIVAS */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base sm:text-lg font-bold text-gray-900">
-            Placas y Puntos de Contacto Registrados ({devices.length})
+            {accountType === 'review_plate' ? 'Tu Placa Inteligente de Reseñas' : `Placas y Puntos de Contacto Registrados (${devices.length})`}
           </h2>
-          <Link
-            href="/dashboard/qr-studio"
-            className="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
-          >
-            <QrCode className="w-3.5 h-3.5" />
-            <span>Ir al Estudio QR para Imprimir</span>
-          </Link>
+          {accountType !== 'review_plate' && (
+            <Link
+              href="/dashboard/qr-studio"
+              className="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span>Ir al Estudio QR para Imprimir</span>
+            </Link>
+          )}
         </div>
 
         {devices.length === 0 ? (
@@ -548,7 +555,7 @@ export default function DevicesManager({
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                  <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
                     <a 
                       href={`/r/${device.tag_id}`}
                       target="_blank"
@@ -560,36 +567,70 @@ export default function DevicesManager({
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => openNfcWriter(device.tag_id ? `https://www.omnitag.site/r/${device.tag_id}` : device.redirect_url, `Placa Tag: ${device.tag_id}`)}
-                        className="px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition flex items-center gap-1 cursor-pointer"
-                        title="Grabar este enlace en un chip NFC físico"
-                      >
-                        <Radio className="w-3.5 h-3.5" />
-                        <span>Grabar NFC</span>
-                      </button>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {accountType === 'review_plate' ? (
+                        <>
+                          <Link
+                            href="/dashboard/feedback"
+                            className="px-2.5 py-1.5 text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 rounded-xl transition flex items-center gap-1"
+                            title="Ver quejas privadas de clientes"
+                          >
+                            <MessageSquareWarning className="w-3.5 h-3.5" />
+                            <span>Quejas Privadas</span>
+                          </Link>
 
-                      <Link
-                        href="/dashboard/qr-studio"
-                        className="px-2.5 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition flex items-center gap-1"
-                        title="Diseñar e imprimir QR"
-                      >
-                        <QrCode className="w-3.5 h-3.5" />
-                        <span>QR</span>
-                      </Link>
+                          <Link
+                            href="/dashboard/analytics"
+                            className="px-2.5 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition flex items-center gap-1"
+                            title="Ver estadísticas de escaneos"
+                          >
+                            <BarChart3 className="w-3.5 h-3.5" />
+                            <span>Métricas</span>
+                          </Link>
 
-                      <form action={deleteDevice}>
-                        <input type="hidden" name="device_id" value={device.id} />
-                        <button 
-                          type="submit" 
-                          className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition cursor-pointer"
-                          title="Eliminar placa"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </form>
+                          <button
+                            type="button"
+                            onClick={() => openNfcWriter(device.tag_id ? `https://www.omnitag.site/r/${device.tag_id}` : device.redirect_url, `Placa Tag: ${device.tag_id}`)}
+                            className="px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition flex items-center gap-1 cursor-pointer"
+                            title="Grabar este enlace en un chip NFC físico"
+                          >
+                            <Radio className="w-3.5 h-3.5" />
+                            <span>Grabar NFC</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openNfcWriter(device.tag_id ? `https://www.omnitag.site/r/${device.tag_id}` : device.redirect_url, `Placa Tag: ${device.tag_id}`)}
+                            className="px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition flex items-center gap-1 cursor-pointer"
+                            title="Grabar este enlace en un chip NFC físico"
+                          >
+                            <Radio className="w-3.5 h-3.5" />
+                            <span>Grabar NFC</span>
+                          </button>
+
+                          <Link
+                            href="/dashboard/qr-studio"
+                            className="px-2.5 py-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition flex items-center gap-1"
+                            title="Diseñar e imprimir QR"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                            <span>QR</span>
+                          </Link>
+
+                          <form action={deleteDevice}>
+                            <input type="hidden" name="device_id" value={device.id} />
+                            <button 
+                              type="submit" 
+                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                              title="Eliminar placa"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </form>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

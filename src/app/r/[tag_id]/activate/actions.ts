@@ -49,7 +49,7 @@ export async function activatePlateAndRegister(formData: FormData) {
         data: {
           full_name: fullName,
           personal_phone: personalPhone,
-          account_type: 'business',
+          account_type: 'review_plate',
           business_name: businessName,
           industry: googleTypes[0] || 'business'
         }
@@ -67,14 +67,22 @@ export async function activatePlateAndRegister(formData: FormData) {
   // 2. Establecer vigencia de 1 año (365 días) de suscripción para la placa
   const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
 
+  // Si no era ya una cuenta de negocio mensual completa, asignarle rol de placa de reseñas
+  const { data: currentProfile } = await supabase
+    .from('users')
+    .select('account_type')
+    .eq('id', targetUserId)
+    .maybeSingle()
+
+  const finalAccountType = currentProfile?.account_type === 'business' ? 'business' : 'review_plate'
+
   await supabase
     .from('users')
     .update({
       full_name: fullName || undefined,
       personal_phone: personalPhone || undefined,
-      account_type: 'business',
-      subscription_expires_at: expiresAt,
-      plan_status: 'pro_annual'
+      account_type: finalAccountType,
+      subscription_expires_at: expiresAt
     })
     .eq('id', targetUserId)
 

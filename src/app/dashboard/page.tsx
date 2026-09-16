@@ -16,9 +16,192 @@ export default async function DashboardPage() {
   }
 
   // 1. Obtener plan, contador de días restantes y privilegios del usuario
-  const { isPro, isAdmin, expiresAt, daysLeft, isExpired, isTrial, isDiscountEligible, discountDaysLeft } = await getUserPlanInfo(supabase, user.id)
+  const [{ isPro, isAdmin, expiresAt, daysLeft, isExpired, isTrial, isDiscountEligible, discountDaysLeft }, { data: profile }] = await Promise.all([
+    getUserPlanInfo(supabase, user.id),
+    supabase.from('users').select('full_name, account_type, business_name').eq('id', user.id).maybeSingle()
+  ])
 
-  // 2. Obtener conteos básicos para KPIs rápidos
+  const isReviewPlateUser = profile?.account_type === 'review_plate'
+
+  // Si es un cliente exclusivo de Placa de Reseñas de Google, mostrar su panel especializado
+  if (isReviewPlateUser) {
+    const { data: userDevices } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('user_id', user.id)
+
+    const primaryDevice = userDevices?.[0]
+    const deviceIds = userDevices?.map(d => d.id) || []
+
+    const [{ count: feedbackCount }, { count: scansCount }] = await Promise.all([
+      deviceIds.length > 0 
+        ? supabase.from('private_feedbacks').select('*', { count: 'exact', head: true }).in('device_id', deviceIds)
+        : { count: 0 },
+      deviceIds.length > 0
+        ? supabase.from('scans').select('*', { count: 'exact', head: true }).in('device_id', deviceIds)
+        : { count: 0 }
+    ])
+
+    return (
+      <div className="space-y-6">
+        {/* Vista Dedicada para Clientes de Placas NFC de Reseñas */}
+        <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 sm:p-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
+                  ¡Hola{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}! 👋
+                </h1>
+                <span className="bg-linear-to-r from-amber-500 to-amber-600 text-black text-[10px] sm:text-xs font-black px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
+                  <Star className="w-3.5 h-3.5 fill-black text-black" /> PLACA DE RESEÑAS PRO (1 AÑO)
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-gray-500">
+                Panel exclusivo de control para tu placa física NFC de Google Reviews y Escudo Anti-Quejas.
+              </p>
+            </div>
+
+            {primaryDevice?.tag_id && (
+              <a
+                href={`/r/${primaryDevice.tag_id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0"
+              >
+                <span>Probar mi Placa</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
+
+          {/* Estado de la Placa y Días de Suscripción */}
+          <div className="mb-6 p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-50/80 border-amber-200 text-amber-950">
+            <div className="flex items-center gap-2.5">
+              <Clock className="w-5 h-5 shrink-0 text-amber-600" />
+              <div>
+                <p className="font-extrabold text-sm">
+                  {primaryDevice?.business_name ? primaryDevice.business_name : 'Placa Activa'} • {daysLeft} días de servicio restantes
+                </p>
+                <p className="text-[11px] text-amber-800/90 mt-0.5">
+                  Tu placa cuenta con membresía anual activa. No requieres pagos mensuales adicionales.
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold px-2.5 py-1 bg-amber-200/60 text-amber-900 rounded-lg shrink-0">
+              Vence: {expiresAt ? new Date(expiresAt).toLocaleDateString() : '1 Año'}
+            </span>
+          </div>
+
+          {/* KPIs Principales */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Escaneos Totales</span>
+                <span className="text-2xl font-black text-gray-900 mt-1 block">{scansCount || 0}</span>
+                <span className="text-[10px] text-gray-500">Toques NFC y escaneos QR</span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Escudo Anti-Quejas</span>
+                <span className="text-lg font-black text-emerald-700 mt-1 block">
+                  {primaryDevice?.review_filter_enabled !== false ? 'PROTEGIDO 5★' : 'INACTIVO'}
+                </span>
+                <span className="text-[10px] text-gray-500">4-5★ a Google • 1-3★ a buzón</span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Quejas Privadas</span>
+                <span className="text-2xl font-black text-red-600 mt-1 block">{feedbackCount || 0}</span>
+                <span className="text-[10px] text-gray-500">Inconformidades recibidas</span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Accesos Directos Exclusivos */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 1. Placa de Reseñas */}
+            <Link
+              href="/dashboard/devices"
+              className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-amber-50 text-amber-600 border border-amber-200 shadow-xs rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                  <Star className="w-6 h-6 fill-amber-500" />
+                </div>
+                <h3 className="font-bold text-base text-gray-900 mb-1">Mi Placa de Reseñas</h3>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  {primaryDevice?.business_name ? primaryDevice.business_name : 'Ver datos de tu negocio en Google Maps, probar tu enlace y ajustar el Escudo.'}
+                </p>
+              </div>
+              <span className="mt-4 text-xs font-bold text-black inline-flex items-center gap-1 group-hover:underline">
+                Gestionar Placa <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+
+            {/* 2. Quejas Privadas */}
+            <Link
+              href="/dashboard/feedback"
+              className="group p-5 border border-red-100/80 rounded-2xl bg-red-50/30 hover:bg-red-50/60 hover:border-red-200 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-red-50 text-red-600 border border-red-200 shadow-xs rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-bold text-base text-gray-900">Buzón de Quejas Privadas</h3>
+                  {(feedbackCount || 0) > 0 && (
+                    <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
+                      {feedbackCount}
+                    </span>
+                  )}
+                </div>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  Clientes insatisfechos capturados por el Escudo. Contáctalos directamente por WhatsApp para resolver su caso.
+                </p>
+              </div>
+              <span className="mt-4 text-xs font-bold text-red-700 inline-flex items-center gap-1 group-hover:underline">
+                Abrir Buzón ({feedbackCount || 0}) <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+
+            {/* 3. Métricas y Estadísticas */}
+            <Link
+              href="/dashboard/analytics"
+              className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 border border-blue-200 shadow-xs rounded-xl flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                  <BarChart3 className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-base text-gray-900 mb-1">Métricas de Escaneos</h3>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  Revisa en tiempo real cuántas personas tocan tu placa NFC y qué dispositivos utilizan (iPhone vs Android).
+                </p>
+              </div>
+              <span className="mt-4 text-xs font-bold text-blue-700 inline-flex items-center gap-1 group-hover:underline">
+                Ver Métricas <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 2. Obtener conteos básicos para KPIs rápidos (Usuarios generales y profesionales)
   const [
     { count: devicesCount }, 
     { count: leadsCount },

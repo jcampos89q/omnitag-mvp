@@ -90,11 +90,11 @@ export default function PwaInstallPrompt() {
             <Smartphone className="w-6 h-6 animate-pulse" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h4 className="font-extrabold text-sm text-white">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h4 className="font-extrabold text-xs sm:text-sm text-white">
                 Instala OmniTag en tu pantalla de inicio
               </h4>
-              <span className="text-[10px] bg-blue-400 text-black px-2 py-0.5 rounded-full font-black uppercase tracking-wider">
+              <span className="text-[9px] sm:text-[10px] bg-blue-400 text-black px-2 py-0.5 rounded-full font-black uppercase tracking-wider shrink-0">
                 Como App Móvil
               </span>
             </div>
@@ -105,7 +105,7 @@ export default function PwaInstallPrompt() {
         </div>
 
         {/* Guía según dispositivo */}
-        <div className="w-full md:w-auto shrink-0 flex items-center gap-2">
+        <div className="w-full md:w-auto shrink-0 flex items-center justify-between sm:justify-start gap-2 flex-wrap">
           {platform === 'ios' && (
             <div className="bg-white/10 backdrop-blur-xs border border-white/15 rounded-xl px-3.5 py-2 text-[11px] text-blue-100 flex items-center gap-2">
               <span>Toca</span>
