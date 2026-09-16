@@ -53,17 +53,13 @@ export default async function NfcClaimOrRedirectPage({
       .eq('is_active', true)
       .maybeSingle()
 
-    // Registrar métrica de escaneo NFC en segundo plano
-    try {
-      await supabase.from('scans').insert({
-        target_user_id: card.claimed_by_user_id,
-        vcard_id: vcard?.id || null,
-        source_type: 'nfc',
-        scanned_at: new Date().toISOString()
-      })
-    } catch {
-      // No bloquear la redirección si falla el analytics
-    }
+    // Registrar métrica de escaneo NFC en segundo plano sin retrasar la redirección
+    void supabase.from('scans').insert({
+      target_user_id: card.claimed_by_user_id,
+      vcard_id: vcard?.id || null,
+      source_type: 'nfc',
+      scanned_at: new Date().toISOString()
+    })
 
     if (vcard?.slug) {
       redirect(`/v/${vcard.slug}`)

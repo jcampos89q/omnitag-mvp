@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { cache } from 'react'
 import { 
   UserCircle2, 
   Briefcase, 
@@ -26,19 +27,24 @@ import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
 import { getUserPlanInfo } from '@/lib/plans'
 
+const getVCard = cache(async (slug: string) => {
+  const supabase = await createClient()
+  const { data: vcard } = await supabase
+    .from('vcards')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .maybeSingle()
+  return vcard
+})
+
 export async function generateMetadata({
   params
 }: {
   params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const supabase = await createClient()
   const { slug } = await params
-
-  const { data: vcard } = await supabase
-    .from('vcards')
-    .select('*')
-    .eq('slug', slug)
-    .maybeSingle()
+  const vcard = await getVCard(slug)
 
   if (!vcard) {
     return {
@@ -90,16 +96,9 @@ export default async function PublicVCardPage({
 }: {
   params: Promise<{ slug: string }>
 }) {
-  const supabase = await createClient()
   const { slug } = await params
-
-  // 1. Buscar la vCard por su slug (URL) de forma segura
-  const { data: vcard } = await supabase
-    .from('vcards')
-    .select('*')
-    .eq('slug', slug)
-    .eq('is_active', true)
-    .maybeSingle()
+  const supabase = await createClient()
+  const vcard = await getVCard(slug)
 
   if (!vcard) {
     notFound()
