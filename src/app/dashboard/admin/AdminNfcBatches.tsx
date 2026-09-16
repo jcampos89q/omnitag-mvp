@@ -217,25 +217,95 @@ export default function AdminNfcBatches({
     setTimeout(() => setCopiedAll(false), 2500)
   }
 
-  const exportToCsv = () => {
+  const exportToExcel = () => {
     if (!selectedBatch) return
-    const headers = ['Token', 'URL_NFC', 'Estado', 'Duracion_Dias', 'Reclamado_Por', 'Fecha_Creacion']
-    const rows = selectedBatch.nfc_cards.map(c => [
-      c.card_token,
-      `${baseUrl}/t/${c.card_token}`,
-      c.status,
-      c.plan_duration_days,
-      c.users?.email || 'N/A',
-      c.created_at
-    ])
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + 
-      [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    // Generar formato tabla HTML con estilos para Excel (.xls)
+    const headers = [
+      'N°',
+      'Código / Token',
+      'Enlace NFC & QR',
+      'Estado',
+      'Beneficio PRO',
+      'Usuario Asignado',
+      'Fecha Creación'
+    ]
 
-    const encodedUri = encodeURI(csvContent)
+    const formatStatus = (s: string) => {
+      if (s === 'active') return 'RECLAMADA / ACTIVA'
+      if (s === 'unclaimed') return 'DISPONIBLE'
+      return 'DESHABILITADA'
+    }
+
+    const rowsHtml = selectedBatch.nfc_cards.map((c, i) => {
+      const isClaimed = c.status === 'active'
+      const statusColor = isClaimed ? '#059669' : '#d97706'
+      const statusBg = isClaimed ? '#d1fae5' : '#fef3c7'
+      const dateFormatted = new Date(c.created_at).toLocaleDateString('es-HN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+
+      return `
+        <tr>
+          <td style="text-align:center;mso-number-format:'\\@';">${i + 1}</td>
+          <td style="font-weight:bold;font-family:monospace;background:#f3f4f6;text-align:center;mso-number-format:'\\@';">${c.card_token}</td>
+          <td style="color:#2563eb;text-decoration:underline;">${baseUrl}/t/${c.card_token}</td>
+          <td style="text-align:center;font-weight:bold;color:${statusColor};background:${statusBg};">${formatStatus(c.status)}</td>
+          <td style="text-align:center;">${c.plan_duration_days} Días (1 Año)</td>
+          <td>${c.users?.email ? `${c.users?.full_name || 'Usuario'} (${c.users.email})` : 'Sin asignar (Pendiente)'}</td>
+          <td style="text-align:center;">${dateFormatted}</td>
+        </tr>
+      `
+    }).join('')
+
+    const tableHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta http-equiv="content-type" content="text/plain; charset=UTF-8"/>
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>${selectedBatch.batch_name.substring(0, 30)}</x:Name>
+                  <x:WorksheetOptions>
+                    <x:DisplayGridlines/>
+                  </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+          <style>
+            th { background-color: #0f172a; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #334155; padding: 8px; }
+            td { border: 1px solid #e2e8f0; padding: 6px; font-family: Arial, sans-serif; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <h2>OMNITAG TECH — CONTROL DE LOTE NFC: ${selectedBatch.batch_name.toUpperCase()}</h2>
+          <p>Total de tarjetas: <b>${selectedBatch.nfc_cards.length}</b> | Generado el: ${new Date().toLocaleDateString('es-HN')}</p>
+          <table>
+            <thead>
+              <tr>
+                ${headers.map(h => `<th>${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `
+
+    const blob = new Blob(['\ufeff', tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' })
     const link = document.createElement('a')
-    link.setAttribute('href', encodedUri)
-    link.setAttribute('download', `${selectedBatch.batch_name.replace(/\s+/g, '_')}_tarjetas.csv`)
+    link.href = URL.createObjectURL(blob)
+    link.download = `${selectedBatch.batch_name.replace(/\s+/g, '_')}_Control_Tarjetas.xls`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -403,12 +473,12 @@ export default function AdminNfcBatches({
                   </button>
 
                   <button
-                    onClick={exportToCsv}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
-                    title="Descargar archivo Excel / CSV para control de producción"
+                    onClick={exportToExcel}
+                    className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    title="Descargar archivo Excel con formato y diseño de tabla para control de inventario"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>Exportar CSV</span>
+                    <span>Descargar Excel</span>
                   </button>
 
                   <button
