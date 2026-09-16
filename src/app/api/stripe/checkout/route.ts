@@ -54,12 +54,12 @@ export async function POST(request: NextRequest) {
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: 'hnl',
             product_data: {
               name: 'Suscripción PRO - OmniTag',
               description: 'Acceso ilimitado a todas las funciones premium.',
             },
-            unit_amount: 2000, // $20.00
+            unit_amount: 55000, // L. 550.00
           },
           quantity: 1,
         },

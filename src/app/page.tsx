@@ -91,7 +91,7 @@ export default function LandingPage() {
       highlights: [
         '1 Toque NFC o escaneo QR para abrir Google Reviews',
         'Filtro inteligente: 5★ van a Google, 1-3★ van a gerencia',
-        'Botón directo de WhatsApp para contactar y disculparse',
+        'Placas NFC Inteligentes de Acrílico por solo L. 1,200 (Incluye 1 año de suscripción)',
         'Aumenta tu posición y visibilidad en búsquedas locales'
       ],
       linkText: 'Blindar reputación online',
@@ -107,7 +107,7 @@ export default function LandingPage() {
       description: 'Comparte tu tarjeta de presentación profesional, catálogo, redes sociales y formas de pago con un toque en tu tarjeta NFC o escaneo de código QR.',
       highlights: [
         'Descarga de contacto directo a la agenda del móvil (.vcf)',
-        'Enlaces a WhatsApp, Instagram, LinkedIn, Ubicación y Web',
+        'Tarjetas NFC de Presentación Físicas por solo L. 550 (Incluye 1 año)',
         'Intercambio bidireccional: captura los datos de la otra persona',
         'Temas visuales modernos con colores y tipografías a tu medida'
       ],
@@ -166,7 +166,7 @@ export default function LandingPage() {
           OFERTA DE LANZAMIENTO
         </span>
         <span>
-          🎁 <b>7 Días de Prueba Gratis</b> con herramientas PRO + <b>50% OFF (L. 275 / $10)</b> si pagas en tus primeros 3 días.
+          🎁 <b>7 Días de Prueba Gratis</b> con herramientas PRO + <b>50% OFF (L. 275)</b> si pagas en tus primeros 3 días. (Suscripción Mensual Regular: L. 550)
         </span>
         <Link 
           href="/register" 
@@ -617,7 +617,7 @@ export default function LandingPage() {
                 Empieza a digitalizar tu negocio hoy mismo
               </h3>
               <p className="text-xs sm:text-base text-gray-300 max-w-lg mx-auto font-medium">
-                Crea tu cuenta gratis y obtén <b>7 días de acceso ilimitado PRO</b>. Además, si confirmas tu plan por depósito o transferencia en tus primeros 3 días, tu primer mes te queda con <b>50% de descuento (L. 275 HNL / $10 USD)</b>.
+                Crea tu cuenta gratis y obtén <b>7 días de acceso ilimitado PRO</b>. Además, si confirmas tu plan por depósito o transferencia en tus primeros 3 días, tu primer mes te queda con <b>50% de descuento (L. 275 HNL)</b>. (Renovación regular: L. 550 / mes).
               </p>
             </div>
 

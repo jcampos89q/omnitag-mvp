@@ -140,7 +140,7 @@ export default async function AdminDashboardPage() {
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">MRR Estimado</span>
               <DollarSign className="w-5 h-5 text-emerald-600" />
             </div>
-            <p className="text-3xl font-extrabold text-gray-900">${estimatedMrr} <span className="text-sm font-semibold text-gray-500">(L. {estimatedMrrHnl})</span></p>
+            <p className="text-3xl font-extrabold text-gray-900">L. {estimatedMrrHnl}</p>
             <p className="text-xs text-gray-500 mt-1">
               Tasa de Conversión: <span className="font-bold text-gray-800">{conversionRate}%</span>
             </p>

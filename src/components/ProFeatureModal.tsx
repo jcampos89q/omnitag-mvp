@@ -81,7 +81,6 @@ export default function ProFeatureModal({
             <div className="flex items-baseline justify-center gap-1.5">
               <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">L. 550</span>
               <span className="text-xs text-gray-500 font-medium">HNL / mes</span>
-              <span className="text-xs text-gray-400 font-normal">($20 USD)</span>
             </div>
             <p className="text-[11px] text-gray-400 mt-0.5">Transferencia Bancaria BAC Credomatic o Pago Directo</p>
           </div>

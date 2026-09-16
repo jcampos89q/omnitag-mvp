@@ -85,7 +85,7 @@ export default function BillingClient({
 
   // Precios con o sin descuento del 50%
   const priceHnl = isDiscountEligible ? 'L. 275 HNL' : 'L. 550 HNL'
-  const priceUsd = isDiscountEligible ? '$10 USD' : '$20 USD'
+  const priceUsd = isDiscountEligible ? 'L. 275 HNL' : 'L. 550 HNL' // Fallback if still referenced
 
   const pendingTransfer = transfers.find(t => t.status === 'pending')
 
@@ -229,7 +229,7 @@ export default function BillingClient({
                 ¡Paga tu primer mes de OmniTag PRO a mitad de precio!
               </h3>
               <p className="text-xs text-gray-600 mt-0.5">
-                Por activar tu cuenta en los primeros 3 días, tu primer mes te queda en solo <b>L. 275 HNL</b> (o $10 USD) en lugar de <span className="line-through text-gray-400">L. 550 HNL</span> por depósito o transferencia bancaria.
+                Por activar tu cuenta en los primeros 3 días, tu primer mes te queda en solo <b>L. 275 HNL</b> en lugar de <span className="line-through text-gray-400">L. 550 HNL</span> por depósito o transferencia bancaria. (Si compraste una Tarjeta o Placa NFC, ignora este mensaje, ¡tu año ya está cubierto!)
               </p>
             </div>
           </div>
@@ -331,7 +331,6 @@ export default function BillingClient({
                     <span className="text-3xl font-extrabold text-emerald-700">L. 275</span>
                     <span className="text-gray-400 text-sm line-through font-semibold">L. 550</span>
                     <span className="text-gray-500 text-xs font-medium">HNL / 1er mes</span>
-                    <span className="text-gray-400 text-xs">($10 USD)</span>
                   </div>
                   <p className="text-[11px] text-emerald-700 font-bold mt-0.5">
                     ¡Oferta especial por registrarte hace menos de 3 días!
@@ -342,7 +341,6 @@ export default function BillingClient({
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-3xl font-extrabold text-gray-900">L. 550</span>
                     <span className="text-gray-500 text-xs font-medium">HNL / mes</span>
-                    <span className="text-gray-400 text-xs">($20 USD)</span>
                   </div>
                   <p className="text-[11px] text-gray-400 mt-0.5">Pago por Depósito o Transferencia BAC Credomatic</p>
                 </div>
@@ -470,7 +468,7 @@ export default function BillingClient({
                   {isDiscountEligible ? (
                     <div className="flex items-center gap-2">
                       <span className="font-extrabold text-emerald-700 text-sm sm:text-base">
-                        L. 275.00 HNL <span className="text-gray-400 text-xs font-normal">(o $10 USD)</span>
+                        L. 275.00 HNL
                       </span>
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded">
                         50% APLICADO
@@ -478,7 +476,7 @@ export default function BillingClient({
                     </div>
                   ) : (
                     <span className="font-extrabold text-emerald-700 text-sm sm:text-base">
-                      L. 550.00 HNL <span className="text-gray-400 text-xs font-normal">(o $20 USD)</span>
+                      L. 550.00 HNL
                     </span>
                   )}
                 </div>
@@ -529,24 +527,13 @@ export default function BillingClient({
                   <button
                     type="button"
                     onClick={() => setCurrency('HNL')}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                    className={`col-span-2 py-2 px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
                       currency === 'HNL'
                         ? 'border-black bg-black text-white'
                         : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     {isDiscountEligible ? 'L. 275 Lempiras' : 'L. 550 Lempiras'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCurrency('USD')}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
-                      currency === 'USD'
-                        ? 'border-black bg-black text-white'
-                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    {isDiscountEligible ? '$10 Dólares' : '$20 Dólares'}
                   </button>
                 </div>
               </div>
