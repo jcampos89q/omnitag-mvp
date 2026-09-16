@@ -10,7 +10,7 @@ export default async function NfcClaimOrRedirectPage({
   params: Promise<{ token: string }>
 }) {
   const { token } = await params
-  const cleanToken = token.trim()
+  const cleanToken = decodeURIComponent(token || '').trim()
   const supabase = await createClient()
 
   // 1. Buscar la tarjeta en la base de datos
