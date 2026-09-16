@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { 
   Users, 
   UserCircle, 
@@ -98,7 +99,19 @@ export default function AdminCreationsHub({
   transfers?: AdminBankTransfer[]
   batches?: any[]
 }) {
-  const [activeTab, setActiveTab] = useState<'users' | 'transfers' | 'nfc-batches' | 'contacts' | 'vcards' | 'menus' | 'loyalty' | 'devices'>('users')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState<'users' | 'transfers' | 'nfc-batches' | 'contacts' | 'vcards' | 'menus' | 'loyalty' | 'devices'>(
+    tabParam && ['users', 'transfers', 'nfc-batches', 'contacts', 'vcards', 'menus', 'loyalty', 'devices'].includes(tabParam)
+      ? (tabParam as any)
+      : 'users'
+  )
+
+  useEffect(() => {
+    if (tabParam && ['users', 'transfers', 'nfc-batches', 'contacts', 'vcards', 'menus', 'loyalty', 'devices'].includes(tabParam)) {
+      setActiveTab(tabParam as any)
+    }
+  }, [tabParam])
   const [searchTerm, setSearchTerm] = useState('')
 
   const totalMasterContacts = 

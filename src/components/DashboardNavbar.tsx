@@ -72,8 +72,12 @@ export default function DashboardNavbar({
   // Filtrado de navegación según el tipo de cuenta
   let filteredBaseItems = [...baseNavItems]
 
-  if (accountType === 'professional') {
-    // Los profesionales solo ven su vCard, CRM, estadísticas y suscripción
+  if (isAdmin) {
+    // EL SUPERADMINISTRADOR TIENE ACCESO TOTAL A TODAS LAS HERRAMIENTAS SIN LÍMITES
+    filteredBaseItems = [...baseNavItems]
+    filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Users, badge: 'Salud', section: 'gestion' })
+  } else if (accountType === 'professional') {
+    // Solo los clientes profesionales individuales ven su vCard, CRM y estadísticas
     const allowedHrefs = [
       '/dashboard',
       '/dashboard/vcard',
@@ -103,7 +107,10 @@ export default function DashboardNavbar({
 
   const navItems = [
     ...filteredBaseItems,
-    ...(isAdmin ? [{ name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true, section: 'admin' }] : [])
+    ...(isAdmin ? [
+      { name: '🎴 Lotes Tarjetas NFC', href: '/dashboard/admin?tab=nfc-batches', icon: CreditCard, adminOnly: true, section: 'admin' },
+      { name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true, section: 'admin' }
+    ] : [])
   ]
 
   const isActive = (href: string) => {

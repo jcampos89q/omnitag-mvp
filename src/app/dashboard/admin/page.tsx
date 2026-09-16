@@ -60,7 +60,7 @@ export default async function AdminDashboardPage() {
     supabase.rpc('get_admin_bank_transfers'),
     supabase
       .from('nfc_batches')
-      .select('*, nfc_cards(*, users:claimed_by_user_id(full_name, email))')
+      .select('*, nfc_cards(*)')
       .order('created_at', { ascending: false })
   ])
 
