@@ -3,6 +3,8 @@ export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { QrCode } from 'lucide-react'
 import VCardForm from './VCardForm'
 import { getUserPlanInfo } from '@/lib/plans'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
@@ -63,14 +65,23 @@ export default async function VCardBuilderPage({
                   Enlace público: <span className="font-mono bg-blue-100 px-1.5 py-0.5 rounded font-bold">/v/{vcard.slug}</span>
                 </p>
               </div>
-              <a 
-                href={`/v/${vcard.slug}`} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="text-xs sm:text-sm font-bold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-xs whitespace-nowrap"
-              >
-                Ver Mi Perfil Público &rarr;
-              </a>
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                <Link
+                  href="/dashboard/qr-studio"
+                  className="text-xs font-extrabold bg-white text-gray-800 border border-gray-300 px-3.5 py-2 rounded-lg hover:bg-gray-100 transition shadow-2xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                >
+                  <QrCode className="w-4 h-4 text-purple-600" />
+                  <span>Personalizar & Descargar QR (HD)</span>
+                </Link>
+                <a 
+                  href={`/v/${vcard.slug}`} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-xs font-extrabold bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-xs whitespace-nowrap cursor-pointer"
+                >
+                  Ver Mi Perfil Público &rarr;
+                </a>
+              </div>
             </div>
           )}
         </div>

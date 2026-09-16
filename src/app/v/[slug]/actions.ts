@@ -17,11 +17,20 @@ export async function saveLead(formData: FormData) {
     return { success: false, error: 'Nombre y vCard requeridos' }
   }
 
+  // Obtener primero la vCard para conocer al dueño
+  const { data: vcard } = await supabase
+    .from('vcards')
+    .select('user_id')
+    .eq('id', vcardId)
+    .maybeSingle()
+
   const { data, error } = await supabase.from('leads').insert({
     vcard_id: vcardId,
+    user_id: vcard?.user_id || null,
     name,
     email: email || null,
-    phone: phone || null
+    phone: phone || null,
+    source: 'vcard'
   }).select().single()
 
   if (error) {
@@ -31,12 +40,6 @@ export async function saveLead(formData: FormData) {
 
   // Enviar notificación interna y Notificación Push Flotante al celular del usuario
   try {
-    const { data: vcard } = await supabase
-      .from('vcards')
-      .select('user_id')
-      .eq('id', vcardId)
-      .maybeSingle()
-
     if (vcard?.user_id) {
       // 1. Guardar en base de datos
       await supabase.from('notifications').insert({

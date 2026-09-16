@@ -15,10 +15,12 @@ import {
   ShieldCheck,
   Zap,
   ArrowRight,
-  Tag
+  Tag,
+  CreditCard
 } from 'lucide-react'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import { submitBankTransfer } from './actions'
+import { claimNfcCardByToken } from '@/app/dashboard/admin/nfcActions'
 import { UserPlanInfo } from '@/lib/plans'
 
 interface BankTransfer {
@@ -52,6 +54,28 @@ export default function BillingClient({
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [submitSuccess, setSubmitSuccess] = useState<boolean>(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // Canje de tarjeta NFC física
+  const [cardTokenInput, setCardTokenInput] = useState('')
+  const [claimingCard, setClaimingCard] = useState(false)
+  const [claimMessage, setClaimMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const handleClaimToken = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!cardTokenInput.trim()) return
+    setClaimingCard(true)
+    setClaimMessage(null)
+    try {
+      await claimNfcCardByToken(cardTokenInput)
+      setClaimMessage({ type: 'success', text: '¡Tarjeta vinculada con éxito! Tu membresía de 1 año PRO ya está activa.' })
+      setCardTokenInput('')
+      setTimeout(() => window.location.reload(), 2000)
+    } catch (err: any) {
+      setClaimMessage({ type: 'error', text: err.message || 'Error vinculando tarjeta' })
+    } finally {
+      setClaimingCard(false)
+    }
+  }
 
   const isPro = currentPlan === 'pro'
   const isTrial = Boolean(planInfo?.isTrial)
@@ -140,6 +164,49 @@ export default function BillingClient({
             <p className="font-semibold text-emerald-600">✓ Todas las herramientas PRO habilitadas</p>
           </div>
         )}
+      </div>
+
+      {/* CANJEAR CÓDIGO DE TARJETA FÍSICA NFC */}
+      <div className="bg-linear-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+        <div className="flex items-start gap-3">
+          <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-xs shrink-0">
+            <CreditCard className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="font-extrabold text-sm text-gray-900 flex items-center gap-2">
+              <span>¿Tienes una Tarjeta Física Inteligente NFC?</span>
+              <span className="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.2 rounded-full uppercase">
+                1 Año PRO
+              </span>
+            </h4>
+            <p className="text-xs text-gray-600 mt-0.5">
+              Ingresa el código que viene en tu tarjeta para vincularla a tu perfil y sumar <b>365 días de membresía PRO</b>.
+            </p>
+            {claimMessage && (
+              <p className={`text-xs mt-1.5 font-bold ${claimMessage.type === 'success' ? 'text-emerald-700' : 'text-red-600'}`}>
+                {claimMessage.text}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleClaimToken} className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+          <input
+            type="text"
+            placeholder="Ej. NFC-8A3X9K"
+            value={cardTokenInput}
+            onChange={(e) => setCardTokenInput(e.target.value.toUpperCase())}
+            required
+            className="px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-mono font-bold bg-white focus:border-black focus:outline-none w-full sm:w-44"
+          />
+          <button
+            type="submit"
+            disabled={claimingCard || !cardTokenInput.trim()}
+            className="bg-black hover:bg-gray-800 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition cursor-pointer whitespace-nowrap disabled:opacity-50 shadow-xs"
+          >
+            {claimingCard ? 'Vinculando...' : 'Activar'}
+          </button>
+        </form>
       </div>
 
       {/* BANNER DE OFERTA 50% DE DESCUENTO EN PRIMEROS 3 DÍAS */}

@@ -39,9 +39,16 @@ export async function signup(formData: FormData) {
   const email = (formData.get('email') as string)?.trim()
   const password = formData.get('password') as string
   const fullName = (formData.get('full_name') as string)?.trim()
+  const accountType = (formData.get('account_type') as string)?.trim() || 'professional'
+  const industry = (formData.get('industry') as string)?.trim() || 'general'
+  const professionTitle = (formData.get('profession_title') as string)?.trim() || ''
+  const cardToken = (formData.get('card_token') as string)?.trim() || ''
 
   if (!email || !password) {
-    redirect('/register?error=' + encodeURIComponent('Por favor completa todos los campos requeridos.'))
+    const errorUrl = cardToken 
+      ? `/register?token=${encodeURIComponent(cardToken)}&error=` 
+      : '/register?error='
+    redirect(errorUrl + encodeURIComponent('Por favor completa todos los campos requeridos.'))
   }
 
   const { data, error } = await supabase.auth.signUp({
@@ -50,6 +57,9 @@ export async function signup(formData: FormData) {
     options: {
       data: {
         full_name: fullName,
+        account_type: accountType,
+        industry: industry,
+        profession_title: professionTitle,
       },
     },
   })
@@ -61,7 +71,51 @@ export async function signup(formData: FormData) {
     } else if (error.message.includes('rate limit')) {
       message = 'Límite de correos alcanzado en Supabase. Intenta más tarde.'
     }
-    redirect('/register?error=' + encodeURIComponent(message))
+    const errorUrl = cardToken 
+      ? `/register?token=${encodeURIComponent(cardToken)}&error=` 
+      : '/register?error='
+    redirect(errorUrl + encodeURIComponent(message))
+  }
+
+  // Si se proporcionó un token NFC válido, vincularlo y activar 1 año PRO
+  if (data?.user && cardToken) {
+    try {
+      const { data: card } = await supabase
+        .from('nfc_cards')
+        .select('*')
+        .eq('card_token', cardToken)
+        .eq('status', 'unclaimed')
+        .maybeSingle()
+
+      if (card) {
+        const planDays = card.plan_duration_days || 365
+        const expiresAt = new Date(Date.now() + planDays * 24 * 60 * 60 * 1000).toISOString()
+
+        // 1. Marcar tarjeta como activa y asignada al usuario
+        await supabase
+          .from('nfc_cards')
+          .update({
+            status: 'active',
+            claimed_by_user_id: data.user.id,
+            claimed_at: new Date().toISOString()
+          })
+          .eq('id', card.id)
+
+        // 2. Extender suscripción por 1 año en la tabla users
+        await supabase
+          .from('users')
+          .update({
+            subscription_expires_at: expiresAt,
+            plan_status: 'pro_annual',
+            account_type: accountType,
+            industry: industry,
+            profession_title: professionTitle
+          })
+          .eq('id', data.user.id)
+      }
+    } catch (nfcErr) {
+      console.error('Error vinculando tarjeta NFC en registro:', nfcErr)
+    }
   }
 
   if (data?.user && !data.session) {
@@ -69,6 +123,11 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
+  
+  if (cardToken) {
+    redirect('/dashboard/vcard?nfc_activated=true')
+  }
+
   redirect('/dashboard')
 }
 

@@ -58,30 +58,44 @@ export default function DashboardNavbar({
   userId,
   isAdmin = false,
   userIndustry = 'general',
+  accountType = 'professional',
 }: { 
   userEmail?: string 
   userId?: string
   isAdmin?: boolean
   userIndustry?: string
+  accountType?: string
 }) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // Filter base items based on industry
-  const filteredBaseItems = baseNavItems.filter(item => {
-    if (userIndustry === 'health') {
-      // Hide menus and basic leads for health industry (they use patients instead)
-      if (item.href === '/dashboard/menus' || item.href === '/dashboard/leads') return false
-    } else {
-      // For general industry, hide patients (if we add it to baseNavItems)
-      if (item.href === '/dashboard/patients') return false
-    }
-    return true
-  })
+  // Filtrado de navegación según el tipo de cuenta
+  let filteredBaseItems = [...baseNavItems]
 
-  // Add Patients for health industry
-  if (userIndustry === 'health') {
-    filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Users, badge: 'Salud', section: 'gestion' })
+  if (accountType === 'professional') {
+    // Los profesionales solo ven su vCard, CRM, estadísticas y suscripción
+    const allowedHrefs = [
+      '/dashboard',
+      '/dashboard/vcard',
+      '/dashboard/leads',
+      '/dashboard/analytics',
+      '/dashboard/billing'
+    ]
+    filteredBaseItems = baseNavItems.filter(item => allowedHrefs.includes(item.href))
+  } else {
+    // Negocios / Empresas
+    filteredBaseItems = baseNavItems.filter(item => {
+      if (userIndustry === 'health') {
+        if (item.href === '/dashboard/menus') return false
+      } else {
+        if (item.href === '/dashboard/patients') return false
+      }
+      return true
+    })
+
+    if (userIndustry === 'health') {
+      filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Users, badge: 'Salud', section: 'gestion' })
+    }
   }
   
   // Add Settings to the end

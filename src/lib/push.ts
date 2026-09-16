@@ -30,10 +30,9 @@ export async function sendPushNotificationToUser(userId: string, payload: PushNo
 
   try {
     // Buscar todas las suscripciones push activas del usuario (celular, tablet, PC)
+    // Se usa RPC get_user_push_subscriptions para evitar bloqueos por RLS
     const { data: subs, error } = await supabaseAdmin
-      .from('push_subscriptions')
-      .select('*')
-      .eq('user_id', userId)
+      .rpc('get_user_push_subscriptions', { p_user_id: userId })
 
     if (error || !subs || subs.length === 0) {
       return
@@ -46,7 +45,7 @@ export async function sendPushNotificationToUser(userId: string, payload: PushNo
       icon: payload.icon || '/icon-192x192.png'
     })
 
-    const sendPromises = subs.map(async (sub) => {
+    const sendPromises = subs.map(async (sub: any) => {
       const pushSubscription = {
         endpoint: sub.endpoint,
         keys: {
@@ -61,9 +60,7 @@ export async function sendPushNotificationToUser(userId: string, payload: PushNo
         // Si la suscripción expiró o fue eliminada del navegador (410 Gone / 404), limpiarla
         if (err.statusCode === 410 || err.statusCode === 404) {
           await supabaseAdmin
-            .from('push_subscriptions')
-            .delete()
-            .eq('endpoint', sub.endpoint)
+            .rpc('delete_expired_push_subscription', { p_endpoint: sub.endpoint })
         } else {
           console.error('Error enviando push individual:', err.message)
         }

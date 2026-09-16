@@ -44,19 +44,24 @@ export default async function AdminDashboardPage() {
     )
   }
 
-  // Obtener métricas globales, usuarios, creaciones, contactos master y transferencias bancarias
+  // Obtener métricas globales, usuarios, creaciones, contactos master, transferencias bancarias y lotes NFC
   const [
     { data: metricsData }, 
     { data: usersData }, 
     { data: creationsData },
     { data: contactsData },
-    { data: transfersData }
+    { data: transfersData },
+    { data: batchesData }
   ] = await Promise.all([
     supabase.rpc('get_admin_metrics'),
     supabase.rpc('get_admin_users_list'),
     supabase.rpc('get_admin_all_creations'),
     supabase.rpc('get_admin_master_contacts'),
-    supabase.rpc('get_admin_bank_transfers')
+    supabase.rpc('get_admin_bank_transfers'),
+    supabase
+      .from('nfc_batches')
+      .select('*, nfc_cards(*, users:claimed_by_user_id(full_name, email))')
+      .order('created_at', { ascending: false })
   ])
 
   const users: AdminUser[] = usersData || []
@@ -166,13 +171,14 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Explorador de Creaciones, Contactos Master & Pagos BAC */}
+        {/* Explorador de Creaciones, Contactos Master, Pagos BAC & Lotes NFC */}
         <div>
           <AdminCreationsHub 
             users={users} 
             creations={creations} 
             contacts={contacts}
             transfers={transfers}
+            batches={batchesData || []}
           />
         </div>
       </div>

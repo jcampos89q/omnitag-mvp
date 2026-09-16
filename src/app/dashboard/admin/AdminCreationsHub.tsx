@@ -23,6 +23,7 @@ import {
 import AdminUserTable, { AdminUser } from './AdminUserTable'
 import AdminMasterContacts, { MasterContact } from './AdminMasterContacts'
 import AdminBankTransfers, { AdminBankTransfer } from './AdminBankTransfers'
+import AdminNfcBatches from './AdminNfcBatches'
 
 export interface AdminCreationsData {
   vcards: Array<{
@@ -84,7 +85,8 @@ export default function AdminCreationsHub({
   users,
   creations,
   contacts,
-  transfers = []
+  transfers = [],
+  batches = []
 }: {
   users: AdminUser[]
   creations: AdminCreationsData
@@ -94,8 +96,9 @@ export default function AdminCreationsHub({
     private_feedbacks: MasterContact[]
   }
   transfers?: AdminBankTransfer[]
+  batches?: any[]
 }) {
-  const [activeTab, setActiveTab] = useState<'users' | 'transfers' | 'contacts' | 'vcards' | 'menus' | 'loyalty' | 'devices'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'transfers' | 'nfc-batches' | 'contacts' | 'vcards' | 'menus' | 'loyalty' | 'devices'>('users')
   const [searchTerm, setSearchTerm] = useState('')
 
   const totalMasterContacts = 
@@ -168,6 +171,18 @@ export default function AdminCreationsHub({
         </button>
 
         <button
+          onClick={() => { setActiveTab('nfc-batches'); setSearchTerm('') }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition whitespace-nowrap cursor-pointer ${
+            activeTab === 'nfc-batches'
+              ? 'bg-amber-500 text-black shadow-xs'
+              : 'bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200'
+          }`}
+        >
+          <CreditCard className="w-4 h-4 text-amber-700" />
+          <span>🎴 Lotes Tarjetas NFC ({batches.length})</span>
+        </button>
+
+        <button
           onClick={() => { setActiveTab('contacts'); setSearchTerm('') }}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition whitespace-nowrap cursor-pointer ${
             activeTab === 'contacts'
@@ -236,6 +251,11 @@ export default function AdminCreationsHub({
       {/* 2. PESTAÑA: PAGOS Y TRANSFERENCIAS BANCARIAS */}
       {activeTab === 'transfers' && (
         <AdminBankTransfers transfers={transfers} />
+      )}
+
+      {/* 2.5 PESTAÑA: LOTES Y PRODUCCIÓN DE TARJETAS NFC */}
+      {activeTab === 'nfc-batches' && (
+        <AdminNfcBatches batches={batches} users={users} />
       )}
 
       {/* 3. PESTAÑA: MASTER CRM & LEADS */}
