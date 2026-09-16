@@ -50,7 +50,10 @@ export default function FilterClient({
     
     // Si la calificación es buena (4 o 5), va directo a Google Maps
     if (value >= 4) {
-      window.location.href = redirectUrl
+      const safeUrl = redirectUrl.startsWith('http://') || redirectUrl.startsWith('https://')
+        ? redirectUrl
+        : `https://${redirectUrl}`
+      window.location.href = safeUrl
     } else {
       // Si es 1, 2 o 3, mostramos el formulario de quejas privado
       setShowForm(true)
