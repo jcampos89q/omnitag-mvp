@@ -38,13 +38,15 @@ interface BillingClientProps {
   userEmail: string
   transfers: BankTransfer[]
   planInfo?: UserPlanInfo
+  accountType?: string
 }
 
 export default function BillingClient({
   currentPlan,
   userEmail,
   transfers = [],
-  planInfo
+  planInfo,
+  accountType
 }: BillingClientProps) {
   const [receiptUrl, setReceiptUrl] = useState<string>('')
   const [referenceNumber, setReferenceNumber] = useState<string>('')
@@ -210,7 +212,7 @@ export default function BillingClient({
       </div>
 
       {/* BANNER DE OFERTA 50% DE DESCUENTO EN PRIMEROS 3 DÍAS */}
-      {isDiscountEligible && (
+      {isDiscountEligible && accountType !== 'professional' && (
         <div className="p-5 bg-linear-to-r from-emerald-500/15 via-teal-500/10 to-transparent border-2 border-emerald-500/40 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
           <div className="flex items-start gap-3">
             <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs shrink-0 mt-0.5">
@@ -256,7 +258,90 @@ export default function BillingClient({
         </div>
       )}
 
-      {/* 2. TABLA COMPARATIVA DE PLANES */}
+      {/* 2. TABLAS DE PLANES SEGÚN PERFIL */}
+      {accountType === 'professional' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
+          <div className="border border-gray-200 rounded-2xl p-6 sm:p-7 bg-white flex flex-col justify-between shadow-2xs">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-bold text-gray-900">vCard Digital Gratis</h3>
+                <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">Básico</span>
+              </div>
+              <p className="text-gray-500 text-xs mb-4">Perfil digital para compartir tus datos.</p>
+              <div className="mb-6">
+                <span className="text-3xl font-extrabold text-gray-900">$0</span>
+              </div>
+              <ul className="space-y-2.5 text-xs text-gray-600 mb-6">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span><b>1 vCard Digital</b> básica</span>
+                </li>
+                <li className="flex items-center gap-2 text-gray-400">
+                  <span className="w-4 h-4 text-center">✕</span>
+                  <span className="line-through">Sin tarjeta física NFC</span>
+                </li>
+              </ul>
+            </div>
+            <div className="pt-4 border-t border-gray-100">
+              <span className="block text-center text-xs font-bold text-gray-500 py-2">
+                {!isPro ? '✓ Tu Plan Actual' : 'Incluido'}
+              </span>
+            </div>
+          </div>
+
+          <div className="border-2 border-blue-600 rounded-2xl p-6 sm:p-7 bg-white relative flex flex-col justify-between shadow-xl">
+            <div className="absolute -top-3.5 right-6 bg-blue-600 text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+              <CreditCard className="w-3.5 h-3.5" /> FÍSICA + PRO
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-bold text-gray-900">Tarjeta NFC Física + 1 Año PRO</h3>
+              </div>
+              <p className="text-gray-500 text-xs mb-4">La manera profesional de conectar y compartir tus datos.</p>
+              <div className="mb-6">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-extrabold text-blue-700">L. 550</span>
+                  <span className="text-gray-500 text-xs font-medium">HNL / pago único anual</span>
+                </div>
+                <p className="text-[11px] text-gray-400 mt-0.5">Incluye la tarjeta física NFC + envío + 365 días PRO.</p>
+              </div>
+              <ul className="space-y-2.5 text-xs text-gray-700 mb-6 font-medium">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-blue-600 shrink-0 font-bold" />
+                  <span><b>Tarjeta Física Inteligente NFC</b></span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-blue-600 shrink-0 font-bold" />
+                  <span><b>Captura de Leads (CRM)</b> Ilimitado</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-blue-600 shrink-0 font-bold" />
+                  <span>Exportación de contactos a Excel</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-blue-600 shrink-0 font-bold" />
+                  <span><b>Código QR Impreso</b> en la tarjeta</span>
+                </li>
+              </ul>
+            </div>
+            <div className="pt-4 border-t border-gray-100">
+              {isPro ? (
+                <span className="block text-center text-xs font-bold text-blue-700 bg-blue-50 py-2.5 rounded-xl">
+                  ✓ Plan PRO Activo en tu cuenta
+                </span>
+              ) : (
+                <a
+                  href="#metodos-pago"
+                  className="w-full bg-black text-white font-extrabold py-3 px-4 rounded-xl hover:bg-gray-800 transition text-xs shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <span>Solicitar y Pagar por BAC</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
         {/* PLAN BÁSICO */}
         <div className="border border-gray-200 rounded-2xl p-6 sm:p-7 bg-white flex flex-col justify-between shadow-2xs">
@@ -392,6 +477,7 @@ export default function BillingClient({
           </div>
         </div>
       </div>
+      )}
 
       {/* 3. MÉTODOS DE PAGO: TRANSFERENCIA BAC CREDOMATIC */}
       {!isPro && (
@@ -402,7 +488,9 @@ export default function BillingClient({
               Pago por Transferencia Bancaria (BAC Credomatic Honduras)
             </h3>
             <p className="text-xs text-gray-500 mt-1">
-              Realiza tu transferencia o depósito bancario y adjunta el comprobante aquí abajo para activar tu Plan PRO de inmediato.
+              {accountType === 'professional' 
+                ? 'Realiza el pago para solicitar tu Tarjeta Física Inteligente NFC y adjunta el comprobante aquí abajo. Incluye 1 año de Plan PRO.'
+                : 'Realiza tu transferencia o depósito bancario y adjunta el comprobante aquí abajo para activar tu Plan PRO de inmediato.'}
             </p>
           </div>
 

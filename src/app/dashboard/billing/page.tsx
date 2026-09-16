@@ -18,7 +18,10 @@ export default async function BillingPage({
   if (!user) redirect('/login')
 
   // 1. Obtener plan del usuario (Admins siempre son PRO, incluye prueba gratis y descuento)
-  const planInfo = await getUserPlanInfo(supabase, user.id)
+  const [planInfo, { data: profile }] = await Promise.all([
+    getUserPlanInfo(supabase, user.id),
+    supabase.from('users').select('account_type').eq('id', user.id).maybeSingle()
+  ])
 
   // 2. Obtener transferencias enviadas por el usuario
   const { data: transfersData } = await supabase
@@ -47,6 +50,7 @@ export default async function BillingPage({
           userEmail={user.email || ''}
           transfers={transfers}
           planInfo={planInfo}
+          accountType={profile?.account_type}
         />
       </div>
     </div>

@@ -412,78 +412,86 @@ export default async function DashboardPage() {
           </Link>
 
           {/* Menú Digital */}
-          <Link 
-            href="/dashboard/menus" 
-            className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-amber-600 mb-3 group-hover:scale-105 transition-transform">
-                <Coffee className="w-6 h-6" />
+          {profile?.account_type !== 'professional' && (
+            <Link 
+              href="/dashboard/menus" 
+              className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-amber-600 mb-3 group-hover:scale-105 transition-transform">
+                  <Coffee className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-base text-gray-900 mb-1">Menú & Catálogo</h3>
+                <p className="text-gray-500 text-xs leading-relaxed">Catálogo con fotos, categorías, precios y botón para recibir pedidos directos a WhatsApp.</p>
               </div>
-              <h3 className="font-bold text-base text-gray-900 mb-1">Menú & Catálogo</h3>
-              <p className="text-gray-500 text-xs leading-relaxed">Catálogo con fotos, categorías, precios y botón para recibir pedidos directos a WhatsApp.</p>
-            </div>
-            <span className="mt-4 text-xs font-bold text-black inline-flex items-center gap-1 group-hover:underline">
-              Gestionar Menú <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </Link>
+              <span className="mt-4 text-xs font-bold text-black inline-flex items-center gap-1 group-hover:underline">
+                Gestionar Menú <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          )}
 
           {/* Fidelización & Sellos */}
-          <Link 
-            href="/dashboard/loyalty" 
-            className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-purple-600 mb-3 group-hover:scale-105 transition-transform">
-                <Gift className="w-6 h-6" />
+          {profile?.account_type !== 'professional' && (
+            <Link 
+              href="/dashboard/loyalty" 
+              className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-purple-600 mb-3 group-hover:scale-105 transition-transform">
+                  <Gift className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-base text-gray-900 mb-1">Fidelización & Sellos</h3>
+                <p className="text-gray-500 text-xs leading-relaxed">Tarjeta de sellos digitales para premiar a clientes frecuentes y aumentar visitas repetidas.</p>
               </div>
-              <h3 className="font-bold text-base text-gray-900 mb-1">Fidelización & Sellos</h3>
-              <p className="text-gray-500 text-xs leading-relaxed">Tarjeta de sellos digitales para premiar a clientes frecuentes y aumentar visitas repetidas.</p>
-            </div>
-            <span className="mt-4 text-xs font-bold text-black inline-flex items-center gap-1 group-hover:underline">
-              Club de Premios <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </Link>
+              <span className="mt-4 text-xs font-bold text-black inline-flex items-center gap-1 group-hover:underline">
+                Club de Premios <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          )}
 
           {/* Agendas & Citas (Barberías / Salones) */}
-          <Link 
-            href="/dashboard/appointments" 
-            className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-purple-600 mb-3 group-hover:scale-105 transition-transform">
-                <Scissors className="w-6 h-6" />
+          {profile?.account_type !== 'professional' && (
+            <Link 
+              href="/dashboard/appointments" 
+              className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-purple-600 mb-3 group-hover:scale-105 transition-transform">
+                  <Scissors className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <h3 className="font-bold text-base text-gray-900">Agendas & Citas</h3>
+                  <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.2 rounded">NUEVO</span>
+                </div>
+                <p className="text-gray-500 text-xs leading-relaxed">Reserva de turnos para Barberías, Salones y Spas con selección y calificación de especialistas.</p>
               </div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <h3 className="font-bold text-base text-gray-900">Agendas & Citas</h3>
-                <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.2 rounded">NUEVO</span>
-              </div>
-              <p className="text-gray-500 text-xs leading-relaxed">Reserva de turnos para Barberías, Salones y Spas con selección y calificación de especialistas.</p>
-            </div>
-            <span className="mt-4 text-xs font-bold text-purple-700 inline-flex items-center gap-1 group-hover:underline">
-              Gestionar Agenda <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </Link>
+              <span className="mt-4 text-xs font-bold text-purple-700 inline-flex items-center gap-1 group-hover:underline">
+                Gestionar Agenda <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          )}
 
           {/* Ruleta de Premios & Gamificación */}
-          <Link 
-            href="/dashboard/ruleta" 
-            className="group p-5 border border-amber-200/80 rounded-2xl bg-amber-50/40 hover:bg-amber-50 hover:border-amber-300 transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-amber-600 mb-3 group-hover:scale-105 transition-transform">
-                <Disc className="w-6 h-6" />
+          {profile?.account_type !== 'professional' && (
+            <Link 
+              href="/dashboard/ruleta" 
+              className="group p-5 border border-amber-200/80 rounded-2xl bg-amber-50/40 hover:bg-amber-50 hover:border-amber-300 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-amber-600 mb-3 group-hover:scale-105 transition-transform">
+                  <Disc className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <h3 className="font-bold text-base text-gray-900">Ruleta de Premios</h3>
+                  <span className="text-[9px] bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.2 rounded">VIP</span>
+                </div>
+                <p className="text-gray-500 text-xs leading-relaxed">Gamificación para mesas y clientes con control de probabilidades, stock anti-sobregiros y cupones de fidelización.</p>
               </div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <h3 className="font-bold text-base text-gray-900">Ruleta de Premios</h3>
-                <span className="text-[9px] bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.2 rounded">VIP</span>
-              </div>
-              <p className="text-gray-500 text-xs leading-relaxed">Gamificación para mesas y clientes con control de probabilidades, stock anti-sobregiros y cupones de fidelización.</p>
-            </div>
-            <span className="mt-4 text-xs font-bold text-amber-700 inline-flex items-center gap-1 group-hover:underline">
-              Gestionar Ruleta <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </Link>
+              <span className="mt-4 text-xs font-bold text-amber-700 inline-flex items-center gap-1 group-hover:underline">
+                Gestionar Ruleta <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          )}
 
           {/* Contactos CRM */}
           <Link 
