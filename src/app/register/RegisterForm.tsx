@@ -117,7 +117,7 @@ export default function RegisterForm({
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Ej. Dr. Carlos Mendoza"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-black focus:outline-none transition"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:border-black focus:outline-none transition shadow-2xs"
               />
             </div>
 
@@ -132,7 +132,7 @@ export default function RegisterForm({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@correo.com"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-black focus:outline-none transition"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:border-black focus:outline-none transition shadow-2xs"
               />
             </div>
 
@@ -148,7 +148,7 @@ export default function RegisterForm({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-black focus:outline-none transition"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:border-black focus:outline-none transition shadow-2xs"
               />
             </div>
 
@@ -233,16 +233,16 @@ export default function RegisterForm({
               <select
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:border-black focus:outline-none transition bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:border-black focus:outline-none transition bg-white text-gray-900 shadow-2xs"
               >
                 {accountType === 'professional'
                   ? professionalIndustries.map((item) => (
-                      <option key={item.id} value={item.id}>
+                      <option key={item.id} value={item.id} className="text-gray-900 bg-white">
                         {item.name}
                       </option>
                     ))
                   : businessIndustries.map((item) => (
-                      <option key={item.id} value={item.id}>
+                      <option key={item.id} value={item.id} className="text-gray-900 bg-white">
                         {item.name}
                       </option>
                     ))}
@@ -261,7 +261,7 @@ export default function RegisterForm({
                   value={professionTitle}
                   onChange={(e) => setProfessionTitle(e.target.value)}
                   placeholder="Ej. Cirujano Dentista, Abogado Laboral, Broker"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-black focus:outline-none transition"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:border-black focus:outline-none transition shadow-2xs"
                 />
               </div>
             )}

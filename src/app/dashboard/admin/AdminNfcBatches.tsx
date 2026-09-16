@@ -570,7 +570,7 @@ export default function AdminNfcBatches({
                   value={batchName}
                   onChange={(e) => setBatchName(e.target.value)}
                   placeholder="Ej. Lote 200 - Profesionales Septiembre"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:border-black focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:border-black focus:outline-none"
                 />
               </div>
 
@@ -586,7 +586,7 @@ export default function AdminNfcBatches({
                     required
                     value={cardCount}
                     onChange={(e) => setCardCount(parseInt(e.target.value) || 10)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold focus:border-black focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-bold text-gray-900 bg-white focus:border-black focus:outline-none"
                   />
                   {/* Atajos rápidos de cantidad */}
                   <div className="flex items-center gap-1.5 mt-2">
@@ -615,7 +615,7 @@ export default function AdminNfcBatches({
                     maxLength={5}
                     value={tokenPrefix}
                     onChange={(e) => setTokenPrefix(e.target.value.toUpperCase())}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-mono font-bold focus:border-black focus:outline-none"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-mono font-bold text-gray-900 bg-white focus:border-black focus:outline-none"
                   />
                   <span className="text-[10px] text-gray-400">Ej. {tokenPrefix}-8A3X9K</span>
                 </div>
@@ -753,7 +753,7 @@ export default function AdminNfcBatches({
                 placeholder="Buscar por nombre o correo..."
                 value={userSearchQuery}
                 onChange={(e) => setUserSearchQuery(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs focus:border-black focus:outline-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs text-gray-900 bg-white placeholder:text-gray-400 focus:border-black focus:outline-none"
               />
 
               <div className="max-h-52 overflow-y-auto divide-y divide-gray-100 border border-gray-200 rounded-xl">
