@@ -25,12 +25,13 @@ export default async function VCardBuilderPage({
   // 1. Obtener estado del plan
   const { isPro } = await getUserPlanInfo(supabase, user.id)
 
-  // 2. Obtener la vCard actual de forma segura con maybeSingle
-  const { data: vcard } = await supabase
-    .from('vcards')
-    .select('*')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  // 2. Obtener la vCard y el tipo de cuenta
+  const [{ data: vcard }, { data: profile }] = await Promise.all([
+    supabase.from('vcards').select('*').eq('user_id', user.id).maybeSingle(),
+    supabase.from('users').select('account_type').eq('id', user.id).maybeSingle()
+  ])
+  
+  const accountType = profile?.account_type || 'professional'
 
   return (
     <div className="space-y-6">
@@ -87,7 +88,7 @@ export default async function VCardBuilderPage({
         </div>
 
         {/* Formulario Principal interactivo */}
-        <VCardForm vcard={vcard} isPro={isPro} />
+        <VCardForm vcard={vcard} isPro={isPro} accountType={accountType} />
       </div>
     </div>
   )

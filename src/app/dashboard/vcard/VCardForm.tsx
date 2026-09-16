@@ -33,6 +33,7 @@ import { saveVCard } from './actions'
 interface VCardFormProps {
   vcard?: any
   isPro?: boolean
+  accountType?: string
 }
 
 const TIME_OPTIONS = [
@@ -54,7 +55,7 @@ const DAYS_OF_WEEK = [
   { key: 'sunday', label: 'Domingo' }
 ]
 
-export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
+export default function VCardForm({ vcard, isPro, accountType }: VCardFormProps) {
   const [cardType, setCardType] = useState<'personal' | 'business'>(
     vcard?.card_type === 'business' ? 'business' : 'personal'
   )
@@ -580,55 +581,61 @@ export default function VCardForm({ vcard, isPro = false }: VCardFormProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           {/* Switch Menú Digital */}
-          <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
-            <div className="flex items-center gap-2.5">
-              <span className="text-base">🍽️</span>
-              <div>
-                <p className="font-bold text-xs">Menú & Catálogo</p>
-                <p className="text-[10px] text-gray-400">Platos, precios y pedidos</p>
+          {accountType !== 'professional' && (
+            <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
+              <div className="flex items-center gap-2.5">
+                <span className="text-base">🍽️</span>
+                <div>
+                  <p className="font-bold text-xs">Menú & Catálogo</p>
+                  <p className="text-[10px] text-gray-400">Platos, precios y pedidos</p>
+                </div>
               </div>
-            </div>
-            <input
-              type="checkbox"
-              name="show_menu"
-              defaultChecked={businessInfo?.show_menu !== false}
-              className="w-4 h-4 rounded text-yellow-400 focus:ring-yellow-400"
-            />
-          </label>
+              <input
+                type="checkbox"
+                name="show_menu"
+                defaultChecked={businessInfo?.show_menu !== false}
+                className="w-4 h-4 rounded text-yellow-400 focus:ring-yellow-400"
+              />
+            </label>
+          )}
 
           {/* Switch Agenda & Citas */}
-          <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
-            <div className="flex items-center gap-2.5">
-              <span className="text-base">📅</span>
-              <div>
-                <p className="font-bold text-xs">Agendas & Citas</p>
-                <p className="text-[10px] text-gray-400">Reserva con especialistas</p>
+          {accountType !== 'professional' && (
+            <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
+              <div className="flex items-center gap-2.5">
+                <span className="text-base">📅</span>
+                <div>
+                  <p className="font-bold text-xs">Agendas & Citas</p>
+                  <p className="text-[10px] text-gray-400">Reserva con especialistas</p>
+                </div>
               </div>
-            </div>
-            <input
-              type="checkbox"
-              name="show_appointments"
-              defaultChecked={businessInfo?.show_appointments !== false}
-              className="w-4 h-4 rounded text-purple-400 focus:ring-purple-400"
-            />
-          </label>
+              <input
+                type="checkbox"
+                name="show_appointments"
+                defaultChecked={businessInfo?.show_appointments !== false}
+                className="w-4 h-4 rounded text-purple-400 focus:ring-purple-400"
+              />
+            </label>
+          )}
 
           {/* Switch Fidelización */}
-          <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
-            <div className="flex items-center gap-2.5">
-              <span className="text-base">🎁</span>
-              <div>
-                <p className="font-bold text-xs">Club de Sellos</p>
-                <p className="text-[10px] text-gray-400">Premios a clientes fieles</p>
+          {accountType !== 'professional' && (
+            <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">
+              <div className="flex items-center gap-2.5">
+                <span className="text-base">🎁</span>
+                <div>
+                  <p className="font-bold text-xs">Club de Sellos</p>
+                  <p className="text-[10px] text-gray-400">Premios a clientes fieles</p>
+                </div>
               </div>
-            </div>
-            <input
-              type="checkbox"
-              name="show_loyalty"
-              defaultChecked={businessInfo?.show_loyalty !== false}
-              className="w-4 h-4 rounded text-pink-400 focus:ring-pink-400"
-            />
-          </label>
+              <input
+                type="checkbox"
+                name="show_loyalty"
+                defaultChecked={businessInfo?.show_loyalty !== false}
+                className="w-4 h-4 rounded text-pink-400 focus:ring-pink-400"
+              />
+            </label>
+          )}
 
           {/* Switch Reseñas Google */}
           <label className="p-3.5 bg-white/10 rounded-xl border border-white/10 flex items-center justify-between cursor-pointer hover:bg-white/15 transition">

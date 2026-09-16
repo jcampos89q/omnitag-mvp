@@ -376,41 +376,45 @@ export default async function DashboardPage() {
           </Link>
 
           {/* Estudio QR */}
-          <Link 
-            href="/dashboard/qr-studio" 
-            className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-purple-600 mb-3 group-hover:scale-105 transition-transform">
-                <QrCode className="w-6 h-6" />
+          {accountType !== 'professional' && (
+            <Link 
+              href="/dashboard/qr-studio" 
+              className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-purple-600 mb-3 group-hover:scale-105 transition-transform">
+                  <QrCode className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <h3 className="font-bold text-base text-gray-900">Estudio QR (Impresión)</h3>
+                  <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.2 rounded">HD</span>
+                </div>
+                <p className="text-gray-500 text-xs leading-relaxed">Diseña códigos QR con degradados estilo Instagram, tu logo central y marcos para imprenta.</p>
               </div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <h3 className="font-bold text-base text-gray-900">Estudio QR (Impresión)</h3>
-                <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.2 rounded">HD</span>
-              </div>
-              <p className="text-gray-500 text-xs leading-relaxed">Diseña códigos QR con degradados estilo Instagram, tu logo central y marcos para imprenta.</p>
-            </div>
-            <span className="mt-4 text-xs font-bold text-purple-700 inline-flex items-center gap-1 group-hover:underline">
-              Diseñar e Imprimir <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </Link>
+              <span className="mt-4 text-xs font-bold text-purple-700 inline-flex items-center gap-1 group-hover:underline">
+                Diseñar e Imprimir <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          )}
 
           {/* Reseñas Google & NFC */}
-          <Link 
-            href="/dashboard/devices" 
-            className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
-          >
-            <div>
-              <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-amber-500 mb-3 group-hover:scale-105 transition-transform">
-                <Star className="w-6 h-6 fill-amber-400" />
+          {accountType !== 'professional' && (
+            <Link 
+              href="/dashboard/devices" 
+              className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-amber-500 mb-3 group-hover:scale-105 transition-transform">
+                  <Star className="w-6 h-6 fill-amber-400" />
+                </div>
+                <h3 className="font-bold text-base text-gray-900 mb-1">Reseñas Google & NFC</h3>
+                <p className="text-gray-500 text-xs leading-relaxed">Placas Tap-to-Rate con Escudo Anti-Quejas para multiplicar tus 5 estrellas en Google Maps.</p>
               </div>
-              <h3 className="font-bold text-base text-gray-900 mb-1">Reseñas Google & NFC</h3>
-              <p className="text-gray-500 text-xs leading-relaxed">Placas Tap-to-Rate con Escudo Anti-Quejas para multiplicar tus 5 estrellas en Google Maps.</p>
-            </div>
-            <span className="mt-4 text-xs font-bold text-black inline-flex items-center gap-1 group-hover:underline">
-              Configurar Placas ({devicesCount || 0}) <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </Link>
+              <span className="mt-4 text-xs font-bold text-black inline-flex items-center gap-1 group-hover:underline">
+                Configurar Placas ({devicesCount || 0}) <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          )}
 
           {/* Menú Digital */}
           {accountType !== 'professional' && (
