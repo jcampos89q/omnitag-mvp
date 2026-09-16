@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -17,12 +17,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?' + new URLSearchParams({
+    const lat = searchParams.get('lat') || request.headers.get('x-vercel-ip-latitude') || '15.5'
+    const lng = searchParams.get('lng') || request.headers.get('x-vercel-ip-longitude') || '-88.0'
+
+    const params: Record<string, string> = {
       input,
       key: apiKey,
-      types: 'establishment',
-      language: 'es'
-    })
+      language: 'es',
+      location: `${lat},${lng}`,
+      radius: '60000'
+    }
+
+    const url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json?' + new URLSearchParams(params)
 
     const res = await fetch(url)
     const data = await res.json()

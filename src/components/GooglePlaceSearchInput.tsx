@@ -40,7 +40,18 @@ export default function GooglePlaceSearchInput({
   )
   const [loadingDetails, setLoadingDetails] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Intentar obtener geolocalización aproximada del navegador
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {} // Ignorar si el usuario no da permiso
+      )
+    }
+  }, [])
 
   // Cerrar dropdown si se hace click fuera
   useEffect(() => {
@@ -64,7 +75,8 @@ export default function GooglePlaceSearchInput({
     setSearching(true)
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch('/api/places/autocomplete?input=' + encodeURIComponent(query))
+        const geoParams = coords ? `&lat=${coords.lat}&lng=${coords.lng}` : ''
+        const res = await fetch('/api/places/autocomplete?input=' + encodeURIComponent(query) + geoParams)
         const data = await res.json()
         setPredictions(data.predictions || [])
         setIsOpen(true)
@@ -77,7 +89,7 @@ export default function GooglePlaceSearchInput({
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [query, selectedPlace])
+  }, [query, selectedPlace, coords])
 
   const handleSelectPrediction = async (prediction: any) => {
     setLoadingDetails(true)
@@ -106,36 +118,41 @@ export default function GooglePlaceSearchInput({
   return (
     <div ref={containerRef} className={`relative space-y-3 ${className}`}>
       {!selectedPlace ? (
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
-            {searching ? (
-              <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
-            ) : (
-              <Search className="w-4 h-4 text-gray-400" />
+        <div className="space-y-1.5">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              {searching ? (
+                <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
+              ) : (
+                <Search className="w-4 h-4 text-gray-400" />
+              )}
+            </div>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setSelectedPlace(null)
+              }}
+              onFocus={() => {
+                if (predictions.length > 0) setIsOpen(true)
+              }}
+              placeholder="Escribe el nombre de tu negocio (ej. Nexoria, Café Welchez)..."
+              className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-300 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition shadow-2xs"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-black cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             )}
           </div>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              setSelectedPlace(null)
-            }}
-            onFocus={() => {
-              if (predictions.length > 0) setIsOpen(true)
-            }}
-            placeholder="Escribe el nombre de tu negocio (ej. Café Welchez, Taller San Pedro)..."
-            className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-300 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition shadow-2xs"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-black cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          <p className="text-[11px] text-gray-400 flex items-center gap-1.5 px-1">
+            <span>💡 <b>Tip:</b> Si tu negocio no aparece de primero, agrega tu ciudad (ej. <i>"Nexoria Puerto Cortés"</i>).</span>
+          </p>
         </div>
       ) : (
         /* Tarjeta de negocio seleccionado con datos auto-rellenados */
