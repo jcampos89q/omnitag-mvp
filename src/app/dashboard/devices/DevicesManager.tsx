@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { 
   Star, 
   ShieldCheck, 
@@ -22,12 +23,13 @@ import {
   Wifi,
   Radio,
   AlertCircle,
-  Disc
+  Disc,
+  Building2
 } from 'lucide-react'
 import { createDevice, deleteDevice } from './actions'
-import Link from 'next/link'
 import ProFeatureModal from '@/components/ProFeatureModal'
 import NfcCardWriterModal from '@/components/NfcCardWriterModal'
+import GooglePlaceSearchInput, { PlaceDetails } from '@/components/GooglePlaceSearchInput'
 
 interface DevicesManagerProps {
   devices: any[]
@@ -62,6 +64,9 @@ export default function DevicesManager({
     setNfcWriterTitle(title)
     setShowNfcWriter(true)
   }
+
+  // Estado de negocio de Google Maps seleccionado
+  const [googlePlace, setGooglePlace] = useState<PlaceDetails | null>(null)
 
   const handleCreateSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     // Si no es PRO y ya tiene 1 dispositivo registrado
@@ -273,35 +278,38 @@ export default function DevicesManager({
 
           {/* Campo de URL según tipo */}
           {deviceType === 'tap_to_rate' && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="redirect_url" className="block text-xs font-bold text-gray-700">
-                  Enlace directo de Google Reviews (o Google Place ID):
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5 flex items-center justify-between">
+                  <span>Busca tu Negocio en Google Maps</span>
+                  <span className="text-[11px] font-normal text-amber-700 lowercase">
+                    Búsqueda oficial en vivo
+                  </span>
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setShowGoogleHelp(!showGoogleHelp)}
-                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium cursor-pointer"
-                >
-                  <HelpCircle className="w-3.5 h-3.5" /> ¿Cómo conseguir mi enlace de Google?
-                </button>
+                <GooglePlaceSearchInput
+                  onPlaceSelected={(place) => {
+                    setGooglePlace(place)
+                  }}
+                  initialPlace={googlePlace}
+                />
               </div>
 
+              {/* Campos ocultos para capturar datos en formData */}
               <input 
-                type="text" 
+                type="hidden" 
                 name="redirect_url" 
-                id="redirect_url" 
-                placeholder="https://g.page/r/TU_ENLACE_GOOGLE/review"
-                required
-                className="block w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm shadow-xs focus:border-black focus:outline-none font-medium" 
+                value={googlePlace?.direct_review_url || ''} 
+                required 
               />
+              <input type="hidden" name="place_id" value={googlePlace?.place_id || ''} />
+              <input type="hidden" name="business_name" value={googlePlace?.name || ''} />
+              <input type="hidden" name="business_address" value={googlePlace?.formatted_address || ''} />
+              <input type="hidden" name="business_phone" value={googlePlace?.formatted_phone_number || ''} />
+              <input type="hidden" name="google_types" value={JSON.stringify(googlePlace?.types || [])} />
 
-              {showGoogleHelp && (
-                <div className="p-3.5 bg-blue-50/80 rounded-xl border border-blue-100 text-xs text-blue-900 space-y-1.5 animate-in fade-in">
-                  <p className="font-bold">📍 Pasos para obtener tu enlace de Google Reviews:</p>
-                  <p>1. Entra en <b>Google Maps</b> o busca tu negocio en Google.</p>
-                  <p>2. Haz clic en el botón <b>"Pedir reseñas"</b> o <b>"Solicitar reseñas"</b>.</p>
-                  <p>3. Copia el enlace corto generado (empieza por <code>https://g.page/r/...</code> o <code>https://search.google.com/...</code>) y pégalo aquí.</p>
+              {!googlePlace && (
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-500">
+                  💡 <b>Tip:</b> Escribe el nombre de tu empresa (ej. tu restaurante, clínica o taller). Al seleccionarlo de la lista, el enlace de reseña y los datos se rellenarán automáticamente sin que tengas que copiar ningún enlace.
                 </div>
               )}
 
@@ -518,6 +526,21 @@ export default function DevicesManager({
                         </span>
                       )}
                     </div>
+
+                    {device.business_name && (
+                      <div className="p-2.5 bg-amber-50/70 border border-amber-200/60 rounded-xl space-y-1">
+                        <div className="font-extrabold text-xs text-amber-950 flex items-center gap-1.5">
+                          <Building2 className="w-3.5 h-3.5 text-amber-600" />
+                          <span>{device.business_name}</span>
+                        </div>
+                        {device.business_address && (
+                          <p className="text-[11px] text-gray-600 truncate">{device.business_address}</p>
+                        )}
+                        {device.business_phone && (
+                          <p className="text-[10px] text-gray-500 font-mono">Tel: {device.business_phone}</p>
+                        )}
+                      </div>
+                    )}
 
                     <div className="p-2.5 bg-gray-50 rounded-xl text-xs space-y-1 text-gray-600 border border-gray-100">
                       <p className="text-[11px] truncate"><b>Destino:</b> {device.redirect_url}</p>

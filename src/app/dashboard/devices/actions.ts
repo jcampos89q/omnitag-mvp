@@ -74,6 +74,19 @@ export async function createDevice(formData: FormData) {
     redirect('/dashboard/devices?error=missing_url')
   }
 
+  // Capturar datos enriquecidos de Google Places si vienen en el formulario
+  const placeId = (formData.get('place_id') as string)?.trim() || null
+  const businessName = (formData.get('business_name') as string)?.trim() || null
+  const businessAddress = (formData.get('business_address') as string)?.trim() || null
+  const businessPhone = (formData.get('business_phone') as string)?.trim() || null
+  const googleTypesRaw = (formData.get('google_types') as string) || '[]'
+  let googleTypes: string[] = []
+  try {
+    googleTypes = JSON.parse(googleTypesRaw)
+  } catch {
+    googleTypes = []
+  }
+
   const { error } = await supabase
     .from('devices')
     .insert({
@@ -84,6 +97,11 @@ export async function createDevice(formData: FormData) {
       vcard_id: vcardId,
       loyalty_program_id: loyaltyId,
       review_filter_enabled: reviewFilter,
+      place_id: placeId,
+      business_name: businessName,
+      business_address: businessAddress,
+      business_phone: businessPhone,
+      google_types: googleTypes,
       is_active: true
     })
 

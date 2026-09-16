@@ -1,18 +1,23 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, CheckCircle, ShieldCheck, Send, MessageSquareHeart } from 'lucide-react'
+import Link from 'next/link'
+import { Star, CheckCircle, ShieldCheck, Send, MessageSquareHeart, Settings, Building2 } from 'lucide-react'
 import { submitPrivateFeedback } from './actions'
 import { ThemeConfig } from '@/lib/themes'
 
 export default function FilterClient({ 
   deviceId, 
   redirectUrl,
-  theme
+  theme,
+  businessName,
+  isOwner = false
 }: { 
   deviceId: string
   redirectUrl: string
   theme?: ThemeConfig
+  businessName?: string | null
+  isOwner?: boolean
 }) {
   const [rating, setRating] = useState<number>(0)
   const [hoveredRating, setHoveredRating] = useState<number>(0)
@@ -84,21 +89,46 @@ export default function FilterClient({
   }
 
   return (
-    <div 
-      className={`p-6 sm:p-8 shadow-2xl max-w-md w-full mx-4 border border-black/5 transition-all ${cardRadiusClass}`}
-      style={{ backgroundColor: cardBg, color: textColor }}
-    >
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-bold mb-3">
-          <ShieldCheck className="w-3.5 h-3.5" /> Tu opinión es importante
+    <div className="w-full max-w-md mx-4 space-y-3">
+      {/* Botón de acceso rápido para el dueño si tiene sesión iniciada */}
+      {isOwner && (
+        <div className="bg-black/90 text-white backdrop-blur-md px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs shadow-lg border border-white/10 animate-in fade-in">
+          <div className="flex items-center gap-2 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Eres el dueño de esta placa</span>
+          </div>
+          <Link 
+            href="/dashboard/devices" 
+            className="font-extrabold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            <span>Ver mi Panel</span>
+          </Link>
         </div>
-        <h1 className="text-xl sm:text-2xl font-extrabold mb-1.5" style={{ color: textColor }}>
-          ¿Cómo calificarías tu experiencia hoy?
-        </h1>
-        <p className="text-xs sm:text-sm opacity-70">
-          Toca una estrella para calificar el servicio
-        </p>
-      </div>
+      )}
+
+      <div 
+        className={`p-6 sm:p-8 shadow-2xl w-full border border-black/5 transition-all ${cardRadiusClass}`}
+        style={{ backgroundColor: cardBg, color: textColor }}
+      >
+        <div className="text-center mb-6">
+          {businessName ? (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-extrabold mb-3">
+              <Building2 className="w-3.5 h-3.5 text-amber-700" />
+              <span>{businessName}</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-bold mb-3">
+              <ShieldCheck className="w-3.5 h-3.5" /> Tu opinión es importante
+            </div>
+          )}
+          <h1 className="text-xl sm:text-2xl font-extrabold mb-1.5" style={{ color: textColor }}>
+            ¿Cómo calificarías tu experiencia hoy?
+          </h1>
+          <p className="text-xs sm:text-sm opacity-70">
+            Toca una estrella para calificar el servicio
+          </p>
+        </div>
 
       {/* Selector de Estrellas */}
       <div className="flex justify-center gap-1.5 mb-6">
@@ -202,6 +232,7 @@ export default function FilterClient({
           </div>
         </form>
       )}
+      </div>
     </div>
   )
 }

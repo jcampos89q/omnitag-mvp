@@ -11,9 +11,11 @@ export default async function ReviewFilterPage({
   const supabase = await createClient()
   const { tag_id } = await params
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: device } = await supabase
     .from('devices')
-    .select('id, redirect_url, review_filter_enabled, theme')
+    .select('id, user_id, redirect_url, review_filter_enabled, theme, business_name')
     .eq('tag_id', tag_id)
     .maybeSingle()
 
@@ -21,6 +23,7 @@ export default async function ReviewFilterPage({
     notFound()
   }
 
+  const isOwner = Boolean(user && user.id === device.user_id)
   const theme = resolveTheme(device.theme)
   const fontUrl = getGoogleFontUrl(theme.font_family)
   const fontFamilyCss = getFontFamilyCss(theme.font_family)
@@ -40,6 +43,8 @@ export default async function ReviewFilterPage({
           deviceId={device.id} 
           redirectUrl={device.redirect_url} 
           theme={theme}
+          businessName={device.business_name}
+          isOwner={isOwner}
         />
       </div>
     </>

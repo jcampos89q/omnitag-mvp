@@ -14,12 +14,11 @@ export async function GET(
     .from('devices')
     .select('*')
     .eq('tag_id', tag_id)
-    .eq('is_active', true)
     .maybeSingle()
 
-  // Si no existe o está inactivo, mostrar error o redirigir a la landing de OmniTag
-  if (!device) {
-    return NextResponse.redirect(new URL('/', request.url))
+  // Si no existe o no tiene enlace de destino configurado, enviarlo a la pantalla de activación
+  if (!device || !device.redirect_url || !device.user_id) {
+    return NextResponse.redirect(new URL(`/r/${tag_id}/activate`, request.url))
   }
 
   // 2. Registrar el escaneo asíncronamente
