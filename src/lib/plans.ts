@@ -33,31 +33,55 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     }
   }
 
-  // 1. Invocar la función RPC con permisos directos en PostgreSQL
-  const { data, error } = await supabase.rpc('get_user_plan', {
-    p_user_id: userId
-  })
+  // 1. Invocar la función RPC y obtener datos básicos del usuario en paralelo
+  const [
+    { data: rpcData, error: rpcError },
+    { data: profile }
+  ] = await Promise.all([
+    supabase.rpc('get_user_plan', { p_user_id: userId }),
+    supabase.from('users').select('is_admin, created_at, plan_status, current_period_end').eq('id', userId).maybeSingle()
+  ])
 
-  if (!error && data) {
+  // Calcular siempre los días de prueba y descuentos basados en created_at
+  const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date();
+  const now = new Date();
+  
+  // Supabase RPC default is 10 days for trial in DB, but we consider 10 days for frontend compatibility if needed.
+  // Actually, let's keep frontend logic aware of a 10-day trial if the RPC gave them 10 days.
+  // If created_at is within 10 days, we consider it a trial.
+  const trialEndDate = new Date(createdAt.getTime() + 10 * 24 * 60 * 60 * 1000); 
+  const discountEndDate = new Date(createdAt.getTime() + 3 * 24 * 60 * 60 * 1000);
+  
+  const isDiscountEligible = now <= discountEndDate;
+  const discountDaysLeft = isDiscountEligible 
+    ? Math.max(1, Math.ceil((discountEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  const isTrialWindow = now <= trialEndDate;
+  
+  const isAdmin = Boolean(profile?.is_admin || rpcData?.is_admin);
+
+  if (!rpcError && rpcData) {
+    // Es posible que el RPC devuelva pro porque está en periodo de prueba de 10 días
+    // Vamos a marcarlo como "isTrial: true" si está en esos 10 días y no tiene un plan activo formal
+    const hasFormalPlan = profile?.plan_status === 'active' || profile?.plan_status === 'trialing';
+    const isTrial = rpcData.plan === 'pro' && !isAdmin && !hasFormalPlan && isTrialWindow;
+
     return {
-      plan: data.plan === 'pro' ? 'pro' : 'free',
-      isPro: Boolean(data.is_pro),
-      isAdmin: Boolean(data.is_admin),
-      workspaceId: data.workspace_id || userId,
-      expiresAt: data.expires_at || null,
-      daysLeft: Number(data.days_left || 0),
-      isExpired: Boolean(data.is_expired)
+      plan: rpcData.plan === 'pro' ? 'pro' : 'free',
+      isPro: Boolean(rpcData.is_pro),
+      isAdmin: isAdmin,
+      workspaceId: rpcData.workspace_id || userId,
+      expiresAt: rpcData.expires_at || null,
+      daysLeft: Number(rpcData.days_left || 0),
+      isExpired: Boolean(rpcData.is_expired),
+      isTrial,
+      isDiscountEligible,
+      discountDaysLeft
     }
   }
 
   // 2. Fallback de contingencia si el RPC falla
-  const { data: profile } = await supabase
-    .from('users')
-    .select('is_admin, created_at, plan_status, current_period_end')
-    .eq('id', userId)
-    .maybeSingle()
-
-  const isAdmin = Boolean(profile?.is_admin)
   if (isAdmin) {
     return { 
       plan: 'pro', 
@@ -66,7 +90,10 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
       workspaceId: userId,
       expiresAt: null,
       daysLeft: 9999,
-      isExpired: false
+      isExpired: false,
+      isTrial: false,
+      isDiscountEligible: false,
+      discountDaysLeft: 0
     }
   }
 
@@ -85,26 +112,18 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     }
   }
 
-  // 3. Lógica de 7 días de prueba gratuita al crear la cuenta y descuento de 3 días
-  const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date();
-  const now = new Date();
-  const trialEndDate = new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const discountEndDate = new Date(createdAt.getTime() + 3 * 24 * 60 * 60 * 1000);
-  
-  const isDiscountEligible = now <= discountEndDate;
-  const discountDaysLeft = isDiscountEligible 
-    ? Math.max(1, Math.ceil((discountEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
+  // 3. Lógica de 7 días de prueba gratuita al crear la cuenta
+  const fallbackTrialEndDate = new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  if (now <= trialEndDate) {
-    const daysLeft = Math.max(1, Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  if (now <= fallbackTrialEndDate) {
+    const fallbackDaysLeft = Math.max(1, Math.ceil((fallbackTrialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
     return {
       plan: 'pro', // Herramientas completas durante la prueba
       isPro: true,
       isAdmin: false,
       workspaceId: userId,
-      expiresAt: trialEndDate.toISOString(),
-      daysLeft: daysLeft,
+      expiresAt: fallbackTrialEndDate.toISOString(),
+      daysLeft: fallbackDaysLeft,
       isExpired: false,
       isTrial: true,
       isDiscountEligible,
@@ -118,7 +137,7 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     isPro: false,
     isAdmin: false,
     workspaceId: userId,
-    expiresAt: trialEndDate.toISOString(),
+    expiresAt: fallbackTrialEndDate.toISOString(),
     daysLeft: 0,
     isExpired: true,
     isTrial: false,
