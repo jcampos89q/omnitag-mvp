@@ -32,10 +32,15 @@ export async function createNfcBatch(formData: FormData) {
   if (!profile?.is_admin) throw new Error('No autorizado')
 
   // 2. Extraer parámetros del lote
-  const batchName = (formData.get('batch_name') as string)?.trim() || 'Lote de Tarjetas NFC'
+  const batchType = (formData.get('batch_type') as string)?.trim() || 'vcard'
+  const isReviewPlate = batchType === 'review_plate'
+  const defaultBatchName = isReviewPlate ? 'Lote de Placas Reseñas Google' : 'Lote de Tarjetas NFC'
+  const defaultPrefix = isReviewPlate ? 'REV' : 'NFC'
+
+  const batchName = (formData.get('batch_name') as string)?.trim() || defaultBatchName
   const count = Math.min(Math.max(parseInt((formData.get('card_count') as string) || '10', 10), 1), 500)
   const planDays = parseInt((formData.get('plan_days') as string) || '365', 10)
-  const tokenPrefix = (formData.get('token_prefix') as string)?.trim().toUpperCase() || 'NFC'
+  const tokenPrefix = (formData.get('token_prefix') as string)?.trim().toUpperCase() || defaultPrefix
   const qrStyleJson = (formData.get('qr_style') as string) || '{}'
 
   let parsedQrStyle = {}
@@ -52,6 +57,7 @@ export async function createNfcBatch(formData: FormData) {
       batch_name: batchName,
       total_cards: count,
       qr_style: parsedQrStyle,
+      batch_type: batchType,
     })
     .select()
     .single()
@@ -87,6 +93,20 @@ export async function createNfcBatch(formData: FormData) {
     throw new Error(cardsError.message)
   }
 
+  // 5. Si es un lote de placas de reseñas, pre-registrar en devices para activación inmediata
+  if (isReviewPlate) {
+    const devicesToInsert = cardsToInsert.map(c => ({
+      tag_id: c.card_token,
+      device_type: 'tap_to_rate',
+      review_filter_enabled: true,
+      is_active: false
+    }))
+    // Usar upsert o insert para evitar duplicados si algún token ya existiera
+    await supabase
+      .from('devices')
+      .upsert(devicesToInsert, { onConflict: 'tag_id' })
+  }
+
   revalidatePath('/dashboard/admin')
   return { success: true, batchId: batch.id, count }
 }
@@ -107,6 +127,21 @@ export async function deleteNfcBatch(batchId: string) {
     .single()
 
   if (!profile?.is_admin) throw new Error('No autorizado')
+
+  // Obtener tarjetas del lote para limpiar dispositivos no activados
+  const { data: batchCards } = await supabase
+    .from('nfc_cards')
+    .select('card_token')
+    .eq('batch_id', batchId)
+
+  if (batchCards && batchCards.length > 0) {
+    const tokens = batchCards.map(c => c.card_token)
+    await supabase
+      .from('devices')
+      .delete()
+      .in('tag_id', tokens)
+      .eq('is_active', false)
+  }
 
   const { error } = await supabase
     .from('nfc_batches')

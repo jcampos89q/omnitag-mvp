@@ -250,3 +250,234 @@ export async function generateNfcCardsSheetPdf(
   const filename = 'Plantilla_Vinil_' + cleanName + '_A4.pdf'
   doc.save(filename)
 }
+
+// Helper para dibujar estrellas doradas vectoriales perfectas
+function drawGoldStar(doc: jsPDF, cx: number, cy: number, outerRadius = 3.2, innerRadius = 1.6) {
+  let rot = Math.PI / 2 * 3
+  const step = Math.PI / 5
+  const pts: [number, number][] = []
+  let startX = 0
+  let startY = 0
+  let prevX = 0
+  let prevY = 0
+
+  for (let i = 0; i < 5; i++) {
+    let x = cx + Math.cos(rot) * outerRadius
+    let y = cy + Math.sin(rot) * outerRadius
+    if (i === 0) {
+      startX = x
+      startY = y
+      prevX = x
+      prevY = y
+    } else {
+      pts.push([x - prevX, y - prevY])
+      prevX = x
+      prevY = y
+    }
+    rot += step
+
+    x = cx + Math.cos(rot) * innerRadius
+    y = cy + Math.sin(rot) * innerRadius
+    pts.push([x - prevX, y - prevY])
+    prevX = x
+    prevY = y
+    rot += step
+  }
+
+  doc.setFillColor(245, 158, 11) // Dorado Google Amber
+  doc.lines(pts, startX, startY, [1, 1], 'F', true)
+}
+
+/**
+ * Genera y descarga un PDF en tamaño A4 con Plantillas para Stands / Mostradores Acrílicos
+ * de Reseñas de Google (2 displays grandes de 120 x 126 mm por página A4)
+ */
+export async function generateReviewPlatesSheetPdf(
+  batch: NfcBatch,
+  baseUrl: string,
+  onProgress?: (current: number, total: number) => void
+) {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  })
+
+  const standW = 120.0
+  const standH = 126.0
+  const marginX = (210.0 - standW) / 2 // 45mm
+  const marginY = 14.0
+  const gapY = 14.0
+  const standsPerPage = 2
+
+  const totalCards = batch.nfc_cards.length
+
+  for (let index = 0; index < totalCards; index++) {
+    const card = batch.nfc_cards[index]
+    if (onProgress) onProgress(index + 1, totalCards)
+
+    const pageIndex = index % standsPerPage
+
+    if (index > 0 && pageIndex === 0) {
+      doc.addPage('a4', 'portrait')
+    }
+
+    const x = marginX
+    const y = marginY + pageIndex * (standH + gapY)
+
+    // Encabezado técnico fuera del área de corte en la primera posición de la página
+    if (pageIndex === 0) {
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8)
+      doc.setTextColor(140, 140, 140)
+      doc.text(
+        'OMNITAG REVIEW PLATES - PLANTILLA STAND MOSTRADOR (120 x 126 mm) | LOTE: ' + batch.batch_name.toUpperCase(),
+        14,
+        8
+      )
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7)
+      const curPage = Math.floor(index / standsPerPage) + 1
+      const totPages = Math.ceil(totalCards / standsPerPage)
+      doc.text(
+        'Hoja ' + curPage + ' de ' + totPages + ' - Imprimir al 100% (Tamano Real) para acrilicos de mostrador',
+        14,
+        11.5
+      )
+    }
+
+    // 1. Guías de corte externas (Crop Marks)
+    doc.setDrawColor(180, 180, 190)
+    doc.setLineWidth(0.15)
+    const markLen = 4
+
+    // Arriba-Izquierda
+    doc.line(x - markLen, y, x, y)
+    doc.line(x, y - markLen, x, y)
+    // Arriba-Derecha
+    doc.line(x + standW, y, x + standW + markLen, y)
+    doc.line(x + standW, y - markLen, x + standW, y)
+    // Abajo-Izquierda
+    doc.line(x - markLen, y + standH, x, y + standH)
+    doc.line(x, y + standH, x, y + standH + markLen)
+    // Abajo-Derecha
+    doc.line(x + standW, y + standH, x + standW + markLen, y + standH)
+    doc.line(x + standW, y + standH, x + standW, y + standH + markLen)
+
+    // 2. Fondo Blanco Puro con borde sutil para display acrílico
+    doc.setFillColor(255, 255, 255)
+    doc.roundedRect(x, y, standW, standH, 4, 4, 'F')
+    doc.setDrawColor(226, 232, 240)
+    doc.setLineWidth(0.4)
+    doc.roundedRect(x, y, standW, standH, 4, 4, 'D')
+
+    // Borde decorativo interior fino
+    doc.setDrawColor(241, 245, 249)
+    doc.setLineWidth(0.2)
+    doc.roundedRect(x + 3, y + 3, standW - 6, standH - 6, 3, 3, 'D')
+
+    // 3. 5 Estrellas Doradas Vectoriales Centradas
+    const starsY = y + 13
+    const starOffsets = [-16, -8, 0, 8, 16]
+    starOffsets.forEach(offset => {
+      drawGoldStar(doc, x + standW / 2 + offset, starsY, 3.4, 1.7)
+    })
+
+    // 4. Título Principal
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(13.5)
+    doc.setTextColor(17, 24, 39) // Gray 900
+    const titleText = 'CALIFICANOS EN GOOGLE'
+    const titleW = doc.getTextWidth(titleText)
+    doc.text(titleText, x + (standW - titleW) / 2, y + 23)
+
+    // Subtítulo
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7.5)
+    doc.setTextColor(100, 116, 139) // Slate 500
+    const subtitleText = 'Tu calificacion y comentarios nos ayudan a seguir creciendo'
+    const subW = doc.getTextWidth(subtitleText)
+    doc.text(subtitleText, x + (standW - subW) / 2, y + 28)
+
+    // 5. Código QR HD de Mostrador
+    const plateUrl = baseUrl + '/r/' + card.card_token
+    const qrDataUrl = await generateQrDataUrl(plateUrl, batch.qr_style)
+    const qrSize = 46.0
+    const qrX = x + (standW - qrSize) / 2
+    const qrY = y + 33.0
+
+    // Marco blanco con sombra sutil para el QR
+    doc.setFillColor(248, 250, 252)
+    doc.roundedRect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, 3, 3, 'F')
+    doc.setDrawColor(226, 232, 240)
+    doc.setLineWidth(0.2)
+    doc.roundedRect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, 3, 3, 'D')
+
+    if (qrDataUrl) {
+      doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
+    }
+
+    // 6. Sección de Interacción NFC Contactless
+    const nfcY = y + 87.0
+
+    // Badge Contactless
+    doc.setFillColor(254, 243, 199) // Amber 100
+    doc.setDrawColor(245, 158, 11) // Amber 500
+    doc.setLineWidth(0.2)
+    doc.roundedRect(x + (standW - 54) / 2, nfcY - 3.5, 54, 5.5, 2.5, 2.5, 'FD')
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(6.5)
+    doc.setTextColor(180, 83, 9) // Amber 700
+    const nfcBadgeText = '((( CONTACTLESS NFC )))'
+    const nfcBadgeW = doc.getTextWidth(nfcBadgeText)
+    doc.text(nfcBadgeText, x + (standW - nfcBadgeW) / 2, nfcY)
+
+    // Instrucción para el cliente
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8.5)
+    doc.setTextColor(15, 23, 42) // Slate 900
+    const inst1 = 'Acerca tu telefono celular aqui'
+    const inst1W = doc.getTextWidth(inst1)
+    doc.text(inst1, x + (standW - inst1W) / 2, nfcY + 7.5)
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7)
+    doc.setTextColor(100, 116, 139)
+    const inst2 = 'o abre la camara y escanea el codigo QR'
+    const inst2W = doc.getTextWidth(inst2)
+    doc.text(inst2, x + (standW - inst2W) / 2, nfcY + 11.5)
+
+    // 7. Línea Separadora y Pie de Placa
+    const lineY = y + 107.0
+    doc.setDrawColor(241, 245, 249)
+    doc.setLineWidth(0.3)
+    doc.line(x + 10, lineY, x + standW - 10, lineY)
+
+    // Identificador de Placa
+    doc.setFont('courier', 'bold')
+    doc.setFontSize(7.5)
+    doc.setTextColor(71, 85, 105)
+    doc.text(card.card_token, x + 10, lineY + 6)
+
+    // Enlace corto
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(6.5)
+    doc.setTextColor(148, 163, 184)
+    const urlClean = (baseUrl + '/r/' + card.card_token).replace('https://', '')
+    const urlW = doc.getTextWidth(urlClean)
+    doc.text(urlClean, x + standW - 10 - urlW, lineY + 6)
+
+    // Marca de agua sutil de OmniTag
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(5.5)
+    doc.setTextColor(203, 213, 225)
+    const brandText = 'OMNITAG SMART PLATES'
+    const brandW = doc.getTextWidth(brandText)
+    doc.text(brandText, x + (standW - brandW) / 2, lineY + 13)
+  }
+
+  const cleanName = batch.batch_name.replace(/\s+/g, '_')
+  const filename = 'Plantilla_Mostrador_Resenas_' + cleanName + '_A4.pdf'
+  doc.save(filename)
+}

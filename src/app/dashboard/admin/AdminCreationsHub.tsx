@@ -19,12 +19,14 @@ import {
   Eye,
   HeartHandshake,
   CreditCard,
-  Clock
+  Clock,
+  Star
 } from 'lucide-react'
 import AdminUserTable, { AdminUser } from './AdminUserTable'
 import AdminMasterContacts, { MasterContact } from './AdminMasterContacts'
 import AdminBankTransfers, { AdminBankTransfer } from './AdminBankTransfers'
 import AdminNfcBatches from './AdminNfcBatches'
+import AdminReviewPlateBatches from './AdminReviewPlateBatches'
 
 export interface AdminCreationsData {
   vcards: Array<{
@@ -79,6 +81,11 @@ export interface AdminCreationsData {
     created_at: string
     user_email: string
     user_full_name: string
+    business_name?: string | null
+    business_address?: string | null
+    business_phone?: string | null
+    place_id?: string | null
+    user_personal_phone?: string | null
   }>
 }
 
@@ -101,18 +108,22 @@ export default function AdminCreationsHub({
 }) {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState<'users' | 'transfers' | 'nfc-batches' | 'contacts' | 'vcards' | 'menus' | 'loyalty' | 'devices'>(
-    tabParam && ['users', 'transfers', 'nfc-batches', 'contacts', 'vcards', 'menus', 'loyalty', 'devices'].includes(tabParam)
+  const validTabs = ['users', 'transfers', 'nfc-batches', 'review-batches', 'contacts', 'vcards', 'menus', 'loyalty', 'devices']
+  const [activeTab, setActiveTab] = useState<'users' | 'transfers' | 'nfc-batches' | 'review-batches' | 'contacts' | 'vcards' | 'menus' | 'loyalty' | 'devices'>(
+    tabParam && validTabs.includes(tabParam)
       ? (tabParam as any)
       : 'users'
   )
 
   useEffect(() => {
-    if (tabParam && ['users', 'transfers', 'nfc-batches', 'contacts', 'vcards', 'menus', 'loyalty', 'devices'].includes(tabParam)) {
+    if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam as any)
     }
   }, [tabParam])
   const [searchTerm, setSearchTerm] = useState('')
+
+  const vcardBatches = (batches || []).filter(b => (b.batch_type || 'vcard') === 'vcard')
+  const reviewBatches = (batches || []).filter(b => b.batch_type === 'review_plate')
 
   const totalMasterContacts = 
     (contacts?.vcard_leads?.length || 0) + 
@@ -192,7 +203,19 @@ export default function AdminCreationsHub({
           }`}
         >
           <CreditCard className="w-4 h-4 text-amber-700" />
-          <span>🎴 Lotes Tarjetas NFC ({batches.length})</span>
+          <span>🎴 Lotes Tarjetas vCard ({vcardBatches.length})</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('review-batches'); setSearchTerm('') }}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition whitespace-nowrap cursor-pointer ${
+            activeTab === 'review-batches'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-blue-50 text-blue-900 hover:bg-blue-100 border border-blue-200'
+          }`}
+        >
+          <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
+          <span>⭐ Lotes Placas Reseñas ({reviewBatches.length})</span>
         </button>
 
         <button
@@ -266,9 +289,18 @@ export default function AdminCreationsHub({
         <AdminBankTransfers transfers={transfers} />
       )}
 
-      {/* 2.5 PESTAÑA: LOTES Y PRODUCCIÓN DE TARJETAS NFC */}
+      {/* 2.5 PESTAÑA: LOTES Y PRODUCCIÓN DE TARJETAS NFC VCARDS */}
       {activeTab === 'nfc-batches' && (
-        <AdminNfcBatches batches={batches} users={users} />
+        <AdminNfcBatches batches={vcardBatches} users={users} />
+      )}
+
+      {/* 2.6 PESTAÑA: LOTES Y PRODUCCIÓN DE PLACAS RESEÑAS GOOGLE */}
+      {activeTab === 'review-batches' && (
+        <AdminReviewPlateBatches 
+          batches={reviewBatches} 
+          devices={creations.devices} 
+          users={users} 
+        />
       )}
 
       {/* 3. PESTAÑA: MASTER CRM & LEADS */}

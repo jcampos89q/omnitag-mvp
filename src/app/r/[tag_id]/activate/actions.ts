@@ -127,7 +127,18 @@ export async function activatePlateAndRegister(formData: FormData) {
       })
   }
 
+  // 4. Si la placa pertenecía a un lote de nfc_cards, actualizar su estado a activa
+  await supabase
+    .from('nfc_cards')
+    .update({
+      status: 'active',
+      claimed_by_user_id: targetUserId,
+      claimed_at: new Date().toISOString()
+    })
+    .eq('card_token', tagId)
+
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/devices')
+  revalidatePath('/dashboard/admin')
   redirect('/dashboard/devices?success=plate_activated')
 }
