@@ -190,53 +190,35 @@ export async function generateNfcCardsSheetPdf(
 
     // 5. Textos de Marca (OmniTag)
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(10)
+    doc.setFontSize(11)
     doc.setTextColor(255, 255, 255)
-    doc.text('OMNITAG', logoX + logoSize + 3, logoY + 6.5)
+    doc.text('OMNITAG', logoX + logoSize + 3, logoY + 7)
 
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(5.5)
     doc.setTextColor(168, 168, 180)
-    doc.text('SMART BUSINESS CARD', logoX + logoSize + 3, logoY + 10.5)
+    doc.text('SMART BUSINESS CARD', logoX + logoSize + 3, logoY + 11.5)
 
     // Indicador NFC Contactless Iconográfico
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(6)
-    doc.setTextColor(147, 197, 253)
-    doc.text('((( NFC CONTACTLESS )))', logoX, y + 26)
+    doc.setFontSize(6.5)
+    doc.setTextColor(167, 139, 250) // Morado suave tecnológico
+    doc.text('((( NFC CONTACTLESS )))', logoX, y + 30)
 
-    // Instrucción sutil para el cliente
+    // Instrucción sutil y elegante
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(5.5)
-    doc.setTextColor(150, 150, 160)
-    doc.text('Acerca al celular o', logoX, y + 31.5)
-    doc.text('escanea el codigo QR', logoX, y + 34.5)
+    doc.setTextColor(140, 140, 155)
+    doc.text('Acerca tu teléfono a la tarjeta', logoX, y + 36)
+    doc.text('o escanea el código QR directo', logoX, y + 39.5)
 
-    // 6. CÓDIGO DE ACTIVACIÓN / TOKEN FÍSICO
-    const tokenBoxY = y + 38.5
-    doc.setFillColor(28, 28, 35)
-    doc.roundedRect(logoX, tokenBoxY, 34, 10, 1.8, 1.8, 'F')
-    doc.setDrawColor(60, 60, 75)
-    doc.setLineWidth(0.2)
-    doc.roundedRect(logoX, tokenBoxY, 34, 10, 1.8, 1.8, 'D')
-
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(4.5)
-    doc.setTextColor(156, 163, 175)
-    doc.text('ID DE ACTIVACION / GESTION:', logoX + 2, tokenBoxY + 3.8)
-
-    doc.setFont('courier', 'bold')
-    doc.setFontSize(7.5)
-    doc.setTextColor(255, 255, 255)
-    doc.text(card.card_token, logoX + 2, tokenBoxY + 8)
-
-    // 7. CÓDIGO QR HD ENMARCADO (Lado derecho de la tarjeta)
+    // 6. CÓDIGO QR HD ENMARCADO (Lado derecho de la tarjeta)
     const cardFullUrl = baseUrl + '/t/' + card.card_token
     const qrDataUrl = await generateQrDataUrl(cardFullUrl, batch.qr_style)
 
     const qrContainerX = x + cardW - 35
-    const qrContainerY = y + 9.5
-    const qrContainerSize = 30
+    const qrContainerY = y + 8.5
+    const qrContainerSize = 28
 
     // Marco blanco elegante con bordes redondeados para el QR
     doc.setFillColor(255, 255, 255)
@@ -254,11 +236,13 @@ export async function generateNfcCardsSheetPdf(
       )
     }
 
-    // Pie de tarjeta sutil
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(4.5)
-    doc.setTextColor(120, 120, 130)
-    doc.text('1 ANO PRO INCLUIDO', qrContainerX + 5, y + 43.5)
+    // 7. IDENTIFICADOR DISCRETO DE LA TARJETA (Debajo del QR, centrado y sobrio)
+    doc.setFont('courier', 'bold')
+    doc.setFontSize(6.5)
+    doc.setTextColor(180, 180, 195) // Gris plata elegante y discreto
+    const textWidth = doc.getTextWidth(card.card_token)
+    const tokenCenterX = qrContainerX + (qrContainerSize - textWidth) / 2
+    doc.text(card.card_token, tokenCenterX, qrContainerY + qrContainerSize + 5.5)
   }
 
   // Descargar el archivo PDF automáticamente
