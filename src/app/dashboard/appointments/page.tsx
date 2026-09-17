@@ -6,10 +6,11 @@ import { Scissors, Sparkles } from 'lucide-react'
 import AppointmentsManager from './AppointmentsManager'
 import { createOrUpdateBusiness } from './actions'
 import { getUserPlanInfo } from '@/lib/plans'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function AppointmentsDashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
 
   // 1. Obtener plan
   const { isPro } = await getUserPlanInfo(supabase, user?.id)

@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { MessageSquareWarning, Star, Calendar, Phone, Mail, MessageCircle, CheckCircle2, Building2 } from 'lucide-react'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function FeedbackPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
 
   // Buscar dispositivos del usuario
   const { data: devices } = await supabase

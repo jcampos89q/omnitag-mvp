@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { 
   Star, 
@@ -25,9 +25,10 @@ import {
   AlertCircle,
   Disc,
   Building2,
-  BarChart3
+  BarChart3,
+  Loader2
 } from 'lucide-react'
-import { createDevice, deleteDevice } from './actions'
+import { createDevice, deleteDevice, toggleReviewFilter } from './actions'
 import ProFeatureModal from '@/components/ProFeatureModal'
 import NfcCardWriterModal from '@/components/NfcCardWriterModal'
 import GooglePlaceSearchInput, { PlaceDetails } from '@/components/GooglePlaceSearchInput'
@@ -66,6 +67,58 @@ export default function DevicesManager({
     setNfcWriterUrl(targetUrl)
     setNfcWriterTitle(title)
     setShowNfcWriter(true)
+  }
+
+  // Lista local de dispositivos para reactividad inmediata al conmutar el filtro
+  const [devicesList, setDevicesList] = useState(devices)
+  const [togglingDeviceId, setTogglingDeviceId] = useState<string | null>(null)
+  const [toggleSuccessMsg, setToggleSuccessMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    setDevicesList(devices)
+  }, [devices])
+
+  const handleToggleFilter = async (deviceId: string) => {
+    const targetDevice = devicesList.find(d => d.id === deviceId)
+    // Si no es PRO y va a intentar activarlo
+    if (!isPro && !targetDevice?.review_filter_enabled) {
+      setProModalFeature({
+        name: 'Escudo Anti-Quejas para Google Reviews',
+        desc: 'El filtro inteligente de reseñas de 5 estrellas y el libro digital de quejas privadas es una función exclusiva del Plan PRO.'
+      })
+      setShowProModal(true)
+      return
+    }
+
+    setTogglingDeviceId(deviceId)
+    // Actualización optimista inmediata en UI
+    setDevicesList(prev => prev.map(d => {
+      if (d.id === deviceId) {
+        return { ...d, review_filter_enabled: !d.review_filter_enabled }
+      }
+      return d
+    }))
+
+    try {
+      const res = await toggleReviewFilter(deviceId)
+      if (res?.success) {
+        setToggleSuccessMsg(res.enabled 
+          ? '🛡️ ¡Escudo Anti-Quejas activado para esta placa!' 
+          : '⚡ Escudo desactivado: Los clientes irán 100% directo a Google Maps.')
+        setTimeout(() => setToggleSuccessMsg(null), 4000)
+      }
+    } catch (err: any) {
+      // Revertir en caso de error
+      setDevicesList(prev => prev.map(d => {
+        if (d.id === deviceId) {
+          return { ...d, review_filter_enabled: !d.review_filter_enabled }
+        }
+        return d
+      }))
+      alert(err?.message || 'Error al cambiar el filtro de reseñas')
+    } finally {
+      setTogglingDeviceId(null)
+    }
   }
 
   // Estado de negocio de Google Maps seleccionado
@@ -478,9 +531,16 @@ export default function DevicesManager({
 
       {/* 3. LISTADO DE PLACAS FÍSICAS ACTIVAS */}
       <div className="space-y-4">
+        {toggleSuccessMsg && (
+          <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 flex items-center gap-2 animate-in fade-in shadow-xs">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{toggleSuccessMsg}</span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <h2 className="text-base sm:text-lg font-bold text-gray-900">
-            {accountType === 'review_plate' ? 'Tu Placa Inteligente de Reseñas' : `Placas y Puntos de Contacto Registrados (${devices.length})`}
+            {accountType === 'review_plate' ? 'Tu Placa Inteligente de Reseñas' : `Placas y Puntos de Contacto Registrados (${devicesList.length})`}
           </h2>
           {accountType !== 'review_plate' && (
             <Link
@@ -493,7 +553,7 @@ export default function DevicesManager({
           )}
         </div>
 
-        {devices.length === 0 ? (
+        {devicesList.length === 0 ? (
           <div className="p-12 text-center text-gray-500 bg-white rounded-2xl border border-gray-200">
             <Star className="w-10 h-10 text-gray-300 mx-auto mb-2" />
             <p className="font-bold text-gray-800">Aún no tienes placas registradas</p>
@@ -501,7 +561,7 @@ export default function DevicesManager({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {devices.map((device) => {
+            {devicesList.map((device) => {
               const isGoogle = device.device_type === 'tap_to_rate'
               const isWifi = device.device_type === 'wifi'
 
@@ -527,12 +587,90 @@ export default function DevicesManager({
                         </div>
                       </div>
 
-                      {device.review_filter_enabled && (
+                      {isGoogle ? (
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                          device.review_filter_enabled
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : 'bg-amber-50 text-amber-800 border-amber-200'
+                        }`}>
+                          {device.review_filter_enabled ? (
+                            <>
+                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Escudo 5★
+                            </>
+                          ) : (
+                            <>
+                              <Star className="w-3.5 h-3.5 text-amber-600 fill-amber-500" /> Directo Google
+                            </>
+                          )}
+                        </span>
+                      ) : device.review_filter_enabled && (
                         <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-50 text-emerald-800 rounded-full border border-emerald-200 flex items-center gap-1">
                           <ShieldCheck className="w-3 h-3 text-emerald-600" /> Escudo 5★
                         </span>
                       )}
                     </div>
+
+                    {/* INTERRUPTOR EN VIVO DEL ESCUDO INTELIGENTE DE RESEÑAS */}
+                    {isGoogle && (
+                      <div className={`p-3.5 rounded-xl border transition-all ${
+                        device.review_filter_enabled 
+                          ? 'bg-emerald-50/60 border-emerald-200' 
+                          : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+                              device.review_filter_enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'
+                            }`}>
+                              {togglingDeviceId === device.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                              ) : device.review_filter_enabled ? (
+                                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                              ) : (
+                                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-900">
+                                  {device.review_filter_enabled ? 'Escudo Anti-Quejas' : 'Modo Directo a Google'}
+                                </span>
+                                <span className={`text-[9px] font-black px-1.5 py-0.2 rounded-sm uppercase tracking-wider ${
+                                  device.review_filter_enabled 
+                                    ? 'bg-emerald-200/80 text-emerald-900' 
+                                    : 'bg-gray-200 text-gray-700'
+                                }`}>
+                                  {device.review_filter_enabled ? 'ACTIVO' : 'DESACTIVADO'}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-gray-500 truncate">
+                                {device.review_filter_enabled 
+                                  ? '4-5★ van a Google • 1-3★ a buzón privado' 
+                                  : '100% de clientes van directo a Google Maps'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Switch button */}
+                          <button
+                            type="button"
+                            disabled={togglingDeviceId === device.id}
+                            onClick={() => handleToggleFilter(device.id)}
+                            aria-label="Cambiar modo de filtro de reseñas"
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden disabled:opacity-50 ${
+                              device.review_filter_enabled ? 'bg-emerald-600' : 'bg-gray-300'
+                            }`}
+                            title={device.review_filter_enabled ? 'Haga clic para desactivar el escudo y enviar directo a Google' : 'Haga clic para activar el escudo anti-quejas'}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                device.review_filter_enabled ? 'translate-x-5' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {device.business_name && (
                       <div className="p-2.5 bg-amber-50/70 border border-amber-200/60 rounded-xl space-y-1">
@@ -563,7 +701,7 @@ export default function DevicesManager({
                       className="px-3 py-1.5 text-xs font-bold text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 rounded-xl transition flex items-center gap-1.5"
                       title="Probar enlace"
                     >
-                      <span>Probar Escudo</span>
+                      <span>{device.review_filter_enabled ? 'Probar Escudo' : 'Probar Directo'}</span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
 

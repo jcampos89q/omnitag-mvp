@@ -3,10 +3,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export async function createDevice(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
 
   if (!user) throw new Error("No autenticado")
 
@@ -117,7 +118,7 @@ export async function createDevice(formData: FormData) {
 
 export async function deleteDevice(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) return
 
   const deviceId = formData.get('device_id') as string
@@ -130,4 +131,49 @@ export async function deleteDevice(formData: FormData) {
 
   revalidatePath('/dashboard/devices')
   revalidatePath('/dashboard/admin')
+}
+
+export async function toggleReviewFilter(deviceId: string) {
+  const supabase = await createClient()
+  const { user, realAdmin, isImpersonating } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+
+  // Verificar pertenencia del dispositivo
+  const { data: device, error: fetchError } = await supabase
+    .from('devices')
+    .select('id, review_filter_enabled, user_id')
+    .eq('id', deviceId)
+    .single()
+
+  if (fetchError || !device) {
+    throw new Error("Dispositivo no encontrado")
+  }
+
+  // Si no es el dueño, verificar si es admin (o está en sesión de soporte)
+  if (device.user_id !== user.id) {
+    const checkAdminId = realAdmin?.id || user.id
+    const { data: profile } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('id', checkAdminId)
+      .single()
+    if (!profile?.is_admin) {
+      throw new Error("No tienes permisos para modificar esta placa")
+    }
+  }
+
+  const newStatus = !device.review_filter_enabled
+
+  const { error: updateError } = await supabase
+    .from('devices')
+    .update({ review_filter_enabled: newStatus })
+    .eq('id', deviceId)
+
+  if (updateError) {
+    throw new Error(updateError.message)
+  }
+
+  revalidatePath('/dashboard/devices')
+  revalidatePath('/dashboard/admin')
+  return { success: true, enabled: newStatus }
 }

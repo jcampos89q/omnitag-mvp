@@ -5,10 +5,11 @@ import { createClient } from '@/lib/supabase/server'
 import { Users } from 'lucide-react'
 import LeadsClient, { Lead } from './LeadsClient'
 import { getUserPlanInfo } from '@/lib/plans'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function LeadsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
 
   if (!user) {
     return <div className="p-8 text-center text-gray-500">Inicia sesión para ver tus contactos.</div>

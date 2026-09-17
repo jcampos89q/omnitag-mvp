@@ -6,10 +6,11 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getUserPlanInfo } from '@/lib/plans'
 import { formatScheduleSummaryText } from '@/lib/schedule'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export async function saveVCard(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
 
   if (!user) {
     redirect('/login')

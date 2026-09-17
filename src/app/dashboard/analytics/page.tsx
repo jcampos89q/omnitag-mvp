@@ -5,19 +5,49 @@ import { createClient } from '@/lib/supabase/server'
 import { BarChart3, Smartphone, MonitorSmartphone, Activity, Globe, UserCircle, Coffee, Gift, QrCode, Sparkles, ArrowRight, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { getUserPlanInfo } from '@/lib/plans'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function AnalyticsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
 
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
   const { isPro } = await getUserPlanInfo(supabase, user?.id)
 
   // 2. Obtener todas las visitas y escaneos de todos los recursos del usuario
-  const { data: scansData } = await supabase
+  let scansQuery = supabase
     .from('scans')
     .select('id, device_id, vcard_id, menu_id, loyalty_program_id, source_type, os, country, scanned_at, user_agent')
     .order('scanned_at', { ascending: false })
+
+  if (isImpersonating && user?.id) {
+    const [
+      { data: userDevices },
+      { data: userVcards },
+      { data: userMenus },
+      { data: userLoyalty }
+    ] = await Promise.all([
+      supabase.from('devices').select('id').eq('user_id', user.id),
+      supabase.from('vcards').select('id').eq('user_id', user.id),
+      supabase.from('menus').select('id').eq('user_id', user.id),
+      supabase.from('loyalty_programs').select('id').eq('user_id', user.id),
+    ])
+
+    const dIds = (userDevices || []).map(d => d.id)
+    const vIds = (userVcards || []).map(v => v.id)
+    const mIds = (userMenus || []).map(m => m.id)
+    const lIds = (userLoyalty || []).map(l => l.id)
+
+    let orConditions = [`target_user_id.eq.${user.id}`]
+    if (dIds.length > 0) orConditions.push(`device_id.in.(${dIds.join(',')})`)
+    if (vIds.length > 0) orConditions.push(`vcard_id.in.(${vIds.join(',')})`)
+    if (mIds.length > 0) orConditions.push(`menu_id.in.(${mIds.join(',')})`)
+    if (lIds.length > 0) orConditions.push(`loyalty_program_id.in.(${lIds.join(',')})`)
+
+    scansQuery = scansQuery.or(orConditions.join(','))
+  }
+
+  const { data: scansData } = await scansQuery
 
   const scans = scansData || []
 

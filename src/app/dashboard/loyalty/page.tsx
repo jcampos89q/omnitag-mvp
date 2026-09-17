@@ -2,10 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { Gift, Sparkles, ShieldCheck } from 'lucide-react'
 import { createLoyaltyProgram } from './actions'
 import LoyaltyManager from './LoyaltyManager'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function LoyaltyPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
 
   // Buscar programa de fidelización del usuario
   const { data: program } = await supabase

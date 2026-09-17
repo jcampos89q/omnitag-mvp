@@ -2,21 +2,22 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 // Premios por defecto iniciales
 const DEFAULT_ITEMS = [
   { label: 'Café Gratis', icon: '☕', bg_color: '#7C3AED', text_color: '#FFFFFF', probability_weight: 25, reward_type: 'free_item', sort_order: 0 },
   { label: 'Postre 2x1', icon: '🍰', bg_color: '#D97706', text_color: '#FFFFFF', probability_weight: 20, reward_type: 'discount', sort_order: 1 },
   { label: '15% Descuento', icon: '🏷️', bg_color: '#059669', text_color: '#FFFFFF', probability_weight: 15, reward_type: 'discount', sort_order: 2 },
-  { label: 'Bebida Gratis', icon: '🍹', bg_color: '#DC2626', text_color: '#FFFFFF', probability_weight: 15, reward_type: 'free_item', sort_order: 3 },
+  { label: 'Bebida Gratis', icon: '🥤', bg_color: '#DC2626', text_color: '#FFFFFF', probability_weight: 15, reward_type: 'free_item', sort_order: 3 },
   { label: '+1 Sello Extra', icon: '⭐', bg_color: '#2563EB', text_color: '#FFFFFF', probability_weight: 15, reward_type: 'stamp', stamp_count: 1, sort_order: 4 },
-  { label: '20% Próxima Visita', icon: '🎟️', bg_color: '#DB2777', text_color: '#FFFFFF', probability_weight: 8, reward_type: 'discount', sort_order: 5 },
-  { label: 'Entrada 2x1', icon: '🍔', bg_color: '#4F46E5', text_color: '#FFFFFF', probability_weight: 2, reward_type: 'discount', sort_order: 6 }
+  { label: '20% Próxima Visita', icon: '🎉', bg_color: '#DB2777', text_color: '#FFFFFF', probability_weight: 8, reward_type: 'discount', sort_order: 5 },
+  { label: 'Entrada 2x1', icon: '🎟️', bg_color: '#4F46E5', text_color: '#FFFFFF', probability_weight: 2, reward_type: 'discount', sort_order: 6 }
 ]
 
 export async function getOrCreateWheel() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
 
   // 1. Buscar si ya tiene una ruleta
@@ -78,7 +79,7 @@ export async function getOrCreateWheel() {
 
 export async function updateWheelSettings(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
 
   const wheelId = formData.get('wheel_id') as string
@@ -124,7 +125,7 @@ export async function updateWheelSettings(formData: FormData) {
 
 export async function toggleWheelStatus(wheelId: string, currentStatus: boolean) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
 
   const nextStatus = !currentStatus
@@ -147,7 +148,7 @@ export async function toggleWheelStatus(wheelId: string, currentStatus: boolean)
 
 export async function saveWheelItems(wheelId: string, items: any[]) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
 
   // 1. Validar que la ruleta pertenezca al usuario

@@ -4,10 +4,11 @@ import { createClient } from '@/lib/supabase/server'
 import { uploadMediaFile } from '@/lib/supabase/storage'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export async function createMenu(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
 
   const name = (formData.get('name') as string)?.trim()
@@ -29,7 +30,7 @@ export async function createMenu(formData: FormData) {
 
 export async function updateMenu(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
 
   const menuId = formData.get('menu_id') as string
@@ -83,7 +84,7 @@ export async function updateMenu(formData: FormData) {
 
 export async function setDailySpecial(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
 
   const menuId = formData.get('menu_id') as string
@@ -115,7 +116,7 @@ export async function setDailySpecial(formData: FormData) {
 
 export async function deleteDailySpecial(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
 
   const menuId = formData.get('menu_id') as string
@@ -132,7 +133,7 @@ export async function deleteDailySpecial(formData: FormData) {
 
 export async function createCategory(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
   
   const menuId = formData.get('menu_id') as string
@@ -157,7 +158,7 @@ export async function deleteCategory(formData: FormData) {
 
 export async function createMenuItem(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
   
   const categoryId = formData.get('category_id') as string
@@ -203,7 +204,7 @@ export async function deleteMenuItem(formData: FormData) {
 
 export async function addMenuTable(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
 
   try {
@@ -249,7 +250,7 @@ export async function addMenuTable(formData: FormData) {
 
 export async function generateBatchTables(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
 
   try {
@@ -302,7 +303,7 @@ export async function generateBatchTables(formData: FormData) {
 
 export async function deleteMenuTable(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
 
   try {

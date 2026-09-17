@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Star, ShieldCheck, QrCode } from 'lucide-react'
 import DevicesManager from './DevicesManager'
 import { getUserPlanInfo } from '@/lib/plans'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function DevicesPage({
   searchParams
@@ -12,7 +13,7 @@ export default async function DevicesPage({
   searchParams: Promise<{ success?: string, error?: string }>
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   const { success, error } = await searchParams
 
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)

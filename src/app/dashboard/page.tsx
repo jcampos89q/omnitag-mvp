@@ -7,10 +7,11 @@ import Link from 'next/link'
 import { UserCircle, Smartphone, Coffee, Users, BarChart3, ArrowRight, Zap, Sparkles, Star, QrCode, Gift, Check, ShieldCheck, Clock, AlertTriangle, Scissors, Disc } from 'lucide-react'
 import { getUserPlanInfo } from '@/lib/plans'
 import BusinessUpgradesShowcase from '@/components/BusinessUpgradesShowcase'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
 
   if (!user) {
     redirect('/login')

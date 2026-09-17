@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getOrCreateWheel } from './actions'
 import WheelManagerClient from './WheelManagerClient'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export const metadata = {
   title: 'Ruleta de Premios & Gamificación | Dashboard OmniTag',
@@ -10,7 +11,7 @@ export const metadata = {
 
 export default async function DashboardRuletaPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   if (!user) redirect('/login')
 
   // Obtener o inicializar la ruleta

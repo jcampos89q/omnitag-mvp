@@ -6,10 +6,11 @@ import { createMenu } from './actions'
 import { Coffee, Scissors, Stethoscope, ShoppingBag } from 'lucide-react'
 import MenuManager from './MenuManager'
 import { getUserPlanInfo } from '@/lib/plans'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function MenusPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
 
   // 1. Obtener estado del plan
   const { isPro } = await getUserPlanInfo(supabase, user?.id)

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Download, ShieldCheck, Mail, Phone, Calendar, Smartphone, Coffee, UserCheck, MessageCircle, Sparkles, CheckCircle2, Zap, Clock, PlusCircle } from 'lucide-react'
+import { Search, Download, ShieldCheck, Mail, Phone, Calendar, Smartphone, Coffee, UserCheck, MessageCircle, Sparkles, CheckCircle2, Zap, Clock, PlusCircle, Eye, Loader2 } from 'lucide-react'
 import { toggleUserPlan } from './actions'
+import { startImpersonation } from './impersonateActions'
 
 export interface AdminUser {
   out_user_id: string
@@ -22,6 +23,17 @@ export interface AdminUser {
 export default function AdminUserTable({ users }: { users: AdminUser[] }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [planFilter, setPlanFilter] = useState<'all' | 'pro' | 'free' | 'with_phone'>('all')
+  const [impersonatingId, setImpersonatingId] = useState<string | null>(null)
+
+  const handleImpersonate = async (userId: string) => {
+    setImpersonatingId(userId)
+    try {
+      await startImpersonation(userId)
+    } catch (err: any) {
+      alert(err?.message || 'Error al iniciar el modo soporte')
+      setImpersonatingId(null)
+    }
+  }
 
   const filteredUsers = users.filter((u) => {
     const matchesSearch = 
@@ -229,50 +241,67 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 flex-wrap gap-2">
                     <span className="flex items-center gap-1 text-[11px] text-gray-400">
                       <Calendar className="w-3.5 h-3.5" />
                       {new Date(u.out_created_at).toLocaleDateString()}
                     </span>
 
-                    <form action={toggleUserPlan}>
-                      <input type="hidden" name="target_user_id" value={u.out_user_id} />
-                      <input type="hidden" name="current_plan" value={u.out_plan} />
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <button
-                        type="submit"
-                        className={`text-xs font-bold px-3 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 cursor-pointer ${
-                          isPro
-                            ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
-                            : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                        }`}
+                        type="button"
+                        disabled={impersonatingId === u.out_user_id}
+                        onClick={() => handleImpersonate(u.out_user_id)}
+                        className="text-xs font-bold px-2.5 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 bg-amber-400 hover:bg-amber-500 text-black cursor-pointer disabled:opacity-50"
+                        title="Modo Soporte: Ver como cliente"
                       >
-                        {isPro ? (
-                          <span>Bajar a Gratis</span>
+                        {impersonatingId === u.out_user_id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         ) : (
-                          <>
-                            <Zap className="w-3.5 h-3.5 fill-white" />
-                            <span>Activar PRO (+30 Días)</span>
-                          </>
+                          <Eye className="w-3.5 h-3.5" />
                         )}
+                        <span>Ver como cliente</span>
                       </button>
-                    </form>
+
+                      <form action={toggleUserPlan}>
+                        <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                        <input type="hidden" name="current_plan" value={u.out_plan} />
+                        <button
+                          type="submit"
+                          className={`text-xs font-bold px-2.5 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 cursor-pointer ${
+                            isPro
+                              ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
+                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          }`}
+                        >
+                          {isPro ? (
+                            <span>Bajar a Gratis</span>
+                          ) : (
+                            <>
+                              <Zap className="w-3.5 h-3.5 fill-white" />
+                              <span>Activar PRO</span>
+                            </>
+                          )}
+                        </button>
+                      </form>
+                    </div>
                   </div>
                 </div>
               )
             })}
           </div>
 
-          {/* Vista Escritorio (Tabla Completa) */}
-          <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-            <table className="w-full text-left border-collapse text-sm">
+          {/* Vista Escritorio (Tabla Completa con scroll horizontal suave para evitar recortes) */}
+          <div className="hidden md:block bg-white rounded-2xl border border-gray-200 overflow-x-auto shadow-xs">
+            <table className="w-full min-w-[960px] text-left border-collapse text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-semibold">
-                  <th className="px-6 py-3.5">Usuario / Email</th>
-                  <th className="px-6 py-3.5">Plan & Vigencia (30 Días)</th>
-                  <th className="px-6 py-3.5">Contacto</th>
-                  <th className="px-6 py-3.5">Actividad</th>
-                  <th className="px-6 py-3.5">Registro</th>
-                  <th className="px-6 py-3.5 text-right">Gestión de Suscripción</th>
+                  <th className="px-6 py-3.5 whitespace-nowrap">Usuario / Email</th>
+                  <th className="px-6 py-3.5 whitespace-nowrap">Plan & Vigencia (30 Días)</th>
+                  <th className="px-6 py-3.5 whitespace-nowrap">Contacto</th>
+                  <th className="px-6 py-3.5 whitespace-nowrap">Actividad</th>
+                  <th className="px-6 py-3.5 whitespace-nowrap">Registro</th>
+                  <th className="px-6 py-3.5 text-right whitespace-nowrap">Acciones & Soporte</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -300,31 +329,25 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                       </td>
 
                       <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
+                        <div className="flex flex-col items-start gap-1">
+                          <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full ${
                             isPro 
-                              ? 'bg-black text-yellow-400 border border-yellow-500/30' 
+                              ? 'bg-black text-yellow-400 border border-yellow-500/40' 
                               : isTrial
-                              ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                              ? 'bg-purple-100 text-purple-700'
                               : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {isPro ? <><Sparkles className="w-3 h-3 text-yellow-400" /> PRO ACTIVO</> : 
-                             isTrial ? `Prueba Gratis (${trialDaysLeft}d)` : 'Plan Básico'}
+                            {isPro ? '★ PRO' : isTrial ? `Prueba (${trialDaysLeft}d)` : 'Gratis'}
                           </span>
-
-                          {!isPro && isDiscountEligible && (
-                            <p className="text-[10px] text-green-600 font-bold mt-1">Oferta 50% ({discountDaysLeft}d restantes)</p>
-                          )}
-
                           {isPro && expiresDate && (
-                            <p className="text-[11px] text-gray-500 flex items-center gap-1 font-mono">
-                              <Clock className="w-3 h-3 text-purple-600" />
-                              {isExpired ? (
-                                <span className="text-red-600 font-bold">Vencido ({expiresDate.toLocaleDateString()})</span>
-                              ) : (
-                                <span>{daysLeft} días (Vence {expiresDate.toLocaleDateString()})</span>
-                              )}
-                            </p>
+                            <span className={`text-[11px] font-medium ${isExpired ? 'text-red-600' : 'text-gray-500'}`}>
+                              {isExpired ? 'Vencida' : `${daysLeft}d restantes`}
+                            </span>
+                          )}
+                          {!isPro && isDiscountEligible && (
+                            <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 rounded-sm">
+                              50% OFF ({discountDaysLeft}d)
+                            </span>
                           )}
                         </div>
                       </td>
@@ -335,9 +358,9 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                             href={`https://wa.me/${u.out_phone.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs text-emerald-700 font-medium hover:underline bg-emerald-50 px-2.5 py-1 rounded-md"
+                            className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 hover:underline"
                           >
-                            <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                            <MessageCircle className="w-3.5 h-3.5" />
                             {u.out_phone}
                           </a>
                         ) : (
@@ -347,7 +370,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
 
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 text-xs text-gray-600">
-                          <span className="bg-gray-100 px-2 py-0.5 rounded" title="vCards">📇 {u.out_vcards_count || 0}</span>
+                          <span className="bg-gray-100 px-2 py-0.5 rounded" title="vCards">💳 {u.out_vcards_count || 0}</span>
                           <span className="bg-gray-100 px-2 py-0.5 rounded" title="Menús">☕ {u.out_menus_count || 0}</span>
                           <span className="bg-gray-100 px-2 py-0.5 rounded" title="QRs/Dispositivos">📱 {u.out_devices_count || 0}</span>
                           <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium" title="Leads capturados">👥 {u.out_leads_count || 0}</span>
@@ -358,28 +381,45 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                         {new Date(u.out_created_at).toLocaleDateString()}
                       </td>
 
-                      <td className="px-6 py-4 text-right">
-                        <form action={toggleUserPlan} className="inline-block">
-                          <input type="hidden" name="target_user_id" value={u.out_user_id} />
-                          <input type="hidden" name="current_plan" value={u.out_plan} />
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2">
                           <button
-                            type="submit"
-                            className={`text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer ${
-                              isPro
-                                ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
-                                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                            }`}
+                            type="button"
+                            disabled={impersonatingId === u.out_user_id}
+                            onClick={() => handleImpersonate(u.out_user_id)}
+                            className="text-xs font-bold px-3 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 bg-amber-400 hover:bg-amber-500 text-black cursor-pointer disabled:opacity-50"
+                            title="Ver el panel exactamente como este usuario (Modo Soporte)"
                           >
-                            {isPro ? (
-                              <span>Bajar a Gratis</span>
+                            {impersonatingId === u.out_user_id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             ) : (
-                              <>
-                                <Zap className="w-3.5 h-3.5 fill-white" />
-                                <span>Activar PRO (+30 Días)</span>
-                              </>
+                              <Eye className="w-3.5 h-3.5" />
                             )}
+                            <span>Ver como cliente</span>
                           </button>
-                        </form>
+
+                          <form action={toggleUserPlan} className="inline-block">
+                            <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                            <input type="hidden" name="current_plan" value={u.out_plan} />
+                            <button
+                              type="submit"
+                              className={`text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                                isPro
+                                  ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
+                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                              }`}
+                            >
+                              {isPro ? (
+                                <span>Bajar a Gratis</span>
+                              ) : (
+                                <>
+                                  <Zap className="w-3.5 h-3.5 fill-white" />
+                                  <span>Activar PRO (+30 Días)</span>
+                                </>
+                              )}
+                            </button>
+                          </form>
+                        </div>
                       </td>
                     </tr>
                   )

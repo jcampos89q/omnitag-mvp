@@ -8,6 +8,7 @@ import { QrCode } from 'lucide-react'
 import VCardForm from './VCardForm'
 import { getUserPlanInfo } from '@/lib/plans'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function VCardBuilderPage({
   searchParams,
@@ -15,7 +16,7 @@ export default async function VCardBuilderPage({
   searchParams: Promise<{ success?: string; error?: string }>
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getEffectiveUser(supabase)
   const params = await searchParams
 
   if (!user) {
