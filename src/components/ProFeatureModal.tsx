@@ -95,6 +95,17 @@ export default function ProFeatureModal({
               <span>Ver Datos de Transferencia BAC</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
+
+            <p className="text-[11px] text-gray-500 pt-1">
+              ¿Prefieres tarjeta o placa física NFC?{' '}
+              <Link 
+                href="/tienda" 
+                onClick={onClose}
+                className="text-purple-600 hover:text-purple-700 font-bold underline inline-flex items-center gap-0.5"
+              >
+                Ver Tienda (L. 1,200 incluye 1 año PRO)
+              </Link>
+            </p>
           </div>
         </div>
       </div>

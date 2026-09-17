@@ -269,7 +269,7 @@ export default async function DashboardPage() {
               className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span>{accountType === 'professional' ? 'Obtener Tarjeta NFC PRO (L. 550)' : 'Mejorar a PRO por L. 550'}</span>
+              <span>{accountType === 'professional' ? 'Obtener Tarjeta NFC PRO (L. 1,200)' : 'Mejorar a PRO por L. 550'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           ) : null}

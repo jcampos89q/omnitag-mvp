@@ -85,9 +85,14 @@ export default function BillingClient({
   const daysLeft = planInfo?.daysLeft || 0
   const discountDaysLeft = planInfo?.discountDaysLeft || 0
 
-  // Precios con o sin descuento del 50%
-  const priceHnl = isDiscountEligible ? 'L. 275 HNL' : 'L. 550 HNL'
-  const priceUsd = isDiscountEligible ? 'L. 275 HNL' : 'L. 550 HNL' // Fallback if still referenced
+  // Precios según tipo de cuenta y descuento del 50%
+  const isHardwareAccount = accountType === 'professional' || accountType === 'review_plate'
+  const priceHnl = isHardwareAccount 
+    ? 'L. 1,200 HNL' 
+    : isDiscountEligible 
+    ? 'L. 275 HNL' 
+    : 'L. 550 HNL'
+  const priceUsd = priceHnl // Fallback if still referenced
 
   const pendingTransfer = transfers.find(t => t.status === 'pending')
 
@@ -300,7 +305,7 @@ export default function BillingClient({
               <p className="text-gray-500 text-xs mb-4">La manera profesional de conectar y compartir tus datos.</p>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-extrabold text-blue-700">L. 550</span>
+                  <span className="text-3xl font-extrabold text-blue-700">L. 1,200</span>
                   <span className="text-gray-500 text-xs font-medium">HNL / pago único anual</span>
                 </div>
                 <p className="text-[11px] text-gray-400 mt-0.5">Incluye la tarjeta física NFC + envío + 365 días PRO.</p>
@@ -334,7 +339,7 @@ export default function BillingClient({
                   href="#metodos-pago"
                   className="w-full bg-black text-white font-extrabold py-3 px-4 rounded-xl hover:bg-gray-800 transition text-xs shadow-md flex items-center justify-center gap-1.5"
                 >
-                  <span>Solicitar y Pagar por BAC</span>
+                  <span>Solicitar Tarjeta NFC por BAC (L. 1,200)</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </a>
               )}
@@ -595,7 +600,9 @@ export default function BillingClient({
             </h3>
             <p className="text-xs text-gray-500 mt-1">
               {accountType === 'professional' 
-                ? 'Realiza el pago para solicitar tu Tarjeta Física Inteligente NFC y adjunta el comprobante aquí abajo. Incluye 1 año de Plan PRO.'
+                ? 'Realiza el pago de L. 1,200 para solicitar tu Tarjeta Física Inteligente NFC y adjunta el comprobante aquí abajo. Incluye 1 año de Plan PRO completo.'
+                : accountType === 'review_plate'
+                ? 'Realiza el pago de L. 1,200 para solicitar tu Placa Acrílica de Reseñas de Google y adjunta el comprobante aquí abajo. Incluye 1 año de Plan PRO completo.'
                 : 'Realiza tu transferencia o depósito bancario y adjunta el comprobante aquí abajo para activar tu Plan PRO de inmediato.'}
             </p>
           </div>
@@ -659,7 +666,16 @@ export default function BillingClient({
               <div className="bg-white p-3.5 rounded-xl border border-gray-200 flex items-center justify-between shadow-2xs">
                 <div>
                   <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Monto a Depositar / Transferir:</span>
-                  {isDiscountEligible ? (
+                  {isHardwareAccount ? (
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-emerald-700 text-sm sm:text-base">
+                        L. 1,200.00 HNL
+                      </span>
+                      <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded">
+                        DISPOSITIVO FÍSICO + 1 AÑO PRO
+                      </span>
+                    </div>
+                  ) : isDiscountEligible ? (
                     <div className="flex items-center gap-2">
                       <span className="font-extrabold text-emerald-700 text-sm sm:text-base">
                         L. 275.00 HNL
@@ -670,7 +686,7 @@ export default function BillingClient({
                     </div>
                   ) : (
                     <span className="font-extrabold text-emerald-700 text-sm sm:text-base">
-                      L. 550.00 HNL
+                      L. 550.00 HNL / mes
                     </span>
                   )}
                 </div>
@@ -727,7 +743,11 @@ export default function BillingClient({
                         : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                     }`}
                   >
-                    {isDiscountEligible ? 'L. 275 Lempiras' : 'L. 550 Lempiras'}
+                    {isHardwareAccount 
+                      ? 'L. 1,200 Lempiras (Dispositivo Físico + 1 Año PRO)' 
+                      : isDiscountEligible 
+                      ? 'L. 275 Lempiras (50% OFF)' 
+                      : 'L. 550 Lempiras'}
                   </button>
                 </div>
               </div>

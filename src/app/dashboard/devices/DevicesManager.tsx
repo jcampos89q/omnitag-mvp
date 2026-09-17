@@ -200,6 +200,32 @@ export default function DevicesManager({
         </div>
       </div>
 
+      {/* BANNER: ADQUIRIR PLACA FÍSICA DE RESEÑAS */}
+      <div className="bg-linear-to-r from-gray-950 via-gray-900 to-black text-white p-5 rounded-2xl border border-gray-800 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Placa Física para Mostrador
+          </div>
+          <h3 className="text-base font-extrabold text-white">¿Necesitas la Placa Acrílica NFC para tu Negocio?</h3>
+          <p className="text-xs text-gray-300 max-w-xl">
+            Colócala en tu mostrador o mesas. Tus clientes solo acercan su teléfono y dejan su reseña en 5 segundos. Acrílico premium de 120×126 mm, chip NFC integrado, QR de respaldo y 1 año de suscripción PRO.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+          <div className="text-right hidden sm:block">
+            <span className="text-xs text-gray-400 line-through block">L. 1,600</span>
+            <span className="text-lg font-black text-emerald-400">L. 1,200 <span className="text-xs font-normal text-gray-300">HNL</span></span>
+          </div>
+          <Link
+            href="/tienda"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black px-4 py-2.5 rounded-xl text-xs transition shadow-md"
+          >
+            Pedir Placa Física
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </div>
+
       {/* 2. FORMULARIO PARA REGISTRAR O VINCULAR UNA PLACA NFC (Solo para Administradores y Empresas generales) */}
       {accountType !== 'review_plate' && (
         <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-xs space-y-6">

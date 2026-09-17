@@ -109,7 +109,7 @@ export default function LandingPage() {
       description: 'Comparte tu tarjeta de presentación profesional, catálogo, redes sociales y formas de pago con un toque en tu tarjeta NFC o escaneo de código QR.',
       highlights: [
         'Descarga de contacto directo a la agenda del móvil (.vcf)',
-        'Tarjetas NFC de Presentación Físicas por solo L. 550 (Incluye 1 año)',
+        'Tarjetas NFC Físicas (Matte Black) por L. 1,200 (Incluye 1 año PRO)',
         'Intercambio bidireccional: captura los datos de la otra persona',
         'Temas visuales modernos con colores y tipografías a tu medida'
       ],
