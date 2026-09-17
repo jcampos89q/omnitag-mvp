@@ -206,9 +206,9 @@ export default function DevicesManager({
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Placa Física para Mostrador
           </div>
-          <h3 className="text-base font-extrabold text-white">¿Necesitas la Placa Acrílica NFC para tu Negocio?</h3>
+          <h3 className="text-base font-extrabold text-white">¿Necesitas la Placa NFC para tu Negocio?</h3>
           <p className="text-xs text-gray-300 max-w-xl">
-            Colócala en tu mostrador o mesas. Tus clientes solo acercan su teléfono y dejan su reseña en 5 segundos. Acrílico premium de 120×126 mm, chip NFC integrado, QR de respaldo y 1 año de suscripción PRO.
+            Colócala en tu mostrador o mesas. Tus clientes solo acercan su teléfono y dejan su reseña en 5 segundos. Fabricada en vinil sobre PVC de 120×126 mm (altamente resistente), chip NFC integrado, QR de respaldo y 1 año de suscripción PRO.
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">

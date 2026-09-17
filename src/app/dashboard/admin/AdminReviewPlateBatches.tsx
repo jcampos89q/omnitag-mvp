@@ -403,7 +403,7 @@ export default function AdminReviewPlateBatches({
             Gestor de Lotes: Placas de Reseñas Google
           </h2>
           <p className="text-xs text-blue-200/80 mt-1 max-w-xl">
-            Fabrica lotes de placas acrílicas con QR de alta resolución y chips NFC programables. Cada placa incluye 1 año de suscripción PRO para el negocio.
+            Fabrica lotes de placas físicas (vinil sobre PVC altamente resistente) con QR de alta resolución y chips NFC programables. Cada placa incluye 1 año de suscripción PRO para el negocio.
           </p>
         </div>
 
@@ -443,7 +443,7 @@ export default function AdminReviewPlateBatches({
           </div>
           <h3 className="font-extrabold text-gray-900 text-base">No hay lotes de placas de reseñas creados</h3>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            Genera tu primer lote de placas para obtener los enlaces de activación (`/r/REV-...`), códigos QR para imprenta y plantillas acrílicas para mostrador.
+            Genera tu primer lote de placas para obtener los enlaces de activación (`/r/REV-...`), códigos QR para imprenta y plantillas para placas en vinil sobre PVC.
           </p>
           <button
             onClick={() => setIsCreateModalOpen(true)}
@@ -724,7 +724,7 @@ export default function AdminReviewPlateBatches({
                 </div>
                 <div>
                   <h3 className="font-extrabold text-gray-900 text-lg">Generar Lote de Placas de Reseñas</h3>
-                  <p className="text-xs text-gray-500">Crea códigos únicos y QR personalizados listos para placas acrílicas</p>
+                  <p className="text-xs text-gray-500">Crea códigos únicos y QR personalizados listos para placas en vinil sobre PVC</p>
                 </div>
               </div>
               <button

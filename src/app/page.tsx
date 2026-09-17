@@ -93,7 +93,7 @@ export default function LandingPage() {
       highlights: [
         '1 Toque NFC o escaneo QR para abrir Google Reviews',
         'Filtro inteligente: 5★ van a Google, 1-3★ van a gerencia',
-        'Placas NFC Inteligentes de Acrílico por solo L. 1,200 (Incluye 1 año de suscripción)',
+        'Placas NFC Inteligentes (Vinil sobre PVC altamente resistente) por L. 1,200 (Incluye 1 año)',
         'Aumenta tu posición y visibilidad en búsquedas locales'
       ],
       linkText: 'Blindar reputación online',

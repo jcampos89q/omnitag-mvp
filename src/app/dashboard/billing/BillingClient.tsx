@@ -368,7 +368,7 @@ export default function BillingClient({
               <ul className="space-y-2.5 text-xs text-gray-700 mb-6 font-medium">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-600 shrink-0 font-bold" />
-                  <span><b>Placa Física Inteligente NFC</b> de acrílico para mesa</span>
+                  <span><b>Placa Física Inteligente NFC</b> en vinil sobre PVC para mesa (altamente resistente)</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-600 shrink-0 font-bold" />
@@ -602,7 +602,7 @@ export default function BillingClient({
               {accountType === 'professional' 
                 ? 'Realiza el pago de L. 1,200 para solicitar tu Tarjeta Física Inteligente NFC y adjunta el comprobante aquí abajo. Incluye 1 año de Plan PRO completo.'
                 : accountType === 'review_plate'
-                ? 'Realiza el pago de L. 1,200 para solicitar tu Placa Acrílica de Reseñas de Google y adjunta el comprobante aquí abajo. Incluye 1 año de Plan PRO completo.'
+                ? 'Realiza el pago de L. 1,200 para solicitar tu Placa NFC de Reseñas de Google (vinil sobre PVC resistente) y adjunta el comprobante aquí abajo. Incluye 1 año de Plan PRO completo.'
                 : 'Realiza tu transferencia o depósito bancario y adjunta el comprobante aquí abajo para activar tu Plan PRO de inmediato.'}
             </p>
           </div>

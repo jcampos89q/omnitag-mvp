@@ -289,7 +289,7 @@ function drawGoldStar(doc: jsPDF, cx: number, cy: number, outerRadius = 3.2, inn
 }
 
 /**
- * Genera y descarga un PDF en tamaño A4 con Plantillas para Stands / Mostradores Acrílicos
+ * Genera y descarga un PDF en tamaño A4 con Plantillas para Stands / Mostradores en Vinil sobre PVC
  * de Reseñas de Google (2 displays grandes de 120 x 126 mm por página A4)
  */
 export async function generateReviewPlatesSheetPdf(
@@ -343,7 +343,7 @@ export async function generateReviewPlatesSheetPdf(
       const curPage = Math.floor(index / standsPerPage) + 1
       const totPages = Math.ceil(totalCards / standsPerPage)
       doc.text(
-        'Hoja ' + curPage + ' de ' + totPages + ' - Imprimir al 100% (Tamano Real) para acrilicos de mostrador',
+        'Hoja ' + curPage + ' de ' + totPages + ' - Imprimir al 100% (Tamano Real) para vinil sobre PVC',
         14,
         11.5
       )
@@ -367,7 +367,7 @@ export async function generateReviewPlatesSheetPdf(
     doc.line(x + standW, y + standH, x + standW + markLen, y + standH)
     doc.line(x + standW, y + standH, x + standW, y + standH + markLen)
 
-    // 2. Fondo Blanco Puro con borde sutil para display acrílico
+    // 2. Fondo Blanco Puro con borde sutil para display en vinil sobre PVC
     doc.setFillColor(255, 255, 255)
     doc.roundedRect(x, y, standW, standH, 4, 4, 'F')
     doc.setDrawColor(226, 232, 240)

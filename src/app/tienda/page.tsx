@@ -21,7 +21,7 @@ import {
 
 export const metadata = {
   title: 'Tienda Oficial OmniTag | Tarjetas NFC & Placas de Reseñas Google',
-  description: 'Adquiere tu Tarjeta Inteligente NFC y Placa Acrílica de Reseñas para Mostrador con 1 año de membresía PRO incluida. Envíos a toda Honduras.',
+  description: 'Adquiere tu Tarjeta Inteligente NFC y Placa en Vinil sobre PVC (altamente resistente) de Reseñas para Mostrador con 1 año de membresía PRO incluida. Envíos a toda Honduras.',
 }
 
 export default function TiendaPage() {
@@ -33,11 +33,11 @@ export default function TiendaPage() {
   )}`
 
   const plateOrderUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    'Hola OmniTag, quiero ordenar la Placa Acrílica de Mostrador NFC para Reseñas de Google por L. 1,200 con 1 año PRO incluido.'
+    'Hola OmniTag, quiero ordenar la Placa NFC para Reseñas de Google en Vinil sobre PVC (altamente resistente) por L. 1,200 con 1 año PRO incluido.'
   )}`
 
   const comboOrderUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    'Hola OmniTag, quiero ordenar el Combo Dúo (Tarjeta NFC + Placa de Reseñas Google) por L. 2,200 con 1 año PRO incluido.'
+    'Hola OmniTag, quiero ordenar el Combo Dúo (Tarjeta NFC + Placa de Reseñas Google en Vinil sobre PVC) por L. 2,200 con 1 año PRO incluido.'
   )}`
 
   const generalWhatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
@@ -56,7 +56,7 @@ export default function TiendaPage() {
           rel="noreferrer"
           className="hidden sm:inline-flex items-center gap-1 underline font-black text-emerald-300 hover:text-white transition ml-2 shrink-0"
         >
-          <span>Atención: {whatsappDisplay}</span>
+          <span>Atención por WhatsApp</span>
           <ArrowRight className="w-3 h-3" />
         </a>
       </div>
@@ -106,7 +106,7 @@ export default function TiendaPage() {
               className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm px-3.5 sm:px-4 py-2 rounded-xl font-extrabold transition shadow-xs flex items-center gap-1.5 shrink-0"
             >
               <MessageCircle className="w-4 h-4 fill-white" />
-              <span>WhatsApp: 8772-4813</span>
+              <span>Contactar por WhatsApp</span>
             </a>
           </div>
         </nav>
@@ -167,7 +167,7 @@ export default function TiendaPage() {
               </div>
               <div className="bg-white p-3.5 rounded-2xl border border-gray-200 shadow-2xs">
                 <p className="text-[11px] text-gray-500 font-bold">Atención Directa</p>
-                <p className="text-xs sm:text-sm font-black text-purple-700">WhatsApp 8772-4813</p>
+                <p className="text-xs sm:text-sm font-black text-purple-700">Chat por WhatsApp</p>
               </div>
             </div>
           </div>
@@ -187,7 +187,7 @@ export default function TiendaPage() {
                 Elige tu Dispositivo OmniTag
               </h2>
               <p className="text-sm sm:text-base text-gray-400 font-medium">
-                Haz tu pedido directo a nuestro WhatsApp oficial <b>+504 8772-4813</b> y coordinamos tu entrega de forma inmediata.
+                Haz tu pedido directo a nuestro canal de WhatsApp y coordinamos tu entrega de forma inmediata.
               </p>
             </div>
 
@@ -309,25 +309,25 @@ export default function TiendaPage() {
                     <span>Pedir Tarjeta NFC por WhatsApp (L. 1,200)</span>
                   </a>
                   <p className="text-[11px] text-gray-500 text-center mt-2">
-                    Contacto directo con nuestro equipo al <b>{whatsappDisplay}</b>
+                    Atención personalizada y despacho inmediato
                   </p>
                 </div>
               </div>
 
-              {/* PRODUCTO 2: PLACA ACRÍLICA DE RESEÑAS DE GOOGLE */}
+              {/* PRODUCTO 2: PLACA DE RESEÑAS DE GOOGLE (VINIL SOBRE PVC) */}
               <div className="bg-slate-950/90 border border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl backdrop-blur-sm relative group hover:border-amber-500/50 transition duration-300">
                 <div className="space-y-6">
                   {/* Badge & Título */}
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      Mostrador & Recepción • 120 x 126 mm
+                      Mostrador & Mesas • Vinil sobre PVC (120 x 126 mm)
                     </span>
                     <span className="text-xs font-extrabold text-gray-400 flex items-center gap-1">
                       <Shield className="w-3.5 h-3.5 text-amber-400" /> Escudo 5★ Activo
                     </span>
                   </div>
 
-                  {/* MAQUETA VISUAL EXACTA: STAND ACRÍLICO BLANCO (Según diseño de lote PDF) */}
+                  {/* MAQUETA VISUAL: STAND EN VINIL SOBRE PVC (ALTAMENTE RESISTENTE) */}
                   <div className="w-full max-w-[260px] mx-auto aspect-[1/1.05] bg-white rounded-2xl border-2 border-slate-200 p-4 text-slate-900 shadow-2xl relative flex flex-col justify-between items-center text-center">
                     {/* Borde sutil interior */}
                     <div className="absolute inset-1 rounded-xl border border-slate-100 pointer-events-none" />
@@ -387,7 +387,7 @@ export default function TiendaPage() {
                   {/* Nombre y Precio */}
                   <div className="space-y-2">
                     <h3 className="text-2xl font-black text-white">
-                      Placa Acrílica NFC <span className="text-amber-400 font-semibold text-lg">(Google Reviews 5★)</span>
+                      Placa NFC en Vinil sobre PVC <span className="text-amber-400 font-semibold text-lg">(Google Reviews 5★)</span>
                     </h3>
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl sm:text-4xl font-black text-white">L. 1,200</span>
@@ -396,7 +396,7 @@ export default function TiendaPage() {
                       </span>
                     </div>
                     <p className="text-xs text-gray-400 leading-relaxed">
-                      Multiplica tus opiniones 5 estrellas en Google Maps. Cuando tu cliente acerca su teléfono al mostrador o caja, se abre de inmediato la ventana para calificar con 5 estrellas. Además, cuenta con un filtro inteligente para que las inconformidades o quejas se traten en privado.
+                      Multiplica tus opiniones 5 estrellas en Google Maps. Fabricada con vinil de alta definición montado sobre una sólida placa de PVC (altamente resistente al uso continuo, caídas y humedad). Cuando tu cliente acerca su teléfono en mostrador o mesa, se abre de inmediato la ventana para calificar con 5 estrellas en Google Maps.
                     </p>
                   </div>
 
@@ -412,11 +412,11 @@ export default function TiendaPage() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-300">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span><b>Chip NFC NTAG integrado</b> de alta sensibilidad y alcance de toque</span>
+                      <span><b>Chip NFC NTAG integrado</b> de alta sensibilidad y toque instantáneo</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-300">
                       <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span><b>Acrílico cristal de mostrador</b> elegante y listo para mesa o recepción</span>
+                      <span><b>Vinil premium sobre base de PVC</b>: altamente resistente a caídas, polvo y humedad diaria</span>
                     </div>
                   </div>
                 </div>
@@ -433,7 +433,7 @@ export default function TiendaPage() {
                     <span>Pedir Placa de Reseñas por WhatsApp (L. 1,200)</span>
                   </a>
                   <p className="text-[11px] text-gray-500 text-center mt-2">
-                    Contacto directo con nuestro equipo al <b>{whatsappDisplay}</b>
+                    Atención personalizada y despacho inmediato
                   </p>
                 </div>
               </div>
@@ -495,7 +495,7 @@ export default function TiendaPage() {
               </div>
               <h4 className="font-extrabold text-base text-gray-900">Escríbenos a WhatsApp</h4>
               <p className="text-xs text-gray-500 leading-relaxed">
-                Envíanos un mensaje al <b>{whatsappDisplay}</b> indicando si deseas la Tarjeta NFC, la Placa de Reseñas o el Combo Dúo.
+                Envíanos un mensaje por WhatsApp indicando si deseas la Tarjeta NFC, la Placa de Reseñas o el Combo Dúo.
               </p>
             </div>
 
@@ -558,7 +558,7 @@ export default function TiendaPage() {
                   ¿Cómo funciona el Escudo de Reseñas de Google?
                 </h4>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                  Cuando tu cliente acerca su teléfono al stand de mostrador, el sistema le solicita una valoración previa: si selecciona <b>5 estrellas</b>, se abre automáticamente la ficha de Google Maps para que publique su comentario positivo. Si selecciona <b>1 a 3 estrellas</b>, se abre un formulario privado de atención para que te explique su queja o desacuerdo directamente en tu panel, permitiéndote solucionar el inconveniente antes de que dañe la reputación pública de tu negocio.
+                  Cuando tu cliente acerca su teléfono a la placa de mostrador, el sistema le solicita una valoración previa: si selecciona <b>5 estrellas</b>, se abre automáticamente la ficha de Google Maps para que publique su comentario positivo. Si selecciona <b>1 a 3 estrellas</b>, se abre un formulario privado de atención para que te explique su queja o desacuerdo directamente en tu panel, permitiéndote solucionar el inconveniente antes de que dañe la reputación pública de tu negocio.
                 </p>
               </div>
 
@@ -588,7 +588,7 @@ export default function TiendaPage() {
                 ¿Listo para modernizar la atención de tu negocio?
               </h3>
               <p className="text-xs sm:text-base text-gray-300 max-w-lg mx-auto font-medium">
-                Contáctanos directamente en nuestro canal de WhatsApp oficial <b>{whatsappDisplay}</b> para tomar tu orden o resolver cualquier duda.
+                Contáctanos directamente en nuestro canal oficial de WhatsApp para tomar tu orden o resolver cualquier duda.
               </p>
             </div>
 
@@ -600,7 +600,7 @@ export default function TiendaPage() {
                 className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-black font-black px-8 py-4 rounded-2xl text-sm sm:text-base transition shadow-xl flex items-center justify-center gap-2 cursor-pointer hover:scale-105"
               >
                 <MessageCircle className="w-5 h-5 fill-black" />
-                <span>Escribir al WhatsApp {whatsappDisplay}</span>
+                <span>Ordenar por WhatsApp</span>
               </a>
               <Link 
                 href="/" 
@@ -622,7 +622,7 @@ export default function TiendaPage() {
         title="Contactar a WhatsApp Oficial"
       >
         <MessageCircle className="w-6 h-6 fill-white" />
-        <span className="hidden sm:inline font-black text-xs pr-1">WhatsApp 8772-4813</span>
+        <span className="hidden sm:inline font-black text-xs pr-1">WhatsApp Oficial</span>
       </a>
 
       {/* 8. FOOTER */}
@@ -645,7 +645,7 @@ export default function TiendaPage() {
           </div>
 
           <p className="text-gray-400 text-xs font-medium">
-            © {new Date().getFullYear()} OmniTag. WhatsApp: {whatsappDisplay}
+            © {new Date().getFullYear()} OmniTag. Soporte y envíos a toda Honduras.
           </p>
         </div>
       </footer>
