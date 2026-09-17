@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   // 1. Obtener plan, contador de días restantes y privilegios del usuario
   const [{ isPro, isAdmin, expiresAt, daysLeft, isExpired, isTrial, isDiscountEligible, discountDaysLeft }, { data: profile }] = await Promise.all([
     getUserPlanInfo(supabase, user.id),
-    supabase.from('users').select('full_name, account_type, business_name').eq('id', user.id).maybeSingle()
+    supabase.from('users').select('full_name, account_type').eq('id', user.id).maybeSingle()
   ])
 
   const accountType = profile?.account_type || 'professional'

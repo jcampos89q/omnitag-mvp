@@ -43,7 +43,7 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
   ])
 
   // Calcular siempre los días de prueba y descuentos basados en created_at
-  const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date();
+  const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date(0);
   const now = new Date();
   
   // Supabase RPC default is 10 days for trial in DB, but we consider 10 days for frontend compatibility if needed.
