@@ -95,10 +95,10 @@ export default function AccountLockedPaywall({
               </div>
 
               <Link
-                href="/dashboard/billing"
+                href="/tienda"
                 className="w-full mt-3 py-2.5 px-4 rounded-xl bg-black hover:bg-gray-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm"
               >
-                <span>Adquirir con Tarjeta NFC</span>
+                <span>Ver Tienda & Pedir Tarjeta NFC</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -116,7 +116,7 @@ export default function AccountLockedPaywall({
               </p>
             </div>
             <a
-              href={`https://wa.me/50498877763?text=${whatsappMessage}`}
+              href={`https://wa.me/50487724813?text=${whatsappMessage}`}
               target="_blank"
               rel="noreferrer"
               className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold flex items-center justify-center gap-2 transition shrink-0 shadow-xs"

@@ -251,7 +251,7 @@ export default function BusinessUpgradesShowcase({
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <a
-                href="https://wa.me/50498877763?text=Hola%20OmniTag,%20tengo%20una%20cuenta%20anual%20y%20me%20gustar%C3%ADa%20activar%20la%20Suite%20Empresarial%20mensual"
+                href="https://wa.me/50487724813?text=Hola%20OmniTag,%20tengo%20una%20cuenta%20anual%20y%20me%20gustar%C3%ADa%20activar%20la%20Suite%20Empresarial%20mensual"
                 target="_blank"
                 rel="noreferrer"
                 className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 border border-emerald-200"
