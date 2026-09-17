@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { 
@@ -132,9 +133,14 @@ export default function DashboardNavbar({
       {/* 1. TOP BAR MÓVIL (Visible solo en < md) */}
       <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-xs">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center font-bold text-lg">
-            O
-          </div>
+          <Image
+            src="/logo-light.png"
+            alt="OmniTag"
+            width={32}
+            height={32}
+            className="w-8 h-8 object-contain"
+            priority
+          />
           <span className="text-xl font-bold tracking-tight text-gray-900">OmniTag</span>
           {isAdmin && (
             <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded">
@@ -178,9 +184,13 @@ export default function DashboardNavbar({
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl p-5 z-10 animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-black text-white rounded-lg flex items-center justify-center font-bold text-base">
-                  O
-                </div>
+                <Image
+                  src="/logo-light.png"
+                  alt="OmniTag"
+                  width={28}
+                  height={28}
+                  className="w-7 h-7 object-contain"
+                />
                 <span className="text-lg font-bold tracking-tight text-gray-900">Menú Principal</span>
               </div>
               <button 
@@ -269,9 +279,14 @@ export default function DashboardNavbar({
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 shrink-0 min-h-screen sticky top-0 h-screen">
         <div className="p-6 pb-4 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center font-bold text-lg">
-              O
-            </div>
+            <Image
+              src="/logo-light.png"
+              alt="OmniTag"
+              width={36}
+              height={36}
+              className="w-9 h-9 object-contain"
+              priority
+            />
             <span className="text-2xl font-bold tracking-tight text-gray-900">OmniTag</span>
           </Link>
 

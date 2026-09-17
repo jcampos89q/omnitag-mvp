@@ -101,8 +101,8 @@ export async function generateNfcCardsSheetPdf(
   const gapY = 8.5
   const cardsPerPage = 8
 
-  // Cargar el isotipo / logo OmniTag en base64
-  const logoDataUrl = await getBase64ImageFromUrl('/omnitag-logo.jpg')
+  // Cargar el isotipo / logo OmniTag para fondo negro en base64
+  const logoDataUrl = await getBase64ImageFromUrl('/logo-dark.png')
 
   const totalCards = batch.nfc_cards.length
   
@@ -181,7 +181,7 @@ export async function generateNfcCardsSheetPdf(
 
     if (logoDataUrl) {
       try {
-        doc.addImage(logoDataUrl, 'JPEG', logoX, logoY, logoSize, logoSize)
+        doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoSize, logoSize)
       } catch (e) {
         doc.setFillColor(0, 0, 0)
         doc.roundedRect(logoX, logoY, logoSize, logoSize, 2, 2, 'F')
@@ -309,6 +309,9 @@ export async function generateReviewPlatesSheetPdf(
   const marginY = 14.0
   const gapY = 14.0
   const standsPerPage = 2
+
+  // Cargar el isotipo / logo OmniTag para fondo blanco en base64
+  const logoLightDataUrl = await getBase64ImageFromUrl('/logo-light.png')
 
   const totalCards = batch.nfc_cards.length
 
@@ -468,13 +471,24 @@ export async function generateReviewPlatesSheetPdf(
     const urlW = doc.getTextWidth(urlClean)
     doc.text(urlClean, x + standW - 10 - urlW, lineY + 6)
 
-    // Marca de agua sutil de OmniTag
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(5.5)
-    doc.setTextColor(203, 213, 225)
+    // Marca de agua de OmniTag con isotipo oficial para fondo blanco
+    const brandLogoSize = 5.0
     const brandText = 'OMNITAG SMART PLATES'
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(6.0)
+    doc.setTextColor(148, 163, 184)
     const brandW = doc.getTextWidth(brandText)
-    doc.text(brandText, x + (standW - brandW) / 2, lineY + 13)
+    const brandTotalW = brandW + (logoLightDataUrl ? brandLogoSize + 2 : 0)
+    const brandStartX = x + (standW - brandTotalW) / 2
+
+    if (logoLightDataUrl) {
+      try {
+        doc.addImage(logoLightDataUrl, 'PNG', brandStartX, lineY + 9.5, brandLogoSize, brandLogoSize)
+      } catch (e) {
+        // fallback
+      }
+    }
+    doc.text(brandText, brandStartX + (logoLightDataUrl ? brandLogoSize + 2 : 0), lineY + 13.2)
   }
 
   const cleanName = batch.batch_name.replace(/\s+/g, '_')

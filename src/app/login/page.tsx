@@ -1,5 +1,6 @@
 import { login } from '@/app/auth/actions'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft } from 'lucide-react'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 
@@ -26,10 +27,15 @@ export default async function LoginPage({
 
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-gray-100">
         <div className="text-center">
-          <Link href="/" title="Volver a la página principal" className="inline-block hover:scale-105 transition-transform">
-            <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-black text-2xl mx-auto mb-3 shadow-md">
-              O
-            </div>
+          <Link href="/" title="Volver a la página principal" className="inline-block hover:scale-105 transition-transform mb-3">
+            <Image
+              src="/logo-light.png"
+              alt="OmniTag"
+              width={64}
+              height={64}
+              className="w-16 h-16 object-contain mx-auto"
+              priority
+            />
           </Link>
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">
             Bienvenido a OmniTag

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   Smartphone, 
   Star, 
@@ -181,9 +182,14 @@ export default function LandingPage() {
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
         <nav className="flex items-center justify-between px-4 sm:px-6 py-3.5 max-w-7xl mx-auto w-full">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-black text-white rounded-xl flex items-center justify-center font-black text-xl shadow-xs">
-              O
-            </div>
+            <Image
+              src="/logo-light.png"
+              alt="OmniTag"
+              width={36}
+              height={36}
+              className="w-9 h-9 object-contain"
+              priority
+            />
             <span className="text-2xl font-black tracking-tight text-gray-900">OmniTag</span>
           </Link>
 
@@ -643,9 +649,13 @@ export default function LandingPage() {
       <footer className="border-t border-gray-200 bg-white py-12 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-black text-white rounded-lg flex items-center justify-center font-bold text-sm">
-              O
-            </div>
+            <Image
+              src="/logo-light.png"
+              alt="OmniTag"
+              width={28}
+              height={28}
+              className="w-7 h-7 object-contain"
+            />
             <span className="font-black text-lg text-gray-900">OmniTag</span>
           </div>
 
