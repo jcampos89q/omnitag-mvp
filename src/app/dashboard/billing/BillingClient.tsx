@@ -156,7 +156,7 @@ export default function BillingClient({
           </div>
           {isTrial && (
             <p className="text-xs text-amber-700 mt-1 font-medium">
-              🎁 Tienes acceso completo a todas las herramientas PRO por ser usuario nuevo (7 días de cortesía).
+              🎁 Tienes acceso completo a todas las herramientas PRO por ser usuario nuevo (10 días de cortesía).
             </p>
           )}
         </div>

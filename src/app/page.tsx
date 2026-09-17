@@ -25,7 +25,11 @@ import {
   Download,
   Wifi,
   Tag,
-  Check
+  Check,
+  CreditCard,
+  Radio,
+  Truck,
+  Shield
 } from 'lucide-react'
 
 export default function LandingPage() {
@@ -163,15 +167,15 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white flex flex-col selection:bg-black selection:text-white">
       {/* 0. CINTILLO SUPERIOR DE OFERTA */}
       <div className="bg-gradient-to-r from-purple-700 via-indigo-600 to-emerald-600 text-white py-2 px-4 text-center text-xs font-bold flex items-center justify-center gap-2 shadow-xs">
-        <span className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+        <span className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0">
           OFERTA DE LANZAMIENTO
         </span>
-        <span>
-          🎁 <b>7 Días de Prueba Gratis</b> con herramientas PRO + <b>50% OFF (L. 275)</b> si pagas en tus primeros 3 días. (Suscripción Mensual Regular: L. 550)
+        <span className="truncate sm:overflow-visible sm:whitespace-normal">
+          🎁 <b>10 Días de Prueba Gratis</b> con herramientas PRO + <b>50% OFF (L. 275)</b> si pagas en tus primeros 3 días. (Suscripción Regular: L. 550)
         </span>
         <Link 
           href="/register" 
-          className="hidden sm:inline-flex items-center gap-1 underline font-black text-yellow-300 hover:text-white transition ml-1"
+          className="hidden sm:inline-flex items-center gap-1 underline font-black text-yellow-300 hover:text-white transition ml-1 shrink-0"
         >
           <span>Activar cuenta gratis</span>
           <ArrowRight className="w-3 h-3" />
@@ -180,41 +184,46 @@ export default function LandingPage() {
 
       {/* 1. NAVEGACIÓN SUPERIOR */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
-        <nav className="flex items-center justify-between px-4 sm:px-6 py-3.5 max-w-7xl mx-auto w-full">
-          <Link href="/" className="flex items-center gap-2.5">
+        <nav className="flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3.5 max-w-7xl mx-auto w-full">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
             <Image
               src="/logo-light.png"
               alt="OmniTag"
-              width={36}
-              height={36}
-              className="w-9 h-9 object-contain"
+              width={32}
+              height={32}
+              className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
               priority
             />
-            <span className="text-2xl font-black tracking-tight text-gray-900">OmniTag</span>
+            <span className="text-xl sm:text-2xl font-black tracking-tight text-gray-900">OmniTag</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-6 text-xs font-bold text-gray-600">
+          <div className="hidden lg:flex items-center gap-5 text-xs font-bold text-gray-600">
             <a href="#estudio-qr" className="text-purple-700 hover:text-purple-900 transition flex items-center gap-1 font-extrabold">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Generador QR</span>
+            </a>
+            <a href="#dispositivos" className="text-emerald-700 hover:text-emerald-900 transition flex items-center gap-1 font-extrabold">
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Tarjetas & Placas NFC</span>
             </a>
             <a href="#funciones" className="hover:text-black transition">Funcionalidades</a>
             <a href="#soluciones" className="hover:text-black transition">Sectores</a>
             <a href="#como-funciona" className="hover:text-black transition">¿Cómo Funciona?</a>
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Link 
               href="/login" 
-              className="text-xs sm:text-sm text-gray-700 hover:text-black font-bold px-3 py-2 rounded-xl transition"
+              className="text-xs sm:text-sm text-gray-700 hover:text-black font-bold px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl transition"
             >
               Iniciar Sesión
             </Link>
             <Link 
               href="/register" 
-              className="bg-black text-white text-xs sm:text-sm px-4 sm:px-5 py-2.5 rounded-xl font-extrabold hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5"
+              className="bg-black text-white text-xs sm:text-sm px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-extrabold hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5"
             >
-              <span>7 Días Gratis PRO</span>
+              <span className="hidden xs:inline">10 Días Gratis PRO</span>
+              <span className="xs:hidden">10 Días Gratis</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -232,7 +241,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black tracking-wide">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-              <span>7 DÍAS DE PRUEBA PRO GRATIS • SIN TARJETA DE CRÉDITO</span>
+              <span>10 DÍAS DE PRUEBA PRO GRATIS • SIN TARJETA DE CRÉDITO</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-gray-950 leading-[1.1]">
@@ -251,15 +260,15 @@ export default function LandingPage() {
                 href="/register" 
                 className="w-full sm:w-auto bg-black text-white px-8 py-4 rounded-2xl font-black text-sm sm:text-base hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl cursor-pointer"
               >
-                <span>Probar 7 Días Gratis</span>
+                <span>Probar 10 Días Gratis</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <a 
-                href="#estudio-qr" 
-                className="w-full sm:w-auto bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 px-6 py-4 rounded-2xl font-black text-sm sm:text-base transition flex items-center justify-center gap-2"
+                href="#dispositivos" 
+                className="w-full sm:w-auto bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 px-6 py-4 rounded-2xl font-black text-sm sm:text-base transition flex items-center justify-center gap-2"
               >
-                <QrCode className="w-4 h-4 text-purple-700" />
-                <span>Diseñar QR Gratis</span>
+                <CreditCard className="w-4 h-4 text-emerald-700" />
+                <span>Tarjetas & Placas NFC</span>
               </a>
               <a 
                 href="#funciones" 
@@ -273,7 +282,7 @@ export default function LandingPage() {
             <div className="pt-2 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 text-xs font-semibold text-gray-600">
               <span className="flex items-center gap-1.5 text-emerald-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                <b>7 días</b> con todas las herramientas PRO activas
+                <b>10 días</b> con todas las herramientas PRO activas
               </span>
               <span className="flex items-center gap-1.5 text-gray-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
@@ -477,6 +486,306 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* 2.6. SECCIÓN DE DISPOSITIVOS FÍSICOS & HARDWARE NFC (TIENDA OFICIAL OMNITAG) */}
+        <section id="dispositivos" className="py-20 sm:py-28 px-4 sm:px-6 bg-slate-900 text-white relative overflow-hidden border-y border-slate-800">
+          {/* Luces y texturas ambientales */}
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="max-w-7xl mx-auto space-y-12 sm:space-y-16 relative z-10">
+            {/* Encabezado de la Tienda */}
+            <div className="text-center max-w-3xl mx-auto space-y-3">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/20 text-purple-300 text-xs font-black uppercase tracking-wider border border-purple-500/30">
+                <Radio className="w-3.5 h-3.5 text-purple-400" />
+                <span>Hardware & Dispositivos Oficiales</span>
+              </div>
+              <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+                Tarjetas Inteligentes & Placas NFC para Mostrador
+              </h2>
+              <p className="text-sm sm:text-base text-gray-400 font-medium">
+                Conecta tu mundo presencial con tus servicios digitales en 1 solo segundo. Cada dispositivo incluye <b>1 año completo de suscripción PRO</b> y se envía programado y listo para usar directo a tu negocio.
+              </p>
+            </div>
+
+            {/* Grid de Productos: Tarjeta y Placa */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+              
+              {/* PRODUCTO 1: TARJETA INTELIGENTE NFC (MATTE BLACK EDITION) */}
+              <div className="bg-slate-950/80 border border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl backdrop-blur-sm relative group hover:border-purple-500/50 transition duration-300">
+                <div className="space-y-6">
+                  {/* Badge & Título */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      Formato Bolsillo • CR80
+                    </span>
+                    <span className="text-xs font-extrabold text-gray-400 flex items-center gap-1">
+                      <Truck className="w-3.5 h-3.5 text-emerald-400" /> Envío a toda Honduras
+                    </span>
+                  </div>
+
+                  {/* MAQUETA VISUAL EXACTA: TARJETA NEGRO MATE (Según diseño de lote PDF) */}
+                  <div className="w-full max-w-sm mx-auto aspect-[85.6/54] bg-[#0f0f12] rounded-2xl border border-zinc-700/80 p-4 sm:p-5 text-white shadow-2xl relative overflow-hidden flex flex-col justify-between">
+                    {/* Acento violeta superior */}
+                    <div className="absolute top-0 left-6 right-6 h-0.5 bg-gradient-to-r from-purple-500 via-indigo-500 to-fuchsia-500" />
+
+                    {/* Fila Superior: Isotipo y Marca */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Image
+                          src="/logo-dark.png"
+                          alt="OmniTag"
+                          width={28}
+                          height={28}
+                          className="w-7 h-7 object-contain"
+                        />
+                        <div>
+                          <div className="text-xs font-black tracking-wider leading-none text-white">OMNITAG</div>
+                          <div className="text-[7px] font-bold text-gray-400 tracking-widest mt-0.5">SMART BUSINESS CARD</div>
+                        </div>
+                      </div>
+                      <span className="text-[8px] font-mono text-purple-300 bg-purple-950/80 border border-purple-700/50 px-1.5 py-0.5 rounded">
+                        NTAG215
+                      </span>
+                    </div>
+
+                    {/* Fila Central / Inferior: NFC Contactless y QR enmarcado */}
+                    <div className="flex items-end justify-between gap-3 pt-2">
+                      <div className="space-y-1">
+                        <div className="text-[9px] sm:text-[10px] font-black text-purple-400 font-mono tracking-wider flex items-center gap-1">
+                          <Radio className="w-3 h-3 text-purple-400 animate-pulse" />
+                          <span>((( NFC CONTACTLESS )))</span>
+                        </div>
+                        <p className="text-[7px] sm:text-[8px] text-gray-400 leading-tight">
+                          Acerca tu teléfono a la tarjeta <br />
+                          o escanea el código QR directo
+                        </p>
+                      </div>
+
+                      {/* Marco Blanco con Código QR HD */}
+                      <div className="bg-white p-1.5 rounded-xl shrink-0 shadow-lg text-center">
+                        <div className="w-14 h-14 bg-black rounded-lg p-1 flex items-center justify-center relative">
+                          <QrCode className="w-full h-full text-white" />
+                          <div className="absolute inset-0 m-auto w-3 h-3 bg-white rounded-xs flex items-center justify-center">
+                            <span className="text-[7px] font-black text-black">O</span>
+                          </div>
+                        </div>
+                        <div className="text-[7px] font-mono font-bold text-gray-800 mt-0.5">
+                          OT-CARD-001
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Nombre y Precio */}
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-white">
+                      Tarjeta Inteligente NFC <span className="text-purple-400 font-semibold text-lg">(Matte Black Edition)</span>
+                    </h3>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl sm:text-4xl font-black text-white">L. 1,200</span>
+                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        Pago Único • 1 Año PRO Incluido
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      Sustituye tus tarjetas de papel por una credencial de por vida. Acerca tu tarjeta al celular de tu prospecto y se abrirá automáticamente tu perfil profesional con botón para guardar tu contacto directo en su agenda.
+                    </p>
+                  </div>
+
+                  {/* Lista de Especificaciones */}
+                  <div className="space-y-2 pt-1 border-t border-slate-800/80">
+                    <div className="flex items-center gap-2 text-xs text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span><b>1 Año Completo de Membresía PRO</b> (valorado en L. 6,600 / año)</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span><b>Chip NFC NTAG integrado</b> de lectura ultra-rápida (iOS & Android)</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span><b>Código QR Dinámico HD</b> impreso con enlace siempre editable en la nube</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span><b>Acabado PVC Matte Black</b> impermeable y de máxima durabilidad</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botón Pedido a WhatsApp */}
+                <div className="pt-6">
+                  <a
+                    href="https://wa.me/50498877763?text=Hola%20OmniTag%2C%20deseo%20ordenar%20mi%20Tarjeta%20Inteligente%20NFC%20(Matte%20Black)%20por%20L.%201%2C200%20con%201%20a%C3%B1o%20PRO%20incluido."
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3.5 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 transition hover:scale-[1.01]"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-white" />
+                    <span>Pedir Tarjeta NFC por WhatsApp (L. 1,200)</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* PRODUCTO 2: PLACA ACRÍLICA DE RESEÑAS DE GOOGLE (WHITE COUNTER EDITION) */}
+              <div className="bg-slate-950/80 border border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl backdrop-blur-sm relative group hover:border-amber-500/50 transition duration-300">
+                <div className="space-y-6">
+                  {/* Badge & Título */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      Mostrador & Recepción • 120 x 126 mm
+                    </span>
+                    <span className="text-xs font-extrabold text-gray-400 flex items-center gap-1">
+                      <Shield className="w-3.5 h-3.5 text-amber-400" /> Escudo 5★ Activo
+                    </span>
+                  </div>
+
+                  {/* MAQUETA VISUAL EXACTA: STAND ACRÍLICO BLANCO (Según diseño de lote PDF) */}
+                  <div className="w-full max-w-[260px] mx-auto aspect-[1/1.05] bg-white rounded-2xl border-2 border-slate-200 p-4 text-slate-900 shadow-2xl relative flex flex-col justify-between items-center text-center">
+                    {/* Borde sutil interior */}
+                    <div className="absolute inset-1 rounded-xl border border-slate-100 pointer-events-none" />
+
+                    {/* 5 Estrellas Doradas */}
+                    <div className="space-y-1 pt-1">
+                      <div className="flex items-center justify-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        ))}
+                      </div>
+                      <div className="text-[11px] font-black tracking-tight text-gray-900 uppercase">
+                        CALIFÍCANOS EN GOOGLE
+                      </div>
+                      <div className="text-[6.5px] text-slate-500 font-medium leading-none">
+                        Tu opinión nos ayuda a seguir creciendo
+                      </div>
+                    </div>
+
+                    {/* QR Mostrador Enmarcado */}
+                    <div className="bg-slate-50 border border-slate-200 p-2 rounded-xl shadow-inner my-1.5 w-24 h-24 flex flex-col items-center justify-center relative">
+                      <QrCode className="w-full h-full text-slate-900" />
+                      <div className="absolute inset-0 m-auto w-4 h-4 bg-white rounded-xs shadow-xs flex items-center justify-center">
+                        <span className="text-[9px] font-black text-black">G</span>
+                      </div>
+                    </div>
+
+                    {/* Badge Contactless y Pie de Placa */}
+                    <div className="space-y-1 w-full">
+                      <div className="bg-amber-100 text-amber-900 font-bold text-[7.5px] font-mono py-0.5 px-2 rounded-full inline-block border border-amber-300">
+                        ((( CONTACTLESS NFC )))
+                      </div>
+                      <div className="text-[7.5px] font-extrabold text-slate-900 leading-none">
+                        Acerca tu teléfono celular aquí
+                      </div>
+                      <div className="text-[6.5px] text-slate-400 leading-none">
+                        o escanea con la cámara de tu teléfono
+                      </div>
+
+                      {/* Footer de marca de la placa */}
+                      <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[6px] text-slate-400 w-full px-1">
+                        <span className="font-mono font-bold">OT-REV-001</span>
+                        <div className="flex items-center gap-1">
+                          <Image
+                            src="/logo-light.png"
+                            alt="OmniTag"
+                            width={10}
+                            height={10}
+                            className="w-2.5 h-2.5 object-contain"
+                          />
+                          <span className="font-bold">OMNITAG</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Nombre y Precio */}
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-black text-white">
+                      Placa Acrílica NFC <span className="text-amber-400 font-semibold text-lg">(Google Reviews 5★)</span>
+                    </h3>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl sm:text-4xl font-black text-white">L. 1,200</span>
+                      <span className="text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                        Pago Único • 1 Año PRO Incluido
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      Multiplica tus reseñas positivas en Google Maps de forma automática. Tus clientes acercan su teléfono al mostrador o caja y se abre directamente la ventana de 5 estrellas con el botón para calificar.
+                    </p>
+                  </div>
+
+                  {/* Lista de Especificaciones */}
+                  <div className="space-y-2 pt-1 border-t border-slate-800/80">
+                    <div className="flex items-center gap-2 text-xs text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span><b>Escudo Inteligente de Reseñas</b>: filtra quejas de 1 a 3★ en privado a tu panel</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span><b>1 Año Completo de Membresía PRO</b> incluido sin mensualidades</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span><b>Chip NFC NTAG de alta sensibilidad</b> con cobertura de toque rápido</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-300">
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span><b>Acrílico cristal de mostrador</b> elegante y listo para caja o recepción</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botón Pedido a WhatsApp */}
+                <div className="pt-6">
+                  <a
+                    href="https://wa.me/50498877763?text=Hola%20OmniTag%2C%20deseo%20ordenar%20la%20Placa%20Acr%C3%ADlica%20de%20Rese%C3%B1as%20de%20Google%20por%20L.%201%2C200%20con%201%20a%C3%B1o%20PRO%20incluido."
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-3.5 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 transition hover:scale-[1.01]"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-white" />
+                    <span>Pedir Placa de Reseñas por WhatsApp (L. 1,200)</span>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+
+            {/* COMBO DÚO: BANNER DE OFERTA ESPECIAL */}
+            <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-950 border-2 border-purple-500/40 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-2 text-center md:text-left max-w-xl">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-400 text-black px-2.5 py-1 rounded-full inline-block">
+                  COMBO DÚO NEGOCIO COMPLETO
+                </span>
+                <h3 className="text-2xl sm:text-3xl font-black text-white">
+                  1 Tarjeta Inteligente NFC + 1 Placa de Reseñas Google
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-300">
+                  Lleva la credencial personal para tus reuniones y el stand para el mostrador de tu negocio. <b>Incluye 1 año de servicio PRO completo para ambos dispositivos</b>.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0 text-center md:text-right">
+                <div>
+                  <div className="text-xs text-gray-400 line-through">Precio Regular: L. 2,400</div>
+                  <div className="text-3xl sm:text-4xl font-black text-white">L. 2,200</div>
+                  <div className="text-[11px] font-bold text-emerald-400">Ahorras L. 200 al instante</div>
+                </div>
+
+                <a
+                  href="https://wa.me/50498877763?text=Hola%20OmniTag%2C%20deseo%20ordenar%20el%20Combo%20D%C3%BAo%20(Tarjeta%20NFC%20%2B%20Placa%20de%20Rese%C3%B1as)%20por%20L.%202%2C200%20con%201%20a%C3%B1o%20PRO%20incluido."
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-3.5 px-6 rounded-2xl bg-white text-black hover:bg-gray-100 font-black text-sm flex items-center justify-center gap-2 shadow-xl transition hover:scale-105"
+                >
+                  <MessageCircle className="w-4 h-4 fill-black" />
+                  <span>Ordenar Combo por WhatsApp</span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
         {/* 3. SECCIÓN DE FUNCIONES PRINCIPALES (GRID DETALLADO) */}
         <section id="funciones" className="py-20 sm:py-28 px-4 sm:px-6 max-w-7xl mx-auto border-t border-gray-100">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-16 sm:mb-20">
@@ -617,13 +926,13 @@ export default function LandingPage() {
 
             <div className="relative space-y-3">
               <span className="text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30">
-                7 Días Gratis • Sin Tarjeta
+                10 Días Gratis • Sin Tarjeta
               </span>
               <h3 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
                 Empieza a digitalizar tu negocio hoy mismo
               </h3>
               <p className="text-xs sm:text-base text-gray-300 max-w-lg mx-auto font-medium">
-                Crea tu cuenta gratis y obtén <b>7 días de acceso ilimitado PRO</b>. Además, si confirmas tu plan por depósito o transferencia en tus primeros 3 días, tu primer mes te queda con <b>50% de descuento (L. 275 HNL)</b>. (Renovación regular: L. 550 / mes).
+                Crea tu cuenta gratis y obtén <b>10 días de acceso ilimitado PRO</b>. Además, si confirmas tu plan por depósito o transferencia en tus primeros 3 días, tu primer mes te queda con <b>50% de descuento (L. 275 HNL)</b>. (Renovación regular: L. 550 / mes).
               </p>
             </div>
 
@@ -632,7 +941,7 @@ export default function LandingPage() {
                 href="/register" 
                 className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-black px-8 py-4 rounded-2xl text-sm sm:text-base transition shadow-xl cursor-pointer"
               >
-                Comenzar 7 Días de Prueba Gratis
+                Comenzar 10 Días de Prueba Gratis
               </Link>
               <Link 
                 href="/login" 

@@ -116,7 +116,7 @@ export default function AccountLockedPaywall({
               </p>
             </div>
             <a
-              href={`https://wa.me/50499000000?text=${whatsappMessage}`}
+              href={`https://wa.me/50498877763?text=${whatsappMessage}`}
               target="_blank"
               rel="noreferrer"
               className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold flex items-center justify-center gap-2 transition shrink-0 shadow-xs"

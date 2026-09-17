@@ -131,42 +131,42 @@ export default function DashboardNavbar({
   return (
     <>
       {/* 1. TOP BAR MÓVIL (Visible solo en < md) */}
-      <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-xs">
-        <Link href="/dashboard" className="flex items-center gap-2">
+      <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 px-3.5 py-2.5 flex items-center justify-between shadow-xs">
+        <Link href="/dashboard" className="flex items-center gap-2 shrink-0 min-w-0">
           <Image
             src="/logo-light.png"
             alt="OmniTag"
-            width={32}
-            height={32}
-            className="w-8 h-8 object-contain"
+            width={28}
+            height={28}
+            className="w-7 h-7 shrink-0 object-contain"
             priority
           />
-          <span className="text-xl font-bold tracking-tight text-gray-900">OmniTag</span>
+          <span className="text-lg font-black tracking-tight text-gray-900 truncate">OmniTag</span>
           {isAdmin && (
-            <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded">
+            <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded-sm shrink-0">
               ADMIN
             </span>
           )}
         </Link>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <Link
             href="/"
-            className="p-2 rounded-xl text-gray-700 hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
+            className="hidden sm:inline-flex p-1.5 rounded-lg text-gray-600 hover:text-black hover:bg-gray-100 transition-colors"
             title="Ir a la página principal de la web"
           >
-            <Globe className="w-5 h-5" />
+            <Globe className="w-4 h-4" />
           </Link>
 
           <NotificationBell userId={userId} position="topbar" />
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-xl text-gray-700 hover:text-black hover:bg-gray-100 transition-colors focus:outline-none flex items-center gap-1 font-bold text-xs"
+            className="p-1.5 px-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors flex items-center gap-1 font-bold text-xs cursor-pointer ml-0.5"
             aria-label="Abrir menú"
           >
-            <span>Menú</span>
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
+            <span className="hidden xs:inline">Menú</span>
+            {isMobileMenuOpen ? <X className="w-4 h-4" /> : <MenuIcon className="w-4 h-4" />}
           </button>
         </div>
       </header>
@@ -277,26 +277,26 @@ export default function DashboardNavbar({
 
       {/* 3. SIDEBAR DE ESCRITORIO (Visible solo en >= md) */}
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 shrink-0 min-h-screen sticky top-0 h-screen">
-        <div className="p-6 pb-4 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
+        <div className="px-4 py-3.5 pb-3 flex items-center justify-between border-b border-gray-100">
+          <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
             <Image
               src="/logo-light.png"
               alt="OmniTag"
-              width={36}
-              height={36}
-              className="w-9 h-9 object-contain"
+              width={32}
+              height={32}
+              className="w-8 h-8 shrink-0 object-contain"
               priority
             />
-            <span className="text-2xl font-bold tracking-tight text-gray-900">OmniTag</span>
+            <span className="text-xl font-black tracking-tight text-gray-900 truncate">OmniTag</span>
           </Link>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <Link
               href="/"
-              className="p-2 text-gray-500 hover:text-black rounded-xl hover:bg-gray-100 transition cursor-pointer"
+              className="p-1.5 text-gray-500 hover:text-black rounded-lg hover:bg-gray-100 transition cursor-pointer"
               title="Ver Página Principal (Web)"
             >
-              <Globe className="w-5 h-5" />
+              <Globe className="w-4 h-4" />
             </Link>
             <NotificationBell userId={userId} position="sidebar" />
           </div>
