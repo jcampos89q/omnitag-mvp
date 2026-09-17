@@ -119,7 +119,7 @@ export default function LeadsClient({
               Exporta tu base completa de clientes a Excel (CSV)
             </h3>
             <p className="text-xs text-purple-200 leading-relaxed">
-              En tu <b>Plan Gratis</b> ya puedes recibir contactos de tu vCard y gestionarlos aquí. Con <b>OmniTag PRO (L. 550 / $20)</b> desbloqueas la exportación directa a Excel para campañas masivas de WhatsApp, Estudio QR HD y Escudo Google.
+              En tu <b>Plan Gratis</b> ya puedes recibir contactos de tu vCard y gestionarlos aquí. Con <b>OmniTag PRO (L. 550 HNL)</b> desbloqueas la exportación directa a Excel para campañas masivas de WhatsApp, Estudio QR HD y Escudo Google.
             </p>
           </div>
 

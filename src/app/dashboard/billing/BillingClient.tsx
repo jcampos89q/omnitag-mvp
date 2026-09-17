@@ -212,7 +212,7 @@ export default function BillingClient({
       </div>
 
       {/* BANNER DE OFERTA 50% DE DESCUENTO EN PRIMEROS 3 DÍAS */}
-      {isDiscountEligible && accountType !== 'professional' && (
+      {!isPro && isDiscountEligible && accountType === 'business' && (
         <div className="p-5 bg-linear-to-r from-emerald-500/15 via-teal-500/10 to-transparent border-2 border-emerald-500/40 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
           <div className="flex items-start gap-3">
             <div className="p-2.5 bg-emerald-600 text-white rounded-xl shadow-xs shrink-0 mt-0.5">
@@ -338,6 +338,112 @@ export default function BillingClient({
                   <ArrowRight className="w-3.5 h-3.5" />
                 </a>
               )}
+            </div>
+          </div>
+        </div>
+      ) : accountType === 'review_plate' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto items-stretch">
+          {/* PLAN PLACA DE RESEÑAS NFC */}
+          <div className="border-2 border-amber-500 rounded-2xl p-6 sm:p-7 bg-white relative flex flex-col justify-between shadow-xl">
+            <div className="absolute -top-3.5 right-6 bg-linear-to-r from-amber-500 to-amber-600 text-black text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 fill-black text-black" /> PLACA FÍSICA + 1 AÑO PRO
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-bold text-gray-900">Placa Tap-to-Rate NFC (Google)</h3>
+              </div>
+              <p className="text-gray-500 text-xs mb-4">Multiplica tus 5 estrellas en Google Maps con Escudo Anti-Quejas.</p>
+              <div className="mb-6">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-extrabold text-amber-600">L. 1,200</span>
+                  <span className="text-gray-500 text-xs font-medium">HNL / pago único anual</span>
+                </div>
+                <p className="text-[11px] text-gray-400 mt-0.5">Incluye Placa Física de Mesa + Escudo Anti-Quejas + 1 Año de Membresía.</p>
+              </div>
+              <ul className="space-y-2.5 text-xs text-gray-700 mb-6 font-medium">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-600 shrink-0 font-bold" />
+                  <span><b>Placa Física Inteligente NFC</b> de acrílico para mesa</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-600 shrink-0 font-bold" />
+                  <span><b>🛡️ Escudo Anti-Quejas</b> (4-5★ a Google / 1-3★ privado)</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-600 shrink-0 font-bold" />
+                  <span><b>Buzón Privado</b> con alertas directas de inconformidades</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-amber-600 shrink-0 font-bold" />
+                  <span><b>Métricas en tiempo real</b> de escaneos y dispositivos</span>
+                </li>
+              </ul>
+            </div>
+            <div className="pt-4 border-t border-gray-100">
+              {isPro ? (
+                <span className="block text-center text-xs font-bold text-amber-800 bg-amber-50 py-2.5 rounded-xl border border-amber-200">
+                  ✓ Placa de Reseñas PRO Activa ({daysLeft} días restantes)
+                </span>
+              ) : (
+                <a
+                  href="#metodos-pago"
+                  className="w-full bg-black text-white font-extrabold py-3 px-4 rounded-xl hover:bg-gray-800 transition text-xs shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <span>Solicitar Placa por BAC (L. 1,200)</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* UPGRADE OPCIONAL A SUITE EMPRESARIAL */}
+          <div className="border border-purple-200 rounded-2xl p-6 sm:p-7 bg-linear-to-b from-purple-50/40 via-white to-white relative flex flex-col justify-between shadow-2xs">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-bold text-gray-900">Suite de Negocio (Opcional)</h3>
+                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-purple-100 text-purple-800 uppercase">
+                  Complemento
+                </span>
+              </div>
+              <p className="text-gray-500 text-xs mb-4">Añade marketing digital completo a tu restaurante o tienda.</p>
+              <div className="mb-6">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-extrabold text-purple-700">L. 550</span>
+                  <span className="text-gray-500 text-xs font-medium">HNL / mes adicional</span>
+                </div>
+                <p className="text-[11px] text-gray-400 mt-0.5">Renovación mensual voluntaria por depósito bancario BAC.</p>
+              </div>
+              <ul className="space-y-2.5 text-xs text-gray-600 mb-6">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
+                  <span><b>Menú & Catálogo con pedidos a WhatsApp</b></span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
+                  <span><b>Club de Fidelización & Sellos</b> digitales</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
+                  <span><b>Agendas & Citas online</b> con especialistas</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
+                  <span><b>Ruleta de Premios</b> interactiva en mesa</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
+                  <span>Estudio QR HD (2000px) para imprenta</span>
+                </li>
+              </ul>
+            </div>
+            <div className="pt-4 border-t border-gray-100">
+              <a
+                href="#metodos-pago"
+                className="w-full bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
+              >
+                <span>Sumar Suite Empresarial (L. 550/mes)</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
             </div>
           </div>
         </div>

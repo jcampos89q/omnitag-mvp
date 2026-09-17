@@ -473,7 +473,7 @@ export default function QRStudioClient({
             }}
             className="bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold text-xs px-5 py-3 rounded-xl shadow-md transition flex items-center gap-2 shrink-0 cursor-pointer"
           >
-            <span>Ver Opciones PRO (L. 550 / $20)</span>
+            <span>Ver Opciones PRO (L. 550 HNL)</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

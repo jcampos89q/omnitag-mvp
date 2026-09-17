@@ -101,17 +101,22 @@ export async function signup(formData: FormData) {
           })
           .eq('id', card.id)
 
-        // 2. Extender suscripción por 1 año en la tabla users
+        // 2. Extender suscripción por 1 año en la tabla users y workspaces
         await supabase
           .from('users')
           .update({
             subscription_expires_at: expiresAt,
-            plan_status: 'pro_annual',
             account_type: accountType,
             industry: industry,
             profession_title: professionTitle
           })
           .eq('id', data.user.id)
+
+        await supabase.rpc('admin_set_user_plan', {
+          p_user_id: data.user.id,
+          p_plan: 'pro',
+          p_duration_days: planDays
+        })
       }
     } catch (nfcErr) {
       console.error('Error vinculando tarjeta NFC en registro:', nfcErr)

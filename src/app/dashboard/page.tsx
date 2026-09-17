@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { UserCircle, Smartphone, Coffee, Users, BarChart3, ArrowRight, Zap, Sparkles, Star, QrCode, Gift, Check, ShieldCheck, Clock, AlertTriangle, Scissors, Disc } from 'lucide-react'
 import { getUserPlanInfo } from '@/lib/plans'
+import BusinessUpgradesShowcase from '@/components/BusinessUpgradesShowcase'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -197,6 +198,11 @@ export default async function DashboardPage() {
               </span>
             </Link>
           </div>
+
+          {/* Vitrina de Marketing Digital y Beneficios de la Suite Empresarial */}
+          <div className="pt-2">
+            <BusinessUpgradesShowcase currentAccountType="review_plate" />
+          </div>
         </div>
       </div>
     )
@@ -223,7 +229,7 @@ export default async function DashboardPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-                ¡Hola! 👋
+                ¡Hola{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}! 👋
               </h1>
               {isPro ? (
                 isTrial ? (
@@ -247,7 +253,7 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          {isDiscountEligible ? (
+          {!isPro && isDiscountEligible ? (
             <Link
               href="/dashboard/billing#metodos-pago"
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
@@ -256,16 +262,16 @@ export default async function DashboardPage() {
               <span>50% OFF: Primer mes por L. 275</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-          ) : !isPro && (
+          ) : !isPro ? (
             <Link
               href="/dashboard/billing#metodos-pago"
               className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span>Mejorar a PRO por L. 550 / $20</span>
+              <span>{accountType === 'professional' ? 'Obtener Tarjeta NFC PRO (L. 550)' : 'Mejorar a PRO por L. 550'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-          )}
+          ) : null}
         </div>
 
         {/* CONTADOR DE TIEMPO / ESTADO MENSUAL PRO O PRUEBA */}
@@ -299,7 +305,7 @@ export default async function DashboardPage() {
               href="/dashboard/billing#metodos-pago"
               className="bg-black text-white font-bold px-3.5 py-2 rounded-xl text-xs shrink-0 hover:bg-gray-800 transition shadow-2xs"
             >
-              {isDiscountEligible ? 'Pagar con 50% OFF (L. 275) →' : 'Datos para Transferir con BAC →'}
+              {isTrial && isDiscountEligible ? 'Aprovechar 50% OFF (L. 275) →' : 'Detalles de Suscripción BAC →'}
             </Link>
           </div>
         )}
@@ -516,6 +522,11 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Vitrina de Aplicaciones de Marketing Digital para Cuentas Profesionales */}
+      {accountType === 'professional' && (
+        <BusinessUpgradesShowcase currentAccountType="professional" />
+      )}
     </div>
   )
 }

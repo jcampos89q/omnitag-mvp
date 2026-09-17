@@ -178,7 +178,7 @@ export default async function AnalyticsPage() {
                       Visualiza el historial ilimitado con OmniTag PRO
                     </h4>
                     <p className="text-xs text-gray-600 mt-0.5">
-                      El Plan Básico muestra las últimas 5 visitas. Mejora a PRO por L. 550 / $20 para ver analítica completa de todos tus clientes.
+                      El Plan Básico muestra las últimas 5 visitas. Mejora a PRO por L. 550 HNL para ver analítica completa de todos tus clientes.
                     </p>
                   </div>
 

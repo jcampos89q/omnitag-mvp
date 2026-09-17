@@ -39,41 +39,42 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     { data: profile }
   ] = await Promise.all([
     supabase.rpc('get_user_plan', { p_user_id: userId }),
-    supabase.from('users').select('is_admin, created_at, plan_status, current_period_end').eq('id', userId).maybeSingle()
+    supabase.from('users').select('is_admin, created_at, subscription_expires_at').eq('id', userId).maybeSingle()
   ])
 
   // Calcular siempre los días de prueba y descuentos basados en created_at
   const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date(0);
   const now = new Date();
   
-  // Supabase RPC default is 10 days for trial in DB, but we consider 10 days for frontend compatibility if needed.
-  // Actually, let's keep frontend logic aware of a 10-day trial if the RPC gave them 10 days.
-  // If created_at is within 10 days, we consider it a trial.
   const trialEndDate = new Date(createdAt.getTime() + 10 * 24 * 60 * 60 * 1000); 
   const discountEndDate = new Date(createdAt.getTime() + 3 * 24 * 60 * 60 * 1000);
   
-  const isDiscountEligible = now <= discountEndDate;
-  const discountDaysLeft = isDiscountEligible 
-    ? Math.max(1, Math.ceil((discountEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-    : 0;
-
   const isTrialWindow = now <= trialEndDate;
-  
   const isAdmin = Boolean(profile?.is_admin || rpcData?.is_admin);
 
   if (!rpcError && rpcData) {
-    // Es posible que el RPC devuelva pro porque está en periodo de prueba de 10 días
-    // Vamos a marcarlo como "isTrial: true" si está en esos 10 días y no tiene un plan activo formal
-    const hasFormalPlan = profile?.plan_status === 'active' || profile?.plan_status === 'trialing';
-    const isTrial = rpcData.plan === 'pro' && !isAdmin && !hasFormalPlan && isTrialWindow;
+    const isPro = Boolean(rpcData.is_pro);
+    const daysLeft = Number(rpcData.days_left || 0);
+
+    // Un usuario solo está en "Trial" si está dentro de sus primeros 10 días de registro
+    // Y NO tiene una membresía mensual (30 días) ni anual (365 días) asignada formalmente.
+    // Si tiene más de 10 días restantes, definitivamente es un plan PRO activado (30 o 365 días).
+    const isTrial = isPro && !isAdmin && isTrialWindow && daysLeft <= 10;
+
+    // La oferta del 50% solo aplica a usuarios gratuitos que aún no han adquirido ningún plan PRO
+    // y que se registraron hace menos de 3 días.
+    const isDiscountEligible = !isPro && now <= discountEndDate;
+    const discountDaysLeft = isDiscountEligible 
+      ? Math.max(1, Math.ceil((discountEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+      : 0;
 
     return {
-      plan: rpcData.plan === 'pro' ? 'pro' : 'free',
-      isPro: Boolean(rpcData.is_pro),
-      isAdmin: isAdmin,
+      plan: isPro ? 'pro' : 'free',
+      isPro,
+      isAdmin,
       workspaceId: rpcData.workspace_id || userId,
-      expiresAt: rpcData.expires_at || null,
-      daysLeft: Number(rpcData.days_left || 0),
+      expiresAt: rpcData.expires_at || profile?.subscription_expires_at || null,
+      daysLeft,
       isExpired: Boolean(rpcData.is_expired),
       isTrial,
       isDiscountEligible,
@@ -97,28 +98,37 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     }
   }
 
-  // Verificar si tiene una suscripción activa real (preparando para cuando haya webhook)
-  if (profile?.plan_status === 'active' || profile?.plan_status === 'trialing') {
-    const expiresAt = profile.current_period_end ? new Date(profile.current_period_end).toISOString() : null;
-    const daysLeft = expiresAt ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 9999;
+  // Verificar si tiene fecha de expiración en la tabla users
+  if (profile?.subscription_expires_at) {
+    const expiresDate = new Date(profile.subscription_expires_at);
+    const daysLeft = Math.max(0, Math.ceil((expiresDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    const isPro = expiresDate > now;
     return {
-      plan: 'pro',
-      isPro: true,
+      plan: isPro ? 'pro' : 'free',
+      isPro,
       isAdmin: false,
       workspaceId: userId,
-      expiresAt,
+      expiresAt: profile.subscription_expires_at,
       daysLeft,
-      isExpired: daysLeft <= 0
+      isExpired: !isPro,
+      isTrial: false,
+      isDiscountEligible: false,
+      discountDaysLeft: 0
     }
   }
 
-  // 3. Lógica de 7 días de prueba gratuita al crear la cuenta
+  // 3. Lógica de 7 días de prueba gratuita al crear la cuenta si es un usuario recién creado
   const fallbackTrialEndDate = new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  if (now <= fallbackTrialEndDate) {
+  if (now <= fallbackTrialEndDate && createdAt.getTime() > 0) {
     const fallbackDaysLeft = Math.max(1, Math.ceil((fallbackTrialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    const isDiscountEligible = now <= discountEndDate;
+    const discountDaysLeft = isDiscountEligible 
+      ? Math.max(1, Math.ceil((discountEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+      : 0;
+
     return {
-      plan: 'pro', // Herramientas completas durante la prueba
+      plan: 'pro',
       isPro: true,
       isAdmin: false,
       workspaceId: userId,
@@ -126,20 +136,20 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
       daysLeft: fallbackDaysLeft,
       isExpired: false,
       isTrial: true,
-      isDiscountEligible,
-      discountDaysLeft
+      isDiscountEligible: false, // Ya tiene PRO en prueba, no requiere comprar con 50% hasta que termine
+      discountDaysLeft: 0
     }
   }
 
-  // 4. Cuenta gratuita expirada (terminó la prueba de 7 días)
+  // 4. Cuenta gratuita regular
   return {
     plan: 'free',
     isPro: false,
     isAdmin: false,
     workspaceId: userId,
-    expiresAt: fallbackTrialEndDate.toISOString(),
+    expiresAt: null,
     daysLeft: 0,
-    isExpired: true,
+    isExpired: false,
     isTrial: false,
     isDiscountEligible: false,
     discountDaysLeft: 0

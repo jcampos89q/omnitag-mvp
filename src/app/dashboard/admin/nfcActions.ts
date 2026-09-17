@@ -226,10 +226,15 @@ export async function assignNfcCardToUser(cardId: string, userId: string) {
   await supabase
     .from('users')
     .update({
-      subscription_expires_at: expiresAt,
-      plan_status: 'pro_annual'
+      subscription_expires_at: expiresAt
     })
     .eq('id', userId)
+
+  await supabase.rpc('admin_set_user_plan', {
+    p_user_id: userId,
+    p_plan: 'pro',
+    p_duration_days: planDays
+  })
 
   revalidatePath('/dashboard/admin')
   return { success: true }
@@ -270,10 +275,15 @@ export async function claimNfcCardByToken(cardToken: string) {
   await supabase
     .from('users')
     .update({
-      subscription_expires_at: expiresAt,
-      plan_status: 'pro_annual'
+      subscription_expires_at: expiresAt
     })
     .eq('id', user.id)
+
+  await supabase.rpc('admin_set_user_plan', {
+    p_user_id: user.id,
+    p_plan: 'pro',
+    p_duration_days: planDays
+  })
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/billing')
