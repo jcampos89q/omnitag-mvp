@@ -46,43 +46,23 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
   const createdAt = profile?.created_at ? new Date(profile.created_at) : new Date(0);
   const now = new Date();
   
-  const trialEndDate = new Date(createdAt.getTime() + 10 * 24 * 60 * 60 * 1000); 
+  // 10 días de prueba gratuita completa
+  const trialEndDate = profile?.subscription_expires_at 
+    ? new Date(profile.subscription_expires_at) 
+    : new Date(createdAt.getTime() + 10 * 24 * 60 * 60 * 1000); 
+
+  // 3 primeros días con oferta del 50%
   const discountEndDate = new Date(createdAt.getTime() + 3 * 24 * 60 * 60 * 1000);
   
   const isTrialWindow = now <= trialEndDate;
   const isAdmin = Boolean(profile?.is_admin || rpcData?.is_admin);
 
-  if (!rpcError && rpcData) {
-    const isPro = Boolean(rpcData.is_pro);
-    const daysLeft = Number(rpcData.days_left || 0);
+  // Oferta del 50% solo durante los primeros 3 días desde el registro
+  const isDiscountEligible = !isAdmin && now <= discountEndDate;
+  const discountDaysLeft = isDiscountEligible 
+    ? Math.max(1, Math.ceil((discountEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
 
-    // Un usuario solo está en "Trial" si está dentro de sus primeros 10 días de registro
-    // Y NO tiene una membresía mensual (30 días) ni anual (365 días) asignada formalmente.
-    // Si tiene más de 10 días restantes, definitivamente es un plan PRO activado (30 o 365 días).
-    const isTrial = isPro && !isAdmin && isTrialWindow && daysLeft <= 10;
-
-    // La oferta del 50% solo aplica a usuarios gratuitos que aún no han adquirido ningún plan PRO
-    // y que se registraron hace menos de 3 días.
-    const isDiscountEligible = !isPro && now <= discountEndDate;
-    const discountDaysLeft = isDiscountEligible 
-      ? Math.max(1, Math.ceil((discountEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-      : 0;
-
-    return {
-      plan: isPro ? 'pro' : 'free',
-      isPro,
-      isAdmin,
-      workspaceId: rpcData.workspace_id || userId,
-      expiresAt: rpcData.expires_at || profile?.subscription_expires_at || null,
-      daysLeft,
-      isExpired: Boolean(rpcData.is_expired),
-      isTrial,
-      isDiscountEligible,
-      discountDaysLeft
-    }
-  }
-
-  // 2. Fallback de contingencia si el RPC falla
   if (isAdmin) {
     return { 
       plan: 'pro', 
@@ -98,11 +78,51 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     }
   }
 
-  // Verificar si tiene fecha de expiración en la tabla users
+  if (!rpcError && rpcData) {
+    const rawIsPro = Boolean(rpcData.is_pro);
+    const rawDaysLeft = Number(rpcData.days_left || 0);
+    const rawIsExpired = Boolean(rpcData.is_expired);
+
+    // Si el RPC dice que venció, pero aún está en su ventana de prueba o prórroga:
+    let isPro = rawIsPro;
+    let daysLeft = rawDaysLeft;
+    let isExpired = rawIsExpired;
+
+    if (isTrialWindow && createdAt.getTime() > 0) {
+      isPro = true;
+      isExpired = false;
+      daysLeft = Math.max(1, Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    } else if (!isPro || rawIsExpired || now > trialEndDate) {
+      // Si ya pasó la prueba y no tiene membresía pagada activa -> CUENTA BLOQUEADA / VENCIDA
+      isPro = false;
+      isExpired = true;
+      daysLeft = 0;
+    }
+
+    // Es prueba si está activo dentro de la ventana de prueba y no tiene membresía formal de 30 o 365 días
+    const isTrial = isPro && isTrialWindow && daysLeft <= 10;
+
+    return {
+      plan: isPro ? 'pro' : 'free',
+      isPro,
+      isAdmin: false,
+      workspaceId: rpcData.workspace_id || userId,
+      expiresAt: rpcData.expires_at || trialEndDate.toISOString(),
+      daysLeft,
+      isExpired,
+      isTrial,
+      isDiscountEligible,
+      discountDaysLeft
+    }
+  }
+
+  // 2. Fallback de contingencia si el RPC falla
   if (profile?.subscription_expires_at) {
     const expiresDate = new Date(profile.subscription_expires_at);
     const daysLeft = Math.max(0, Math.ceil((expiresDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
     const isPro = expiresDate > now;
+    const isTrial = isPro && daysLeft <= 10;
+
     return {
       plan: isPro ? 'pro' : 'free',
       isPro,
@@ -111,47 +131,42 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
       expiresAt: profile.subscription_expires_at,
       daysLeft,
       isExpired: !isPro,
-      isTrial: false,
-      isDiscountEligible: false,
-      discountDaysLeft: 0
+      isTrial,
+      isDiscountEligible,
+      discountDaysLeft
     }
   }
 
-  // 3. Lógica de 7 días de prueba gratuita al crear la cuenta si es un usuario recién creado
-  const fallbackTrialEndDate = new Date(createdAt.getTime() + 7 * 24 * 60 * 60 * 1000);
-
-  if (now <= fallbackTrialEndDate && createdAt.getTime() > 0) {
-    const fallbackDaysLeft = Math.max(1, Math.ceil((fallbackTrialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-    const isDiscountEligible = now <= discountEndDate;
-    const discountDaysLeft = isDiscountEligible 
-      ? Math.max(1, Math.ceil((discountEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-      : 0;
+  // 3. Ventana de 10 días de prueba gratuita por defecto desde el registro
+  if (now <= trialEndDate && createdAt.getTime() > 0) {
+    const fallbackDaysLeft = Math.max(1, Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
     return {
       plan: 'pro',
       isPro: true,
       isAdmin: false,
       workspaceId: userId,
-      expiresAt: fallbackTrialEndDate.toISOString(),
+      expiresAt: trialEndDate.toISOString(),
       daysLeft: fallbackDaysLeft,
       isExpired: false,
       isTrial: true,
-      isDiscountEligible: false, // Ya tiene PRO en prueba, no requiere comprar con 50% hasta que termine
-      discountDaysLeft: 0
+      isDiscountEligible,
+      discountDaysLeft
     }
   }
 
-  // 4. Cuenta gratuita regular
+  // 4. Cuenta expirada (No existen cuentas gratuitas permanentes)
   return {
     plan: 'free',
     isPro: false,
     isAdmin: false,
     workspaceId: userId,
-    expiresAt: null,
+    expiresAt: trialEndDate.toISOString(),
     daysLeft: 0,
-    isExpired: false,
+    isExpired: true,
     isTrial: false,
     isDiscountEligible: false,
     discountDaysLeft: 0
   }
 }
+

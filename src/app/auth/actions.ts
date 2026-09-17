@@ -121,6 +121,21 @@ export async function signup(formData: FormData) {
     } catch (nfcErr) {
       console.error('Error vinculando tarjeta NFC en registro:', nfcErr)
     }
+  } else if (data?.user && !cardToken) {
+    try {
+      const trialExpiresAt = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString()
+      await supabase
+        .from('users')
+        .update({
+          subscription_expires_at: trialExpiresAt,
+          account_type: accountType,
+          industry: industry,
+          profession_title: professionTitle
+        })
+        .eq('id', data.user.id)
+    } catch (trialErr) {
+      console.error('Error configurando prueba de 10 días en registro:', trialErr)
+    }
   }
 
   if (data?.user && !data.session) {

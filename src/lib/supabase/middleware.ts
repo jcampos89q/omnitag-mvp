@@ -2,11 +2,15 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
-
   const pathname = request.nextUrl.pathname
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-current-path', pathname)
+
+  let supabaseResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
 
   // Solo verificar y refrescar sesión de Auth en rutas protegidas del Dashboard o Auth
   // Rutas públicas (/v/, /m/, /b/, /l/, /r/, /) cargan al instante sin latencia de Auth

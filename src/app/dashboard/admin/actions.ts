@@ -89,3 +89,47 @@ export async function activateUserProCash(targetUserId: string) {
   revalidatePath('/dashboard/billing')
   revalidatePath('/dashboard')
 }
+
+export async function grantTrialExtension(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.is_admin) {
+    throw new Error("No autorizado: Solo administradores pueden conceder prórrogas.")
+  }
+
+  const targetUserId = formData.get('target_user_id') as string
+  const days = parseInt(formData.get('days') as string || '3', 10)
+
+  // Invocar la función RPC con SECURITY DEFINER
+  const { error } = await supabase.rpc('admin_grant_trial_extension', {
+    p_user_id: targetUserId,
+    p_days: days
+  })
+
+  if (error) {
+    console.error("Error concediendo prórroga:", error)
+  }
+
+  try {
+    await sendPushNotificationToUser(targetUserId, {
+      title: '🎁 ¡Prórroga de 3 Días Concedida!',
+      body: 'Se te han otorgado 3 días adicionales de acceso completo a OmniTag. ¡Aprovéchalos!',
+      url: '/dashboard'
+    })
+  } catch (err) {
+    console.error('Error enviando push en prórroga:', err)
+  }
+
+  revalidatePath('/dashboard/admin')
+  revalidatePath('/dashboard/billing')
+  revalidatePath('/dashboard')
+}
+

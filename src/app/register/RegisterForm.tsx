@@ -67,7 +67,7 @@ export default function RegisterForm({
   return (
     <div>
       {/* Banner si viene de una tarjeta NFC física */}
-      {token && (
+      {token ? (
         <div className="mb-6 bg-linear-to-r from-amber-500 via-orange-500 to-yellow-500 text-white p-3.5 rounded-2xl shadow-md text-xs font-bold flex items-center gap-2.5 animate-in fade-in">
           <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
             <CreditCard className="w-4 h-4 text-white" />
@@ -75,6 +75,21 @@ export default function RegisterForm({
           <div>
             <div className="uppercase tracking-wider text-[10px] text-amber-100">Tarjeta NFC Detectada</div>
             <div className="text-white">¡Activarás 1 Año Completo de Membresía PRO con este registro!</div>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-6 bg-linear-to-r from-purple-950 via-indigo-950 to-black text-white p-3.5 rounded-2xl shadow-md text-xs font-medium flex items-center gap-3 animate-in fade-in border border-purple-500/30">
+          <div className="w-9 h-9 rounded-xl bg-amber-400 text-black flex items-center justify-center shrink-0 font-black text-xs shadow-sm">
+            10d
+          </div>
+          <div className="leading-snug">
+            <div className="font-extrabold text-amber-300 text-xs flex items-center gap-1.5">
+              <span>¡10 Días de Prueba Gratuita PRO!</span>
+              <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.5 rounded-full uppercase tracking-wider font-black">50% OFF</span>
+            </div>
+            <div className="text-[11px] text-gray-300 mt-0.5">
+              Acceso total sin costo. Aprovecha 50% OFF (L. 275) pagando en tus primeros 3 días.
+            </div>
           </div>
         </div>
       )}

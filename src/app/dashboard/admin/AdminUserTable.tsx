@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Search, Download, ShieldCheck, Mail, Phone, Calendar, Smartphone, Coffee, UserCheck, MessageCircle, Sparkles, CheckCircle2, Zap, Clock, PlusCircle, Eye, Loader2 } from 'lucide-react'
-import { toggleUserPlan } from './actions'
+import { toggleUserPlan, grantTrialExtension } from './actions'
 import { startImpersonation } from './impersonateActions'
 
 export interface AdminUser {
@@ -158,9 +158,9 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               // Calcular trial y descuento
               const createdDate = new Date(u.out_created_at)
               const daysSinceCreation = Math.ceil(Math.abs(new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
-              const isTrial = daysSinceCreation <= 7
-              const trialDaysLeft = Math.max(0, 7 - daysSinceCreation + 1)
-              const isDiscountEligible = daysSinceCreation <= 3
+              const isTrial = (daysSinceCreation <= 10 || (daysLeft !== null && daysLeft <= 10 && !isExpired)) && !isExpired
+              const trialDaysLeft = daysLeft !== null ? daysLeft : Math.max(0, 10 - daysSinceCreation + 1)
+              const isDiscountEligible = !isExpired && daysSinceCreation <= 3
               const discountDaysLeft = Math.max(0, 3 - daysSinceCreation + 1)
 
               return (
@@ -174,15 +174,17 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                        isPro 
+                        isExpired
+                          ? 'bg-red-100 text-red-700 border border-red-200'
+                          : isPro && daysLeft && daysLeft > 10
                           ? 'bg-black text-yellow-400 border border-yellow-500/40' 
                           : isTrial
-                          ? 'bg-purple-100 text-purple-700'
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {isPro ? '★ PRO' : isTrial ? `Prueba (${trialDaysLeft}d)` : 'Gratis'}
+                        {isExpired ? '🔒 Bloqueado' : isPro && daysLeft && daysLeft > 10 ? `★ PRO (${daysLeft}d)` : isTrial ? `Prueba (${trialDaysLeft}d)` : 'Sin Plan'}
                       </span>
-                      {!isPro && isDiscountEligible && (
+                      {!isExpired && isDiscountEligible && (
                         <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 rounded-sm">
                           50% OFF ({discountDaysLeft}d)
                         </span>
@@ -191,13 +193,13 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                   </div>
 
                   {/* Estado de Vencimiento Mensual */}
-                  {isPro && expiresDate && (
+                  {expiresDate && (
                     <div className={`p-2 rounded-xl text-xs flex items-center justify-between font-medium ${
                       isExpired ? 'bg-red-50 text-red-800' : daysLeft && daysLeft <= 5 ? 'bg-amber-50 text-amber-900' : 'bg-purple-50 text-purple-900'
                     }`}>
                       <span className="flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5" />
-                        {isExpired ? 'Suscripción Vencida' : `${daysLeft} días restantes`}
+                        {isExpired ? 'Prueba/Plan Vencido' : `${daysLeft} días restantes`}
                       </span>
                       <span className="text-[10px] opacity-80">
                         Vence: {expiresDate.toLocaleDateString()}
@@ -263,6 +265,19 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                         <span>Ver como cliente</span>
                       </button>
 
+                      <form action={grantTrialExtension}>
+                        <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                        <input type="hidden" name="days" value="3" />
+                        <button
+                          type="submit"
+                          className="text-xs font-bold px-2.5 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 cursor-pointer"
+                          title="Conceder 3 días de prórroga a este usuario"
+                        >
+                          <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>+3d Prórroga</span>
+                        </button>
+                      </form>
+
                       <form action={toggleUserPlan}>
                         <input type="hidden" name="target_user_id" value={u.out_user_id} />
                         <input type="hidden" name="current_plan" value={u.out_plan} />
@@ -314,9 +329,9 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                   // Calcular trial y descuento
                   const createdDate = new Date(u.out_created_at)
                   const daysSinceCreation = Math.ceil(Math.abs(new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
-                  const isTrial = daysSinceCreation <= 7
-                  const trialDaysLeft = Math.max(0, 7 - daysSinceCreation + 1)
-                  const isDiscountEligible = daysSinceCreation <= 3
+                  const isTrial = (daysSinceCreation <= 10 || (daysLeft !== null && daysLeft <= 10 && !isExpired)) && !isExpired
+                  const trialDaysLeft = daysLeft !== null ? daysLeft : Math.max(0, 10 - daysSinceCreation + 1)
+                  const isDiscountEligible = !isExpired && daysSinceCreation <= 3
                   const discountDaysLeft = Math.max(0, 3 - daysSinceCreation + 1)
 
                   return (
@@ -331,20 +346,22 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                       <td className="px-6 py-4">
                         <div className="flex flex-col items-start gap-1">
                           <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full ${
-                            isPro 
+                            isExpired
+                              ? 'bg-red-100 text-red-700 border border-red-200'
+                              : isPro && daysLeft && daysLeft > 10
                               ? 'bg-black text-yellow-400 border border-yellow-500/40' 
                               : isTrial
-                              ? 'bg-purple-100 text-purple-700'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
                               : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {isPro ? '★ PRO' : isTrial ? `Prueba (${trialDaysLeft}d)` : 'Gratis'}
+                            {isExpired ? '🔒 Bloqueado' : isPro && daysLeft && daysLeft > 10 ? `★ PRO (${daysLeft}d)` : isTrial ? `Prueba (${trialDaysLeft}d)` : 'Sin Plan'}
                           </span>
-                          {isPro && expiresDate && (
-                            <span className={`text-[11px] font-medium ${isExpired ? 'text-red-600' : 'text-gray-500'}`}>
+                          {expiresDate && (
+                            <span className={`text-[11px] font-medium ${isExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
                               {isExpired ? 'Vencida' : `${daysLeft}d restantes`}
                             </span>
                           )}
-                          {!isPro && isDiscountEligible && (
+                          {!isExpired && isDiscountEligible && (
                             <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 rounded-sm">
                               50% OFF ({discountDaysLeft}d)
                             </span>
@@ -397,6 +414,19 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                             )}
                             <span>Ver como cliente</span>
                           </button>
+
+                          <form action={grantTrialExtension} className="inline-block">
+                            <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                            <input type="hidden" name="days" value="3" />
+                            <button
+                              type="submit"
+                              className="text-xs font-bold px-3 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 cursor-pointer"
+                              title="Conceder prórroga de 3 días a este usuario"
+                            >
+                              <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>+3d Prórroga</span>
+                            </button>
+                          </form>
 
                           <form action={toggleUserPlan} className="inline-block">
                             <input type="hidden" name="target_user_id" value={u.out_user_id} />

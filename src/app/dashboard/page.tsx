@@ -250,7 +250,7 @@ export default async function DashboardPage() {
             </div>
             <p className="text-xs sm:text-sm text-gray-500">
               Bienvenido a tu suite digital de OmniTag, <span className="font-semibold text-gray-800">{user.email}</span>.
-              {isTrial && ' Estás disfrutando de 7 días de acceso completo a todas las herramientas.'}
+              {isTrial && ' Estás disfrutando de 10 días de prueba gratuita con acceso total a todas las herramientas.'}
             </p>
           </div>
 
@@ -296,7 +296,7 @@ export default async function DashboardPage() {
                 </p>
                 <p className="text-[11px] opacity-80 mt-0.5">
                   {isTrial 
-                    ? `Tu prueba gratuita de 7 días concluye el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. ${isDiscountEligible ? `¡Aprovecha el 50% de descuento (L. 275) durante tus primeros 3 días!` : ''}`
+                    ? `Tu prueba gratuita de 10 días concluye el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. ${isDiscountEligible ? `¡Aprovecha el 50% de descuento (L. 275) durante tus primeros 3 días!` : ''}`
                     : `Vence el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. Se renueva con tu pago mensual por depósito o transferencia BAC.`}
                 </p>
               </div>
@@ -317,7 +317,7 @@ export default async function DashboardPage() {
             <div className="flex items-center gap-2.5">
               <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
               <div>
-                <p className="font-bold">Tu periodo de prueba de 7 días ha finalizado</p>
+                <p className="font-bold">Tu periodo de prueba de 10 días ha finalizado</p>
                 <p className="text-[11px] opacity-80">Realiza tu depósito o transferencia por BAC para mantener todas las herramientas PRO activas.</p>
               </div>
             </div>
@@ -327,39 +327,6 @@ export default async function DashboardPage() {
             >
               Reactivar PRO →
             </Link>
-          </div>
-        )}
-
-        {/* BANNER INFORMATIVO FREEMIUM SOLO SI ES BÁSICO */}
-        {!isPro && !isExpired && (
-          <div className="mb-6 p-4 rounded-2xl bg-linear-to-r from-purple-50/80 via-amber-50/60 to-white border border-purple-100 text-xs space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-gray-900 flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                Límites de tu Plan Básico Gratuito
-              </span>
-              <Link href="/dashboard/billing#metodos-pago" className="text-purple-700 font-extrabold hover:underline">
-                Ver Beneficios PRO →
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] text-gray-600">
-              <div className="p-2 bg-white rounded-xl border border-gray-100">
-                <p className="font-bold text-gray-900">vCards: {vcardsCount || 0}/1</p>
-                <p className="text-[10px] text-gray-400">1 activa en Básico</p>
-              </div>
-              <div className="p-2 bg-white rounded-xl border border-gray-100">
-                <p className="font-bold text-gray-900">Menús: {menusCount || 0}/1</p>
-                <p className="text-[10px] text-gray-400">Hasta 10 platos</p>
-              </div>
-              <div className="p-2 bg-white rounded-xl border border-gray-100">
-                <p className="font-bold text-gray-900">Placas NFC: {devicesCount || 0}/1</p>
-                <p className="text-[10px] text-gray-400">Enlace directo Google</p>
-              </div>
-              <div className="p-2 bg-white rounded-xl border border-gray-100">
-                <p className="font-bold text-gray-900">Escudo 5★: Bloqueado</p>
-                <p className="text-[10px] text-purple-600 font-semibold">Exclusivo PRO</p>
-              </div>
-            </div>
           </div>
         )}
         
