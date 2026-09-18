@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { CreditCard, Sparkles, CheckCircle, ArrowRight, ShieldAlert, LogIn, UserPlus } from 'lucide-react'
 import { revalidatePath } from 'next/cache'
+import { recordPageViewScan } from '@/lib/analytics'
 
 export default async function NfcClaimOrRedirectPage({
   params,
@@ -54,11 +55,10 @@ export default async function NfcClaimOrRedirectPage({
       .maybeSingle()
 
     // Registrar métrica de escaneo NFC en segundo plano sin retrasar la redirección
-    void supabase.from('scans').insert({
-      target_user_id: card.claimed_by_user_id,
-      vcard_id: vcard?.id || null,
-      source_type: 'nfc',
-      scanned_at: new Date().toISOString()
+    recordPageViewScan({
+      targetUserId: card.claimed_by_user_id,
+      vcardId: vcard?.id || undefined,
+      sourceType: 'nfc_device'
     })
 
     if (vcard?.slug) {
