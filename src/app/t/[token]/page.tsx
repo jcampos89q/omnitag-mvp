@@ -21,8 +21,8 @@ export default async function NfcClaimOrRedirectPage({
     .eq('card_token', cleanToken)
     .maybeSingle()
 
-  // Si la tarjeta no existe
-  if (!card) {
+  // Si la tarjeta no existe o está deshabilitada por extravío o pérdida
+  if (!card || card.status === 'disabled') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-gray-100 shadow-xl text-center space-y-4">

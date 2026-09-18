@@ -31,8 +31,8 @@ export async function GET(
     .or(`tag_id.eq.${cleanTagId},tag_id.eq.${encodeURIComponent(cleanTagId)}`)
     .maybeSingle()
 
-  // Si no existe o no tiene enlace de destino configurado, enviarlo a la pantalla de activación
-  if (!device || !device.redirect_url || !device.user_id) {
+  // Si no existe, no está activo o no tiene enlace de destino configurado, enviarlo a la pantalla de activación
+  if (!device || !device.redirect_url || !device.user_id || device.is_active === false) {
     return createNoCacheRedirect(new URL(`/r/${encodeURIComponent(cleanTagId)}/activate`, request.url))
   }
 
