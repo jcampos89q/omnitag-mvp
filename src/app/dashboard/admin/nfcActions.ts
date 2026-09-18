@@ -155,7 +155,130 @@ export async function deleteNfcBatch(batchId: string) {
 }
 
 /**
- * Cambia el estado de una tarjeta (ej. deshabilitar si se extravió o dañó)
+ * Conmuta el estado activo / pausado de un lote completo
+ * Si se pausa, desactiva todas sus tarjetas y dispositivos para evitar uso no autorizado.
+ */
+export async function toggleNfcBatchActive(batchId: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autenticado')
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.is_admin) throw new Error('No autorizado')
+
+  const { data: batch } = await supabase
+    .from('nfc_batches')
+    .select('id, is_active')
+    .eq('id', batchId)
+    .single()
+
+  if (!batch) throw new Error('Lote no encontrado')
+
+  const newIsActive = batch.is_active === false ? true : false
+
+  // 1. Actualizar el lote
+  await supabase
+    .from('nfc_batches')
+    .update({ is_active: newIsActive })
+    .eq('id', batchId)
+
+  // 2. Obtener todas las tarjetas del lote
+  const { data: cards } = await supabase
+    .from('nfc_cards')
+    .select('id, card_token, claimed_by_user_id')
+    .eq('batch_id', batchId)
+
+  if (cards && cards.length > 0) {
+    const tokens = cards.map(c => c.card_token)
+
+    if (!newIsActive) {
+      // Al pausar el lote: marcar tarjetas como disabled y dispositivos como is_active = false
+      await supabase
+        .from('nfc_cards')
+        .update({ status: 'disabled' })
+        .eq('batch_id', batchId)
+
+      await supabase
+        .from('devices')
+        .update({ is_active: false })
+        .in('tag_id', tokens)
+    } else {
+      // Al reactivar el lote: restaurar tarjetas y dispositivos
+      const claimedCards = cards.filter(c => c.claimed_by_user_id)
+      const unclaimedCards = cards.filter(c => !c.claimed_by_user_id)
+
+      if (claimedCards.length > 0) {
+        await supabase
+          .from('nfc_cards')
+          .update({ status: 'active' })
+          .in('id', claimedCards.map(c => c.id))
+
+        await supabase
+          .from('devices')
+          .update({ is_active: true })
+          .in('tag_id', claimedCards.map(c => c.card_token))
+      }
+
+      if (unclaimedCards.length > 0) {
+        await supabase
+          .from('nfc_cards')
+          .update({ status: 'unclaimed' })
+          .in('id', unclaimedCards.map(c => c.id))
+      }
+    }
+  }
+
+  revalidatePath('/dashboard/admin')
+  return { success: true, isActive: newIsActive }
+}
+
+/**
+ * Conmuta el archivado de un lote para ocultarlo o mostrarlo sin destruirlo
+ */
+export async function archiveNfcBatch(batchId: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autenticado')
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.is_admin) throw new Error('No autorizado')
+
+  const { data: batch } = await supabase
+    .from('nfc_batches')
+    .select('id, is_archived')
+    .eq('id', batchId)
+    .single()
+
+  if (!batch) throw new Error('Lote no encontrado')
+
+  const newIsArchived = !Boolean(batch.is_archived)
+
+  const { error } = await supabase
+    .from('nfc_batches')
+    .update({ is_archived: newIsArchived })
+    .eq('id', batchId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/admin')
+  return { success: true, isArchived: newIsArchived }
+}
+
+/**
+ * Cambia el estado de una tarjeta o placa individual (bloquear por extravío / reactivar)
+ * Sincroniza inmediatamente con la tabla devices para bloquear el escaneo en vivo.
  */
 export async function toggleNfcCardStatus(cardId: string, currentStatus: string) {
   const supabase = await createClient()
@@ -171,7 +294,32 @@ export async function toggleNfcCardStatus(cardId: string, currentStatus: string)
 
   if (!profile?.is_admin) throw new Error('No autorizado')
 
-  const newStatus = currentStatus === 'disabled' ? 'unclaimed' : 'disabled'
+  const { data: card } = await supabase
+    .from('nfc_cards')
+    .select('id, card_token, claimed_by_user_id')
+    .eq('id', cardId)
+    .single()
+
+  if (!card) throw new Error('Tarjeta no encontrada')
+
+  let newStatus: string
+  if (currentStatus === 'disabled') {
+    newStatus = card.claimed_by_user_id ? 'active' : 'unclaimed'
+    // Si tenía dispositivo activo, rehabilitarlo
+    if (card.claimed_by_user_id) {
+      await supabase
+        .from('devices')
+        .update({ is_active: true })
+        .eq('tag_id', card.card_token)
+    }
+  } else {
+    newStatus = 'disabled'
+    // Suspender el dispositivo físico
+    await supabase
+      .from('devices')
+      .update({ is_active: false })
+      .eq('tag_id', card.card_token)
+  }
 
   const { error } = await supabase
     .from('nfc_cards')
@@ -182,6 +330,60 @@ export async function toggleNfcCardStatus(cardId: string, currentStatus: string)
 
   revalidatePath('/dashboard/admin')
   return { success: true, newStatus }
+}
+
+/**
+ * Desvincula a un usuario de una tarjeta/placa NFC reclamada (ej. si fue activada sin permiso o robada)
+ * Resetea el hardware a estado disponible y cancela la vinculación no autorizada.
+ */
+export async function unlinkNfcCardUser(cardId: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autenticado')
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('is_admin')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.is_admin) throw new Error('No autorizado')
+
+  const { data: card } = await supabase
+    .from('nfc_cards')
+    .select('id, card_token')
+    .eq('id', cardId)
+    .single()
+
+  if (!card) throw new Error('Tarjeta no encontrada')
+
+  // 1. Resetear la tarjeta a disponible
+  await supabase
+    .from('nfc_cards')
+    .update({
+      status: 'unclaimed',
+      claimed_by_user_id: null,
+      claimed_at: null
+    })
+    .eq('id', cardId)
+
+  // 2. Limpiar el hardware en devices
+  await supabase
+    .from('devices')
+    .update({
+      user_id: null,
+      redirect_url: null,
+      place_id: null,
+      business_name: null,
+      business_address: null,
+      business_phone: null,
+      is_active: false
+    })
+    .eq('tag_id', card.card_token)
+
+  revalidatePath('/dashboard/admin')
+  return { success: true }
 }
 
 /**

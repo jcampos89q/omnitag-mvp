@@ -23,10 +23,17 @@ import {
   Smartphone,
   Printer,
   FileDown,
-  Loader2
+  Loader2,
+  Pause,
+  Play,
+  Archive,
+  ArchiveRestore,
+  ShieldBan,
+  Unlock,
+  UserMinus
 } from 'lucide-react'
 import QRCodeStyling, { DotType, CornerSquareType, CornerDotType } from 'qr-code-styling'
-import { createNfcBatch, deleteNfcBatch, toggleNfcCardStatus, assignNfcCardToUser } from './nfcActions'
+import { createNfcBatch, deleteNfcBatch, toggleNfcCardStatus, assignNfcCardToUser, toggleNfcBatchActive, archiveNfcBatch, unlinkNfcCardUser } from './nfcActions'
 import NfcCardWriterModal from '@/components/NfcCardWriterModal'
 import { generateNfcCardsSheetPdf } from '@/lib/nfcPdfGenerator'
 
@@ -51,6 +58,8 @@ interface NfcBatch {
   qr_style: any
   created_at: string
   nfc_cards: NfcCard[]
+  is_active?: boolean
+  is_archived?: boolean
 }
 
 const dotTypes: { id: DotType; name: string }[] = [
@@ -84,7 +93,20 @@ export default function AdminNfcBatches({
   users?: any[]
 }) {
   const [batches, setBatches] = useState<NfcBatch[]>(initialBatches || [])
+  const [viewMode, setViewMode] = useState<'active' | 'archived'>('active')
+
+  const activeBatches = batches.filter(b => !b.is_archived)
+  const archivedBatches = batches.filter(b => Boolean(b.is_archived))
+  const displayedBatches = viewMode === 'active' ? activeBatches : archivedBatches
+
   const [selectedBatchId, setSelectedBatchId] = useState<string>(initialBatches?.[0]?.id || '')
+
+  useEffect(() => {
+    if (displayedBatches.length > 0 && !displayedBatches.some(b => b.id === selectedBatchId)) {
+      setSelectedBatchId(displayedBatches[0].id)
+    }
+  }, [viewMode, displayedBatches, selectedBatchId])
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [loadingCreate, setLoadingCreate] = useState(false)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
@@ -209,6 +231,60 @@ export default function AdminNfcBatches({
       }
     } catch (err: any) {
       alert('Error al eliminar lote: ' + err.message)
+    }
+  }
+
+  const handleToggleBatchActive = async (batchId: string) => {
+    try {
+      const res = await toggleNfcBatchActive(batchId)
+      setBatches(prev => prev.map(b => {
+        if (b.id !== batchId) return b
+        const updatedCards = b.nfc_cards.map(c => ({
+          ...c,
+          status: res.isActive ? (c.claimed_by_user_id ? 'active' : 'unclaimed') : 'disabled'
+        })) as NfcCard[]
+        return { ...b, is_active: res.isActive, nfc_cards: updatedCards }
+      }))
+    } catch (err: any) {
+      alert('Error al cambiar estado del lote: ' + err.message)
+    }
+  }
+
+  const handleArchiveBatch = async (batchId: string) => {
+    try {
+      const res = await archiveNfcBatch(batchId)
+      setBatches(prev => prev.map(b => b.id === batchId ? { ...b, is_archived: res.isArchived } : b))
+    } catch (err: any) {
+      alert('Error al archivar/desarchivar lote: ' + err.message)
+    }
+  }
+
+  const handleToggleCardStatus = async (cardId: string, currentStatus: string) => {
+    try {
+      const res = await toggleNfcCardStatus(cardId, currentStatus)
+      if (res.success && selectedBatch) {
+        const updatedCards = selectedBatch.nfc_cards.map(c => 
+          c.id === cardId ? { ...c, status: res.newStatus as any } : c
+        )
+        setBatches(prev => prev.map(b => b.id === selectedBatch.id ? { ...b, nfc_cards: updatedCards } : b))
+      }
+    } catch (err: any) {
+      alert('Error al cambiar estado: ' + err.message)
+    }
+  }
+
+  const handleUnlinkUser = async (cardId: string) => {
+    if (!confirm('¿Estás seguro de desvincular al usuario y resetear esta tarjeta a Disponible? El usuario perderá el acceso a esta tarjeta.')) return
+    try {
+      const res = await unlinkNfcCardUser(cardId)
+      if (res.success && selectedBatch) {
+        const updatedCards = selectedBatch.nfc_cards.map(c => 
+          c.id === cardId ? { ...c, status: 'unclaimed' as any, claimed_by_user_id: null, claimed_at: null, users: null } : c
+        )
+        setBatches(prev => prev.map(b => b.id === selectedBatch.id ? { ...b, nfc_cards: updatedCards } : b))
+      }
+    } catch (err: any) {
+      alert('Error al desvincular usuario: ' + err.message)
     }
   }
 
@@ -435,30 +511,73 @@ export default function AdminNfcBatches({
         </div>
       ) : (
         <div className="space-y-4">
+          {/* Selector de Vista: Lotes Activos vs Archivados */}
+          <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setViewMode('active')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  viewMode === 'active'
+                    ? 'bg-black text-white shadow-xs'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <span>Lotes Activos</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${viewMode === 'active' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                  {activeBatches.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setViewMode('archived')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  viewMode === 'archived'
+                    ? 'bg-black text-white shadow-xs'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Archive className="w-3 h-3" />
+                <span>Lotes Archivados</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${viewMode === 'archived' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                  {archivedBatches.length}
+                </span>
+              </button>
+            </div>
+          </div>
+
           {/* Barra de pestañas de lotes */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {batches.map(batch => {
-              const isSelected = batch.id === selectedBatch?.id
-              const claimed = batch.nfc_cards?.filter(c => c.status === 'active')?.length || 0
-              return (
-                <button
-                  key={batch.id}
-                  onClick={() => setSelectedBatchId(batch.id)}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-2 cursor-pointer ${
-                    isSelected
-                      ? 'bg-black text-white shadow-md'
-                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                  <span>{batch.batch_name}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {claimed}/{batch.nfc_cards?.length || 0}
-                  </span>
-                </button>
-              )
-            })}
+            {displayedBatches.length === 0 ? (
+              <div className="text-xs text-gray-400 italic py-2">
+                {viewMode === 'active' ? 'No hay lotes activos' : 'No hay lotes archivados'}
+              </div>
+            ) : (
+              displayedBatches.map(batch => {
+                const isSelected = batch.id === selectedBatch?.id
+                const claimed = batch.nfc_cards?.filter(c => c.status === 'active')?.length || 0
+                return (
+                  <button
+                    key={batch.id}
+                    onClick={() => setSelectedBatchId(batch.id)}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-2 cursor-pointer ${
+                      isSelected
+                        ? 'bg-black text-white shadow-md'
+                        : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    {batch.is_active === false && (
+                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Lote en Pausa" />
+                    )}
+                    <span>{batch.batch_name}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      isSelected ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {claimed}/{batch.nfc_cards?.length || 0}
+                    </span>
+                  </button>
+                )
+              })
+            )}
           </div>
 
           {/* Mesa de Trabajo del Lote Seleccionado */}
@@ -466,60 +585,118 @@ export default function AdminNfcBatches({
             <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-5">
                 <div>
-                  <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
-                    <span>{selectedBatch.batch_name}</span>
-                    <span className="text-xs font-normal text-gray-500">
-                      ({selectedBatch.nfc_cards?.length || 0} tarjetas generadas)
-                    </span>
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                      <span>{selectedBatch.batch_name}</span>
+                      <span className="text-xs font-normal text-gray-500">
+                        ({selectedBatch.nfc_cards?.length || 0} tarjetas generadas)
+                      </span>
+                    </h3>
+                    {selectedBatch.is_active === false ? (
+                      <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                        <Pause className="w-2.5 h-2.5" /> LOTE EN PAUSA
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                        <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" /> LOTE ACTIVO
+                      </span>
+                    )}
+                    {selectedBatch.is_archived && (
+                      <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-600 border border-gray-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        <Archive className="w-2.5 h-2.5" /> ARCHIVADO
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
                     Estilo de QR: Puntos <span className="font-semibold">{selectedBatch.qr_style?.dotsStyle || 'redondeados'}</span> | Color <span className="font-mono font-bold" style={{ color: selectedBatch.qr_style?.dotsColor || '#000' }}>{selectedBatch.qr_style?.dotsColor || '#000000'}</span>
                   </p>
                 </div>
 
-                {/* Botones de acción masiva */}
+                {/* Botones de acción masiva y control */}
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* Botón Pausar / Reactivar Lote */}
+                  <button
+                    onClick={() => handleToggleBatchActive(selectedBatch.id)}
+                    className={`text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer border ${
+                      selectedBatch.is_active === false
+                        ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300 shadow-2xs'
+                        : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300 shadow-2xs'
+                    }`}
+                    title={selectedBatch.is_active === false ? 'Reactivar todas las tarjetas de este lote' : 'Pausar todas las tarjetas de este lote por seguridad'}
+                  >
+                    {selectedBatch.is_active === false ? (
+                      <>
+                        <Play className="w-3.5 h-3.5 fill-emerald-700 text-emerald-700" />
+                        <span>Reactivar Lote</span>
+                      </>
+                    ) : (
+                      <>
+                        <Pause className="w-3.5 h-3.5 text-amber-700" />
+                        <span>Pausar Lote</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Botón Archivar / Desarchivar Lote */}
+                  <button
+                    onClick={() => handleArchiveBatch(selectedBatch.id)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer border border-gray-200"
+                    title={selectedBatch.is_archived ? 'Restaurar lote a la vista principal' : 'Ocultar lote en la pestaña de archivados'}
+                  >
+                    {selectedBatch.is_archived ? (
+                      <>
+                        <ArchiveRestore className="w-3.5 h-3.5" />
+                        <span>Desarchivar</span>
+                      </>
+                    ) : (
+                      <>
+                        <Archive className="w-3.5 h-3.5" />
+                        <span>Archivar</span>
+                      </>
+                    )}
+                  </button>
+
                   <button
                     onClick={copyAllLinks}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer border border-gray-200"
                     title="Copia todas las URLs de este lote al portapapeles"
                   >
                     {copiedAll ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedAll ? '¡Enlaces Copiados!' : 'Copiar Todos los Enlaces'}</span>
+                    <span>{copiedAll ? '¡Copiados!' : 'Copiar Enlaces'}</span>
                   </button>
 
                   <button
                     onClick={exportToExcel}
-                    className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
                     title="Descargar archivo Excel con formato y diseño de tabla para control de inventario"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>Descargar Excel</span>
+                    <span>Excel</span>
                   </button>
 
                   <button
                     onClick={handleExportSheetPdf}
                     disabled={exportingPdf}
-                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-extrabold px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
                     title="Descargar plantilla A4 lista para imprenta con las tarjetas vinil en escala 100% y líneas de corte"
                   >
                     {exportingPdf ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Generando PDF ({pdfProgress ? `${pdfProgress.current}/${pdfProgress.total}` : 'Procesando'}...)</span>
+                        <span>Generando ({pdfProgress ? `${pdfProgress.current}/${pdfProgress.total}` : '...'})</span>
                       </>
                     ) : (
                       <>
                         <Printer className="w-3.5 h-3.5" />
-                        <span>Descargar Viniles PDF (A4)</span>
+                        <span>Viniles PDF (A4)</span>
                       </>
                     )}
                   </button>
 
                   <button
                     onClick={() => handleDeleteBatch(selectedBatch.id)}
-                    className="text-red-500 hover:bg-red-50 p-2 rounded-xl transition cursor-pointer"
-                    title="Eliminar lote"
+                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition cursor-pointer"
+                    title="Eliminar lote definitivamente"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -535,7 +712,7 @@ export default function AdminNfcBatches({
                       <th className="py-3 px-3">Estado</th>
                       <th className="py-3 px-3">Beneficio</th>
                       <th className="py-3 px-3">Dueño / Activado</th>
-                      <th className="py-3 px-3 text-right">Acciones Físicas</th>
+                      <th className="py-3 px-3 text-right">Acciones & Control</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 font-medium">
@@ -578,18 +755,18 @@ export default function AdminNfcBatches({
 
                           <td className="py-3 px-3">
                             {card.status === 'unclaimed' && (
-                              <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                              <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
                                 <Clock className="w-3 h-3" /> Disponible
                               </span>
                             )}
                             {card.status === 'active' && (
-                              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
                                 <CheckCircle2 className="w-3 h-3" /> Reclamada
                               </span>
                             )}
                             {card.status === 'disabled' && (
                               <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                Inactiva
+                                <ShieldBan className="w-3 h-3 text-red-500" /> Bloqueada
                               </span>
                             )}
                           </td>
@@ -641,6 +818,52 @@ export default function AdminNfcBatches({
                                 </button>
                               )}
 
+                              {/* Botón Bloquear por Pérdida/Extravío si está disponible */}
+                              {card.status === 'unclaimed' && (
+                                <button
+                                  onClick={() => handleToggleCardStatus(card.id, card.status)}
+                                  className="bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-700 border border-gray-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer"
+                                  title="Bloquear tarjeta por pérdida o robo antes de ser reclamada"
+                                >
+                                  <ShieldBan className="w-3 h-3 text-red-500" />
+                                  <span>Bloquear</span>
+                                </button>
+                              )}
+
+                              {/* Control de Seguridad: Suspender y Desvincular si está activa */}
+                              {card.status === 'active' && (
+                                <>
+                                  <button
+                                    onClick={() => handleToggleCardStatus(card.id, card.status)}
+                                    className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer"
+                                    title="Suspender temporalmente el acceso de esta tarjeta"
+                                  >
+                                    <Pause className="w-3 h-3 text-amber-600" />
+                                    <span>Suspender</span>
+                                  </button>
+                                  <button
+                                    onClick={() => handleUnlinkUser(card.id)}
+                                    className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition flex items-center gap-1 cursor-pointer"
+                                    title="Desvincular usuario no autorizado y resetear a Disponible"
+                                  >
+                                    <UserMinus className="w-3 h-3 text-red-600" />
+                                    <span>Desvincular</span>
+                                  </button>
+                                </>
+                              )}
+
+                              {/* Control de Seguridad: Reactivar si está deshabilitada/bloqueada */}
+                              {card.status === 'disabled' && (
+                                <button
+                                  onClick={() => handleToggleCardStatus(card.id, card.status)}
+                                  className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                  title="Reactivar y desbloquear esta tarjeta"
+                                >
+                                  <Unlock className="w-3 h-3 text-emerald-600" />
+                                  <span>Reactivar</span>
+                                </button>
+                              )}
+
                               {/* Botón para grabar con chip NFC del móvil */}
                               <button
                                 onClick={() => {
@@ -648,7 +871,7 @@ export default function AdminNfcBatches({
                                   setNfcWriterTitle(`Tarjeta ${card.card_token}`)
                                   setNfcWriterOpen(true)
                                 }}
-                                className="bg-purple-50 hover:bg-purple-100 text-purple-700 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                className="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
                                 title="Grabar en chip NFC con este celular"
                               >
                                 <Radio className="w-3 h-3" />
@@ -658,7 +881,7 @@ export default function AdminNfcBatches({
                               {/* Botón Descargar QR HD */}
                               <button
                                 onClick={() => downloadSingleQr(card)}
-                                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition flex items-center gap-1 cursor-pointer border border-gray-200"
                                 title="Descargar código QR para imprenta"
                               >
                                 <Download className="w-3 h-3" />
