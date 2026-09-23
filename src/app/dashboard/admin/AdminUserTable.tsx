@@ -18,11 +18,13 @@ export interface AdminUser {
   out_devices_count: number
   out_scans_count: number
   out_leads_count: number
+  out_has_hardware?: boolean
+  out_is_trial?: boolean
 }
 
 export default function AdminUserTable({ users }: { users: AdminUser[] }) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [planFilter, setPlanFilter] = useState<'all' | 'pro' | 'free' | 'with_phone'>('all')
+  const [planFilter, setPlanFilter] = useState<'all' | 'pro' | 'trial' | 'free' | 'with_phone'>('all')
   const [impersonatingId, setImpersonatingId] = useState<string | null>(null)
 
   const handleImpersonate = async (userId: string) => {
@@ -44,6 +46,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
     if (!matchesSearch) return false
 
     if (planFilter === 'pro') return u.out_plan === 'pro'
+    if (planFilter === 'trial') return u.out_plan === 'trial'
     if (planFilter === 'free') return u.out_plan === 'free' || !u.out_plan
     if (planFilter === 'with_phone') return Boolean(u.out_phone)
 
@@ -110,15 +113,23 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               planFilter === 'pro' ? 'bg-black text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
-            Plan PRO ({users.filter(u => u.out_plan === 'pro').length})
+            ★ PRO ({users.filter(u => u.out_plan === 'pro').length})
+          </button>
+          <button
+            onClick={() => setPlanFilter('trial')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
+              planFilter === 'trial' ? 'bg-amber-500 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
+            }`}
+          >
+            ⏳ En Prueba ({users.filter(u => u.out_plan === 'trial').length})
           </button>
           <button
             onClick={() => setPlanFilter('free')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
-              planFilter === 'free' ? 'bg-black text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
+              planFilter === 'free' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
-            Básicos ({users.filter(u => u.out_plan !== 'pro').length})
+            🔒 Vencidos ({users.filter(u => u.out_plan === 'free' || !u.out_plan).length})
           </button>
           <button
             onClick={() => setPlanFilter('with_phone')}
@@ -126,7 +137,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               planFilter === 'with_phone' ? 'bg-black text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
-            Con WhatsApp ({users.filter(u => u.out_phone).length})
+            WhatsApp ({users.filter(u => u.out_phone).length})
           </button>
         </div>
 
@@ -151,16 +162,16 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
           <div className="block md:hidden space-y-3">
             {filteredUsers.map((u) => {
               const isPro = u.out_plan === 'pro'
+              const isTrial = u.out_plan === 'trial'
+              const isFree = u.out_plan === 'free' || !u.out_plan
               const expiresDate = u.out_expires_at ? new Date(u.out_expires_at) : null
-              const isExpired = expiresDate ? expiresDate < new Date() : false
+              const isExpired = isFree || (expiresDate ? expiresDate < new Date() : false)
               const daysLeft = expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null
               
-              // Calcular trial y descuento
+              // Calcular descuento para cuentas nuevas
               const createdDate = new Date(u.out_created_at)
               const daysSinceCreation = Math.ceil(Math.abs(new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
-              const isTrial = (daysSinceCreation <= 10 || (daysLeft !== null && daysLeft <= 10 && !isExpired)) && !isExpired
-              const trialDaysLeft = daysLeft !== null ? daysLeft : Math.max(0, 10 - daysSinceCreation + 1)
-              const isDiscountEligible = !isExpired && daysSinceCreation <= 3
+              const isDiscountEligible = isTrial && daysSinceCreation <= 3
               const discountDaysLeft = Math.max(0, 3 - daysSinceCreation + 1)
 
               return (
@@ -174,15 +185,23 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                        isExpired
+                        isExpired || isFree
                           ? 'bg-red-100 text-red-700 border border-red-200'
-                          : isPro && daysLeft && daysLeft > 10
+                          : isPro
                           ? 'bg-black text-yellow-400 border border-yellow-500/40' 
                           : isTrial
                           ? 'bg-amber-100 text-amber-800 border border-amber-200'
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {isExpired ? '🔒 Bloqueado' : isPro && daysLeft && daysLeft > 10 ? `★ PRO (${daysLeft}d)` : isTrial ? `Prueba (${trialDaysLeft}d)` : 'Sin Plan'}
+                        {isExpired || isFree 
+                          ? '🔒 Bloqueado' 
+                          : isPro 
+                          ? daysLeft && daysLeft > 60 
+                            ? '★ PRO (Hardware Anual)' 
+                            : `★ PRO (${daysLeft || 30}d)` 
+                          : isTrial 
+                          ? `⏳ Prueba (${daysLeft || 10}d)` 
+                          : 'Sin Plan'}
                       </span>
                       {!isExpired && isDiscountEligible && (
                         <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 rounded-sm">
@@ -278,27 +297,58 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                         </button>
                       </form>
 
-                      <form action={toggleUserPlan}>
-                        <input type="hidden" name="target_user_id" value={u.out_user_id} />
-                        <input type="hidden" name="current_plan" value={u.out_plan} />
-                        <button
-                          type="submit"
-                          className={`text-xs font-bold px-2.5 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 cursor-pointer ${
-                            isPro
-                              ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
-                              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                          }`}
-                        >
-                          {isPro ? (
+                      {isPro ? (
+                        <form action={toggleUserPlan}>
+                          <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                          <input type="hidden" name="new_plan" value="free" />
+                          <button
+                            type="submit"
+                            className="text-xs font-bold px-2.5 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200 cursor-pointer"
+                            title="Desactivar plan PRO y volver a estado gratuito"
+                          >
                             <span>Bajar a Gratis</span>
-                          ) : (
-                            <>
+                          </button>
+                        </form>
+                      ) : isTrial ? (
+                        <div className="flex items-center gap-1">
+                          <form action={toggleUserPlan}>
+                            <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                            <input type="hidden" name="new_plan" value="free" />
+                            <button
+                              type="submit"
+                              className="text-xs font-bold px-2.5 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-700 border border-gray-200 cursor-pointer"
+                              title="Terminar prueba y bloquear acceso"
+                            >
+                              <span>Expirar</span>
+                            </button>
+                          </form>
+                          <form action={toggleUserPlan}>
+                            <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                            <input type="hidden" name="new_plan" value="pro" />
+                            <button
+                              type="submit"
+                              className="text-xs font-bold px-2.5 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                              title="Activar plan PRO oficial por 30 días"
+                            >
                               <Zap className="w-3.5 h-3.5 fill-white" />
-                              <span>Activar PRO</span>
-                            </>
-                          )}
-                        </button>
-                      </form>
+                              <span>PRO</span>
+                            </button>
+                          </form>
+                        </div>
+                      ) : (
+                        <form action={toggleUserPlan}>
+                          <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                          <input type="hidden" name="new_plan" value="pro" />
+                          <button
+                            type="submit"
+                            className="text-xs font-bold px-2.5 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                            title="Activar plan PRO oficial por 30 días"
+                          >
+                            <Zap className="w-3.5 h-3.5 fill-white" />
+                            <span>Activar PRO</span>
+                          </button>
+                        </form>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -322,16 +372,16 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map((u) => {
                   const isPro = u.out_plan === 'pro'
+                  const isTrial = u.out_plan === 'trial'
+                  const isFree = u.out_plan === 'free' || !u.out_plan
                   const expiresDate = u.out_expires_at ? new Date(u.out_expires_at) : null
-                  const isExpired = expiresDate ? expiresDate < new Date() : false
+                  const isExpired = isFree || (expiresDate ? expiresDate < new Date() : false)
                   const daysLeft = expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null
                   
-                  // Calcular trial y descuento
+                  // Calcular descuento para cuentas nuevas
                   const createdDate = new Date(u.out_created_at)
                   const daysSinceCreation = Math.ceil(Math.abs(new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24))
-                  const isTrial = (daysSinceCreation <= 10 || (daysLeft !== null && daysLeft <= 10 && !isExpired)) && !isExpired
-                  const trialDaysLeft = daysLeft !== null ? daysLeft : Math.max(0, 10 - daysSinceCreation + 1)
-                  const isDiscountEligible = !isExpired && daysSinceCreation <= 3
+                  const isDiscountEligible = isTrial && daysSinceCreation <= 3
                   const discountDaysLeft = Math.max(0, 3 - daysSinceCreation + 1)
 
                   return (
@@ -346,15 +396,23 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                       <td className="px-6 py-4">
                         <div className="flex flex-col items-start gap-1">
                           <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full ${
-                            isExpired
+                            isExpired || isFree
                               ? 'bg-red-100 text-red-700 border border-red-200'
-                              : isPro && daysLeft && daysLeft > 10
+                              : isPro
                               ? 'bg-black text-yellow-400 border border-yellow-500/40' 
                               : isTrial
                               ? 'bg-amber-100 text-amber-800 border border-amber-200'
                               : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {isExpired ? '🔒 Bloqueado' : isPro && daysLeft && daysLeft > 10 ? `★ PRO (${daysLeft}d)` : isTrial ? `Prueba (${trialDaysLeft}d)` : 'Sin Plan'}
+                            {isExpired || isFree 
+                              ? '🔒 Bloqueado' 
+                              : isPro 
+                              ? daysLeft && daysLeft > 60 
+                                ? '★ PRO (Hardware Anual)' 
+                                : `★ PRO (${daysLeft || 30}d)` 
+                              : isTrial 
+                              ? `⏳ Prueba (${daysLeft || 10}d)` 
+                              : 'Sin Plan'}
                           </span>
                           {expiresDate && (
                             <span className={`text-[11px] font-medium ${isExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
@@ -428,27 +486,58 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                             </button>
                           </form>
 
-                          <form action={toggleUserPlan} className="inline-block">
-                            <input type="hidden" name="target_user_id" value={u.out_user_id} />
-                            <input type="hidden" name="current_plan" value={u.out_plan} />
-                            <button
-                              type="submit"
-                              className={`text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer ${
-                                isPro
-                                  ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200'
-                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                              }`}
-                            >
-                              {isPro ? (
+                          {isPro ? (
+                            <form action={toggleUserPlan} className="inline-block">
+                              <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                              <input type="hidden" name="new_plan" value="free" />
+                              <button
+                                type="submit"
+                                className="text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-700 border border-gray-200 cursor-pointer"
+                                title="Desactivar plan PRO y volver a estado gratuito"
+                              >
                                 <span>Bajar a Gratis</span>
-                              ) : (
-                                <>
+                              </button>
+                            </form>
+                          ) : isTrial ? (
+                            <div className="inline-flex items-center gap-1.5">
+                              <form action={toggleUserPlan} className="inline-block">
+                                <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                                <input type="hidden" name="new_plan" value="free" />
+                                <button
+                                  type="submit"
+                                  className="text-xs font-bold px-3 py-2 rounded-xl transition shadow-xs flex items-center gap-1 bg-gray-100 hover:bg-red-50 text-gray-600 hover:text-red-700 border border-gray-200 cursor-pointer"
+                                  title="Terminar prueba y bloquear acceso ahora"
+                                >
+                                  <span>Expirar</span>
+                                </button>
+                              </form>
+                              <form action={toggleUserPlan} className="inline-block">
+                                <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                                <input type="hidden" name="new_plan" value="pro" />
+                                <button
+                                  type="submit"
+                                  className="text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                                  title="Activar plan PRO oficial por 30 días"
+                                >
                                   <Zap className="w-3.5 h-3.5 fill-white" />
-                                  <span>Activar PRO (+30 Días)</span>
-                                </>
-                              )}
-                            </button>
-                          </form>
+                                  <span>Activar PRO</span>
+                                </button>
+                              </form>
+                            </div>
+                          ) : (
+                            <form action={toggleUserPlan} className="inline-block">
+                              <input type="hidden" name="target_user_id" value={u.out_user_id} />
+                              <input type="hidden" name="new_plan" value="pro" />
+                              <button
+                                type="submit"
+                                className="text-xs font-bold px-3.5 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                                title="Activar plan PRO oficial por 30 días"
+                              >
+                                <Zap className="w-3.5 h-3.5 fill-white" />
+                                <span>Activar PRO (+30 Días)</span>
+                              </button>
+                            </form>
+                          )}
                         </div>
                       </td>
                     </tr>

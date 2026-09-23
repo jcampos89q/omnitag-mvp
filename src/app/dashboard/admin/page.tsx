@@ -83,7 +83,8 @@ export default async function AdminDashboardPage() {
   // Cálculos dinámicos garantizados para KPIs superiores
   const totalUsers = users.length || Number(metricsData?.total_users || 0)
   const totalProUsers = users.filter(u => u.out_plan === 'pro').length || Number(metricsData?.total_pro_users || 0)
-  const totalFreeUsers = users.filter(u => u.out_plan !== 'pro').length || Number(metricsData?.total_free_users || 0)
+  const totalTrialUsers = users.filter(u => u.out_plan === 'trial').length
+  const totalFreeUsers = users.filter(u => u.out_plan === 'free' || !u.out_plan).length
   
   const totalCapturedContacts = 
     (contacts.vcard_leads?.length || 0) + 
@@ -130,7 +131,7 @@ export default async function AdminDashboardPage() {
             </div>
             <p className="text-3xl font-extrabold text-gray-900">{totalUsers}</p>
             <p className="text-xs text-gray-500 mt-1">
-              <span className="font-semibold text-emerald-600">{totalProUsers} PRO</span> • {totalFreeUsers} Gratuitos
+              <span className="font-semibold text-emerald-600">{totalProUsers} PRO</span> • <span className="font-semibold text-amber-600">{totalTrialUsers} Prueba</span> • {totalFreeUsers} Bloqueados
             </p>
           </div>
 

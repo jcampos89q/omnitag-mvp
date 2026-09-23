@@ -21,8 +21,9 @@ export async function toggleUserPlan(formData: FormData) {
   }
 
   const targetUserId = formData.get('target_user_id') as string
+  const explicitPlan = formData.get('new_plan') as string
   const currentPlan = formData.get('current_plan') as string
-  const newPlan = currentPlan === 'pro' ? 'free' : 'pro'
+  const newPlan = explicitPlan ? (explicitPlan === 'pro' ? 'pro' : 'free') : (currentPlan === 'pro' ? 'free' : 'pro')
 
   // Invocar la función RPC con permisos definer en Postgres
   const { data, error } = await supabase.rpc('admin_set_user_plan', {
