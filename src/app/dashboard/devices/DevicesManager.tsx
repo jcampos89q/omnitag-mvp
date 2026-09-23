@@ -41,6 +41,7 @@ interface DevicesManagerProps {
   wheel?: any
   isPro?: boolean
   accountType?: string
+  hasReviewPlate?: boolean
 }
 
 export default function DevicesManager({ 
@@ -50,7 +51,8 @@ export default function DevicesManager({
   loyalty,
   wheel,
   isPro = false,
-  accountType = 'business'
+  accountType = 'business',
+  hasReviewPlate = false
 }: DevicesManagerProps) {
   const [deviceType, setDeviceType] = useState<string>('tap_to_rate')
   const [reviewFilter, setReviewFilter] = useState<boolean>(true)
@@ -186,7 +188,7 @@ export default function DevicesManager({
             <div>
               <h4 className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
                 <span>1 a 3 Estrellas (Quejas Privadas)</span>
-                {!isPro && (
+                {!isPro && !hasReviewPlate && (
                   <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.2 rounded">
                     PRO
                   </span>
@@ -200,31 +202,62 @@ export default function DevicesManager({
         </div>
       </div>
 
-      {/* BANNER: ADQUIRIR PLACA FÍSICA DE RESEÑAS */}
-      <div className="bg-linear-to-r from-gray-950 via-gray-900 to-black text-white p-5 rounded-2xl border border-gray-800 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Placa Física para Mostrador
+      {/* BANNER: ESTADO DE PLACAS FÍSICAS DE RESEÑAS */}
+      {hasReviewPlate || devices.length > 0 || accountType === 'review_plate' ? (
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950 text-white p-5 rounded-2xl border border-amber-500/30 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Placa NFC de Reseñas Activa
+            </div>
+            <h3 className="text-base font-extrabold text-white">
+              {devices.length > 0 && devices[0]?.business_name 
+                ? devices[0].business_name 
+                : 'Tu Placa Tap-to-Rate está Vinculada'}
+            </h3>
+            <p className="text-xs text-gray-300 max-w-xl leading-relaxed">
+              Tu placa física para mostrador está protegiendo tu reputación con el Escudo 5★. Al acercar un teléfono celular, los clientes calificarán tu negocio directamente en Google Maps.
+            </p>
           </div>
-          <h3 className="text-base font-extrabold text-white">¿Necesitas la Placa NFC para tu Negocio?</h3>
-          <p className="text-xs text-gray-300 max-w-xl">
-            Colócala en tu mostrador o mesas. Tus clientes solo acercan su teléfono y dejan su reseña en 5 segundos. Fabricada en vinil sobre PVC de 120×126 mm (altamente resistente), chip NFC integrado, QR de respaldo y 1 año de suscripción PRO.
-          </p>
+          {devices.length > 0 && devices[0]?.tag_id && (
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+              <a
+                href={`/r/${devices[0].tag_id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition shadow-md"
+              >
+                Probar mi Placa
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
-          <div className="text-right hidden sm:block">
-            <span className="text-xs text-gray-400 line-through block">L. 1,600</span>
-            <span className="text-lg font-black text-emerald-400">L. 1,200 <span className="text-xs font-normal text-gray-300">HNL</span></span>
+      ) : (
+        <div className="bg-linear-to-r from-gray-950 via-gray-900 to-black text-white p-5 rounded-2xl border border-gray-800 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Placa Física para Mostrador
+            </div>
+            <h3 className="text-base font-extrabold text-white">¿Necesitas la Placa NFC para tu Negocio?</h3>
+            <p className="text-xs text-gray-300 max-w-xl">
+              Colócala en tu mostrador o mesas. Tus clientes solo acercan su teléfono y dejan su reseña en 5 segundos. Fabricada en vinil sobre PVC de 120×126 mm (altamente resistente), chip NFC integrado, QR de respaldo y 1 año de suscripción PRO.
+            </p>
           </div>
-          <Link
-            href="/tienda"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black px-4 py-2.5 rounded-xl text-xs transition shadow-md"
-          >
-            Pedir Placa Física
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+            <div className="text-right hidden sm:block">
+              <span className="text-xs text-gray-400 line-through block">L. 1,600</span>
+              <span className="text-lg font-black text-emerald-400">L. 1,200 <span className="text-xs font-normal text-gray-300">HNL</span></span>
+            </div>
+            <Link
+              href="/tienda"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-black px-4 py-2.5 rounded-xl text-xs transition shadow-md"
+            >
+              Pedir Placa Física
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 2. FORMULARIO PARA REGISTRAR O VINCULAR UNA PLACA NFC (Solo para Administradores y Empresas generales) */}
       {accountType !== 'review_plate' && (

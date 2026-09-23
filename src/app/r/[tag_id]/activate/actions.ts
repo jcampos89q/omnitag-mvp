@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { sendPushNotificationToUser } from '@/lib/push'
 
 export async function activatePlateAndRegister(formData: FormData) {
   const supabase = await createClient()
@@ -136,6 +137,44 @@ export async function activatePlateAndRegister(formData: FormData) {
       claimed_at: new Date().toISOString()
     })
     .eq('card_token', tagId)
+
+  // 5. Sincronizar espacio de trabajo (workspace) con Plan PRO de 365 días
+  try {
+    await supabase.rpc('admin_set_user_plan', {
+      p_user_id: targetUserId,
+      p_plan: 'pro',
+      p_duration_days: 365
+    })
+  } catch (wsErr) {
+    console.error('Error sincronizando workspace en activación de placa:', wsErr)
+    await supabase
+      .from('workspaces')
+      .upsert({
+        id: targetUserId,
+        name: businessName || 'Mi Negocio',
+        plan: 'pro',
+        subscription_expires_at: expiresAt
+      })
+  }
+
+  // 6. Notificación in-app en la campana
+  try {
+    await supabase.from('notifications').insert({
+      user_id: targetUserId,
+      title: '🎉 ¡Tu Placa de Reseñas NFC está Activa!',
+      message: `Tu placa física para "${businessName || 'tu negocio'}" quedó configurada con 365 días de servicio PRO y Escudo Anti-Quejas.`,
+      type: 'success',
+      link: '/dashboard/devices'
+    })
+
+    await sendPushNotificationToUser(targetUserId, {
+      title: '🎉 ¡Placa de Reseñas NFC Activada!',
+      body: `Tu placa para "${businessName || 'tu negocio'}" ya está vinculada con 1 año de membresía PRO.`,
+      url: '/dashboard/devices'
+    })
+  } catch (notifErr) {
+    console.error('Error creando notificación de activación:', notifErr)
+  }
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/devices')

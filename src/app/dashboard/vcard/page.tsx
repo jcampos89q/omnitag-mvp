@@ -23,8 +23,8 @@ export default async function VCardBuilderPage({
     redirect('/login')
   }
 
-  // 1. Obtener estado del plan
-  const { isPro } = await getUserPlanInfo(supabase, user.id)
+  // 1. Obtener estado del plan y hardware vinculado
+  const { isPro, hasNfcCard, nfcCardToken } = await getUserPlanInfo(supabase, user.id)
 
   // 2. Obtener la vCard y el tipo de cuenta
   const [{ data: vcard }, { data: profile }] = await Promise.all([
@@ -87,33 +87,69 @@ export default async function VCardBuilderPage({
             </div>
           )}
 
-          {/* Banner para solicitar Tarjeta NFC Física en la Tienda Oficial */}
-          <div className="mt-4 p-4 sm:p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-purple-950 text-white rounded-2xl border border-purple-900/40 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                <CreditCard className="w-5 h-5 text-purple-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-extrabold text-sm text-white">¿Deseas tu Tarjeta Inteligente NFC Física?</h3>
-                  <span className="bg-purple-500/30 text-purple-300 text-[10px] font-black px-2 py-0.5 rounded-full border border-purple-500/40">
-                    L. 1,200 HNL
-                  </span>
+          {/* Banner de Tarjeta NFC: Si ya la tiene vinculada, mostrar estado activo; si no la tiene, invitar a pedirla */}
+          {hasNfcCard ? (
+            <div className="mt-4 p-4 sm:p-5 bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-950 text-white rounded-2xl border border-emerald-500/30 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                  <CreditCard className="w-5 h-5 text-emerald-400" />
                 </div>
-                <p className="text-xs text-gray-300 mt-1 max-w-xl leading-relaxed">
-                  Lleva tu credencial de bolsillo en acabado <b>Matte Black</b> con chip NFC universal y código QR HD vinculado a tu vCard. <b>Incluye 1 año completo de suscripción PRO</b> y envío a toda Honduras.
-                </p>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-extrabold text-sm text-white">Tarjeta Inteligente NFC Vinculada</h3>
+                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-emerald-500/40">
+                      ✓ ACTIVA Y PROGRAMADA
+                    </span>
+                    {nfcCardToken && (
+                      <span className="font-mono text-[10px] bg-white/10 text-gray-300 px-2 py-0.5 rounded">
+                        {nfcCardToken}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-300 mt-1 max-w-xl leading-relaxed">
+                    Tu credencial física NFC está configurada con tu vCard. Cualquier cambio que guardes aquí se actualizará de inmediato al acercar la tarjeta a cualquier teléfono celular.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                <Link
+                  href="/dashboard/qr-studio"
+                  className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition border border-white/15 flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-purple-400" />
+                  <span>Código QR HD</span>
+                </Link>
               </div>
             </div>
+          ) : accountType !== 'review_plate' ? (
+            <div className="mt-4 p-4 sm:p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-purple-950 text-white rounded-2xl border border-purple-900/40 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                  <CreditCard className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-extrabold text-sm text-white">¿Deseas tu Tarjeta Inteligente NFC Física?</h3>
+                    <span className="bg-purple-500/30 text-purple-300 text-[10px] font-black px-2 py-0.5 rounded-full border border-purple-500/40">
+                      L. 1,200 HNL
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-300 mt-1 max-w-xl leading-relaxed">
+                    Lleva tu credencial de bolsillo en acabado <b>Matte Black</b> con chip NFC universal y código QR HD vinculado a tu vCard. <b>Incluye 1 año completo de suscripción PRO</b> y envío a toda Honduras.
+                  </p>
+                </div>
+              </div>
 
-            <Link
-              href="/tienda"
-              className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap"
-            >
-              <CreditCard className="w-3.5 h-3.5" />
-              <span>Pedir Tarjeta NFC (L. 1,200)</span>
-            </Link>
-          </div>
+              <Link
+                href="/tienda"
+                className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap"
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span>Pedir Tarjeta NFC (L. 1,200)</span>
+              </Link>
+            </div>
+          ) : null}
         </div>
 
         {/* Formulario Principal interactivo */}

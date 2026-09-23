@@ -91,7 +91,7 @@ export default async function NfcClaimOrRedirectPage({
       })
       .eq('id', card.id)
 
-    // 2. Extender suscripción por 1 año
+    // 2. Extender suscripción por 1 año en users y workspaces
     await s
       .from('users')
       .update({
@@ -99,6 +99,24 @@ export default async function NfcClaimOrRedirectPage({
         plan_status: 'pro_annual'
       })
       .eq('id', currentUser.id)
+
+    try {
+      await s.rpc('admin_set_user_plan', {
+        p_user_id: currentUser.id,
+        p_plan: 'pro',
+        p_duration_days: planDays
+      })
+    } catch (wsErr) {
+      console.error('Error sincronizando plan en reclamo de tarjeta:', wsErr)
+      await s
+        .from('workspaces')
+        .upsert({
+          id: currentUser.id,
+          name: 'Workspace',
+          plan: 'pro',
+          subscription_expires_at: expiresAt
+        })
+    }
 
     revalidatePath('/', 'layout')
     redirect('/dashboard/vcard?nfc_activated=true')

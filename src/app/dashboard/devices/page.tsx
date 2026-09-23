@@ -17,7 +17,7 @@ export default async function DevicesPage({
   const { success, error } = await searchParams
 
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
-  const [{ isPro }, { data: profile }] = await Promise.all([
+  const [{ isPro, hasReviewPlate }, { data: profile }] = await Promise.all([
     getUserPlanInfo(supabase, user?.id),
     supabase.from('users').select('account_type').eq('id', user?.id).maybeSingle()
   ])
@@ -78,6 +78,7 @@ export default async function DevicesPage({
           wheel={wheel}
           isPro={isPro}
           accountType={accountType}
+          hasReviewPlate={hasReviewPlate || (devices && devices.length > 0)}
         />
       </div>
     </div>

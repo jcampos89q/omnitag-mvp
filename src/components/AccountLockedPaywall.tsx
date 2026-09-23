@@ -98,7 +98,7 @@ export default function AccountLockedPaywall({
                 href="/tienda"
                 className="w-full mt-3 py-2.5 px-4 rounded-xl bg-black hover:bg-gray-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm"
               >
-                <span>Ver Tienda & Pedir Tarjeta NFC</span>
+                <span>Renovar Membresía Anual / Tienda NFC</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>

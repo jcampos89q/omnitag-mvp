@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   }
 
   // 1. Obtener plan, contador de días restantes y privilegios del usuario
-  const [{ isPro, isAdmin, expiresAt, daysLeft, isExpired, isTrial, isDiscountEligible, discountDaysLeft }, { data: profile }] = await Promise.all([
+  const [{ isPro, isAdmin, expiresAt, daysLeft, isExpired, isTrial, isDiscountEligible, discountDaysLeft, hasNfcCard }, { data: profile }] = await Promise.all([
     getUserPlanInfo(supabase, user.id),
     supabase.from('users').select('full_name, account_type').eq('id', user.id).maybeSingle()
   ])
@@ -269,7 +269,7 @@ export default async function DashboardPage() {
               className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span>{accountType === 'professional' ? 'Obtener Tarjeta NFC PRO (L. 1,200)' : 'Mejorar a PRO por L. 550'}</span>
+              <span>{hasNfcCard ? 'Renovar PRO por L. 550' : accountType === 'professional' ? 'Obtener Tarjeta NFC PRO (L. 1,200)' : 'Mejorar a PRO por L. 550'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           ) : null}
@@ -297,7 +297,7 @@ export default async function DashboardPage() {
                 <p className="text-[11px] opacity-80 mt-0.5">
                   {isTrial 
                     ? `Tu prueba gratuita de 10 días concluye el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. ${isDiscountEligible ? `¡Aprovecha el 50% de descuento (L. 275) durante tus primeros 3 días!` : ''}`
-                    : `Vence el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. Se renueva con tu pago mensual por depósito o transferencia BAC.`}
+                    : `Vence el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. ${hasNfcCard ? 'Tu tarjeta inteligente NFC cuenta con membresía anual completa sin mensualidades.' : 'Se renueva con tu pago mensual por depósito o transferencia BAC.'}`}
                 </p>
               </div>
             </div>
@@ -306,7 +306,7 @@ export default async function DashboardPage() {
               href="/dashboard/billing#metodos-pago"
               className="bg-black text-white font-bold px-3.5 py-2 rounded-xl text-xs shrink-0 hover:bg-gray-800 transition shadow-2xs"
             >
-              {isTrial && isDiscountEligible ? 'Aprovechar 50% OFF (L. 275) →' : 'Detalles de Suscripción BAC →'}
+              {isTrial && isDiscountEligible ? 'Aprovechar 50% OFF (L. 275) →' : hasNfcCard ? 'Detalles de Membresía →' : 'Detalles de Suscripción BAC →'}
             </Link>
           </div>
         )}
