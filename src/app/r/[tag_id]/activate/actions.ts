@@ -65,17 +65,19 @@ export async function activatePlateAndRegister(formData: FormData) {
     targetUserId = authData.user.id
   }
 
-  // 2. Establecer vigencia de 1 año (365 días) de suscripción para la placa
-  const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+  // 2. Establecer vigencia de 1 año (365 días) para la placa y 30 días de prueba PRO con todas las funciones
+  const hwExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+  const trialExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
   // Si no era ya una cuenta de negocio mensual completa, asignarle rol de placa de reseñas
   const { data: currentProfile } = await supabase
     .from('users')
-    .select('account_type')
+    .select('account_type, hardware_type, trial_expires_at')
     .eq('id', targetUserId)
     .maybeSingle()
 
   const finalAccountType = currentProfile?.account_type === 'business' ? 'business' : 'review_plate'
+  const combinedHw = (currentProfile?.hardware_type && currentProfile.hardware_type !== 'review_plate') ? 'both' : 'review_plate'
 
   await supabase
     .from('users')
@@ -83,7 +85,10 @@ export async function activatePlateAndRegister(formData: FormData) {
       full_name: fullName || undefined,
       personal_phone: personalPhone || undefined,
       account_type: finalAccountType,
-      subscription_expires_at: expiresAt
+      hardware_expires_at: hwExpiresAt,
+      hardware_type: combinedHw,
+      trial_expires_at: currentProfile?.trial_expires_at || trialExpiresAt,
+      subscription_expires_at: trialExpiresAt
     })
     .eq('id', targetUserId)
 

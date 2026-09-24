@@ -79,7 +79,10 @@ export default async function NfcClaimOrRedirectPage({
     if (!currentUser) redirect(`/login?next=/t/${cleanToken}`)
 
     const planDays = card.plan_duration_days || 365
-    const expiresAt = new Date(Date.now() + planDays * 24 * 60 * 60 * 1000).toISOString()
+    const hwExpiresAt = new Date(Date.now() + planDays * 24 * 60 * 60 * 1000).toISOString()
+    const trialExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    const isPlate = (card.nfc_batches as any)?.batch_type === 'review_plate'
+    const newHw = isPlate ? 'review_plate' : 'vcard'
 
     // 1. Asignar tarjeta al usuario
     await s
@@ -91,32 +94,27 @@ export default async function NfcClaimOrRedirectPage({
       })
       .eq('id', card.id)
 
-    // 2. Extender suscripción por 1 año en users y workspaces
+    // Consultar usuario actual para combinar hardware si ya tenía otro
+    const { data: userRow } = await s
+      .from('users')
+      .select('hardware_type, hardware_expires_at, trial_expires_at, account_type')
+      .eq('id', currentUser.id)
+      .maybeSingle()
+
+    const combinedHwType = (userRow?.hardware_type && userRow.hardware_type !== newHw) ? 'both' : newHw
+    const finalAccountType = isPlate ? 'review_plate' : (userRow?.account_type || 'professional')
+
+    // 2. 1 año de hardware + 30 días de prueba PRO con todas las funciones
     await s
       .from('users')
       .update({
-        subscription_expires_at: expiresAt,
-        plan_status: 'pro_annual'
+        hardware_expires_at: hwExpiresAt,
+        hardware_type: combinedHwType,
+        trial_expires_at: userRow?.trial_expires_at || trialExpiresAt,
+        subscription_expires_at: trialExpiresAt,
+        account_type: finalAccountType
       })
       .eq('id', currentUser.id)
-
-    try {
-      await s.rpc('admin_set_user_plan', {
-        p_user_id: currentUser.id,
-        p_plan: 'pro',
-        p_duration_days: planDays
-      })
-    } catch (wsErr) {
-      console.error('Error sincronizando plan en reclamo de tarjeta:', wsErr)
-      await s
-        .from('workspaces')
-        .upsert({
-          id: currentUser.id,
-          name: 'Workspace',
-          plan: 'pro',
-          subscription_expires_at: expiresAt
-        })
-    }
 
     revalidatePath('/', 'layout')
     redirect('/dashboard/vcard?nfc_activated=true')

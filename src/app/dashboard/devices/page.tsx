@@ -6,6 +6,7 @@ import { Star, ShieldCheck, QrCode } from 'lucide-react'
 import DevicesManager from './DevicesManager'
 import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function DevicesPage({
   searchParams
@@ -17,11 +18,22 @@ export default async function DevicesPage({
   const { success, error } = await searchParams
 
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
-  const [{ isPro, hasReviewPlate }, { data: profile }] = await Promise.all([
+  const [planInfo, { data: profile }] = await Promise.all([
     getUserPlanInfo(supabase, user?.id),
     supabase.from('users').select('account_type').eq('id', user?.id).maybeSingle()
   ])
+  const { isPro, hasReviewPlate } = planInfo
   const accountType = profile?.account_type || 'business'
+
+  if (!planInfo.canAccessReviewPlate) {
+    return (
+      <ProFeaturePaywall 
+        featureName="Placa de Reseñas Google NFC"
+        featureDescription="Tu cuenta tiene asignada una Tarjeta Inteligente NFC (vCard). Para configurar una Placa de Reseñas Google, adquiere tu Placa Física o activa la Suscripción PRO Mensual."
+        hardwareType={planInfo.hardwareType}
+      />
+    )
+  }
 
   // 2. Obtener placas del usuario
   const { data: devices } = await supabase

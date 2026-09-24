@@ -7,13 +7,25 @@ import { Coffee, Scissors, Stethoscope, ShoppingBag } from 'lucide-react'
 import MenuManager from './MenuManager'
 import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function MenusPage() {
   const supabase = await createClient()
   const { user } = await getEffectiveUser(supabase)
 
   // 1. Obtener estado del plan
-  const { isPro } = await getUserPlanInfo(supabase, user?.id)
+  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const isPro = planInfo.isPro
+
+  if (!planInfo.canAccessProSuite) {
+    return (
+      <ProFeaturePaywall 
+        featureName="Menú & Catálogo Digital QR"
+        featureDescription="La creación de menús interactivos, listas de precios y cartas digitales está disponible con el Plan PRO Mensual."
+        hardwareType={planInfo.hardwareType}
+      />
+    )
+  }
 
   // 2. Buscar menú del usuario
   const { data: menu } = await supabase

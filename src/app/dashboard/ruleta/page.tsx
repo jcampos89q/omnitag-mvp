@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { getOrCreateWheel } from './actions'
 import WheelManagerClient from './WheelManagerClient'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import { getUserPlanInfo } from '@/lib/plans'
+import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export const metadata = {
   title: 'Ruleta de Premios & Gamificación | Dashboard OmniTag',
@@ -13,6 +15,17 @@ export default async function DashboardRuletaPage() {
   const supabase = await createClient()
   const { user } = await getEffectiveUser(supabase)
   if (!user) redirect('/login')
+
+  const planInfo = await getUserPlanInfo(supabase, user.id)
+  if (!planInfo.canAccessProSuite) {
+    return (
+      <ProFeaturePaywall 
+        featureName="Ruleta de Premios & Gamificación"
+        featureDescription="La ruleta de la fortuna y cupones interactivos para clientes son parte exclusiva del Plan PRO Mensual."
+        hardwareType={planInfo.hardwareType}
+      />
+    )
+  }
 
   // Obtener o inicializar la ruleta
   const wheel = await getOrCreateWheel()

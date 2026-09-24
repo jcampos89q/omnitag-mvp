@@ -3,10 +3,23 @@ import { Gift, Sparkles, ShieldCheck } from 'lucide-react'
 import { createLoyaltyProgram } from './actions'
 import LoyaltyManager from './LoyaltyManager'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import { getUserPlanInfo } from '@/lib/plans'
+import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function LoyaltyPage() {
   const supabase = await createClient()
   const { user } = await getEffectiveUser(supabase)
+
+  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  if (!planInfo.canAccessProSuite) {
+    return (
+      <ProFeaturePaywall 
+        featureName="Programa de Fidelización & Sellos"
+        featureDescription="Las tarjetas de sellos digitales y recompensas para clientes frecuentes están disponibles con el Plan PRO Mensual."
+        hardwareType={planInfo.hardwareType}
+      />
+    )
+  }
 
   // Buscar programa de fidelización del usuario
   const { data: program } = await supabase

@@ -82,14 +82,18 @@ export async function signup(formData: FormData) {
     try {
       const { data: card } = await supabase
         .from('nfc_cards')
-        .select('*')
+        .select('*, nfc_batches(batch_type)')
         .eq('card_token', cardToken)
         .eq('status', 'unclaimed')
         .maybeSingle()
 
       if (card) {
         const planDays = card.plan_duration_days || 365
-        const expiresAt = new Date(Date.now() + planDays * 24 * 60 * 60 * 1000).toISOString()
+        const hwExpiresAt = new Date(Date.now() + planDays * 24 * 60 * 60 * 1000).toISOString()
+        const trialExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        const isPlate = (card.nfc_batches as any)?.batch_type === 'review_plate'
+        const hwType = isPlate ? 'review_plate' : 'vcard'
+        const finalAccountType = isPlate ? 'review_plate' : (accountType || 'professional')
 
         // 1. Marcar tarjeta como activa y asignada al usuario
         await supabase
@@ -101,22 +105,19 @@ export async function signup(formData: FormData) {
           })
           .eq('id', card.id)
 
-        // 2. Extender suscripción por 1 año en la tabla users y workspaces
+        // 2. 1 año de hardware garantizado + 1 mes de prueba full para todo
         await supabase
           .from('users')
           .update({
-            subscription_expires_at: expiresAt,
-            account_type: accountType,
+            hardware_expires_at: hwExpiresAt,
+            hardware_type: hwType,
+            trial_expires_at: trialExpiresAt,
+            subscription_expires_at: trialExpiresAt,
+            account_type: finalAccountType,
             industry: industry,
             profession_title: professionTitle
           })
           .eq('id', data.user.id)
-
-        await supabase.rpc('admin_set_user_plan', {
-          p_user_id: data.user.id,
-          p_plan: 'pro',
-          p_duration_days: planDays
-        })
       }
     } catch (nfcErr) {
       console.error('Error vinculando tarjeta NFC en registro:', nfcErr)

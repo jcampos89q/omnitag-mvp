@@ -7,13 +7,25 @@ import AppointmentsManager from './AppointmentsManager'
 import { createOrUpdateBusiness } from './actions'
 import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function AppointmentsDashboardPage() {
   const supabase = await createClient()
   const { user } = await getEffectiveUser(supabase)
 
   // 1. Obtener plan
-  const { isPro } = await getUserPlanInfo(supabase, user?.id)
+  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const isPro = planInfo.isPro
+
+  if (!planInfo.canAccessProSuite) {
+    return (
+      <ProFeaturePaywall 
+        featureName="Agendas de Citas & Especialistas"
+        featureDescription="La gestión de turnos online, catálogo de servicios y reserva de especialistas está reservada para el Plan PRO Mensual."
+        hardwareType={planInfo.hardwareType}
+      />
+    )
+  }
 
   // 2. Buscar negocio de citas del usuario
   const { data: business } = await supabase

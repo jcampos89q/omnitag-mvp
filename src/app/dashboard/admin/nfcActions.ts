@@ -412,7 +412,8 @@ export async function assignNfcCardToUser(cardId: string, userId: string) {
   if (!card) throw new Error('Tarjeta no encontrada')
 
   const planDays = card.plan_duration_days || 365
-  const expiresAt = new Date(Date.now() + planDays * 24 * 60 * 60 * 1000).toISOString()
+  const hwExpiresAt = new Date(Date.now() + planDays * 24 * 60 * 60 * 1000).toISOString()
+  const trialExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
   // 1. Asignar tarjeta al usuario
   await supabase
@@ -424,19 +425,26 @@ export async function assignNfcCardToUser(cardId: string, userId: string) {
     })
     .eq('id', cardId)
 
-  // 2. Extender membresía del usuario por 1 año PRO
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('hardware_type, trial_expires_at')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const isPlate = (card as any)?.batch_type === 'review_plate'
+  const newHw = isPlate ? 'review_plate' : 'vcard'
+  const combinedHw = (userRow?.hardware_type && userRow.hardware_type !== newHw) ? 'both' : newHw
+
+  // 2. 1 año de hardware + 30 días de prueba PRO completa
   await supabase
     .from('users')
     .update({
-      subscription_expires_at: expiresAt
+      hardware_expires_at: hwExpiresAt,
+      hardware_type: combinedHw,
+      trial_expires_at: userRow?.trial_expires_at || trialExpiresAt,
+      subscription_expires_at: trialExpiresAt
     })
     .eq('id', userId)
-
-  await supabase.rpc('admin_set_user_plan', {
-    p_user_id: userId,
-    p_plan: 'pro',
-    p_duration_days: planDays
-  })
 
   revalidatePath('/dashboard/admin')
   return { success: true }
@@ -454,7 +462,7 @@ export async function claimNfcCardByToken(cardToken: string) {
 
   const { data: card } = await supabase
     .from('nfc_cards')
-    .select('*')
+    .select('*, nfc_batches(batch_type)')
     .eq('card_token', cleanToken)
     .maybeSingle()
 
@@ -463,7 +471,10 @@ export async function claimNfcCardByToken(cardToken: string) {
   if (card.status === 'disabled') throw new Error('Esta tarjeta está deshabilitada')
 
   const planDays = card.plan_duration_days || 365
-  const expiresAt = new Date(Date.now() + planDays * 24 * 60 * 60 * 1000).toISOString()
+  const hwExpiresAt = new Date(Date.now() + planDays * 24 * 60 * 60 * 1000).toISOString()
+  const trialExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  const isPlate = (card.nfc_batches as any)?.batch_type === 'review_plate'
+  const newHw = isPlate ? 'review_plate' : 'vcard'
 
   await supabase
     .from('nfc_cards')
@@ -474,18 +485,23 @@ export async function claimNfcCardByToken(cardToken: string) {
     })
     .eq('id', card.id)
 
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('hardware_type, trial_expires_at')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  const combinedHw = (userRow?.hardware_type && userRow.hardware_type !== newHw) ? 'both' : newHw
+
   await supabase
     .from('users')
     .update({
-      subscription_expires_at: expiresAt
+      hardware_expires_at: hwExpiresAt,
+      hardware_type: combinedHw,
+      trial_expires_at: userRow?.trial_expires_at || trialExpiresAt,
+      subscription_expires_at: trialExpiresAt
     })
     .eq('id', user.id)
-
-  await supabase.rpc('admin_set_user_plan', {
-    p_user_id: user.id,
-    p_plan: 'pro',
-    p_duration_days: planDays
-  })
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/billing')

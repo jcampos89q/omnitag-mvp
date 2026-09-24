@@ -5,13 +5,25 @@ import { createClient } from '@/lib/supabase/server'
 import { QrCode, Sparkles } from 'lucide-react'
 import QRStudioClient from './QRStudioClient'
 import { getUserPlanInfo } from '@/lib/plans'
+import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function QRStudioPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
-  const { isPro } = await getUserPlanInfo(supabase, user?.id)
+  // 1. Obtener plan y privilegios del usuario
+  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const isPro = planInfo.isPro
+
+  if (!planInfo.canAccessProSuite) {
+    return (
+      <ProFeaturePaywall 
+        featureName="Estudio QR (Imprimibles de Alta Definición)"
+        featureDescription="La exportación de códigos QR HD para imprenta, stickers y habladores acrílicos está reservada para el Plan PRO Mensual."
+        hardwareType={planInfo.hardwareType}
+      />
+    )
+  }
 
   // 2. Buscar vCard del usuario
   const { data: vcard } = await supabase

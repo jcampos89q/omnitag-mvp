@@ -9,6 +9,7 @@ import VCardForm from './VCardForm'
 import { getUserPlanInfo } from '@/lib/plans'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function VCardBuilderPage({
   searchParams,
@@ -24,7 +25,18 @@ export default async function VCardBuilderPage({
   }
 
   // 1. Obtener estado del plan y hardware vinculado
-  const { isPro, hasNfcCard, nfcCardToken } = await getUserPlanInfo(supabase, user.id)
+  const planInfo = await getUserPlanInfo(supabase, user.id)
+  const { isPro, hasNfcCard, nfcCardToken } = planInfo
+
+  if (!planInfo.canAccessVCard) {
+    return (
+      <ProFeaturePaywall 
+        featureName="Perfil Digital vCard"
+        featureDescription="Tu cuenta tiene configurada una Placa de Reseñas NFC. Para habilitar un Perfil Digital vCard, adquiere una Tarjeta NFC o activa la Suscripción PRO Mensual."
+        hardwareType={planInfo.hardwareType}
+      />
+    )
+  }
 
   // 2. Obtener la vCard y el tipo de cuenta
   const [{ data: vcard }, { data: profile }] = await Promise.all([

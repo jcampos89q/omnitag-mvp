@@ -1,10 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
 import { MessageSquareWarning, Star, Calendar, Phone, Mail, MessageCircle, CheckCircle2, Building2 } from 'lucide-react'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import { getUserPlanInfo } from '@/lib/plans'
+import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function FeedbackPage() {
   const supabase = await createClient()
   const { user } = await getEffectiveUser(supabase)
+
+  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  if (!planInfo.canAccessFeedback) {
+    return (
+      <ProFeaturePaywall 
+        featureName="Libro Privado de Quejas & Sugerencias"
+        featureDescription="La recepción de opiniones y quejas privadas es parte del sistema de Placa de Reseñas NFC o del Plan PRO Mensual."
+        hardwareType={planInfo.hardwareType}
+      />
+    )
+  }
 
   // Buscar dispositivos del usuario
   const { data: devices } = await supabase

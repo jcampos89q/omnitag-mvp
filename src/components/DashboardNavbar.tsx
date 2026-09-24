@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 import NotificationBell from './NotificationBell'
+import { UserPlanInfo } from '@/lib/plans'
 
 interface NavItem {
   name: string
@@ -60,44 +61,31 @@ export default function DashboardNavbar({
   isAdmin = false,
   userIndustry = 'general',
   accountType = 'professional',
+  planInfo
 }: { 
   userEmail?: string 
   userId?: string
   isAdmin?: boolean
   userIndustry?: string
   accountType?: string
+  planInfo?: UserPlanInfo
 }) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // Filtrado de navegación según el tipo de cuenta
-  let filteredBaseItems = [...baseNavItems]
+  // Filtrado de navegación según el plan real y compra de hardware
+  let filteredBaseItems: NavItem[] = []
+
+  const canAccessProSuite = Boolean(isAdmin || planInfo?.canAccessProSuite)
+  const hasNfc = Boolean(planInfo?.hasNfcCard || accountType === 'professional')
+  const hasPlate = Boolean(planInfo?.hasReviewPlate || accountType === 'review_plate')
 
   if (isAdmin) {
-    // EL SUPERADMINISTRADOR TIENE ACCESO TOTAL A TODAS LAS HERRAMIENTAS SIN LÍMITES
+    // 1. EL SUPERADMINISTRADOR TIENE ACCESO TOTAL A TODAS LAS HERRAMIENTAS
     filteredBaseItems = [...baseNavItems]
     filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Users, badge: 'Salud', section: 'gestion' })
-  } else if (accountType === 'review_plate') {
-    // Clientes exclusivos de Placas NFC de Reseñas de Google
-    // Únicamente tienen acceso a su Placa, Quejas Privadas y Métricas
-    filteredBaseItems = [
-      { name: 'Inicio', href: '/dashboard', icon: Home, section: 'principal' },
-      { name: 'Mi Placa de Reseñas', href: '/dashboard/devices', icon: Star, section: 'principal' },
-      { name: 'Quejas Privadas', href: '/dashboard/feedback', icon: MessageSquareWarning, section: 'gestion' },
-      { name: 'Métricas de Escaneos', href: '/dashboard/analytics', icon: BarChart3, section: 'gestion' },
-    ]
-  } else if (accountType === 'professional') {
-    // Solo los clientes profesionales individuales ven su vCard, CRM y estadísticas
-    const allowedHrefs = [
-      '/dashboard',
-      '/dashboard/vcard',
-      '/dashboard/leads',
-      '/dashboard/analytics',
-      '/dashboard/billing'
-    ]
-    filteredBaseItems = baseNavItems.filter(item => allowedHrefs.includes(item.href))
-  } else {
-    // Negocios / Empresas
+  } else if (canAccessProSuite) {
+    // 2. MES GRATIS (30 DÍAS) O SUSCRIPCIÓN MENSUAL PRO ACTIVA: ACCESO A TODAS LAS HERRAMIENTAS
     filteredBaseItems = baseNavItems.filter(item => {
       if (userIndustry === 'health') {
         if (item.href === '/dashboard/menus') return false
@@ -110,7 +98,34 @@ export default function DashboardNavbar({
     if (userIndustry === 'health') {
       filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Users, badge: 'Salud', section: 'gestion' })
     }
+  } else {
+    // 3. SIN SUSCRIPCIÓN MENSUAL (FUERA DEL MES GRATIS): SOLO HARDWARE FÍSICO ACTIVO (1 AÑO)
+    const allowedHrefs: string[] = ['/dashboard']
+
+    // Si compró Tarjeta NFC -> Mi vCard, Contactos CRM, Estadísticas
+    if (hasNfc) {
+      allowedHrefs.push('/dashboard/vcard', '/dashboard/leads', '/dashboard/analytics')
+    }
+
+    // Si compró Placa de Reseñas -> Mi Placa, Quejas Privadas, Métricas/Estadísticas
+    if (hasPlate) {
+      if (!allowedHrefs.includes('/dashboard/devices')) allowedHrefs.push('/dashboard/devices')
+      if (!allowedHrefs.includes('/dashboard/feedback')) allowedHrefs.push('/dashboard/feedback')
+      if (!allowedHrefs.includes('/dashboard/analytics')) allowedHrefs.push('/dashboard/analytics')
+    }
+
+    // Si no tiene ningún hardware activo
+    if (!hasNfc && !hasPlate) {
+      allowedHrefs.push('/dashboard/analytics')
+    }
+
+    // Siempre disponible facturación para que pueda suscribirse
+    allowedHrefs.push('/dashboard/billing')
+
+    filteredBaseItems = baseNavItems.filter(item => allowedHrefs.includes(item.href))
   }
+
+
   
   // Add Settings to the end
   filteredBaseItems.push({ name: 'Configuración', href: '/dashboard/settings', icon: UserCircle, section: 'cuenta' })
@@ -205,11 +220,23 @@ export default function DashboardNavbar({
               <div className="px-3 py-2 bg-gray-50 rounded-xl mb-3 border border-gray-100">
                 <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Conectado como:</p>
                 <p className="text-xs font-bold text-gray-800 truncate">{userEmail}</p>
-                {isAdmin && (
+                {isAdmin ? (
                   <span className="inline-block mt-1 text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
                     👑 Super Administrador
                   </span>
-                )}
+                ) : planInfo?.isTrial ? (
+                  <span className="inline-block mt-1 text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
+                    🎁 Mes Gratis Full ({planInfo.trialDaysLeft}d)
+                  </span>
+                ) : planInfo?.isMonthlyPro ? (
+                  <span className="inline-block mt-1 text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
+                    💎 Plan PRO Activo
+                  </span>
+                ) : planInfo?.isHardwareActive ? (
+                  <span className="inline-block mt-1 text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                    🎴 {planInfo.hasReviewPlate ? 'Placa NFC (1 Año)' : 'Tarjeta NFC (1 Año)'}
+                  </span>
+                ) : null}
               </div>
             )}
 
@@ -303,16 +330,28 @@ export default function DashboardNavbar({
         </div>
 
         {userEmail && (
-          <div className="px-6 py-2">
+          <div className="px-5 py-2.5 bg-gray-50/70 border-b border-gray-100">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-400 font-medium">Cuenta activa</p>
-              {isAdmin && (
-                <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded">
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Cuenta activa</p>
+              {isAdmin ? (
+                <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded">
                   ADMIN
                 </span>
-              )}
+              ) : planInfo?.isTrial ? (
+                <span className="text-[10px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded">
+                  MES GRATIS ({planInfo.trialDaysLeft}d)
+                </span>
+              ) : planInfo?.isMonthlyPro ? (
+                <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded">
+                  PRO ACTIVO
+                </span>
+              ) : planInfo?.isHardwareActive ? (
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded">
+                  1 AÑO ACTIVO
+                </span>
+              ) : null}
             </div>
-            <p className="text-xs font-semibold text-gray-700 truncate mt-0.5">{userEmail}</p>
+            <p className="text-xs font-semibold text-gray-800 truncate mt-0.5">{userEmail}</p>
           </div>
         )}
         

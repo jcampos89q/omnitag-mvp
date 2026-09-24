@@ -141,17 +141,27 @@ export default function BillingClient({
       <div className="bg-gray-50/90 p-5 sm:p-6 rounded-2xl border border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Estado de tu Cuenta</span>
-          <div className="flex items-center gap-2.5 mt-1">
+          <div className="flex items-center gap-2.5 mt-1 flex-wrap">
             <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-              {isPro 
-                ? (isTrial ? 'Prueba Gratuita PRO (Herramientas Completas)' : 'Plan PRO (Acceso Total Ilimitado)') 
+              {planInfo?.isMonthlyPro 
+                ? 'Plan PRO Mensual (Acceso Total Ilimitado)' 
+                : planInfo?.isTrial 
+                ? 'Mes Gratis PRO de Cortesía (Todas las Funciones)' 
+                : planInfo?.isHardwareActive
+                ? (planInfo.hasReviewPlate ? 'Placa de Reseñas NFC (1 Año Activo)' : 'Tarjeta Inteligente NFC (1 Año Activo)')
                 : 'Plan Básico (Gratuito)'}
             </h2>
-            {isPro ? (
-              <span className={`text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 ${
-                isTrial ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800'
-              }`}>
-                <Sparkles className="w-3.5 h-3.5" /> {isTrial ? `Prueba: ${daysLeft} ${daysLeft === 1 ? 'día' : 'días'} restantes` : 'PRO Activo'}
+            {planInfo?.isMonthlyPro ? (
+              <span className="text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 bg-purple-100 text-purple-800">
+                <Sparkles className="w-3.5 h-3.5" /> PRO Mensual Activo
+              </span>
+            ) : planInfo?.isTrial ? (
+              <span className="text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 bg-amber-100 text-amber-800">
+                <Sparkles className="w-3.5 h-3.5" /> Mes Gratis: {planInfo.trialDaysLeft} {planInfo.trialDaysLeft === 1 ? 'día restante' : 'días restantes'}
+              </span>
+            ) : planInfo?.isHardwareActive ? (
+              <span className="text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 bg-emerald-100 text-emerald-800">
+                <ShieldCheck className="w-3.5 h-3.5" /> 1 Año Garantizado ({planInfo.hardwareDaysLeft}d)
               </span>
             ) : (
               <span className="bg-gray-200 text-gray-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
@@ -159,9 +169,14 @@ export default function BillingClient({
               </span>
             )}
           </div>
-          {isTrial && (
-            <p className="text-xs text-amber-700 mt-1 font-medium">
-              🎁 Tienes acceso completo a todas las herramientas PRO por ser usuario nuevo (10 días de cortesía).
+          {planInfo?.isTrial && (
+            <p className="text-xs text-amber-700 mt-1.5 font-medium">
+              🎁 Tu compra de hardware incluye <b>1 mes de cortesía con todas las funciones</b> (Ruleta, Sellos, Citas, Menús). Al terminar, tu hardware (vCard/Placa + CRM) sigue activo por el año completo.
+            </p>
+          )}
+          {planInfo?.isHardwareActive && !planInfo?.isPro && (
+            <p className="text-xs text-emerald-700 mt-1.5 font-medium">
+              ✓ Tu {planInfo.hasReviewPlate ? 'Placa de Reseñas' : 'Tarjeta NFC (vCard), CRM y Estadísticas'} cuenta con 1 año activo. Activa la Suscripción Mensual para desbloquear la Ruleta, Sellos, Citas y Menús.
             </p>
           )}
         </div>
@@ -184,7 +199,7 @@ export default function BillingClient({
               <h4 className="font-extrabold text-sm text-gray-900 flex items-center gap-2 flex-wrap">
                 <span>{planInfo?.hasReviewPlate ? 'Placa NFC de Reseñas Vinculada' : 'Tarjeta Inteligente NFC Vinculada'}</span>
                 <span className="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2 py-0.5 rounded-full uppercase">
-                  ✓ 1 Año PRO Activo
+                  ✓ 1 Año de Hardware Activo
                 </span>
                 {planInfo?.nfcCardToken && (
                   <span className="text-[10px] font-mono bg-white text-gray-700 px-2 py-0.5 rounded border border-gray-200 font-bold">
@@ -193,7 +208,9 @@ export default function BillingClient({
                 )}
               </h4>
               <p className="text-xs text-gray-600 mt-0.5">
-                Tu dispositivo físico NFC está activo y asociado a tu perfil. Tienes acceso completo a todas las funcionalidades.
+                {planInfo?.hasReviewPlate 
+                  ? 'Tu Placa NFC, libro de quejas privadas y estadísticas de escaneo están garantizadas por 1 año completo.' 
+                  : 'Tu Tarjeta NFC, perfil digital vCard, CRM de contactos y estadísticas están garantizadas por 1 año completo.'}
               </p>
               {claimMessage && (
                 <p className={`text-xs mt-1.5 font-bold ${claimMessage.type === 'success' ? 'text-emerald-700' : 'text-red-600'}`}>

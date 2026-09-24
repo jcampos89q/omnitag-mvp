@@ -6,6 +6,7 @@ import { Users } from 'lucide-react'
 import LeadsClient, { Lead } from './LeadsClient'
 import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function LeadsPage() {
   const supabase = await createClient()
@@ -16,7 +17,18 @@ export default async function LeadsPage() {
   }
 
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
-  const { isPro } = await getUserPlanInfo(supabase, user?.id)
+  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const isPro = planInfo.isPro
+
+  if (!planInfo.canAccessLeads) {
+    return (
+      <ProFeaturePaywall 
+        featureName="Contactos Capturados (CRM)"
+        featureDescription="La libreta de contactos y clientes capturados está ligada a las Tarjetas Inteligentes NFC (vCard) y al Plan PRO Mensual."
+        hardwareType={planInfo.hardwareType}
+      />
+    )
+  }
 
   // 2. Buscar entidades pertenecientes al usuario
   const [

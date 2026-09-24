@@ -59,6 +59,7 @@ export default async function DashboardLayout({
           isAdmin={realIsAdmin && !isImpersonating} 
           userIndustry={effectiveUser?.industry || 'general'} 
           accountType={effectiveUser?.account_type || 'professional'}
+          planInfo={planInfo}
         />
 
         {/* Contenido Principal */}
