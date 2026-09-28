@@ -52,10 +52,19 @@ export function signGoogleWalletJwt(
   const signer = crypto.createSign('RSA-SHA256')
   signer.update(signatureInput)
 
-  // Manejo de saltos de línea escapados en variables de entorno (.env)
-  const formattedKey = privateKey.includes('\n')
-    ? privateKey
-    : privateKey.replace(/\\n/g, '\n')
+  // Limpieza y formateo robusto de la clave privada (comillas, saltos escapados, etc.)
+  let formattedKey = (privateKey || '').trim()
+  if (
+    (formattedKey.startsWith('"') && formattedKey.endsWith('"')) ||
+    (formattedKey.startsWith("'") && formattedKey.endsWith("'"))
+  ) {
+    formattedKey = formattedKey.slice(1, -1).trim()
+  }
+  formattedKey = formattedKey
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
 
   const signature = signer.sign(formattedKey)
   const encodedSignature = base64url(signature)
