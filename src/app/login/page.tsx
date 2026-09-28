@@ -111,6 +111,16 @@ export default async function LoginPage({
             Regístrate aquí
           </Link>
         </p>
+
+        <div className="pt-4 border-t border-gray-100 text-center">
+          <Link 
+            href="/privacidad" 
+            target="_blank" 
+            className="text-[11px] font-bold text-gray-400 hover:text-black hover:underline"
+          >
+            Políticas de Privacidad & Tratamiento de Datos
+          </Link>
+        </div>
       </div>
     </div>
   )

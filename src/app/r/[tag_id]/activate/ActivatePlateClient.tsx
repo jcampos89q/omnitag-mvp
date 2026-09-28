@@ -25,6 +25,7 @@ export default function ActivatePlateClient({
   const [personalPhone, setPersonalPhone] = useState('') // WhatsApp personal
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
 
   return (
     <div className="max-w-md w-full bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95">
@@ -174,6 +175,33 @@ export default function ActivatePlateClient({
                 />
               </div>
             </div>
+
+            {/* Aceptación de Políticas de Privacidad */}
+            <div className="p-3 bg-white/5 border border-white/10 rounded-xl">
+              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-gray-300 select-none">
+                <input
+                  type="checkbox"
+                  name="privacy_accepted"
+                  value="true"
+                  required
+                  checked={acceptedPrivacy}
+                  onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-white/20 bg-black/40 text-amber-500 focus:ring-amber-500 cursor-pointer shrink-0"
+                />
+                <span className="leading-snug text-[11px]">
+                  Acepto los Términos del Servicio y la{' '}
+                  <a
+                    href="/privacidad"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-amber-400 underline hover:text-amber-300"
+                  >
+                    Política de Privacidad
+                  </a>{' '}
+                  de OmniTag.
+                </span>
+              </label>
+            </div>
           </div>
         ) : (
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-xs text-emerald-300">
@@ -185,7 +213,7 @@ export default function ActivatePlateClient({
         {/* Botón de Activación */}
         <button
           type="submit"
-          disabled={!selectedPlace || submitting}
+          disabled={!selectedPlace || submitting || (!currentUser && !acceptedPrivacy)}
           className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-black font-extrabold text-sm hover:brightness-110 transition shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <span>{submitting ? 'Activando Placa...' : 'Activar Placa & 1 Año de Servicio'}</span>

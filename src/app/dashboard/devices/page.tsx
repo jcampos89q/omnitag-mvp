@@ -90,7 +90,7 @@ export default async function DevicesPage({
           wheel={wheel}
           isPro={isPro}
           accountType={accountType}
-          hasReviewPlate={hasReviewPlate || (devices && devices.length > 0)}
+          hasReviewPlate={Boolean(hasReviewPlate || (devices && devices.length > 0))}
         />
       </div>
     </div>

@@ -506,5 +506,5 @@ export async function claimNfcCardByToken(cardToken: string) {
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/billing')
   revalidatePath('/dashboard/vcard')
-  return { success: true, expiresAt }
+  return { success: true, expiresAt: hwExpiresAt }
 }

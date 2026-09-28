@@ -36,6 +36,7 @@ export default function WheelPublicClient({
   const [isSpinning, setIsSpinning] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [spinStatus, setSpinStatus] = useState('✨ Toca GIRAR para probar tu suerte')
+  const [acceptedTerms, setAcceptedTerms] = useState(true)
   
   // Estado del Premio Ganado
   const [wonPrize, setWonPrize] = useState<{
@@ -747,10 +748,34 @@ export default function WheelPublicClient({
                 />
               </div>
 
+              {/* Checkbox Políticas de Privacidad */}
+              <div className="pt-1">
+                <label className="flex items-start gap-2 cursor-pointer text-[10px] text-slate-300 select-none leading-snug">
+                  <input 
+                    type="checkbox" 
+                    required 
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-0.5 w-3.5 h-3.5 rounded border-slate-700 bg-slate-950 text-amber-500 cursor-pointer shrink-0" 
+                  />
+                  <span>
+                    Acepto registrarme para recibir mi cupón y la{' '}
+                    <a 
+                      href="/privacidad" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-amber-400 underline font-bold hover:text-amber-300"
+                    >
+                      Política de Privacidad
+                    </a>.
+                  </span>
+                </label>
+              </div>
+
               <button
                 type="submit"
-                disabled={isClaiming}
-                className="w-full bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2 cursor-pointer mt-2"
+                disabled={isClaiming || !acceptedTerms}
+                className="w-full bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{isClaiming ? 'Generando Cupón...' : '🚀 GUARDAR MI PREMIO & GENERAR CUPÓN'}</span>
               </button>

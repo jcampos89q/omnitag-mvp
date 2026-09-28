@@ -43,6 +43,14 @@ export async function signup(formData: FormData) {
   const industry = (formData.get('industry') as string)?.trim() || 'general'
   const professionTitle = (formData.get('profession_title') as string)?.trim() || ''
   const cardToken = (formData.get('card_token') as string)?.trim() || ''
+  const privacyAccepted = formData.get('privacy_accepted')
+
+  if (!privacyAccepted) {
+    const errorUrl = cardToken 
+      ? `/register?token=${encodeURIComponent(cardToken)}&error=` 
+      : '/register?error='
+    redirect(errorUrl + encodeURIComponent('Debes aceptar las políticas de privacidad y términos para crear tu cuenta.'))
+  }
 
   if (!email || !password) {
     const errorUrl = cardToken 

@@ -23,6 +23,7 @@ import {
 import ShareButtons from '@/components/ShareButtons'
 import LeadCaptureModal from './LeadCaptureModal'
 import BusinessHoursWidget from './BusinessHoursWidget'
+import GoogleWalletButton from '@/components/GoogleWalletButton'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
 import { getUserPlanInfo } from '@/lib/plans'
@@ -475,6 +476,13 @@ export default async function PublicVCardPage({
               <Download className="w-5 h-5" />
               Guardar Contacto en el Móvil
             </a>
+
+            {/* Añadir a Google Wallet */}
+            <GoogleWalletButton
+              type="vcard"
+              slug={slug}
+              className={btnRadiusClass}
+            />
 
             {/* Modal de Intercambiar Contacto / Leads (Exclusivo PRO) */}
             {canCaptureLeads && (

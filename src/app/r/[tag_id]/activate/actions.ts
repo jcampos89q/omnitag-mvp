@@ -158,7 +158,7 @@ export async function activatePlateAndRegister(formData: FormData) {
         id: targetUserId,
         name: businessName || 'Mi Negocio',
         plan: 'pro',
-        subscription_expires_at: expiresAt
+        subscription_expires_at: hwExpiresAt
       })
   }
 

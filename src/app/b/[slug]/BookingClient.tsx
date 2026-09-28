@@ -131,6 +131,7 @@ export default function BookingClient({
   const [customerNotes, setCustomerNotes] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [bookingSuccess, setBookingSuccess] = useState<any>(null)
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState<boolean>(true)
 
   // Modal para Calificar Especialista
   const [reviewModalSpecialist, setReviewModalSpecialist] = useState<Specialist | null>(null)
@@ -721,10 +722,34 @@ export default function BookingClient({
           />
         </div>
 
+        {/* Aceptación de Políticas de Privacidad */}
+        <div className="pt-1">
+          <label className="flex items-start gap-2 cursor-pointer text-xs text-gray-600 select-none leading-snug">
+            <input 
+              type="checkbox" 
+              required 
+              checked={acceptedPrivacy}
+              onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+              className="mt-0.5 w-4 h-4 rounded border-gray-300 text-black cursor-pointer shrink-0" 
+            />
+            <span>
+              Acepto los términos de reserva y el tratamiento de mis datos según la{' '}
+              <a 
+                href="/privacidad" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="font-bold text-black underline hover:text-gray-700"
+              >
+                Política de Privacidad
+              </a>.
+            </span>
+          </label>
+        </div>
+
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-black hover:bg-gray-800 text-white font-extrabold py-4 px-6 rounded-2xl shadow-xl transition flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-50"
+          disabled={isSubmitting || !acceptedPrivacy}
+          className="w-full bg-black hover:bg-gray-800 text-white font-extrabold py-4 px-6 rounded-2xl shadow-xl transition flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Calendar className="w-5 h-5" />
           <span>{isSubmitting ? 'Apartando turno...' : 'Confirmar Reserva de Turno'}</span>

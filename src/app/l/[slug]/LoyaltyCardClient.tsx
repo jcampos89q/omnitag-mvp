@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { ThemeConfig } from '@/lib/themes'
 import { validateAndAddStamp, claimLoyaltyReward } from '@/app/dashboard/loyalty/actions'
+import GoogleWalletButton from '@/components/GoogleWalletButton'
 
 interface LoyaltyCardClientProps {
   program: any
@@ -28,6 +29,7 @@ export default function LoyaltyCardClient({ program, theme }: LoyaltyCardClientP
   const [phone, setPhone] = useState('')
   const [name, setName] = useState('')
   const [isIdentified, setIsIdentified] = useState(false)
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(true)
   const [currentStamps, setCurrentStamps] = useState<number>(0)
   const [totalClaimed, setTotalClaimed] = useState<number>(0)
   const [isLoading, setIsLoading] = useState(false)
@@ -236,10 +238,30 @@ export default function LoyaltyCardClient({ program, theme }: LoyaltyCardClientP
               </div>
             </div>
 
+            {/* Aceptación de Políticas de Privacidad */}
+            <div className="pt-1 pb-1">
+              <label className="flex items-start gap-2 cursor-pointer text-[11px] opacity-80 select-none leading-snug">
+                <input 
+                  type="checkbox" 
+                  required 
+                  checked={acceptedPrivacy} 
+                  onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                  className="mt-0.5 w-3.5 h-3.5 rounded border-gray-300 text-black cursor-pointer shrink-0" 
+                />
+                <span>
+                  Acepto unirme al club de fidelización y la{' '}
+                  <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:opacity-100">
+                    Política de Privacidad
+                  </a>.
+                </span>
+              </label>
+            </div>
+
             <button
               type="submit"
+              disabled={!acceptedPrivacy || !phone}
               style={{ backgroundColor: primaryColor }}
-              className={`w-full text-white font-extrabold py-3.5 text-sm shadow-md hover:opacity-90 transition cursor-pointer flex items-center justify-center gap-2 ${btnRadiusClass}`}
+              className={`w-full text-white font-extrabold py-3.5 text-sm shadow-md hover:opacity-90 transition cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${btnRadiusClass}`}
             >
               <span>Ver Mi Tarjeta de Sellos</span>
               <ChevronRight className="w-4 h-4" />
@@ -391,6 +413,16 @@ export default function LoyaltyCardClient({ program, theme }: LoyaltyCardClientP
                   <span>Sellar Mi Visita de Hoy (+1 Sello)</span>
                 </button>
               )}
+
+              {/* Botón Oficial de Google Wallet */}
+              <div className="pt-1">
+                <GoogleWalletButton
+                  type="loyalty"
+                  slug={program.slug}
+                  phone={phone}
+                  name={name}
+                />
+              </div>
 
               <p className="text-[11px] text-center opacity-50">
                 🔒 El personal del local introducirá el PIN de autorización para validar la visita.

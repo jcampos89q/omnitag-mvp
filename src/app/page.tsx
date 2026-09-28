@@ -667,7 +667,17 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Plataforma Segura • Infraestructura en la Nube de Alta Disponibilidad</span>
+            <span>Plataforma Segura • Infraestructura en la Nube</span>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs font-semibold text-gray-500">
+            <Link href="/privacidad" className="hover:text-black hover:underline">
+              Políticas de Privacidad
+            </Link>
+            <span>•</span>
+            <Link href="/login" className="hover:text-black hover:underline">
+              Iniciar Sesión
+            </Link>
           </div>
 
           <p className="text-gray-400 text-xs font-medium">

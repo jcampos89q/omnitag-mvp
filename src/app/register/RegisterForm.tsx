@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { signup } from '@/app/auth/actions'
 import { 
   UserCheck, 
@@ -57,6 +58,7 @@ export default function RegisterForm({
   const [accountType, setAccountType] = useState<'professional' | 'business'>('professional')
   const [industry, setIndustry] = useState(token ? 'health' : 'health')
   const [professionTitle, setProfessionTitle] = useState('')
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
 
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault()
@@ -281,6 +283,33 @@ export default function RegisterForm({
               </div>
             )}
 
+            {/* Checkbox de Políticas de Privacidad y Términos */}
+            <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200">
+              <label className="flex items-start gap-2.5 cursor-pointer text-xs text-gray-700 select-none">
+                <input
+                  type="checkbox"
+                  name="privacy_accepted"
+                  value="true"
+                  required
+                  checked={acceptedPrivacy}
+                  onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer shrink-0"
+                />
+                <span className="leading-snug">
+                  He leído y acepto la{' '}
+                  <Link 
+                    href="/privacidad" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="font-extrabold text-black underline hover:text-gray-600 inline-flex items-center gap-0.5"
+                  >
+                    Política de Privacidad y Términos
+                  </Link>
+                  {' '}de OmniTag.
+                </span>
+              </label>
+            </div>
+
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
@@ -293,7 +322,8 @@ export default function RegisterForm({
 
               <button
                 type="submit"
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 text-sm font-extrabold text-white hover:bg-gray-800 transition cursor-pointer shadow-md"
+                disabled={!acceptedPrivacy}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 text-sm font-extrabold text-white hover:bg-gray-800 transition cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>{token ? 'Comenzar & Activar 1 Año PRO' : 'Crear Mi Cuenta'}</span>
                 <ArrowRight className="w-4 h-4" />

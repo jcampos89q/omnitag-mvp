@@ -19,6 +19,7 @@ export default function LeadCaptureModal({
   const [isOpen, setIsOpen] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(true)
 
   const primaryColor = theme?.primary_color || mainColor || '#0F172A'
   const isDark = theme?.is_dark || false
@@ -161,12 +162,37 @@ export default function LeadCaptureModal({
                     />
                   </div>
                   
+                  {/* Aceptación de Políticas de Privacidad */}
+                  <div className="pt-1">
+                    <label className="flex items-start gap-2 cursor-pointer text-[11px] opacity-80 select-none leading-snug" style={{ color: textColor }}>
+                      <input 
+                        type="checkbox" 
+                        required 
+                        checked={acceptedPrivacy}
+                        onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                        className="mt-0.5 w-3.5 h-3.5 rounded border-gray-300 text-black cursor-pointer shrink-0" 
+                      />
+                      <span>
+                        Acepto compartir mis datos y acepto la{' '}
+                        <a 
+                          href="/privacidad" 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="underline font-bold hover:opacity-100"
+                          style={{ color: primaryColor }}
+                        >
+                          Política de Privacidad
+                        </a>.
+                      </span>
+                    </label>
+                  </div>
+
                   <div className="pt-2">
                     <button 
                       type="submit" 
-                      disabled={loading}
+                      disabled={loading || !acceptedPrivacy}
                       style={{ backgroundColor: primaryColor }}
-                      className={`w-full text-white font-bold py-3.5 text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md cursor-pointer disabled:opacity-50 ${btnRadiusClass}`}
+                      className={`w-full text-white font-bold py-3.5 text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${btnRadiusClass}`}
                     >
                       <Send className="w-4 h-4" />
                       {loading ? 'Guardando...' : 'Enviar Mis Datos'}

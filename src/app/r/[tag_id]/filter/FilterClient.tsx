@@ -233,6 +233,13 @@ export default function FilterClient({
               <span>{loading ? 'Enviando...' : 'Enviar al Buzón de Gerencia'}</span>
             </button>
           </div>
+
+          <p className="text-[10px] text-center opacity-60 leading-tight">
+            Tus comentarios y datos se tratarán de forma confidencial conforme a nuestra{' '}
+            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:opacity-100">
+              Política de Privacidad
+            </a>.
+          </p>
         </form>
       )}
       </div>
