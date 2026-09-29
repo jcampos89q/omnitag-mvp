@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Gift, 
   Award, 
@@ -60,6 +60,31 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
   const [lat, setLat] = useState(program.latitude ? String(program.latitude) : '')
   const [lng, setLng] = useState(program.longitude ? String(program.longitude) : '')
   const [detectingLocation, setDetectingLocation] = useState(false)
+  const [savingConfig, setSavingConfig] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
+  // Sincronizar estados si program cambia
+  useEffect(() => {
+    if (program.address) setAddress(program.address)
+    if (program.latitude) setLat(String(program.latitude))
+    if (program.longitude) setLng(String(program.longitude))
+  }, [program.address, program.latitude, program.longitude])
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setSavingConfig(true)
+    setSaveSuccess(false)
+    const formData = new FormData(e.currentTarget)
+    try {
+      await updateLoyaltyProgram(formData)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 6000)
+    } catch (err: any) {
+      alert('Error al guardar configuración: ' + (err.message || 'Error desconocido'))
+    } finally {
+      setSavingConfig(false)
+    }
+  }
 
   const handlePlaceSelected = (place: PlaceDetails) => {
     if (place.formatted_address) {
@@ -374,8 +399,15 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
           </div>
         </div>
 
-        <form action={updateLoyaltyProgram} className="space-y-6">
+        <form onSubmit={handleFormSubmit} className="space-y-6">
           <input type="hidden" name="program_id" value={program.id} />
+
+          {saveSuccess && (
+            <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shadow-xs animate-in fade-in">
+              <Check className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span>¡Configuración, dirección y coordenadas GPS guardadas exitosamente!</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -534,6 +566,16 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
                 <span>Buscar mi Negocio en Google Maps (Autocompleta nombre, dirección y GPS)</span>
               </label>
               <GooglePlaceSearchInput
+                initialPlace={
+                  program.address
+                    ? {
+                        name: program.name || 'Negocio',
+                        formatted_address: program.address,
+                        place_id: 'saved_place',
+                        direct_review_url: ''
+                      }
+                    : null
+                }
                 onPlaceSelected={handlePlaceSelected}
                 className="w-full text-xs"
               />
@@ -607,13 +649,20 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
             <ThemeSelector initialTheme={program.theme} fieldNamePrefix="theme" />
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <button 
               type="submit" 
-              className="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition flex items-center gap-2 text-sm cursor-pointer shadow-sm"
+              disabled={savingConfig}
+              className="bg-black text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition flex items-center gap-2 text-sm cursor-pointer shadow-sm disabled:opacity-50"
             >
-              <Save className="w-4 h-4" /> Guardar Configuración del Programa
+              <Save className="w-4 h-4" />
+              <span>{savingConfig ? 'Guardando cambios...' : 'Guardar Configuración del Programa'}</span>
             </button>
+            {saveSuccess && (
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-1.5 animate-in fade-in">
+                <Check className="w-4 h-4 text-emerald-600" /> ¡Guardado con éxito!
+              </span>
+            )}
           </div>
         </form>
       </div>

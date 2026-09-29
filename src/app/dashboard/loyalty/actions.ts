@@ -99,6 +99,8 @@ export async function updateLoyaltyProgram(formData: FormData) {
 
   revalidatePath('/dashboard/loyalty')
   revalidatePath('/', 'layout')
+
+  return { success: true, message: 'Configuración guardada exitosamente.' }
 }
 
 // Acción pública o de cajero para sumar sello con validación de PIN y Cooldown
