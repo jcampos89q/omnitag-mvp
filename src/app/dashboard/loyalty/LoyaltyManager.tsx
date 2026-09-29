@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import ThemeSelector from '@/components/ThemeSelector'
+import GooglePlaceSearchInput, { PlaceDetails } from '@/components/GooglePlaceSearchInput'
 import { updateLoyaltyProgram, validateAndAddStamp, sendLoyaltyCampaignPush } from './actions'
 
 interface LoyaltyManagerProps {
@@ -55,9 +56,20 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
   } | null>(null)
 
   // Estados de Geolocalización
+  const [address, setAddress] = useState(program.address || '')
   const [lat, setLat] = useState(program.latitude ? String(program.latitude) : '')
   const [lng, setLng] = useState(program.longitude ? String(program.longitude) : '')
   const [detectingLocation, setDetectingLocation] = useState(false)
+
+  const handlePlaceSelected = (place: PlaceDetails) => {
+    if (place.formatted_address) {
+      setAddress(place.formatted_address)
+    }
+    if (place.lat !== undefined && place.lng !== undefined) {
+      setLat(place.lat.toFixed(6))
+      setLng(place.lng.toFixed(6))
+    }
+  }
 
   const handleDetectLocation = () => {
     if (typeof window === 'undefined' || !navigator.geolocation) {
@@ -515,6 +527,21 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
               Cuando un cliente que guardó tu tarjeta pase cerca de esta dirección (a 100-150 metros), <b>Google Wallet le enviará un recordatorio automático a su pantalla de bloqueo</b> para que entre a tu negocio.
             </p>
 
+            {/* Buscador inteligente con Google Maps API */}
+            <div className="bg-white p-4 rounded-xl border border-blue-200/80 shadow-2xs space-y-2">
+              <label className="block text-xs font-extrabold text-blue-950 flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5 text-blue-600" />
+                <span>Buscar mi Negocio en Google Maps (Autocompleta nombre, dirección y GPS)</span>
+              </label>
+              <GooglePlaceSearchInput
+                onPlaceSelected={handlePlaceSelected}
+                className="w-full text-xs"
+              />
+              <p className="text-[11px] text-gray-400">
+                Escribe parte del nombre de tu negocio para buscarlo en Google Maps y extraer automáticamente la dirección exacta y coordenadas.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-1">
                 <label className="block text-xs font-semibold text-blue-950 mb-1">
@@ -523,7 +550,8 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
                 <input
                   type="text"
                   name="address"
-                  defaultValue={program.address || ''}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                   placeholder="Ej. Calle Principal 123, Centro"
                   className="w-full rounded-xl border border-blue-300 bg-white px-3.5 py-2 text-xs sm:text-sm shadow-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />

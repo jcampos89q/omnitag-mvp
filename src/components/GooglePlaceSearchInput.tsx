@@ -12,6 +12,8 @@ export interface PlaceDetails {
   website?: string
   types?: string[]
   direct_review_url: string
+  lat?: number
+  lng?: number
 }
 
 interface GooglePlaceSearchInputProps {
