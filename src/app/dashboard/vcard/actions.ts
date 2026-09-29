@@ -250,6 +250,8 @@ export async function sendVCardCampaignPush(formData: FormData) {
   const vcardId = formData.get('vcard_id') as string
   const title = (formData.get('title') as string)?.trim()
   const body = (formData.get('body') as string)?.trim()
+  const actionUrl = (formData.get('action_url') as string)?.trim() || undefined
+  const actionLabel = (formData.get('action_label') as string)?.trim() || undefined
 
   if (!vcardId || !title || !body) {
     return { success: false, error: 'Por favor completa el título y el mensaje de la notificación.' }
@@ -271,7 +273,9 @@ export async function sendVCardCampaignPush(formData: FormData) {
   const result = await sendVCardPushMessage({
     vcardSlug: vcard.slug,
     title,
-    body
+    body,
+    actionUrl,
+    actionLabel
   })
 
   // Registrar en historial de campañas de la base de datos
@@ -280,6 +284,8 @@ export async function sendVCardCampaignPush(formData: FormData) {
     user_id: user.id,
     title,
     body,
+    action_url: actionUrl || null,
+    action_label: actionLabel || null,
     status: result.success ? 'sent' : 'failed',
     google_response: result.data || { error: result.error }
   })

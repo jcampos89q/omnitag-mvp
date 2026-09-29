@@ -25,7 +25,11 @@ import {
   Radio,
   AlertCircle,
   X,
-  Navigation
+  Navigation,
+  Link2,
+  Tag,
+  ArrowUpRight,
+  ShoppingBag
 } from 'lucide-react'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import ThemeSelector from '@/components/ThemeSelector'
@@ -39,6 +43,41 @@ interface LoyaltyManagerProps {
   messages?: any[]
 }
 
+const LOYALTY_TEMPLATES = [
+  {
+    icon: Tag,
+    badge: 'Liquidación / Oferta',
+    title: '🔥 ¡Liquidación Flash para Miembros!',
+    body: 'Descuentos exclusivos por tiempo limitado en artículos seleccionados. Aprovecha antes de que se agoten.',
+    actionLabel: 'Comprar Oferta Flash',
+    sampleUrl: 'https://'
+  },
+  {
+    icon: ShoppingBag,
+    badge: '2x1 Promoción',
+    title: '🎉 ¡Hoy Especial 2x1 en tu Consumo!',
+    body: 'Visítanos hoy y duplica tu consumo presentando tu tarjeta de fidelidad digital. ¡Te esperamos!',
+    actionLabel: 'Ver Promoción / Menú',
+    sampleUrl: 'https://'
+  },
+  {
+    icon: MapPin,
+    badge: 'Doble Sello',
+    title: '⭐ ¡Doble Sello este Fin de Semana!',
+    body: 'Por cada visita acumulas 2 sellos en tu tarjeta digital. ¡Llega a tu recompensa mucho más rápido!',
+    actionLabel: 'Cómo Llegar al Local',
+    sampleUrl: 'https://maps.google.com'
+  },
+  {
+    icon: Gift,
+    badge: 'Premio Especial',
+    title: '🎁 ¡Recompensa Lista para Canjear!',
+    body: 'Si completaste tus sellos, visítanos para reclamar tu premio especial o escríbenos para coordinar tu entrega.',
+    actionLabel: 'Contactar por WhatsApp',
+    sampleUrl: 'https://wa.me/'
+  }
+]
+
 export default function LoyaltyManager({ program, members, logs, messages = [] }: LoyaltyManagerProps) {
   const [copied, setCopied] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -48,12 +87,23 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
   const [campaignModalOpen, setCampaignModalOpen] = useState(false)
   const [campaignTitle, setCampaignTitle] = useState('')
   const [campaignBody, setCampaignBody] = useState('')
+  const [campaignActionUrl, setCampaignActionUrl] = useState('')
+  const [campaignActionLabel, setCampaignActionLabel] = useState('')
   const [campaignLoading, setCampaignLoading] = useState(false)
   const [campaignFeedback, setCampaignFeedback] = useState<{
     type: 'success' | 'error'
     message: string
     needsApiEnable?: boolean
   } | null>(null)
+
+  const handleApplyLoyaltyTemplate = (tpl: typeof LOYALTY_TEMPLATES[0]) => {
+    setCampaignTitle(tpl.title)
+    setCampaignBody(tpl.body)
+    setCampaignActionLabel(tpl.actionLabel)
+    if (!campaignActionUrl) {
+      setCampaignActionUrl(tpl.sampleUrl)
+    }
+  }
 
   // Estados de Geolocalización
   const [address, setAddress] = useState(program.address || '')
@@ -127,6 +177,12 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
     formData.append('program_id', program.id)
     formData.append('title', campaignTitle)
     formData.append('body', campaignBody)
+    if (campaignActionUrl.trim()) {
+      formData.append('action_url', campaignActionUrl.trim())
+    }
+    if (campaignActionLabel.trim()) {
+      formData.append('action_label', campaignActionLabel.trim())
+    }
 
     try {
       const res = await sendLoyaltyCampaignPush(formData)
@@ -137,6 +193,8 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
         })
         setCampaignTitle('')
         setCampaignBody('')
+        setCampaignActionUrl('')
+        setCampaignActionLabel('')
       } else {
         setCampaignFeedback({
           type: 'error',
@@ -281,6 +339,35 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
         {/* Formulario Desplegable de Campaña Push */}
         {campaignModalOpen && (
           <form onSubmit={handleSendCampaign} className="mt-6 pt-6 border-t border-white/10 space-y-4 animate-in fade-in slide-in-from-top-2 relative z-10">
+            {/* Plantillas Rápidas Comerciales */}
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-300 mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Plantillas rápidas para tu negocio:</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {LOYALTY_TEMPLATES.map((tpl, idx) => {
+                  const Icon = tpl.icon
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleApplyLoyaltyTemplate(tpl)}
+                      className="p-2.5 rounded-xl border border-purple-400/25 bg-black/40 hover:bg-purple-500/20 text-left transition text-xs flex flex-col justify-between group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-300 group-hover:text-white">
+                        <Icon className="w-3.5 h-3.5 text-purple-400 group-hover:text-amber-300" />
+                        <span>{tpl.badge}</span>
+                      </div>
+                      <div className="text-[11px] text-white/80 line-clamp-1 mt-1 font-medium">
+                        {tpl.title.replace(/^[^\s]+\s/, '')}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-purple-200 mb-1">
@@ -321,6 +408,45 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
                 placeholder="Ej. Ven hoy de 4 a 8 PM y recibe tu segundo café de especialidad gratis presentando tu tarjeta de sellos."
                 className="w-full rounded-xl border border-purple-400/40 bg-black/40 px-3.5 py-2.5 text-sm text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
+            </div>
+
+            {/* Enlace de Acción Interactivo */}
+            <div className="p-3.5 rounded-xl bg-purple-950/50 border border-purple-400/30 space-y-3">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-200">
+                <Link2 className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Enlace Directo de Acción (Opcional - WhatsApp, Tienda Online o Menú)</span>
+              </div>
+              <p className="text-[11px] text-purple-300/80">
+                Google Wallet convertirá este enlace en un botón interactivo dentro de la notificación para que tus clientes puedan comprar o consultar en 1 clic.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-purple-300 mb-1">
+                    URL / Enlace de Destino
+                  </label>
+                  <input
+                    type="url"
+                    value={campaignActionUrl}
+                    onChange={(e) => setCampaignActionUrl(e.target.value)}
+                    placeholder="https://wa.me/593... o https://tutienda.com/oferta"
+                    className="w-full rounded-xl border border-purple-400/30 bg-black/50 px-3 py-2 text-xs text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-400 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-purple-300 mb-1">
+                    Texto del Botón / Acción (CTA)
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={30}
+                    value={campaignActionLabel}
+                    onChange={(e) => setCampaignActionLabel(e.target.value)}
+                    placeholder="Ej. Comprar Ahora, Ver Menú, WhatsApp"
+                    className="w-full rounded-xl border border-purple-400/30 bg-black/50 px-3 py-2 text-xs text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                </div>
+              </div>
             </div>
 
             {campaignFeedback && (
@@ -375,11 +501,22 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
 
         {/* Historial Reciente de Mensajes */}
         {messages && messages.length > 0 && !campaignModalOpen && (
-          <div className="mt-4 pt-4 border-t border-white/10 text-xs text-purple-200/70 flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" /> Última campaña: <b>"{messages[0].title}"</b> ({new Date(messages[0].created_at).toLocaleDateString('es-ES')})
-            </span>
-            <span className="text-[11px] bg-white/10 px-2 py-0.5 rounded-md font-mono text-emerald-300">
+          <div className="mt-4 pt-4 border-t border-white/10 text-xs text-purple-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 shrink-0" /> 
+              <span>Última campaña: <b>"{messages[0].title}"</b> ({new Date(messages[0].created_at).toLocaleDateString('es-ES')})</span>
+              {messages[0].action_url && (
+                <a 
+                  href={messages[0].action_url} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="text-cyan-300 hover:text-white inline-flex items-center gap-0.5 underline ml-1"
+                >
+                  {messages[0].action_label || 'Enlace'} <ArrowUpRight className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+            <span className="text-[11px] bg-white/10 px-2 py-0.5 rounded-md font-mono text-emerald-300 shrink-0 self-start sm:self-auto">
               {messages.length} mensaje(s) enviado(s)
             </span>
           </div>

@@ -110,6 +110,8 @@ export async function sendLoyaltyPushMessage(params: {
   programSlug: string
   title: string
   body: string
+  actionUrl?: string
+  actionLabel?: string
 }): Promise<{
   success: boolean
   error?: string
@@ -131,10 +133,14 @@ export async function sendLoyaltyPushMessage(params: {
 
   try {
     const url = `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass/${encodeURIComponent(classId)}/addMessage`
+    const formattedBody = params.actionUrl
+      ? `${params.body}\n\n👉 ${params.actionLabel || 'Ver Enlace'}: ${params.actionUrl}`
+      : params.body
+
     const payload = {
       message: {
         header: params.title,
-        body: params.body,
+        body: formattedBody,
         kind: 'walletobjects#message',
         messageType: 'TEXT',
       },
@@ -243,6 +249,8 @@ export async function sendVCardPushMessage(params: {
   vcardSlug: string
   title: string
   body: string
+  actionUrl?: string
+  actionLabel?: string
 }): Promise<{
   success: boolean
   error?: string
@@ -264,10 +272,14 @@ export async function sendVCardPushMessage(params: {
 
   try {
     const url = `https://walletobjects.googleapis.com/walletobjects/v1/genericClass/${encodeURIComponent(classId)}/addMessage`
+    const formattedBody = params.actionUrl
+      ? `${params.body}\n\n👉 ${params.actionLabel || 'Ver Enlace'}: ${params.actionUrl}`
+      : params.body
+
     const payload = {
       message: {
         header: params.title,
-        body: params.body,
+        body: formattedBody,
         kind: 'walletobjects#message',
         messageType: 'TEXT',
       },
