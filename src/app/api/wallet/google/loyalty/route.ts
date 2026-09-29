@@ -41,10 +41,10 @@ export async function GET(req: NextRequest) {
 
     if (phone) {
       const { data: member } = await supabase
-        .from('loyalty_card_members')
+        .from('loyalty_members')
         .select('current_stamps, customer_name')
         .eq('program_id', program.id)
-        .eq('phone', phone)
+        .eq('customer_phone', phone)
         .maybeSingle()
 
       if (member) {
