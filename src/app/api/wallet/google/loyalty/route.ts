@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateLoyaltyWalletUrl } from '@/lib/googleWallet'
 import { resolveTheme } from '@/lib/themes'
 import { sendPushNotificationToUser } from '@/lib/push'
+import { detectDeviceAndOS } from '@/lib/analytics'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -35,14 +36,14 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // 2. Obtener sellos actuales del cliente si proporcionó teléfono
+    // 2. Obtener sellos actuales del cliente si proporcionó teléfono y marcar has_wallet
     let currentStamps = 0
     let customerName = name
 
     if (phone) {
       const { data: member } = await supabase
         .from('loyalty_members')
-        .select('current_stamps, customer_name')
+        .select('id, current_stamps, customer_name, has_wallet')
         .eq('program_id', program.id)
         .eq('customer_phone', phone)
         .maybeSingle()
@@ -52,6 +53,28 @@ export async function GET(req: NextRequest) {
         if (!customerName && member.customer_name) {
           customerName = member.customer_name
         }
+        await supabase
+          .from('loyalty_members')
+          .update({
+            has_wallet: true,
+            wallet_added_at: new Date().toISOString(),
+            ...(customerName && customerName !== 'Miembro VIP' ? { customer_name: customerName } : {})
+          })
+          .eq('id', member.id)
+      } else {
+        // Registrar automáticamente al cliente en la base de datos con su estado en billetera
+        const cleanName = customerName && customerName !== 'Miembro VIP' ? customerName : 'Cliente Billetera'
+        await supabase
+          .from('loyalty_members')
+          .insert({
+            program_id: program.id,
+            customer_name: cleanName,
+            customer_phone: phone,
+            current_stamps: 0,
+            total_rewards_claimed: 0,
+            has_wallet: true,
+            wallet_added_at: new Date().toISOString()
+          })
       }
     }
 
@@ -75,8 +98,24 @@ export async function GET(req: NextRequest) {
       longitude: program.longitude ? Number(program.longitude) : undefined
     })
 
-    // 3. Si se generó el enlace con éxito, notificar al dueño del negocio
+    // 3. Si se generó el enlace con éxito, registrar en analítica y notificar al dueño del negocio
     if (result.success && program.user_id) {
+      try {
+        const userAgent = req.headers.get('user-agent') || ''
+        const country = req.headers.get('x-vercel-ip-country') || 'Desconocido'
+        const { os, deviceType } = detectDeviceAndOS(userAgent)
+
+        await supabase.from('scans').insert({
+          loyalty_program_id: program.id,
+          target_user_id: program.user_id,
+          source_type: 'wallet_pass',
+          os,
+          country,
+          user_agent: userAgent ? `Google Wallet | ${deviceType}` : 'Google Wallet'
+        })
+      } catch (scanErr) {
+        console.error('Error registrando scan de wallet loyalty:', scanErr)
+      }
       try {
         const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString()
         const { data: recentNotif } = await supabase

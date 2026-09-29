@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateVCardWalletUrl } from '@/lib/googleWallet'
 import { resolveTheme } from '@/lib/themes'
 import { sendPushNotificationToUser } from '@/lib/push'
+import { detectDeviceAndOS } from '@/lib/analytics'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -59,8 +60,24 @@ export async function GET(req: NextRequest) {
       publicUrl
     })
 
-    // 2. Si se generó el enlace con éxito, notificar al dueño de la vCard
+    // 2. Si se generó el enlace con éxito, registrar en analítica y notificar al dueño
     if (result.success && vcard.user_id) {
+      try {
+        const userAgent = req.headers.get('user-agent') || ''
+        const country = req.headers.get('x-vercel-ip-country') || 'Desconocido'
+        const { os, deviceType } = detectDeviceAndOS(userAgent)
+
+        await supabase.from('scans').insert({
+          vcard_id: vcard.id,
+          target_user_id: vcard.user_id,
+          source_type: 'wallet_pass',
+          os,
+          country,
+          user_agent: userAgent ? `Google Wallet | ${deviceType}` : 'Google Wallet'
+        })
+      } catch (scanErr) {
+        console.error('Error registrando scan de wallet vcard:', scanErr)
+      }
       try {
         // Antispam / Cooldown de 2 minutos para no saturar si el usuario recarga la página
         const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString()

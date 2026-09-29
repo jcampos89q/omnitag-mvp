@@ -29,7 +29,8 @@ import {
   Link2,
   Tag,
   ArrowUpRight,
-  ShoppingBag
+  ShoppingBag,
+  Wallet
 } from 'lucide-react'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import ThemeSelector from '@/components/ThemeSelector'
@@ -234,11 +235,12 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
   const totalStampsGiven = logs.filter(l => l.action === 'stamp_added').length
   const totalRewardsClaimed = members.reduce((acc, m) => acc + (m.total_rewards_claimed || 0), 0)
   const almostCompletedMembers = members.filter(m => m.current_stamps === program.total_stamps_required - 1)
+  const walletMembers = members.filter(m => m.has_wallet).length
 
   return (
     <div className="space-y-8">
       {/* 1. Métricas Rápidas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
           <div className="flex items-center justify-between text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">
             <span>Clientes Fieles</span>
@@ -273,6 +275,15 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold text-purple-700">{almostCompletedMembers.length}</p>
           <p className="text-[11px] text-gray-400 mt-1">Prospectos calientes</p>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-indigo-100 shadow-xs col-span-2 lg:col-span-1 bg-indigo-50/20">
+          <div className="flex items-center justify-between text-indigo-700 text-xs font-bold uppercase tracking-wider mb-2">
+            <span>En Google Wallet</span>
+            <Wallet className="w-4 h-4 text-indigo-600" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-extrabold text-indigo-700">{walletMembers}</p>
+          <p className="text-[11px] text-gray-400 mt-1">Con pase en billetera 📱</p>
         </div>
       </div>
 
@@ -883,7 +894,14 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
                   return (
                     <tr key={member.id} className="hover:bg-gray-50/70 transition-colors">
                       <td className="px-5 py-3.5">
-                        <p className="font-bold text-gray-900 text-xs sm:text-sm">{member.customer_name}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-bold text-gray-900 text-xs sm:text-sm">{member.customer_name}</p>
+                          {member.has_wallet && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded-md border border-indigo-200" title="Tarjeta agregada a Google Wallet">
+                              <Wallet className="w-2.5 h-2.5 text-indigo-600" /> Billetera
+                            </span>
+                          )}
+                        </div>
                         <p className="font-mono text-xs text-gray-500">{member.customer_phone}</p>
                       </td>
 

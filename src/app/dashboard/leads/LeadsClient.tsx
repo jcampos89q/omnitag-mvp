@@ -30,7 +30,8 @@ import {
   Layers,
   Copy,
   Check,
-  X
+  X,
+  Wallet
 } from 'lucide-react'
 import Link from 'next/link'
 import ProFeatureModal from '@/components/ProFeatureModal'
@@ -50,6 +51,7 @@ export interface Lead {
   status?: LeadStatus
   category?: string | null
   deal_value?: number
+  hasWallet?: boolean
 }
 
 export const LEAD_STATUS_CONFIG: Record<LeadStatus, {
@@ -349,7 +351,7 @@ export default function LeadsClient({
 
     if (leadsList.length === 0) return
 
-    const headers = ['Nombre', 'Teléfono', 'Email', 'Estatus CRM', 'Sector / Etiqueta', 'Origen', 'Detalle / Notas', 'Fecha']
+    const headers = ['Nombre', 'Teléfono', 'Email', 'Estatus CRM', 'Sector / Etiqueta', 'Origen', 'En Billetera', 'Detalle / Notas', 'Fecha']
     const rows = leadsList.map(l => [
       `"${l.name.replace(/"/g, '""')}"`,
       `"${(l.phone || '').replace(/"/g, '""')}"`,
@@ -357,6 +359,7 @@ export default function LeadsClient({
       `"${LEAD_STATUS_CONFIG[l.status || 'lead']?.label || 'Nuevo Prospecto'}"`,
       `"${(l.category || '').replace(/"/g, '""')}"`,
       `"${l.source === 'loyalty' ? 'Fidelización' : l.source === 'appointment' ? 'Citas' : l.source === 'menu' ? 'Menú Digital' : l.source === 'review' ? 'Calificación' : 'vCard'}"`,
+      `"${l.hasWallet ? 'Sí (Google Wallet)' : 'No'}"`,
       `"${(l.notes || (l.source === 'loyalty' ? `${l.loyaltyStamps || 1} Sellos` : 'Intercambio directo')).replace(/"/g, '""')}"`,
       `"${new Date(l.created_at).toLocaleString()}"`
     ])
@@ -606,6 +609,12 @@ export default function LeadsClient({
                           </span>
                         )}
 
+                        {lead.hasWallet && (
+                          <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-indigo-200" title="Tarjeta en Google Wallet">
+                            <Wallet className="w-3 h-3 text-indigo-600" /> Billetera
+                          </span>
+                        )}
+
                         {lead.category && (
                           <span className="text-[10px] bg-gray-100 text-gray-700 font-semibold px-2 py-0.5 rounded-md border border-gray-200">
                             #{lead.category}
@@ -797,27 +806,35 @@ export default function LeadsClient({
 
                       <td className="px-5 py-4">
                         <div className="space-y-1">
-                          {lead.source === 'loyalty' ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-100">
-                              <Gift className="w-3 h-3" /> {lead.loyaltyStamps || 1} sellos
-                            </span>
-                          ) : lead.source === 'appointment' ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
-                              <Scissors className="w-3 h-3" /> Cita / Reserva
-                            </span>
-                          ) : lead.source === 'menu' ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100">
-                              <Coffee className="w-3 h-3" /> Menú Digital
-                            </span>
-                          ) : lead.source === 'review' ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-yellow-800 bg-yellow-50 px-2.5 py-0.5 rounded-full border border-yellow-200">
-                              <Star className="w-3 h-3" /> Opinión
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
-                              <UserCircle className="w-3 h-3" /> vCard
-                            </span>
-                          )}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {lead.source === 'loyalty' ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-100">
+                                <Gift className="w-3 h-3" /> {lead.loyaltyStamps || 1} sellos
+                              </span>
+                            ) : lead.source === 'appointment' ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+                                <Scissors className="w-3 h-3" /> Cita / Reserva
+                              </span>
+                            ) : lead.source === 'menu' ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-100">
+                                <Coffee className="w-3 h-3" /> Menú Digital
+                              </span>
+                            ) : lead.source === 'review' ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-yellow-800 bg-yellow-50 px-2.5 py-0.5 rounded-full border border-yellow-200">
+                                <Star className="w-3 h-3" /> Opinión
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
+                                <UserCircle className="w-3 h-3" /> vCard
+                              </span>
+                            )}
+
+                            {lead.hasWallet && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200" title="Tarjeta en Google Wallet">
+                                <Wallet className="w-3 h-3 text-indigo-600" /> Billetera
+                              </span>
+                            )}
+                          </div>
 
                           {lead.notes && (
                             <p className="text-[11px] text-gray-500 italic max-w-xs truncate" title={lead.notes}>

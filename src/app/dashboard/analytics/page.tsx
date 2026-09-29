@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
-import { BarChart3, Smartphone, MonitorSmartphone, Activity, Globe, UserCircle, Coffee, Gift, QrCode, Sparkles, ArrowRight, Zap } from 'lucide-react'
+import { BarChart3, Smartphone, MonitorSmartphone, Activity, Globe, UserCircle, Coffee, Gift, QrCode, Sparkles, ArrowRight, Zap, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
@@ -63,10 +63,11 @@ export default async function AnalyticsPage() {
   const desktopPercent = totalScans > 0 ? Math.round((desktopScans / totalScans) * 100) : 0
 
   // Desglose por tipo de recurso
-  const vcardScans = scans.filter(s => s.source_type === 'vcard' || s.vcard_id).length
+  const vcardScans = scans.filter(s => s.source_type === 'vcard' || (s.vcard_id && s.source_type !== 'wallet_pass')).length
   const menuScans = scans.filter(s => s.source_type === 'menu' || s.menu_id).length
-  const loyaltyScans = scans.filter(s => s.source_type === 'loyalty' || s.loyalty_program_id).length
+  const loyaltyScans = scans.filter(s => s.source_type === 'loyalty' || (s.loyalty_program_id && s.source_type !== 'wallet_pass')).length
   const deviceScans = scans.filter(s => s.source_type === 'nfc_device' || s.device_id).length
+  const walletScans = scans.filter(s => s.source_type === 'wallet_pass').length
 
   return (
     <div className="space-y-6">
@@ -133,7 +134,7 @@ export default async function AnalyticsPage() {
         </div>
 
         {/* Tráfico Desglosado por Recursos */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
           <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-100 text-center">
             <UserCircle className="w-5 h-5 text-blue-600 mx-auto mb-1" />
             <p className="text-lg sm:text-xl font-extrabold text-blue-950">{vcardScans}</p>
@@ -157,6 +158,12 @@ export default async function AnalyticsPage() {
             <p className="text-lg sm:text-xl font-extrabold text-emerald-950">{deviceScans}</p>
             <p className="text-[11px] font-semibold text-emerald-700">Placas NFC / QRs</p>
           </div>
+
+          <div className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200 text-center col-span-2 sm:col-span-1">
+            <Wallet className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
+            <p className="text-lg sm:text-xl font-extrabold text-indigo-950">{walletScans}</p>
+            <p className="text-[11px] font-semibold text-indigo-700">Google Wallet 📱</p>
+          </div>
         </div>
 
         {/* LOG DETALLADO DE ESCANEOS EN VIVO */}
@@ -179,15 +186,21 @@ export default async function AnalyticsPage() {
                     <div key={scan.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs ${
-                          scan.os === 'Apple' ? 'bg-gray-100 text-gray-900' : scan.os === 'Android' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
+                          scan.source_type === 'wallet_pass'
+                            ? 'bg-indigo-100 text-indigo-800'
+                            : scan.os === 'Apple' ? 'bg-gray-100 text-gray-900' : scan.os === 'Android' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
                         }`}>
-                          {scan.os === 'Apple' ? 'iOS' : scan.os === 'Android' ? 'AND' : 'PC'}
+                          {scan.source_type === 'wallet_pass' ? <Wallet className="w-4 h-4" /> : scan.os === 'Apple' ? 'iOS' : scan.os === 'Android' ? 'AND' : 'PC'}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-xs sm:text-sm text-gray-900">{scan.user_agent?.split('|')[0] || scan.os}</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 uppercase">
-                              {scan.source_type}
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                              scan.source_type === 'wallet_pass'
+                                ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {scan.source_type === 'wallet_pass' ? '📱 En Billetera' : scan.source_type}
                             </span>
                           </div>
                           <p className="text-[11px] text-gray-400 mt-0.5">

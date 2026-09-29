@@ -8,7 +8,7 @@ export interface LogScanOptions {
   loyaltyProgramId?: string
   deviceId?: string
   targetUserId?: string
-  sourceType: 'vcard' | 'menu' | 'loyalty' | 'nfc_device' | 'qr'
+  sourceType: 'vcard' | 'menu' | 'loyalty' | 'nfc_device' | 'qr' | 'wallet_pass'
   userAgent?: string
   country?: string
 }

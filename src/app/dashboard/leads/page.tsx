@@ -92,7 +92,8 @@ export default async function LeadsPage() {
       notes: l.notes || null,
       status: (l.status as any) || 'lead',
       category: l.category || null,
-      deal_value: l.deal_value || 0
+      deal_value: l.deal_value || 0,
+      hasWallet: !!l.has_wallet
     })
   })
 
@@ -112,7 +113,8 @@ export default async function LeadsPage() {
         loyaltyStamps: m.current_stamps,
         status: 'lead',
         category: 'Club Fidelización',
-        deal_value: 0
+        deal_value: 0,
+        hasWallet: !!m.has_wallet
       })
     }
   })
