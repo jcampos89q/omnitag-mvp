@@ -65,6 +65,7 @@ export default function VCardCampaignPush({ vcard, messages = [] }: VCardCampaig
   const [body, setBody] = useState('')
   const [actionUrl, setActionUrl] = useState('')
   const [actionLabel, setActionLabel] = useState('')
+  const [targetAudience, setTargetAudience] = useState('all')
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'error'
@@ -92,6 +93,7 @@ export default function VCardCampaignPush({ vcard, messages = [] }: VCardCampaig
     formData.append('vcard_id', vcard.id)
     formData.append('title', title)
     formData.append('body', body)
+    formData.append('target_audience', targetAudience)
     if (actionUrl.trim()) {
       formData.append('action_url', actionUrl.trim())
     }
@@ -207,12 +209,20 @@ export default function VCardCampaignPush({ vcard, messages = [] }: VCardCampaig
 
             <div>
               <label className="block text-xs font-bold text-purple-200 mb-1">
-                Destinatarios
+                Audiencia / Segmento Destinatario
               </label>
-              <div className="w-full rounded-xl border border-purple-400/20 bg-black/30 px-3.5 py-2.5 text-xs text-purple-300 flex items-center justify-between">
-                <span>Contactos con tu tarjeta en Google Wallet</span>
-                <span className="font-bold text-white bg-purple-600/60 px-2 py-0.5 rounded-lg">Pases activos</span>
-              </div>
+              <select
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                className="w-full rounded-xl border border-purple-400/40 bg-black/60 px-3.5 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-400 cursor-pointer"
+              >
+                <option value="all">🌐 Todos los Contactos con Tarjeta (Pases activos)</option>
+                <option value="lead">🟡 Nuevos Prospectos</option>
+                <option value="negotiation">🟣 En Negociación / Interesados</option>
+                <option value="won">🟢 Clientes con Venta Completada (VIP)</option>
+                <option value="inmobiliaria">🏡 Sector Inmobiliario (Inversionistas / Compradores)</option>
+                <option value="liquidacion">🏷️ Sector Ofertas / Liquidación</option>
+              </select>
             </div>
           </div>
 

@@ -27,7 +27,10 @@ import {
   Tag,
   Loader2,
   Filter,
-  Layers
+  Layers,
+  Copy,
+  Check,
+  X
 } from 'lucide-react'
 import Link from 'next/link'
 import ProFeatureModal from '@/components/ProFeatureModal'
@@ -105,6 +108,116 @@ export const LEAD_STATUS_CONFIG: Record<LeadStatus, {
   }
 }
 
+export function getStageWhatsAppMessage(lead: Lead): string {
+  const currentStatus = lead.status || 'lead'
+  switch (currentStatus) {
+    case 'negotiation':
+      return `¡Hola ${lead.name}! Te escribo para dar seguimiento a nuestra conversación sobre la propuesta / propiedad. ¿Pudiste revisarla o te gustaría coordinar una visita presencial?`
+    case 'won':
+      return `¡Hola ${lead.name}! Espero que te encuentres excelente. Quería agradecerte nuevamente tu confianza y compartirte en primicia una novedad exclusiva para nuestros clientes preferenciales.`
+    case 'contacted':
+      return `¡Hola ${lead.name}! Un gusto saludarte de nuevo. ¿Te gustaría que coordinemos una breve llamada para responder cualquier duda sobre la información que te compartí?`
+    case 'lost':
+      return `¡Hola ${lead.name}! Quería saludarte y consultarte si en este momento te interesaría conocer nuevas oportunidades con condiciones especiales.`
+    case 'lead':
+    default:
+      if (lead.source === 'appointment') {
+        return `¡Hola ${lead.name}! Te saludamos de tu cita en nuestro negocio. ¿Cómo podemos ayudarte hoy?`
+      }
+      if (lead.source === 'loyalty') {
+        return `¡Hola ${lead.name}! Tienes ${lead.loyaltyStamps || 1} sellos acumulados en nuestro Club de Fidelización. ¡Te esperamos para tu próxima visita!`
+      }
+      return `¡Hola ${lead.name}! Gracias por conectar conmigo a través de mi tarjeta digital. ¿Cómo puedo ayudarte hoy con la información o propiedad que buscas?`
+  }
+}
+
+export const SEGMENT_TEMPLATES: Record<LeadStatus, {
+  title: string
+  subtitle: string
+  items: { tag: string; title: string; text: string }[]
+}> = {
+  lead: {
+    title: '🟡 Nuevos Prospectos (Primer Contacto & Calificación)',
+    subtitle: 'Objetivo: Romper el hielo, presentarse y detectar qué están buscando en 1 toque.',
+    items: [
+      {
+        tag: 'Inmobiliaria',
+        title: 'Presentación y Ficha de Propiedad',
+        text: '¡Hola [Nombre]! Gracias por guardar mi tarjeta de contacto. Vi que tienes interés en opciones inmobiliarias. ¿Buscas comprar para habitar de inmediato o te interesa invertir para renta/plusvalía?'
+      },
+      {
+        tag: 'Liquidación / Ofertas',
+        title: 'Disponibilidad de Modelos en Liquidación',
+        text: '¡Hola [Nombre]! Gracias por conectar. Te comparto que tenemos liquidación activa en equipos seleccionados. ¿Qué modelo o capacidad estabas cotizando para apartarte el precio?'
+      },
+      {
+        tag: 'General / Asesoría',
+        title: 'Bienvenida Profesional Directa',
+        text: '¡Hola [Nombre]! Un gusto saludarte. Vi que revisaste mi tarjeta digital. ¿En qué proyecto o servicio te puedo asesorar hoy?'
+      }
+    ]
+  },
+  contacted: {
+    title: '🔵 Contactados (Seguimiento & Profundización)',
+    subtitle: 'Objetivo: Dar el siguiente paso después de la primera respuesta y coordinar llamada o visita.',
+    items: [
+      {
+        tag: 'Inmobiliaria',
+        title: 'Coordinación de Visita a la Propiedad',
+        text: '¡Hola [Nombre]! Quería consultarte si pudiste ver las fotos y ubicación que te envié. Esta semana estaremos mostrando el inmueble, ¿qué día te queda más cómodo para ir?'
+      },
+      {
+        tag: 'Ventas',
+        title: 'Resolución de Dudas & Presupuesto',
+        text: '¡Hola [Nombre]! Te preparé los números de la propuesta que conversamos. ¿Te parece bien si te los envío por aquí o prefieres una llamada rápida de 5 minutos?'
+      }
+    ]
+  },
+  negotiation: {
+    title: '🟣 En Negociación (Impulso de Cierre & Urgencia)',
+    subtitle: 'Objetivo: Resolver las últimas objeciones y cerrar la reserva o firma.',
+    items: [
+      {
+        tag: 'Inmobiliaria',
+        title: 'Congelamiento de Precio / Reserva de Lote',
+        text: '¡Hola [Nombre]! Te comento que tuvimos otras consultas por la misma propiedad. Si te interesa avanzar, podemos bloquear la unidad hoy mismo con las condiciones acordadas.'
+      },
+      {
+        tag: 'Comercio',
+        title: 'Últimas Unidades con Envío Prioritario',
+        text: '¡Hola [Nombre]! Solo nos quedan 2 unidades disponibles con el descuento de liquidación. ¿Deseas que te reserve una con entrega prioritaria hoy?'
+      }
+    ]
+  },
+  won: {
+    title: '🟢 Ventas Ganadas (Fidelización, Referidos & Nuevos Lanzamientos)',
+    subtitle: 'Objetivo: Maximizar el valor de por vida del cliente y conseguir nuevos prospectos recomendados.',
+    items: [
+      {
+        tag: 'Exclusivo VIP',
+        title: 'Lanzamiento Exclusivo en Preventa',
+        text: '¡Hola [Nombre]! Como cliente preferencial, te comparto en primicia este nuevo proyecto antes de su anuncio público. Tiene precios especiales de preventa que seguro te gustarán.'
+      },
+      {
+        tag: 'Referidos',
+        title: 'Recomendación con Beneficio Especial',
+        text: '¡Hola [Nombre]! Espero que estés disfrutando tu compra. Si tienes algún amigo o familiar buscando opciones, refiérelo conmigo y le damos atención VIP con descuento.'
+      }
+    ]
+  },
+  lost: {
+    title: '⚪ Descartados / Inactivos (Reactivación Inteligente)',
+    subtitle: 'Objetivo: Recuperar prospectos dormidos con una oportunidad irrechazable sin ser invasivo.',
+    items: [
+      {
+        tag: 'Oportunidad Única',
+        title: 'Propiedad con Rebaja de Precio de Ocasión',
+        text: '¡Hola [Nombre]! Sé que anteriormente no era el momento para comprar, pero acaba de liberarse una opción con precio rebajado por debajo del mercado. Pensé en ti de inmediato, ¿te gustaría verla?'
+      }
+    ]
+  }
+}
+
 export default function LeadsClient({ 
   leads,
   isPro = false
@@ -117,6 +230,15 @@ export default function LeadsClient({
   const [statusFilter, setStatusFilter] = useState<'all' | LeadStatus>('all')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [showProModal, setShowProModal] = useState(false)
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false)
+  const [activeTemplateTab, setActiveTemplateTab] = useState<LeadStatus>('lead')
+  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+
+  const handleCopyTemplate = (text: string, key: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 2500)
+  }
 
   // Recuento de prospectos por fase del embudo
   const counts = {
@@ -403,22 +525,33 @@ export default function LeadsClient({
           />
         </div>
 
-        <button
-          onClick={handleExportCSV}
-          className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap cursor-pointer ${
-            isPro 
-              ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
-              : 'bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200'
-          }`}
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-          <span>Exportar a Excel (CSV)</span>
-          {!isPro && (
-            <span className="bg-purple-600 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-md">
-              PRO
-            </span>
-          )}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <button
+            type="button"
+            onClick={() => setShowTemplatesModal(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 transition shadow-2xs whitespace-nowrap cursor-pointer"
+          >
+            <MessageSquare className="w-4 h-4 text-indigo-600" />
+            <span>Guía de Mensajes</span>
+          </button>
+
+          <button
+            onClick={handleExportCSV}
+            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition shadow-xs whitespace-nowrap cursor-pointer ${
+              isPro 
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white' 
+                : 'bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200'
+            }`}
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Exportar a Excel (CSV)</span>
+            {!isPro && (
+              <span className="bg-purple-600 text-white text-[9px] font-extrabold px-1.5 py-0.2 rounded-md">
+                PRO
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Lista Vacía o Resultados */}
@@ -441,14 +574,7 @@ export default function LeadsClient({
               const currentStatus = lead.status || 'lead'
               const statusCfg = LEAD_STATUS_CONFIG[currentStatus] || LEAD_STATUS_CONFIG.lead
               const isUpdating = updatingId === lead.id
-
-              const waText = lead.source === 'appointment'
-                ? `¡Hola ${lead.name}! Te saludamos de tu cita en nuestro negocio. ¿Cómo podemos ayudarte?`
-                : lead.source === 'loyalty'
-                ? `¡Hola ${lead.name}! Tienes ${lead.loyaltyStamps || 1} sellos acumulados en nuestro Club de Fidelización. ¡Te esperamos para tu próxima visita!`
-                : lead.source === 'menu'
-                ? `¡Hola ${lead.name}! Gracias por visitar nuestro Menú Digital. ¿Te gustaría ordenar algo hoy?`
-                : `¡Hola ${lead.name}! Gracias por conectar conmigo a través de mi tarjeta digital. ¿Cómo puedo ayudarte hoy?`
+              const waText = getStageWhatsAppMessage(lead)
 
               return (
                 <div key={lead.id} className={`p-4 bg-white rounded-2xl border transition shadow-xs space-y-3 ${
@@ -609,14 +735,7 @@ export default function LeadsClient({
                   const currentStatus = lead.status || 'lead'
                   const statusCfg = LEAD_STATUS_CONFIG[currentStatus] || LEAD_STATUS_CONFIG.lead
                   const isUpdating = updatingId === lead.id
-
-                  const waText = lead.source === 'appointment'
-                    ? `¡Hola ${lead.name}! Te saludamos de tu cita en nuestro negocio. ¿Cómo podemos ayudarte?`
-                    : lead.source === 'loyalty'
-                    ? `¡Hola ${lead.name}! Tienes ${lead.loyaltyStamps || 1} sellos acumulados en nuestro Club de Fidelización. ¡Te esperamos para tu próxima visita!`
-                    : lead.source === 'menu'
-                    ? `¡Hola ${lead.name}! Gracias por visitar nuestro Menú Digital. ¿Te gustaría ordenar algo hoy?`
-                    : `¡Hola ${lead.name}! Gracias por conectar conmigo a través de mi tarjeta digital. ¿Cómo puedo ayudarte hoy?`
+                  const waText = getStageWhatsAppMessage(lead)
 
                   return (
                     <tr key={lead.id} className={`hover:bg-gray-50/80 transition-colors ${
@@ -753,6 +872,128 @@ export default function LeadsClient({
         featureName="Exportación de Contactos a Excel (CSV)"
         featureDescription="Descarga tu base completa de clientes, teléfonos de WhatsApp y prospectos para sincronizar con tus campañas masivas de marketing o software de ventas."
       />
+
+      {/* Modal de Guía de Mensajes & Plantillas por Nivel */}
+      {showTemplatesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col max-h-[88vh]">
+            <div className="p-5 border-b border-gray-100 flex items-start justify-between bg-gradient-to-r from-gray-900 to-indigo-950 text-white">
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-indigo-300 text-[10px] font-extrabold uppercase tracking-wider mb-1">
+                  <Sparkles className="w-3 h-3 text-amber-300" /> Copywriting Comercial
+                </div>
+                <h3 className="font-extrabold text-lg text-white">
+                  Guía de Mensajes Persuasivos por Segmento
+                </h3>
+                <p className="text-xs text-indigo-200/80 mt-0.5">
+                  Textos probados para WhatsApp para mover prospectos al siguiente nivel del embudo.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTemplatesModal(false)}
+                className="text-gray-400 hover:text-white p-1 rounded-lg transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Pestañas de Estatus */}
+            <div className="flex items-center gap-1 p-2 bg-gray-100 border-b border-gray-200 overflow-x-auto scrollbar-none text-xs font-bold">
+              {(['lead', 'contacted', 'negotiation', 'won', 'lost'] as LeadStatus[]).map((st) => {
+                const cfg = LEAD_STATUS_CONFIG[st]
+                const isActive = activeTemplateTab === st
+                return (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setActiveTemplateTab(st)}
+                    className={`px-3 py-1.5 rounded-xl transition whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                      isActive 
+                        ? 'bg-white text-gray-900 shadow-xs' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <span>{cfg.emoji}</span>
+                    <span>{cfg.shortLabel}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Lista de Plantillas para la pestaña activa */}
+            <div className="p-5 overflow-y-auto space-y-4 flex-1">
+              <div>
+                <h4 className="font-extrabold text-sm text-gray-900">
+                  {SEGMENT_TEMPLATES[activeTemplateTab].title}
+                </h4>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {SEGMENT_TEMPLATES[activeTemplateTab].subtitle}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {SEGMENT_TEMPLATES[activeTemplateTab].items.map((item, idx) => {
+                  const key = `${activeTemplateTab}_${idx}`
+                  const isCopied = copiedKey === key
+
+                  return (
+                    <div key={idx} className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-gray-50 transition space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200">
+                            {item.tag}
+                          </span>
+                          <span className="font-bold text-xs text-gray-900">
+                            {item.title}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleCopyTemplate(item.text, key)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer ${
+                            isCopied 
+                              ? 'bg-emerald-600 text-white' 
+                              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                          }`}
+                        >
+                          {isCopied ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-white" />
+                              <span>¡Copiado!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5 text-gray-500" />
+                              <span>Copiar</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-gray-700 leading-relaxed font-sans bg-white p-3 rounded-lg border border-gray-100">
+                        "{item.text}"
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+              <span>Recuerda cambiar <b>[Nombre]</b> por el nombre de tu cliente.</span>
+              <button
+                type="button"
+                onClick={() => setShowTemplatesModal(false)}
+                className="bg-gray-900 hover:bg-black text-white font-extrabold px-4 py-2 rounded-xl transition cursor-pointer"
+              >
+                Listo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
