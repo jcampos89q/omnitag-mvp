@@ -7,7 +7,7 @@ import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; message?: string }>
+  searchParams: Promise<{ error?: string; message?: string; next?: string }>
 }) {
   const params = await searchParams
 
@@ -46,6 +46,9 @@ export default async function LoginPage({
         </div>
 
         <form className="mt-8 space-y-5" action={login}>
+          {params?.next && (
+            <input type="hidden" name="next" value={params.next} />
+          )}
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-xs font-bold text-gray-700 uppercase mb-1">

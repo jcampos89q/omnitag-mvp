@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -18,7 +19,11 @@ import {
   Gift,
   Star,
   ChevronRight,
-  CalendarDays
+  CalendarDays,
+  Edit3,
+  Settings,
+  Lock,
+  LayoutDashboard
 } from 'lucide-react'
 import ShareButtons from '@/components/ShareButtons'
 import LeadCaptureModal from './LeadCaptureModal'
@@ -129,20 +134,34 @@ export default async function PublicVCardPage({
     lead_capture_enabled 
   } = vcard
 
-  // 2. Comprobar si el dueño de la vCard es PRO y buscar sus módulos del ecosistema
+    // 2. Comprobar sesión de usuario (para modo propietario/admin) y módulos del ecosistema
   const [
+    { data: { user: currentUser } },
     { isPro: ownerIsPro },
     { data: activeMenu },
     { data: activeAppointment },
     { data: activeLoyalty },
     { data: activeDevice }
   ] = await Promise.all([
+    supabase.auth.getUser(),
     getUserPlanInfo(supabase, ownerId),
     supabase.from('menus').select('id, slug, name, business_type').eq('user_id', ownerId).eq('is_active', true).maybeSingle(),
     supabase.from('appointment_businesses').select('id, slug, name, category').eq('user_id', ownerId).eq('is_active', true).maybeSingle(),
     supabase.from('loyalty_programs').select('id, slug, title, reward_text').eq('user_id', ownerId).eq('is_active', true).maybeSingle(),
     supabase.from('devices').select('id, tag_id, name').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
   ])
+
+  const isOwner = Boolean(currentUser && currentUser.id === ownerId)
+  let isAdmin = false
+  if (currentUser && !isOwner) {
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('is_admin')
+      .eq('id', currentUser.id)
+      .maybeSingle()
+    isAdmin = Boolean(userProfile?.is_admin)
+  }
+  const canManage = isOwner || isAdmin
 
   // La captura de contactos en vCard está habilitada para todos los usuarios que la activen
   const canCaptureLeads = Boolean(lead_capture_enabled)
@@ -195,6 +214,49 @@ export default async function PublicVCardPage({
           fontFamily: fontFamilyCss 
         }}
       >
+        {/* Barra superior de Propietario / Administrador */}
+        {canManage && (
+          <div className="w-full max-w-md mb-3 bg-black/90 text-white backdrop-blur-md px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs shadow-xl border border-white/10 animate-in fade-in z-20">
+            <div className="flex items-center gap-2 font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>
+                {isOwner 
+                  ? 'Estás viendo tu tarjeta como propietario' 
+                  : 'Estás viendo esta tarjeta como administrador'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Link 
+                href="/dashboard/vcard" 
+                className="font-extrabold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl text-xs"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Editar Datos</span>
+              </Link>
+              <Link 
+                href="/dashboard" 
+                className="text-gray-300 hover:text-white transition p-1.5 rounded-xl hover:bg-white/10"
+                title="Ir a mi Panel General"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Botón flotante para acceso rápido a editar en dispositivos móviles */}
+        {canManage && (
+          <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-2">
+            <Link
+              href="/dashboard/vcard"
+              className="flex items-center gap-2 bg-black/90 hover:bg-black text-amber-400 font-extrabold text-xs px-4 py-2.5 rounded-full shadow-2xl border border-white/20 backdrop-blur-md hover:scale-105 transition-all"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Editar Tarjeta</span>
+            </Link>
+          </div>
+        )}
+
         <div 
           className={`w-full max-w-md shadow-2xl overflow-hidden border transition-all ${cardRadiusClass} ${
             isGlass ? 'backdrop-blur-xl border-white/20' : 'border-black/5'
@@ -566,10 +628,22 @@ export default async function PublicVCardPage({
         </div>
 
         {/* Pie de Página */}
-        <div className="mt-6 text-center opacity-60">
+        <div className="mt-6 text-center space-y-2 opacity-70">
           <p className="text-xs font-semibold" style={{ color: theme.text_color }}>
             Tarjeta Digital creada con <span className="font-bold">OmniTag</span>
           </p>
+          {!currentUser && (
+            <p className="text-[11px]">
+              <Link 
+                href={`/login?next=/dashboard/vcard`}
+                className="hover:underline inline-flex items-center gap-1 font-medium transition opacity-80 hover:opacity-100"
+                style={{ color: theme.text_color }}
+              >
+                <Lock className="w-3 h-3" />
+                <span>¿Eres el dueño de esta tarjeta? Inicia sesión aquí</span>
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </>

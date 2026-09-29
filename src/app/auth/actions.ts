@@ -9,9 +9,11 @@ export async function login(formData: FormData) {
   
   const email = (formData.get('email') as string)?.trim()
   const password = formData.get('password') as string
+  const next = (formData.get('next') as string)?.trim()
+  const nextQuery = next && next.startsWith('/') ? '&next=' + encodeURIComponent(next) : ''
 
   if (!email || !password) {
-    redirect('/login?error=' + encodeURIComponent('Por favor ingresa tu correo y contraseña.'))
+    redirect('/login?error=' + encodeURIComponent('Por favor ingresa tu correo y contraseña.') + nextQuery)
   }
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -26,10 +28,13 @@ export async function login(formData: FormData) {
     } else if (error.message.includes('Email not confirmed')) {
       message = 'Tu correo no ha sido confirmado. Revisa tu bandeja de entrada o solicita asistencia.'
     }
-    redirect('/login?error=' + encodeURIComponent(message))
+    redirect('/login?error=' + encodeURIComponent(message) + nextQuery)
   }
 
   revalidatePath('/', 'layout')
+  if (next && next.startsWith('/')) {
+    redirect(next)
+  }
   redirect('/dashboard')
 }
 
