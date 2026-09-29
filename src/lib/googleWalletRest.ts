@@ -235,3 +235,71 @@ export async function updateLoyaltyMemberStamps(params: {
     return { success: false, error: err.message }
   }
 }
+
+/**
+ * Envía un mensaje Push a todas las personas que guardaron una vCard profesional en su Google Wallet
+ */
+export async function sendVCardPushMessage(params: {
+  vcardSlug: string
+  title: string
+  body: string
+}): Promise<{
+  success: boolean
+  error?: string
+  needsApiEnable?: boolean
+  data?: any
+}> {
+  const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID
+  if (!issuerId) {
+    return { success: false, error: 'Falta configurar GOOGLE_WALLET_ISSUER_ID.' }
+  }
+
+  const { token, error: tokenError } = await getGoogleWalletAccessToken()
+  if (tokenError || !token) {
+    return { success: false, error: tokenError || 'No se pudo obtener autorización de Google.' }
+  }
+
+  const classSuffix = sanitizeWalletId(`vcard_${params.vcardSlug}_v2`)
+  const classId = `${issuerId}.${classSuffix}`
+
+  try {
+    const url = `https://walletobjects.googleapis.com/walletobjects/v1/genericClass/${encodeURIComponent(classId)}/addMessage`
+    const payload = {
+      message: {
+        header: params.title,
+        body: params.body,
+        kind: 'walletobjects#message',
+        messageType: 'TEXT',
+      },
+    }
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+
+    const result = await res.json()
+
+    if (!res.ok) {
+      const errorMsg = result?.error?.message || 'Error desconocido de Google Wallet API'
+      const isApiDisabled =
+        result?.error?.status === 'PERMISSION_DENIED' &&
+        errorMsg.includes('Google Wallet API has not been used')
+      return {
+        success: false,
+        error: errorMsg,
+        needsApiEnable: isApiDisabled,
+        data: result,
+      }
+    }
+
+    return { success: true, data: result }
+  } catch (err: any) {
+    console.error('Error enviando mensaje push a vCard en Google Wallet:', err)
+    return { success: false, error: err.message || 'Fallo de conexión al enviar el mensaje push.' }
+  }
+}

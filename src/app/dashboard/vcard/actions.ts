@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import { getUserPlanInfo } from '@/lib/plans'
 import { formatScheduleSummaryText } from '@/lib/schedule'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import { sendVCardPushMessage } from '@/lib/googleWalletRest'
 
 export async function saveVCard(formData: FormData) {
   const supabase = await createClient()
@@ -238,4 +239,63 @@ export async function saveVCard(formData: FormData) {
   }
 
   redirect('/dashboard/vcard?success=true')
+}
+
+// Acción para enviar notificaciones Push de marketing a los poseedores de una vCard
+export async function sendVCardCampaignPush(formData: FormData) {
+  const supabase = await createClient()
+  const { user } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+
+  const vcardId = formData.get('vcard_id') as string
+  const title = (formData.get('title') as string)?.trim()
+  const body = (formData.get('body') as string)?.trim()
+
+  if (!vcardId || !title || !body) {
+    return { success: false, error: 'Por favor completa el título y el mensaje de la notificación.' }
+  }
+
+  // Verificar que el usuario sea el dueño de la vCard
+  const { data: vcard } = await supabase
+    .from('vcards')
+    .select('id, slug, first_name, last_name, company_name')
+    .eq('id', vcardId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!vcard) {
+    return { success: false, error: 'Tarjeta vCard no encontrada o no tienes permisos.' }
+  }
+
+  // Enviar mensaje push a Google Wallet
+  const result = await sendVCardPushMessage({
+    vcardSlug: vcard.slug,
+    title,
+    body
+  })
+
+  // Registrar en historial de campañas de la base de datos
+  await supabase.from('vcard_messages').insert({
+    vcard_id: vcard.id,
+    user_id: user.id,
+    title,
+    body,
+    status: result.success ? 'sent' : 'failed',
+    google_response: result.data || { error: result.error }
+  })
+
+  revalidatePath('/dashboard/vcard')
+
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error,
+      needsApiEnable: result.needsApiEnable
+    }
+  }
+
+  return {
+    success: true,
+    message: '¡Notificación enviada con éxito a las billeteras de tus contactos!'
+  }
 }

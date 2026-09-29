@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { QrCode, CreditCard } from 'lucide-react'
 import VCardForm from './VCardForm'
+import VCardCampaignPush from './VCardCampaignPush'
 import { getUserPlanInfo } from '@/lib/plans'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
@@ -45,6 +46,17 @@ export default async function VCardBuilderPage({
   ])
   
   const accountType = profile?.account_type || 'professional'
+
+  let vcardMessages: any[] = []
+  if (vcard) {
+    const { data: vList } = await supabase
+      .from('vcard_messages')
+      .select('*')
+      .eq('vcard_id', vcard.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    vcardMessages = vList || []
+  }
 
   return (
     <div className="space-y-6">
@@ -163,6 +175,13 @@ export default async function VCardBuilderPage({
             </div>
           ) : null}
         </div>
+
+        {/* Campañas Push a Billeteras de Google para vCard */}
+        {vcard && (
+          <div className="mb-6">
+            <VCardCampaignPush vcard={vcard} messages={vcardMessages} />
+          </div>
+        )}
 
         {/* Formulario Principal interactivo */}
         <VCardForm vcard={vcard} isPro={isPro} accountType={accountType} />
