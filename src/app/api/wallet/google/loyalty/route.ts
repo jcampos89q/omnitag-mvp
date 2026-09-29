@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Resolver tema y colores de marca del negocio
-    const theme = resolveTheme(program.theme_config)
+    const theme = resolveTheme(program.theme || program.theme_config)
     const publicUrl = `https://www.omnitag.site/l/${slug}`
 
     const result = generateLoyaltyWalletUrl({

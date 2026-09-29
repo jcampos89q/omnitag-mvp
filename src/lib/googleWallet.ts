@@ -72,6 +72,18 @@ export function signGoogleWalletJwt(
   return `${signatureInput}.${encodedSignature}`
 }
 
+function getProxiedImageUrl(url?: string): string {
+  if (!url || !url.startsWith('http')) {
+    return 'https://www.omnitag.site/logo-light.png'
+  }
+  // Si la imagen proviene de Supabase o servicios externos que bloquean crawlers de Google (x-robots-tag),
+  // se sirve a través de nuestro proxy oficial en omnitag.site
+  if (url.includes('supabase.co') || !url.includes('omnitag.site')) {
+    return `https://www.omnitag.site/api/wallet/image-proxy?url=${encodeURIComponent(url)}`
+  }
+  return url
+}
+
 export interface LoyaltyPassParams {
   programId: string
   programSlug: string
@@ -96,6 +108,8 @@ export interface VCardPassParams {
   email?: string
   address?: string
   avatarUrl?: string
+  coverUrl?: string
+  bio?: string
   primaryColor?: string
   publicUrl: string
 }
@@ -123,7 +137,7 @@ export function generateLoyaltyWalletUrl(params: LoyaltyPassParams): {
   }
 
   try {
-    const classSuffix = sanitizeWalletId(`loyalty_${params.programSlug}`)
+    const classSuffix = sanitizeWalletId(`loyalty_${params.programSlug}_v2`)
     const objectSuffix = sanitizeWalletId(
       `loyalty_${params.programSlug}_${params.customerPhone.replace(/\D/g, '') || 'client'}`
     )
@@ -132,8 +146,7 @@ export function generateLoyaltyWalletUrl(params: LoyaltyPassParams): {
     const objectId = `${issuerId}.${objectSuffix}`
 
     const brandColor = sanitizeHexColor(params.primaryColor)
-    const fallbackLogo = 'https://www.omnitag.site/logo-light.png'
-    const logoUri = params.logoUrl && params.logoUrl.startsWith('http') ? params.logoUrl : fallbackLogo
+    const logoUri = getProxiedImageUrl(params.logoUrl)
 
     // 1. Plantilla de Clase (Class)
     const loyaltyClass: any = {
@@ -160,12 +173,13 @@ export function generateLoyaltyWalletUrl(params: LoyaltyPassParams): {
       id: objectId,
       classId: classId,
       state: 'ACTIVE',
-      accountId: params.customerPhone || 'Cliente',
+      hexBackgroundColor: brandColor,
+      accountId: params.customerPhone || 'Cliente VIP',
       accountName: params.customerName || 'Miembro del Club',
       loyaltyPoints: {
         label: 'Sellos Acumulados',
         balance: {
-          string: `${params.currentStamps} de ${params.totalStampsRequired} sellos`
+          string: `${params.currentStamps} de ${params.totalStampsRequired} sellos ⭐`
         }
       },
       barcode: {
@@ -175,12 +189,12 @@ export function generateLoyaltyWalletUrl(params: LoyaltyPassParams): {
       },
       textModulesData: [
         {
-          header: 'Premio por Completar',
-          body: `🎁 ${params.rewardTitle}`
+          header: '🎁 Premio por Completar',
+          body: params.rewardTitle
         },
         {
-          header: 'Meta del Club',
-          body: `Reúne ${params.totalStampsRequired} sellos en tus visitas para canjear gratis.`
+          header: 'Progreso del Club',
+          body: `Llevas ${params.currentStamps} de ${params.totalStampsRequired} sellos acumulados en tus visitas.`
         }
       ],
       linksModuleData: {
@@ -246,20 +260,23 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
   }
 
   try {
-    const classSuffix = sanitizeWalletId(`vcard_${params.vcardSlug}`)
-    const objectSuffix = sanitizeWalletId(`vcard_${params.vcardSlug}_obj`)
+    const classSuffix = sanitizeWalletId(`vcard_${params.vcardSlug}_v2`)
+    const objectSuffix = sanitizeWalletId(`vcard_${params.vcardSlug}_obj_v2`)
 
     const classId = `${issuerId}.${classSuffix}`
     const objectId = `${issuerId}.${objectSuffix}`
 
     const brandColor = sanitizeHexColor(params.primaryColor)
-    const fallbackLogo = 'https://www.omnitag.site/logo-light.png'
-    const logoUri = params.avatarUrl && params.avatarUrl.startsWith('http') ? params.avatarUrl : fallbackLogo
+    const logoUri = getProxiedImageUrl(params.avatarUrl || params.coverUrl)
+    const coverUri = params.coverUrl ? getProxiedImageUrl(params.coverUrl) : ''
+
+    const displayName = params.companyName || params.fullName || 'OmniTag'
+    const displaySubtitle = params.jobTitle || 'Contacto Profesional'
 
     // 1. Generic Class
     const genericClass: any = {
       id: classId,
-      issuerName: params.companyName || params.fullName || 'OmniTag',
+      issuerName: displayName,
       logo: {
         sourceUri: {
           uri: logoUri
@@ -267,7 +284,7 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
         contentDescription: {
           defaultValue: {
             language: 'es',
-            value: `Contacto de ${params.fullName}`
+            value: `Logo de ${displayName}`
           }
         }
       },
@@ -294,8 +311,15 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
 
     if (params.address) {
       textModules.push({
-        header: 'Ubicación',
+        header: 'Ubicación / Dirección',
         body: params.address
+      })
+    }
+
+    if (params.bio) {
+      textModules.push({
+        header: 'Sobre Nosotros',
+        body: params.bio.length > 250 ? `${params.bio.slice(0, 247)}...` : params.bio
       })
     }
 
@@ -320,10 +344,11 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
       id: objectId,
       classId: classId,
       state: 'ACTIVE',
+      hexBackgroundColor: brandColor,
       cardTitle: {
         defaultValue: {
           language: 'es',
-          value: params.jobTitle || 'Contacto Profesional'
+          value: displayName
         }
       },
       header: {
@@ -335,7 +360,18 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
       subheader: {
         defaultValue: {
           language: 'es',
-          value: params.companyName || 'OmniTag Perfil'
+          value: displaySubtitle
+        }
+      },
+      logo: {
+        sourceUri: {
+          uri: logoUri
+        },
+        contentDescription: {
+          defaultValue: {
+            language: 'es',
+            value: `Logo de ${displayName}`
+          }
         }
       },
       barcode: {
@@ -346,6 +382,21 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
       textModulesData: textModules,
       linksModuleData: {
         uris: links
+      }
+    }
+
+    // Si la tarjeta tiene imagen de portada panorámica, se agrega como Hero Banner de Google Wallet
+    if (coverUri) {
+      genericObject.heroImage = {
+        sourceUri: {
+          uri: coverUri
+        },
+        contentDescription: {
+          defaultValue: {
+            language: 'es',
+            value: `Portada de ${displayName}`
+          }
+        }
       }
     }
 

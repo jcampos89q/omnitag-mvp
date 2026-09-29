@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
     const contactInfo = vcard.contact_info || {}
     const businessInfo = vcard.business_info || {}
-    const theme = resolveTheme(vcard.theme_config)
+    const theme = resolveTheme(vcard.theme || vcard.theme_config)
     const publicUrl = `https://www.omnitag.site/v/${slug}`
 
     const result = generateVCardWalletUrl({
@@ -51,7 +51,9 @@ export async function GET(req: NextRequest) {
       phone: contactInfo.phone || '',
       email: contactInfo.email || '',
       address: businessInfo.address || '',
-      avatarUrl: vcard.avatar_url || vcard.cover_url || '',
+      avatarUrl: vcard.avatar_url || '',
+      coverUrl: vcard.cover_url || '',
+      bio: vcard.bio || '',
       primaryColor: theme.primary_color,
       publicUrl
     })
