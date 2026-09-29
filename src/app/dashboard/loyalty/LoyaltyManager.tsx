@@ -17,22 +17,105 @@ import {
   Search, 
   Sparkles, 
   Plus, 
-  Palette 
+  Palette,
+  MapPin,
+  Send,
+  BellRing,
+  Megaphone,
+  Radio,
+  AlertCircle,
+  X,
+  Navigation
 } from 'lucide-react'
 import ImageUploadInput from '@/components/ImageUploadInput'
 import ThemeSelector from '@/components/ThemeSelector'
-import { updateLoyaltyProgram, validateAndAddStamp } from './actions'
+import { updateLoyaltyProgram, validateAndAddStamp, sendLoyaltyCampaignPush } from './actions'
 
 interface LoyaltyManagerProps {
   program: any
   members: any[]
   logs: any[]
+  messages?: any[]
 }
 
-export default function LoyaltyManager({ program, members, logs }: LoyaltyManagerProps) {
+export default function LoyaltyManager({ program, members, logs, messages = [] }: LoyaltyManagerProps) {
   const [copied, setCopied] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [showPin, setShowPin] = useState(false)
+
+  // Estados de Campaña Push
+  const [campaignModalOpen, setCampaignModalOpen] = useState(false)
+  const [campaignTitle, setCampaignTitle] = useState('')
+  const [campaignBody, setCampaignBody] = useState('')
+  const [campaignLoading, setCampaignLoading] = useState(false)
+  const [campaignFeedback, setCampaignFeedback] = useState<{
+    type: 'success' | 'error'
+    message: string
+    needsApiEnable?: boolean
+  } | null>(null)
+
+  // Estados de Geolocalización
+  const [lat, setLat] = useState(program.latitude ? String(program.latitude) : '')
+  const [lng, setLng] = useState(program.longitude ? String(program.longitude) : '')
+  const [detectingLocation, setDetectingLocation] = useState(false)
+
+  const handleDetectLocation = () => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      alert('La geolocalización no está disponible en este dispositivo.')
+      return
+    }
+    setDetectingLocation(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude.toFixed(6))
+        setLng(pos.coords.longitude.toFixed(6))
+        setDetectingLocation(false)
+      },
+      (err) => {
+        alert('No se pudo obtener la ubicación: ' + err.message)
+        setDetectingLocation(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
+  const handleSendCampaign = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!campaignTitle.trim() || !campaignBody.trim()) return
+
+    setCampaignLoading(true)
+    setCampaignFeedback(null)
+
+    const formData = new FormData()
+    formData.append('program_id', program.id)
+    formData.append('title', campaignTitle)
+    formData.append('body', campaignBody)
+
+    try {
+      const res = await sendLoyaltyCampaignPush(formData)
+      if (res.success) {
+        setCampaignFeedback({
+          type: 'success',
+          message: res.message || 'Campaña enviada con éxito.'
+        })
+        setCampaignTitle('')
+        setCampaignBody('')
+      } else {
+        setCampaignFeedback({
+          type: 'error',
+          message: res.error || 'Ocurrió un error al enviar.',
+          needsApiEnable: res.needsApiEnable
+        })
+      }
+    } catch (err: any) {
+      setCampaignFeedback({
+        type: 'error',
+        message: err.message || 'Error de conexión.'
+      })
+    } finally {
+      setCampaignLoading(false)
+    }
+  }
 
   const publicUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/l/${program.slug}` 
@@ -127,6 +210,143 @@ export default function LoyaltyManager({ program, members, logs }: LoyaltyManage
             <ExternalLink className="w-4 h-4" /> Ver Tarjeta
           </a>
         </div>
+      </div>
+
+      {/* 2.5. Campañas Push a Billeteras de Google */}
+      <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-white p-6 rounded-2xl shadow-lg border border-purple-500/20 relative overflow-hidden">
+        <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-44 h-44 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-[11px] font-extrabold uppercase tracking-wider mb-2 border border-purple-400/30">
+              <BellRing className="w-3.5 h-3.5" /> Google Wallet Push Marketing
+            </div>
+            <h3 className="font-extrabold text-xl sm:text-2xl text-white">
+              Notificaciones Directas a las Billeteras
+            </h3>
+            <p className="text-xs sm:text-sm text-purple-200/80 mt-1 max-w-xl">
+              Envía promociones, recordatorios y ofertas a la pantalla de bloqueo de los clientes que guardaron tu tarjeta en su teléfono. Sin costo de SMS ni WhatsApp.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setCampaignModalOpen(!campaignModalOpen)
+              setCampaignFeedback(null)
+            }}
+            className="bg-white text-purple-950 hover:bg-purple-50 font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl transition flex items-center gap-2 shadow-md cursor-pointer whitespace-nowrap"
+          >
+            <Megaphone className="w-4 h-4 text-purple-700" />
+            <span>{campaignModalOpen ? 'Cerrar Formulario' : 'Crear Campaña Push'}</span>
+          </button>
+        </div>
+
+        {/* Formulario Desplegable de Campaña Push */}
+        {campaignModalOpen && (
+          <form onSubmit={handleSendCampaign} className="mt-6 pt-6 border-t border-white/10 space-y-4 animate-in fade-in slide-in-from-top-2 relative z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-purple-200 mb-1">
+                  Título de la Notificación (máx. 50 caracteres) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={50}
+                  value={campaignTitle}
+                  onChange={(e) => setCampaignTitle(e.target.value)}
+                  placeholder="Ej. ¡Jueves de 2x1 en Café!"
+                  className="w-full rounded-xl border border-purple-400/40 bg-black/40 px-3.5 py-2.5 text-sm text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-purple-200 mb-1">
+                  Destinatarios
+                </label>
+                <div className="w-full rounded-xl border border-purple-400/20 bg-black/30 px-3.5 py-2.5 text-xs text-purple-300 flex items-center justify-between">
+                  <span>Todos los clientes con tarjeta en Google Wallet</span>
+                  <span className="font-bold text-white bg-purple-600/60 px-2 py-0.5 rounded-lg">{totalMembers} registrados</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-purple-200 mb-1">
+                Mensaje de la Oferta / Promoción *
+              </label>
+              <textarea
+                required
+                rows={2}
+                maxLength={200}
+                value={campaignBody}
+                onChange={(e) => setCampaignBody(e.target.value)}
+                placeholder="Ej. Ven hoy de 4 a 8 PM y recibe tu segundo café de especialidad gratis presentando tu tarjeta de sellos."
+                className="w-full rounded-xl border border-purple-400/40 bg-black/40 px-3.5 py-2.5 text-sm text-white placeholder-purple-300/40 focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+            </div>
+
+            {campaignFeedback && (
+              <div className={`p-4 rounded-xl text-xs ${
+                campaignFeedback.type === 'success' 
+                  ? 'bg-emerald-500/20 border border-emerald-400/40 text-emerald-200' 
+                  : 'bg-rose-500/20 border border-rose-400/40 text-rose-200'
+              }`}>
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">{campaignFeedback.message}</p>
+                    {campaignFeedback.needsApiEnable && (
+                      <div className="mt-2 text-[11px] text-white space-y-1">
+                        <p>
+                          Tu cuenta de Google Cloud necesita tener habilitada la <b>Google Wallet API</b> para despachar notificaciones.
+                        </p>
+                        <a
+                          href="https://console.developers.google.com/apis/api/walletobjects.googleapis.com/overview?project=1009146761390"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 bg-white text-black font-extrabold px-3 py-1.5 rounded-lg hover:bg-gray-100 transition mt-1"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" /> Habilitar Google Wallet API en 1 Clic
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setCampaignModalOpen(false)}
+                className="text-xs font-bold text-purple-300 hover:text-white px-4 py-2 transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={campaignLoading}
+                className="bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>{campaignLoading ? 'Despachando...' : 'Enviar Notificación Push Ahora'}</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Historial Reciente de Mensajes */}
+        {messages && messages.length > 0 && !campaignModalOpen && (
+          <div className="mt-4 pt-4 border-t border-white/10 text-xs text-purple-200/70 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" /> Última campaña: <b>"{messages[0].title}"</b> ({new Date(messages[0].created_at).toLocaleDateString('es-ES')})
+            </span>
+            <span className="text-[11px] bg-white/10 px-2 py-0.5 rounded-md font-mono text-emerald-300">
+              {messages.length} mensaje(s) enviado(s)
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 3. Configuración del Programa y PIN de Seguridad */}
@@ -269,6 +489,72 @@ export default function LoyaltyManager({ program, members, logs }: LoyaltyManage
                 <p className="text-[11px] text-amber-800/80 mt-1">
                   Evita que un mismo cliente sume múltiples visitas en un mismo día.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Geolocalización y Aviso por Proximidad (Google Wallet) */}
+          <div className="bg-blue-50/70 border border-blue-200 p-5 rounded-2xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-blue-950 font-extrabold text-sm">
+                <MapPin className="w-5 h-5 text-blue-700" />
+                Geolocalización & Aviso por Proximidad en Google Wallet
+              </div>
+              <button
+                type="button"
+                onClick={handleDetectLocation}
+                disabled={detectingLocation}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-800 hover:text-blue-900 bg-white hover:bg-blue-100/60 border border-blue-300 px-3 py-1.5 rounded-xl transition cursor-pointer shadow-2xs self-start sm:self-auto"
+              >
+                <Navigation className="w-3.5 h-3.5 text-blue-600" />
+                <span>{detectingLocation ? 'Detectando GPS...' : 'Detectar mi Ubicación Actual'}</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-blue-900/80">
+              Cuando un cliente que guardó tu tarjeta pase cerca de esta dirección (a 100-150 metros), <b>Google Wallet le enviará un recordatorio automático a su pantalla de bloqueo</b> para que entre a tu negocio.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-1">
+                <label className="block text-xs font-semibold text-blue-950 mb-1">
+                  Dirección del Local
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  defaultValue={program.address || ''}
+                  placeholder="Ej. Calle Principal 123, Centro"
+                  className="w-full rounded-xl border border-blue-300 bg-white px-3.5 py-2 text-xs sm:text-sm shadow-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-blue-950 mb-1">
+                  Latitud GPS
+                </label>
+                <input
+                  type="text"
+                  name="latitude"
+                  value={lat}
+                  onChange={(e) => setLat(e.target.value)}
+                  placeholder="Ej. 19.432608"
+                  className="w-full rounded-xl border border-blue-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-blue-950 mb-1">
+                  Longitud GPS
+                </label>
+                <input
+                  type="text"
+                  name="longitude"
+                  value={lng}
+                  onChange={(e) => setLng(e.target.value)}
+                  placeholder="Ej. -99.133209"
+                  className="w-full rounded-xl border border-blue-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
             </div>
           </div>

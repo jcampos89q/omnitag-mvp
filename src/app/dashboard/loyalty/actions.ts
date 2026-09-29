@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { updateLoyaltyMemberStamps, sendLoyaltyPushMessage } from '@/lib/googleWalletRest'
 
 export async function createLoyaltyProgram(formData: FormData) {
   const supabase = await createClient()
@@ -48,6 +49,11 @@ export async function updateLoyaltyProgram(formData: FormData) {
   const pinCode = (formData.get('pin_code') as string)?.trim() || '1234'
   const cooldownHours = parseInt(formData.get('cooldown_hours') as string) || 12
   const logoUrl = (formData.get('logo_url') as string)?.trim() || null
+  const address = (formData.get('address') as string)?.trim() || null
+  const latitudeRaw = (formData.get('latitude') as string)?.trim()
+  const longitudeRaw = (formData.get('longitude') as string)?.trim()
+  const latitude = latitudeRaw ? parseFloat(latitudeRaw) : null
+  const longitude = longitudeRaw ? parseFloat(longitudeRaw) : null
 
   // Parsear tema
   const themePreset = (formData.get('theme_preset') as string) || 'minimal_white'
@@ -78,7 +84,10 @@ export async function updateLoyaltyProgram(formData: FormData) {
     total_stamps_required: totalStamps,
     pin_code: pinCode,
     cooldown_hours: cooldownHours,
-    theme
+    theme,
+    address,
+    latitude,
+    longitude
   }
   if (logoUrl !== undefined) updateData.logo_url = logoUrl
 
@@ -201,6 +210,19 @@ export async function validateAndAddStamp(formData: FormData) {
     console.error('Error enviando notificacion de loyalty:', notifErr)
   }
 
+  // Notificar y actualizar pase en Google Wallet del cliente en segundo plano
+  try {
+    updateLoyaltyMemberStamps({
+      programSlug: program.slug,
+      customerPhone: phone,
+      newStamps: newStampCount,
+      totalRequired: program.total_stamps_required,
+      rewardTitle: program.reward_title || 'Premio de Fidelización'
+    }).catch(err => console.error('Error en segundo plano actualizando Google Wallet:', err))
+  } catch (gwErr) {
+    console.error('Error invocando updateLoyaltyMemberStamps:', gwErr)
+  }
+
   revalidatePath(`/l/${program.slug}`)
   revalidatePath('/dashboard/loyalty')
 
@@ -278,4 +300,63 @@ export async function claimLoyaltyReward(formData: FormData) {
   revalidatePath('/dashboard/loyalty')
 
   return { success: true, message: '¡Premio canjeado con éxito!' }
+}
+
+// Acción para enviar mensajes Push de Marketing a las billeteras de los clientes
+export async function sendLoyaltyCampaignPush(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const programId = formData.get('program_id') as string
+  const title = (formData.get('title') as string)?.trim()
+  const body = (formData.get('body') as string)?.trim()
+
+  if (!programId || !title || !body) {
+    return { success: false, error: 'Por favor completa el título y el mensaje de la campaña.' }
+  }
+
+  // Verificar que el usuario sea el dueño del programa
+  const { data: program } = await supabase
+    .from('loyalty_programs')
+    .select('id, slug, name')
+    .eq('id', programId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!program) {
+    return { success: false, error: 'Programa no encontrado o no tienes permisos.' }
+  }
+
+  // Enviar mensaje push a Google Wallet
+  const result = await sendLoyaltyPushMessage({
+    programSlug: program.slug,
+    title,
+    body
+  })
+
+  // Registrar en historial de campañas de la base de datos
+  await supabase.from('loyalty_messages').insert({
+    program_id: programId,
+    user_id: user.id,
+    title,
+    body,
+    status: result.success ? 'sent' : 'failed',
+    google_response: result.data || { error: result.error }
+  })
+
+  revalidatePath('/dashboard/loyalty')
+
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error,
+      needsApiEnable: result.needsApiEnable
+    }
+  }
+
+  return {
+    success: true,
+    message: '¡Mensaje de campaña enviado exitosamente a las billeteras de tus clientes!'
+  }
 }

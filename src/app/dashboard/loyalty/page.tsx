@@ -30,6 +30,7 @@ export default async function LoyaltyPage() {
 
   let members: any[] = []
   let logs: any[] = []
+  let messages: any[] = []
 
   if (program) {
     const { data: mList } = await supabase
@@ -45,8 +46,16 @@ export default async function LoyaltyPage() {
       .order('created_at', { ascending: false })
       .limit(100)
 
+    const { data: msgList } = await supabase
+      .from('loyalty_messages')
+      .select('*')
+      .eq('program_id', program.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
     members = mList || []
     logs = lList || []
+    messages = msgList || []
   }
 
   return (
@@ -158,7 +167,7 @@ export default async function LoyaltyPage() {
             </form>
           </div>
         ) : (
-          <LoyaltyManager program={program} members={members} logs={logs} />
+          <LoyaltyManager program={program} members={members} logs={logs} messages={messages} />
         )}
       </div>
     </div>

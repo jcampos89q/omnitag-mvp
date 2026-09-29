@@ -69,7 +69,9 @@ export async function GET(req: NextRequest) {
       customerPhone: phone || 'Cliente',
       customerName: customerName || 'Miembro VIP',
       currentStamps,
-      publicUrl
+      publicUrl,
+      latitude: program.latitude ? Number(program.latitude) : undefined,
+      longitude: program.longitude ? Number(program.longitude) : undefined
     })
 
     return NextResponse.json(result)

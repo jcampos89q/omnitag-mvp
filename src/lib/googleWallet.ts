@@ -96,6 +96,8 @@ export interface LoyaltyPassParams {
   customerName?: string
   currentStamps: number
   publicUrl: string
+  latitude?: number
+  longitude?: number
 }
 
 export interface VCardPassParams {
@@ -112,6 +114,8 @@ export interface VCardPassParams {
   bio?: string
   primaryColor?: string
   publicUrl: string
+  latitude?: number
+  longitude?: number
 }
 
 /**
@@ -166,6 +170,17 @@ export function generateLoyaltyWalletUrl(params: LoyaltyPassParams): {
       },
       hexBackgroundColor: brandColor,
       reviewStatus: 'UNDER_REVIEW'
+    }
+
+    // Geolocalización / Geofencing para notificar en pantalla de bloqueo al pasar cerca
+    if (params.latitude && params.longitude) {
+      loyaltyClass.locations = [
+        {
+          kind: 'walletobjects#latLongPoint',
+          latitude: params.latitude,
+          longitude: params.longitude
+        }
+      ]
     }
 
     // 2. Instancia del Cliente (Object)
@@ -290,6 +305,16 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
       },
       hexBackgroundColor: brandColor,
       reviewStatus: 'UNDER_REVIEW'
+    }
+
+    if (params.latitude && params.longitude) {
+      genericClass.locations = [
+        {
+          kind: 'walletobjects#latLongPoint',
+          latitude: params.latitude,
+          longitude: params.longitude
+        }
+      ]
     }
 
     // 2. Generic Object
