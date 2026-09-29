@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateVCardWalletUrl } from '@/lib/googleWallet'
 import { resolveTheme } from '@/lib/themes'
+import { sendPushNotificationToUser } from '@/lib/push'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -57,6 +58,43 @@ export async function GET(req: NextRequest) {
       primaryColor: theme.primary_color,
       publicUrl
     })
+
+    // 2. Si se generó el enlace con éxito, notificar al dueño de la vCard
+    if (result.success && vcard.user_id) {
+      try {
+        // Antispam / Cooldown de 2 minutos para no saturar si el usuario recarga la página
+        const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+        const { data: recentNotif } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('user_id', vcard.user_id)
+          .ilike('title', '%Google Wallet%')
+          .gt('created_at', twoMinutesAgo)
+          .limit(1)
+
+        if (!recentNotif || recentNotif.length === 0) {
+          const cardName = vcard.first_name || vcard.company_name || 'tu tarjeta digital'
+
+          // A. Notificación en el Panel de OmniTag (Campanita)
+          await supabase.from('notifications').insert({
+            user_id: vcard.user_id,
+            title: '📱 ¡Tarjeta Añadida a Google Wallet!',
+            message: `Un nuevo cliente acaba de guardar tu tarjeta "${cardName}" en su billetera móvil de Google Wallet.`,
+            type: 'success',
+            link: '/dashboard/vcard'
+          })
+
+          // B. Notificación Push nativa al celular del dueño
+          await sendPushNotificationToUser(vcard.user_id, {
+            title: '📱 ¡Tarjeta Guardada en Google Wallet!',
+            body: `Un cliente acaba de añadir tu tarjeta "${cardName}" a su billetera móvil.`,
+            url: '/dashboard/vcard'
+          })
+        }
+      } catch (notifErr) {
+        console.error('Error enviando notificación de wallet a dueño:', notifErr)
+      }
+    }
 
     return NextResponse.json(result)
   } catch (err: any) {
