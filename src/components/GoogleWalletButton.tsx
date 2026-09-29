@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Wallet, Loader2, AlertCircle, CheckCircle2, X, ExternalLink } from 'lucide-react'
 
 interface GoogleWalletButtonProps {
@@ -20,9 +20,23 @@ export default function GoogleWalletButton({
   className = '',
   style
 }: GoogleWalletButtonProps) {
+  const [isAndroid, setIsAndroid] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showDemoModal, setShowDemoModal] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+
+  useEffect(() => {
+    setMounted(true)
+    if (typeof navigator !== 'undefined') {
+      const ua = navigator.userAgent.toLowerCase()
+      setIsAndroid(/android/i.test(ua))
+    }
+  }, [])
+
+  if (!mounted || !isAndroid) {
+    return null
+  }
 
   const handleAddToWallet = async () => {
     setLoading(true)
