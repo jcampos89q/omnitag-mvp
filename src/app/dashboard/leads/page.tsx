@@ -89,7 +89,10 @@ export default async function LeadsPage() {
       created_at: l.created_at,
       vcard_id: l.vcard_id || null,
       source: (l.source as any) || 'vcard',
-      notes: l.notes || null
+      notes: l.notes || null,
+      status: (l.status as any) || 'lead',
+      category: l.category || null,
+      deal_value: l.deal_value || 0
     })
   })
 
@@ -106,7 +109,10 @@ export default async function LeadsPage() {
         created_at: m.created_at,
         vcard_id: m.program_id,
         source: 'loyalty',
-        loyaltyStamps: m.current_stamps
+        loyaltyStamps: m.current_stamps,
+        status: 'lead',
+        category: 'Club Fidelización',
+        deal_value: 0
       })
     }
   })
@@ -133,7 +139,10 @@ export default async function LeadsPage() {
         created_at: b.created_at || new Date().toISOString(),
         source: 'appointment',
         serviceName: serviceName || 'Atención General',
-        notes: `Cita: ${b.booking_date} a las ${b.booking_time} (${specialistName || 'Especialista'})`
+        notes: `Cita: ${b.booking_date} a las ${b.booking_time} (${specialistName || 'Especialista'})`,
+        status: 'contacted',
+        category: serviceName || 'Citas',
+        deal_value: 0
       })
     }
   })
@@ -152,7 +161,10 @@ export default async function LeadsPage() {
         phone: r.customer_phone,
         created_at: r.created_at,
         source: 'review',
-        notes: `Calificación ${r.rating}★ a ${specName || 'Especialista'}`
+        notes: `Calificación ${r.rating}★ a ${specName || 'Especialista'}`,
+        status: 'won',
+        category: 'Reseña Google',
+        deal_value: 0
       })
     }
   })

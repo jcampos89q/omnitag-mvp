@@ -12,6 +12,8 @@ export async function saveLead(formData: FormData) {
   const email = (formData.get('email') as string)?.trim()
   const phone = (formData.get('phone') as string)?.trim()
   const slug = (formData.get('slug') as string)?.trim()
+  const notes = (formData.get('notes') as string)?.trim() || null
+  const category = (formData.get('category') as string)?.trim() || null
 
   if (!vcardId || !name) {
     return { success: false, error: 'Nombre y vCard requeridos' }
@@ -30,7 +32,10 @@ export async function saveLead(formData: FormData) {
     name,
     email: email || null,
     phone: phone || null,
-    source: 'vcard'
+    source: 'vcard',
+    status: 'lead',
+    notes,
+    category
   }).select().single()
 
   if (error) {
