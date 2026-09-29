@@ -66,7 +66,8 @@ const LOYALTY_TEMPLATES = [
     title: '⭐ ¡Doble Sello este Fin de Semana!',
     body: 'Por cada visita acumulas 2 sellos en tu tarjeta digital. ¡Llega a tu recompensa mucho más rápido!',
     actionLabel: 'Cómo Llegar al Local',
-    sampleUrl: 'https://maps.google.com'
+    sampleUrl: 'https://maps.google.com',
+    requiresZeroCooldown: true
   },
   {
     icon: Gift,
@@ -368,6 +369,21 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
               </div>
             </div>
 
+            {/* Alerta de Cooldown para Promoción de Doble Sello */}
+            {campaignTitle.toLowerCase().includes('doble') && (program.cooldown_hours ?? 12) > 0 && (
+              <div className="p-3.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 text-xs flex items-start gap-2.5 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-amber-100">
+                    ⚠️ Importante para tu promoción de Doble Sello:
+                  </p>
+                  <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                    Tu programa tiene activo el límite antifraude de <b>1 sello cada {program.cooldown_hours || 12} horas</b>. Para que tu cajero pueda otorgar 2 sellos seguidos en la misma visita durante la promoción, debes cambiar temporalmente el <b>"Límite de Visitas (Cooldown)"</b> a <b>"Sin límite (0 horas)"</b> en la sección de Configuración de abajo. De lo contrario, el sistema rechazará el segundo sello.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-purple-200 mb-1">
@@ -667,8 +683,9 @@ export default function LoyaltyManager({ program, members, logs, messages = [] }
                   <option value="12">Máximo 1 sello cada 12 horas (Recomendado)</option>
                   <option value="24">Máximo 1 sello cada 24 horas (1 por día)</option>
                 </select>
-                <p className="text-[11px] text-amber-800/80 mt-1">
-                  Evita que un mismo cliente sume múltiples visitas en un mismo día.
+                <p className="text-[11px] text-amber-800/80 mt-1 leading-relaxed">
+                  Evita que un mismo cliente sume múltiples visitas en un mismo día. <br />
+                  <span className="font-bold text-amber-950">💡 Para promociones de Doble Sello:</span> Selecciona temporalmente <b>"Sin límite (0 horas)"</b> para que el cajero pueda otorgar 2 sellos seguidos en la misma compra.
                 </p>
               </div>
             </div>
