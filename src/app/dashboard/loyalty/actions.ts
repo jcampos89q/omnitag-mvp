@@ -298,6 +298,20 @@ export async function claimLoyaltyReward(formData: FormData) {
     console.error('Error enviando notificacion de premio:', notifErr)
   }
 
+  // Actualizar pase en Google Wallet del cliente con el nuevo balance reseteado
+  try {
+    const finalStamps = Math.max(0, remainingStamps)
+    updateLoyaltyMemberStamps({
+      programSlug: program.slug,
+      customerPhone: phone,
+      newStamps: finalStamps,
+      totalRequired: program.total_stamps_required,
+      rewardTitle: program.reward_title || 'Premio de Fidelización'
+    }).catch(err => console.error('Error actualizando Google Wallet tras canje:', err))
+  } catch (gwErr) {
+    console.error('Error invocando updateLoyaltyMemberStamps tras canje:', gwErr)
+  }
+
   revalidatePath(`/l/${program.slug}`)
   revalidatePath('/dashboard/loyalty')
 
