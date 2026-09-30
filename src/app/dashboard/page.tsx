@@ -4,7 +4,7 @@ export const revalidate = 0
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { UserCircle, Smartphone, Coffee, Users, BarChart3, ArrowRight, Zap, Sparkles, Star, QrCode, Gift, Check, ShieldCheck, Clock, AlertTriangle, Scissors, Disc } from 'lucide-react'
+import { UserCircle, Smartphone, Coffee, Users, BarChart3, ArrowRight, Zap, Sparkles, Star, QrCode, Gift, Check, ShieldCheck, Clock, AlertTriangle, Scissors, Disc, CreditCard } from 'lucide-react'
 import { getUserPlanInfo } from '@/lib/plans'
 import BusinessUpgradesShowcase from '@/components/BusinessUpgradesShowcase'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
@@ -18,10 +18,25 @@ export default async function DashboardPage() {
   }
 
   // 1. Obtener plan, contador de días restantes y privilegios del usuario
-  const [{ isPro, isAdmin, expiresAt, daysLeft, isExpired, isTrial, isDiscountEligible, discountDaysLeft, hasNfcCard }, { data: profile }] = await Promise.all([
+  const [planInfo, { data: profile }] = await Promise.all([
     getUserPlanInfo(supabase, user.id),
     supabase.from('users').select('full_name, account_type').eq('id', user.id).maybeSingle()
   ])
+
+  const {
+    isPro,
+    isAdmin,
+    expiresAt,
+    daysLeft,
+    isExpired,
+    isTrial,
+    isDiscountEligible,
+    discountDaysLeft,
+    hasNfcCard,
+    isHardwareActive,
+    hardwareDaysLeft,
+    hardwareExpiresAt
+  } = planInfo
 
   const accountType = profile?.account_type || 'professional'
   const isReviewPlateUser = accountType === 'review_plate'
@@ -232,7 +247,11 @@ export default async function DashboardPage() {
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
                 ¡Hola{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}! 👋
               </h1>
-              {isPro ? (
+              {isHardwareActive && hasNfcCard ? (
+                <span className="bg-linear-to-r from-blue-600 to-indigo-600 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                  <CreditCard className="w-3.5 h-3.5" /> TARJETA NFC PRO ({hardwareDaysLeft} {hardwareDaysLeft === 1 ? 'DÍA' : 'DÍAS'})
+                </span>
+              ) : isPro ? (
                 isTrial ? (
                   <span className="bg-linear-to-r from-amber-500 to-orange-500 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
                     <Sparkles className="w-3.5 h-3.5 text-yellow-200" /> PRUEBA GRATUITA ({daysLeft} {daysLeft === 1 ? 'DÍA' : 'DÍAS'})
@@ -250,11 +269,24 @@ export default async function DashboardPage() {
             </div>
             <p className="text-xs sm:text-sm text-gray-500">
               Bienvenido a tu suite digital de OmniTag, <span className="font-semibold text-gray-800">{user.email}</span>.
-              {isTrial && ' Estás disfrutando de 10 días de prueba gratuita con acceso total a todas las herramientas.'}
+              {isHardwareActive && hasNfcCard
+                ? ' Tu tarjeta inteligente física NFC y perfil digital vCard cuentan con membresía anual activa.'
+                : isTrial
+                ? ` Estás disfrutando de ${daysLeft} días de prueba gratuita con acceso total a todas las herramientas.`
+                : ''}
             </p>
           </div>
 
-          {!isPro && isDiscountEligible ? (
+          {hasNfcCard && isHardwareActive ? (
+            <Link
+              href="/dashboard/vcard"
+              className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
+              <CreditCard className="w-4 h-4 text-blue-400" />
+              <span>Ver mi vCard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          ) : !isPro && isDiscountEligible ? (
             <Link
               href="/dashboard/billing#metodos-pago"
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
@@ -269,14 +301,39 @@ export default async function DashboardPage() {
               className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span>{hasNfcCard ? 'Renovar PRO por L. 550' : accountType === 'professional' ? 'Obtener Tarjeta NFC PRO (L. 1,200)' : 'Mejorar a PRO por L. 550'}</span>
+              <span>{accountType === 'professional' ? 'Obtener Tarjeta NFC PRO (L. 1,200)' : 'Mejorar a PRO por L. 550'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           ) : null}
         </div>
 
-        {/* CONTADOR DE TIEMPO / ESTADO MENSUAL PRO O PRUEBA */}
-        {isPro && !isAdmin && expiresAt && (
+        {/* CONTADOR DE TIEMPO / ESTADO MENSUAL PRO O PRUEBA O HARDWARE */}
+        {isHardwareActive && hasNfcCard && !isAdmin ? (
+          <div className="mb-6 p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-linear-to-r from-blue-50/90 to-indigo-50/80 border-blue-200 text-blue-950">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <CreditCard className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-extrabold text-sm text-gray-900">
+                  Membresía de Tarjeta NFC Activa • {hardwareDaysLeft} {hardwareDaysLeft === 1 ? 'día restante' : 'días restantes'}
+                </p>
+                <p className="text-[11px] text-gray-600 mt-0.5">
+                  Vence el {hardwareExpiresAt ? new Date(hardwareExpiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }) : '1 Año'}. Tu tarjeta física y perfil vCard no requieren pagos mensuales obligatorios.
+                  {isTrial && ' (Incluye cortesía temporal en herramientas extendidas Pro).'}
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/dashboard/vcard"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs shrink-0 transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Gestionar mi vCard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        ) : isPro && !isAdmin && expiresAt && (
           <div className={`mb-6 p-4 rounded-2xl border text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
             isTrial 
               ? 'bg-amber-50/90 border-amber-200 text-amber-950'
@@ -296,8 +353,8 @@ export default async function DashboardPage() {
                 </p>
                 <p className="text-[11px] opacity-80 mt-0.5">
                   {isTrial 
-                    ? `Tu prueba gratuita de 10 días concluye el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. ${isDiscountEligible ? `¡Aprovecha el 50% de descuento (L. 275) durante tus primeros 3 días!` : ''}`
-                    : `Vence el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. ${hasNfcCard ? 'Tu tarjeta inteligente NFC cuenta con membresía anual completa sin mensualidades.' : 'Se renueva con tu pago mensual por depósito o transferencia BAC.'}`}
+                    ? `Tu prueba gratuita concluye el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. ${isDiscountEligible ? `¡Aprovecha el 50% de descuento (L. 275) durante tus primeros 3 días!` : ''}`
+                    : `Vence el ${new Date(expiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })}. Se renueva con tu pago mensual por depósito o transferencia BAC.`}
                 </p>
               </div>
             </div>
@@ -306,7 +363,7 @@ export default async function DashboardPage() {
               href="/dashboard/billing#metodos-pago"
               className="bg-black text-white font-bold px-3.5 py-2 rounded-xl text-xs shrink-0 hover:bg-gray-800 transition shadow-2xs"
             >
-              {isTrial && isDiscountEligible ? 'Aprovechar 50% OFF (L. 275) →' : hasNfcCard ? 'Detalles de Membresía →' : 'Detalles de Suscripción BAC →'}
+              {isTrial && isDiscountEligible ? 'Aprovechar 50% OFF (L. 275) →' : 'Detalles de Suscripción BAC →'}
             </Link>
           </div>
         )}
@@ -317,7 +374,7 @@ export default async function DashboardPage() {
             <div className="flex items-center gap-2.5">
               <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
               <div>
-                <p className="font-bold">Tu periodo de prueba de 10 días ha finalizado</p>
+                <p className="font-bold">Tu periodo de prueba ha finalizado</p>
                 <p className="text-[11px] opacity-80">Realiza tu depósito o transferencia por BAC para mantener todas las herramientas PRO activas.</p>
               </div>
             </div>

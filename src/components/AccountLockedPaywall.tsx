@@ -16,7 +16,7 @@ export default function AccountLockedPaywall({
     : 'recientemente'
 
   const whatsappMessage = encodeURIComponent(
-    `Hola OmniTag, mi periodo de prueba de 10 días ha finalizado (${userEmail || 'mi cuenta'}). Me gustaría solicitar una prórroga de 3 días para terminar de configurar mis herramientas.`
+    `Hola OmniTag, mi periodo de prueba ha finalizado (${userEmail || 'mi cuenta'}). Me gustaría solicitar una prórroga de 3 días para terminar de configurar mis herramientas.`
   )
 
   return (
@@ -37,7 +37,7 @@ export default function AccountLockedPaywall({
           </span>
 
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-1">
-            Tu periodo de prueba de 10 días concluyó
+            Tu periodo de prueba ha concluido
           </h1>
           <p className="text-sm sm:text-base text-rose-100 mt-2 max-w-lg mx-auto leading-relaxed">
             Tu acceso gratuito expiró el <span className="font-bold underline">{formattedDate}</span>. Para reactivar tu panel de control, enlaces y herramientas, activa tu membresía PRO.
