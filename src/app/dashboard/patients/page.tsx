@@ -14,7 +14,7 @@ export default async function PatientsPage() {
   // Ensure they are in the health industry or admin
   const { data: profile } = await supabase
     .from('users')
-    .select('industry, is_admin')
+    .select('industry, is_admin, currency, currency_symbol')
     .eq('id', user.id)
     .single()
     
@@ -59,6 +59,7 @@ export default async function PatientsPage() {
   return (
     <PatientsClient 
       initialPatients={patients || []} 
+      currencySymbol={profile?.currency_symbol || 'L.'}
       stats={{
         totalPatients,
         totalConsultations,

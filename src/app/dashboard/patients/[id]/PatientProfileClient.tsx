@@ -93,6 +93,7 @@ interface PatientProfileClientProps {
   services: AppointmentService[]
   specialists: Specialist[]
   clinicName: string
+  currencySymbol?: string
 }
 
 export default function PatientProfileClient({ 
@@ -101,7 +102,8 @@ export default function PatientProfileClient({
   bookings, 
   services, 
   specialists,
-  clinicName
+  clinicName,
+  currencySymbol = 'L.'
 }: PatientProfileClientProps) {
   const [activeTab, setActiveTab] = useState<'consultations' | 'appointments' | 'billing'>('consultations')
   
@@ -406,11 +408,11 @@ export default function PatientProfileClient({
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
                 <p className="text-gray-400 text-[10px] font-semibold">Total Pagado</p>
-                <p className="font-extrabold text-emerald-600 text-sm mt-0.5">L. {totalPaid.toLocaleString('es-HN')}</p>
+                <p className="font-extrabold text-emerald-600 text-sm mt-0.5">{currencySymbol} {totalPaid.toLocaleString('es-HN')}</p>
               </div>
               <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-100">
                 <p className="text-gray-400 text-[10px] font-semibold">Saldo Pendiente</p>
-                <p className="font-extrabold text-amber-600 text-sm mt-0.5">L. {totalPending.toLocaleString('es-HN')}</p>
+                <p className="font-extrabold text-amber-600 text-sm mt-0.5">{currencySymbol} {totalPending.toLocaleString('es-HN')}</p>
               </div>
             </div>
           </div>
@@ -703,7 +705,7 @@ export default function PatientProfileClient({
                             <td className="py-3 font-mono">{new Date(c.created_at).toLocaleDateString()}</td>
                             <td className="py-3 font-semibold text-gray-900">{c.reason}</td>
                             <td className="py-3 font-bold text-gray-900">
-                              L. {(Number(c.consultation_fee) || 0).toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+                              {currencySymbol} {(Number(c.consultation_fee) || 0).toLocaleString('es-HN', { minimumFractionDigits: 2 })}
                             </td>
                             <td className="py-3">
                               <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
@@ -897,7 +899,7 @@ export default function PatientProfileClient({
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Costo Consulta (L.)</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Costo Consulta ({currencySymbol})</label>
                     <input 
                       type="number" 
                       step="0.01" 
@@ -985,7 +987,7 @@ export default function PatientProfileClient({
                 >
                   <option value="">Consulta Médica General</option>
                   {services.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} (L. {s.price})</option>
+                    <option key={s.id} value={s.id}>{s.name} ({currencySymbol} {s.price})</option>
                   ))}
                 </select>
               </div>

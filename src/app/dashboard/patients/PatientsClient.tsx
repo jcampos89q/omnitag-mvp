@@ -48,6 +48,7 @@ export type Patient = {
 
 interface PatientsClientProps {
   initialPatients: Patient[]
+  currencySymbol?: string
   stats: {
     totalPatients: number
     totalConsultations: number
@@ -57,7 +58,7 @@ interface PatientsClientProps {
   }
 }
 
-export default function PatientsClient({ initialPatients, stats }: PatientsClientProps) {
+export default function PatientsClient({ initialPatients, stats, currencySymbol = 'L.' }: PatientsClientProps) {
   const [patients, setPatients] = useState<Patient[]>(initialPatients)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -144,7 +145,7 @@ export default function PatientsClient({ initialPatients, stats }: PatientsClien
             <DollarSign className="w-4 h-4 text-emerald-600" />
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold text-emerald-600">
-            L. {stats.totalEarned.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+            {currencySymbol} {stats.totalEarned.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
           </p>
           <p className="text-[11px] text-gray-400 mt-0.5">Ingresos por consultas</p>
         </div>
@@ -155,7 +156,7 @@ export default function PatientsClient({ initialPatients, stats }: PatientsClien
             <CreditCard className="w-4 h-4 text-amber-500" />
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold text-amber-600">
-            L. {stats.totalPending.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
+            {currencySymbol} {stats.totalPending.toLocaleString('es-HN', { minimumFractionDigits: 2 })}
           </p>
           <p className="text-[11px] text-gray-400 mt-0.5">Saldos pendientes</p>
         </div>

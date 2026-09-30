@@ -151,6 +151,7 @@ export default function AppointmentsManager({
   }
 
   const meta = getCategoryMeta(category)
+  const currencySymbol = business.currency_symbol || 'L.'
 
   return (
     <div className="space-y-6">
@@ -316,7 +317,7 @@ export default function AppointmentsManager({
                   <select name="service_id" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none">
                     <option value="">Servicio General</option>
                     {services.map(serv => (
-                      <option key={serv.id} value={serv.id}>{serv.name} (${serv.price})</option>
+                      <option key={serv.id} value={serv.id}>{serv.name} ({currencySymbol} {serv.price})</option>
                     ))}
                   </select>
                 </div>
@@ -458,7 +459,7 @@ export default function AppointmentsManager({
                       >
                         <option value="">Servicio General</option>
                         {services.map(serv => (
-                          <option key={serv.id} value={serv.id}>{serv.name} (${serv.price})</option>
+                          <option key={serv.id} value={serv.id}>{serv.name} ({currencySymbol} {serv.price})</option>
                         ))}
                       </select>
                     </div>
@@ -869,7 +870,7 @@ export default function AppointmentsManager({
                   <input type="text" name="name" required placeholder={meta.placeholderService} className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Precio *</label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Precio ({currencySymbol}) *</label>
                   <input type="number" step="0.01" name="price" required placeholder="150" className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-xs font-medium focus:border-black focus:outline-none" />
                 </div>
               </div>
@@ -929,7 +930,7 @@ export default function AppointmentsManager({
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className="font-extrabold text-base text-gray-900">${serv.price}</span>
+                  <span className="font-extrabold text-base text-gray-900">{currencySymbol} {serv.price}</span>
                   <form action={deleteService}>
                     <input type="hidden" name="service_id" value={serv.id} />
                     <button type="submit" className="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition cursor-pointer">

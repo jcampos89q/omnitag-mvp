@@ -87,6 +87,7 @@ export default function StaffPortalClient({
   const [manualTime, setManualTime] = useState<string>('10:00 AM')
   const [manualDuration, setManualDuration] = useState<number>(45)
   const [manualNotes, setManualNotes] = useState<string>('Cliente presencial (Walk-in)')
+  const currencySymbol = business?.currency_symbol || 'L.'
 
   useEffect(() => {
     const savedPin = localStorage.getItem(`staff_pin_${specialist.id}`)
@@ -425,7 +426,7 @@ export default function StaffPortalClient({
                       {!isBlock && (
                         <p className="text-xs text-gray-600 font-semibold mt-0.5">
                           ✂️ {b.appointment_services?.name || 'Servicio General'} 
-                          {b.appointment_services?.price ? ` • $${b.appointment_services.price}` : ''}
+                          {b.appointment_services?.price ? ` • ${currencySymbol} ${b.appointment_services.price}` : ''}
                         </p>
                       )}
 

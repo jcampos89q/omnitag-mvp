@@ -140,6 +140,7 @@ export default function BookingClient({
   const [reviewerPhone, setReviewerPhone] = useState<string>('')
   const [reviewerComment, setReviewerComment] = useState<string>('')
   const category = business?.category || 'barbershop'
+  const currencySymbol = business?.currency_symbol || 'L.'
 
   const getCategoryMeta = (cat: string) => {
     switch (cat) {
@@ -366,7 +367,7 @@ export default function BookingClient({
     const specialistText = bookingSuccess.specialist?.name || 'Cualquiera disponible'
     const serviceName = bookingSuccess.service?.name || 'Atención General / Cita'
     const servicePrice = bookingSuccess.service?.price !== undefined && bookingSuccess.service?.price !== null
-      ? `$${bookingSuccess.service.price}`
+      ? `${currencySymbol} ${bookingSuccess.service.price}`
       : 'Sin costo'
 
     const waText = encodeURIComponent(
@@ -500,7 +501,7 @@ export default function BookingClient({
                   )}
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-extrabold text-base text-gray-900">${service.price}</p>
+                  <p className="font-extrabold text-base text-gray-900">{currencySymbol} {service.price}</p>
                 </div>
               </button>
             )

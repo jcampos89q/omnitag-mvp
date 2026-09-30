@@ -87,6 +87,7 @@ export default function PublicMenuClient({
   const primaryColor = theme?.primary_color || '#B45309'
   const cardBg = theme?.card_bg || '#FFFFFF'
   const textColor = theme?.text_color || '#292524'
+  const currencySymbol = menu.currency || 'L.'
 
   // Verificar Plato del Día (Auto-expira si la fecha no es hoy)
   const todayStr = new Date().toISOString().slice(0, 10)
@@ -124,11 +125,11 @@ export default function PublicMenuClient({
 
     let text = ''
     if (isSalon) {
-      text = `¡Hola *${menu.name}*! Me gustaría agendar una cita para:%0A%0A✂️ *Servicio:* ${item.name}%0A💰 *Precio:* $${item.price.toFixed(2)}${item.duration_minutes ? `%0A⏱️ *Duración estimada:* ${item.duration_minutes}` : ''}%0A%0A¿Qué horarios tienen disponibles para hoy o mañana?`
+      text = `¡Hola *${menu.name}*! Me gustaría agendar una cita para:%0A%0A✂️ *Servicio:* ${item.name}%0A💰 *Precio:* ${currencySymbol} ${item.price.toFixed(2)}${item.duration_minutes ? `%0A⏱️ *Duración estimada:* ${item.duration_minutes}` : ''}%0A%0A¿Qué horarios tienen disponibles para hoy o mañana?`
     } else if (isDental) {
-      text = `¡Hola *${menu.name}*! Me interesa solicitar una cita de valoración médica para el tratamiento:%0A%0A🦷 *Tratamiento:* ${item.name}%0A💰 *Tarifa:* ${item.price_type === 'starting_at' ? 'Desde ' : ''}$${item.price.toFixed(2)}%0A%0A¿Podrían indicarme los horarios disponibles para consulta?`
+      text = `¡Hola *${menu.name}*! Me interesa solicitar una cita de valoración médica para el tratamiento:%0A%0A🦷 *Tratamiento:* ${item.name}%0A💰 *Tarifa:* ${item.price_type === 'starting_at' ? 'Desde ' : ''}${currencySymbol} ${item.price.toFixed(2)}%0A%0A¿Podrían indicarme los horarios disponibles para consulta?`
     } else {
-      text = `¡Hola *${menu.name}*! Me interesa consultar información sobre *${item.name}* ($${item.price.toFixed(2)}).`
+      text = `¡Hola *${menu.name}*! Me interesa consultar información sobre *${item.name}* (${currencySymbol} ${item.price.toFixed(2)}).`
     }
 
     const url = `https://wa.me/${cleanPhone}?text=${text}`
@@ -237,7 +238,7 @@ export default function PublicMenuClient({
                   
                   <div className="flex items-center gap-3">
                     <span className="text-2xl font-black" style={{ color: primaryColor }}>
-                      ${dailySpecial.price}
+                      {currencySymbol} {dailySpecial.price}
                     </span>
                     {menu.whatsapp_number && (
                       <button
@@ -321,7 +322,7 @@ export default function PublicMenuClient({
                               {item.name}
                             </h3>
                             <span className="font-extrabold text-base shrink-0" style={{ color: primaryColor }}>
-                              {item.price_type === 'starting_at' ? 'Desde ' : item.price_type === 'consultation' ? 'Valoración ' : ''}${item.price}
+                              {item.price_type === 'starting_at' ? 'Desde ' : item.price_type === 'consultation' ? 'Valoración ' : ''}{currencySymbol} {item.price}
                             </span>
                           </div>
 
@@ -411,7 +412,7 @@ export default function PublicMenuClient({
               <span className="text-xs font-medium text-gray-400">
                 {tableNumber ? `Mesa #${tableNumber} • ` : ''}{totalItems} {totalItems === 1 ? 'producto' : 'productos'}
               </span>
-              <span className="font-extrabold text-base sm:text-lg">${totalPrice.toFixed(2)}</span>
+              <span className="font-extrabold text-base sm:text-lg">{currencySymbol} {totalPrice.toFixed(2)}</span>
             </div>
             <button 
               onClick={() => setIsCartOpen(true)}
@@ -533,7 +534,7 @@ export default function PublicMenuClient({
                   <div key={c.item.id} className="flex justify-between items-center gap-4 border-b border-black/5 pb-3">
                     <div className="flex-1">
                       <p className="font-bold text-sm" style={{ color: textColor }}>{c.item.name}</p>
-                      <p className="opacity-60 text-xs font-medium">${c.item.price} c/u</p>
+                      <p className="opacity-60 text-xs font-medium">{currencySymbol} {c.item.price} c/u</p>
                     </div>
                     <div className="flex items-center gap-2 bg-black/5 p-1 rounded-xl">
                       <button onClick={() => removeFromCart(c.item.id)} className="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-xs text-gray-700 cursor-pointer"><Minus className="w-3.5 h-3.5"/></button>
@@ -549,7 +550,7 @@ export default function PublicMenuClient({
             <div className="p-5 border-t border-black/5 bg-black/5 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="font-medium opacity-70 text-xs sm:text-sm">Total a Pagar:</span>
-                <span className="font-extrabold text-xl sm:text-2xl" style={{ color: primaryColor }}>${totalPrice.toFixed(2)}</span>
+                <span className="font-extrabold text-xl sm:text-2xl" style={{ color: primaryColor }}>{currencySymbol} {totalPrice.toFixed(2)}</span>
               </div>
               <button 
                 onClick={sendWhatsAppOrder}

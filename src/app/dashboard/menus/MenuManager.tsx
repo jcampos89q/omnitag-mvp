@@ -47,6 +47,7 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
 
   const todayStr = new Date().toISOString().slice(0, 10)
   const isDailySpecialActive = menu.daily_special?.is_active && menu.daily_special?.date === todayStr
+  const currencySymbol = menu.currency || 'L.'
 
   return (
     <div className="space-y-8">
@@ -287,7 +288,7 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-gray-900 text-sm">{menu.daily_special.name}</h4>
-                  <span className="font-extrabold text-amber-900 text-sm">${menu.daily_special.price}</span>
+                  <span className="font-extrabold text-amber-900 text-sm">{currencySymbol} {menu.daily_special.price}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{menu.daily_special.description}</p>
               </div>
@@ -310,7 +311,7 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Precio Especial *</label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Precio Especial ({currencySymbol}) *</label>
                   <input 
                     type="number" 
                     step="0.01" 
@@ -490,7 +491,7 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
                       <div className="flex justify-between items-start">
                         <h4 className="font-bold text-gray-900 text-sm truncate pr-2">{item.name}</h4>
                         <span className="font-extrabold text-gray-900 text-sm">
-                          {item.price_type === 'starting_at' ? 'Desde ' : item.price_type === 'consultation' ? 'Valoración' : ''}${item.price}
+                          {item.price_type === 'starting_at' ? 'Desde ' : item.price_type === 'consultation' ? 'Valoración ' : ''}{currencySymbol} {item.price}
                         </span>
                       </div>
 
@@ -547,7 +548,7 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Precio *</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Precio ({currencySymbol}) *</label>
                       <input 
                         type="number" 
                         step="0.01" 

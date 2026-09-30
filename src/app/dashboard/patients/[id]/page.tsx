@@ -32,7 +32,8 @@ export default async function PatientProfilePage({
   const [
     { data: consultationsData },
     { data: patientBookingsData },
-    { data: business }
+    { data: business },
+    { data: profile }
   ] = await Promise.all([
     supabase
       .from('medical_consultations')
@@ -48,7 +49,12 @@ export default async function PatientProfilePage({
       .from('appointment_businesses')
       .select('id, name')
       .eq('user_id', user.id)
-      .maybeSingle()
+      .maybeSingle(),
+    supabase
+      .from('users')
+      .select('currency, currency_symbol')
+      .eq('id', user.id)
+      .single()
   ])
 
   // 3. Obtener especialistas y servicios de la clínica para agendar o registrar consultas
@@ -71,6 +77,7 @@ export default async function PatientProfilePage({
       services={services}
       specialists={specialists}
       clinicName={business?.name || 'Clínica / Consultorio'}
+      currencySymbol={profile?.currency_symbol || 'L.'}
     />
   )
 }
