@@ -4,7 +4,7 @@ export const revalidate = 0
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { UserCircle, Smartphone, Coffee, Users, BarChart3, ArrowRight, Zap, Sparkles, Star, QrCode, Gift, Check, ShieldCheck, Clock, AlertTriangle, Scissors, Disc, CreditCard } from 'lucide-react'
+import { UserCircle, Smartphone, Coffee, Users, BarChart3, ArrowRight, Zap, Sparkles, Star, QrCode, Gift, Check, ShieldCheck, Clock, AlertTriangle, Scissors, Disc, CreditCard, MapPin } from 'lucide-react'
 import { getUserPlanInfo } from '@/lib/plans'
 import BusinessUpgradesShowcase from '@/components/BusinessUpgradesShowcase'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
@@ -443,6 +443,28 @@ export default async function DashboardPage() {
               </div>
               <span className="mt-4 text-xs font-bold text-black inline-flex items-center gap-1 group-hover:underline">
                 Configurar Placas ({devicesCount || 0}) <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          )}
+
+          {/* Google Maps & SEO Local */}
+          {accountType !== 'professional' && (
+            <Link 
+              href="/dashboard/google-business" 
+              className="group p-5 border border-blue-200/80 rounded-2xl bg-blue-50/40 hover:bg-blue-50 hover:border-blue-300 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-blue-600 mb-3 group-hover:scale-105 transition-transform">
+                  <MapPin className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <h3 className="font-bold text-base text-gray-900">Google Maps & SEO Local</h3>
+                  <span className="text-[9px] bg-blue-100 text-blue-800 font-extrabold px-1.5 py-0.2 rounded">IA</span>
+                </div>
+                <p className="text-gray-500 text-xs leading-relaxed">Auditoría de salud de perfil en 1-clic, respuestas inteligentes a reseñas con IA y guía de verificación.</p>
+              </div>
+              <span className="mt-4 text-xs font-bold text-blue-700 inline-flex items-center gap-1 group-hover:underline">
+                Auditar Mi Perfil <ArrowRight className="w-3.5 h-3.5" />
               </span>
             </Link>
           )}

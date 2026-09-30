@@ -24,7 +24,8 @@ import {
   Scissors,
   Globe,
   ExternalLink,
-  Disc
+  Disc,
+  MapPin
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 import NotificationBell from './NotificationBell'
@@ -45,6 +46,7 @@ const baseNavItems: NavItem[] = [
   { name: 'Mi vCard', href: '/dashboard/vcard', icon: UserCircle, section: 'creaciones' },
   { name: 'Estudio QR (Imprimibles)', href: '/dashboard/qr-studio', icon: QrCode, badge: 'HD', section: 'creaciones' },
   { name: 'Reseñas Google & NFC', href: '/dashboard/devices', icon: Star, section: 'creaciones' },
+  { name: 'Google Maps & SEO Local', href: '/dashboard/google-business', icon: MapPin, badge: 'IA', section: 'creaciones' },
   { name: 'Menú & Catálogo', href: '/dashboard/menus', icon: Coffee, section: 'creaciones' },
   { name: 'Agendas & Citas', href: '/dashboard/appointments', icon: Scissors, badge: 'Nuevo', section: 'creaciones' },
   { name: 'Tarjetas de Regalo', href: '/dashboard/gift-cards', icon: Gift, badge: 'Nuevo', section: 'creaciones' },

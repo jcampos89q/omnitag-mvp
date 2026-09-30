@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const fields = 'name,formatted_address,formatted_phone_number,international_phone_number,website,types,url,geometry'
+    const fields = 'name,formatted_address,formatted_phone_number,international_phone_number,website,types,url,geometry,rating,user_ratings_total,opening_hours,photos,reviews,business_status'
     const url = 'https://maps.googleapis.com/maps/api/place/details/json?' + new URLSearchParams({
       place_id: placeId,
       fields,
@@ -47,7 +47,18 @@ export async function GET(request: NextRequest) {
       google_maps_url: result.url || '',
       direct_review_url: reviewUrl,
       lat: result.geometry?.location?.lat,
-      lng: result.geometry?.location?.lng
+      lng: result.geometry?.location?.lng,
+      rating: result.rating || 0,
+      user_ratings_total: result.user_ratings_total || 0,
+      opening_hours: result.opening_hours || null,
+      photos_count: result.photos?.length || 0,
+      photos: (result.photos || []).slice(0, 6).map((p: any) => ({
+        photo_reference: p.photo_reference,
+        width: p.width,
+        height: p.height
+      })),
+      reviews: result.reviews || [],
+      business_status: result.business_status || 'OPERATIONAL'
     })
   } catch (error: any) {
     console.error('Error fetching place details:', error)
