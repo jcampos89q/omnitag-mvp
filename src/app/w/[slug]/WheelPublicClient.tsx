@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Sparkles, Gift, Check, Clock, AlertCircle, ShieldCheck, Lock, RefreshCw, X } from 'lucide-react'
+import { Sparkles, Gift, Check, Clock, AlertCircle, ShieldCheck, Lock, RefreshCw, X, ExternalLink } from 'lucide-react'
 
 interface WheelItem {
   id: string
@@ -664,6 +664,26 @@ export default function WheelPublicClient({
               <p className="text-xs font-mono font-black text-amber-300">2 Horas</p>
             </div>
           </div>
+
+          {/* Botón de Acceso al Certificado / Gift Card Oficial */}
+          {wonPrize.prize?.gift_card_url && (
+            <div className="pt-1">
+              <a
+                href={wonPrize.prize.gift_card_url}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:scale-[1.02] cursor-pointer"
+              >
+                <span>🎁 Ver Mi Certificado / Gift Card</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+              {wonPrize.prize?.security_pin && (
+                <p className="text-[10px] text-amber-300/80 font-mono mt-1 text-center">
+                  PIN de Canje: <span className="font-bold text-white bg-black/40 px-2 py-0.5 rounded">{wonPrize.prize.security_pin}</span>
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Botón de Redención para el Mesero */}
           <div className="pt-1">

@@ -28,7 +28,8 @@ import {
   ExternalLink,
   Pill,
   Thermometer,
-  Scale
+  Scale,
+  MapPin
 } from 'lucide-react'
 import Link from 'next/link'
 import { 

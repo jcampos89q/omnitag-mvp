@@ -74,7 +74,10 @@ export function signGoogleWalletJwt(
 
 function getProxiedImageUrl(url?: string): string {
   if (!url || !url.startsWith('http')) {
-    return 'https://www.omnitag.site/logo-light.png'
+    return 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&h=400&fit=crop&q=85'
+  }
+  if (url.includes('unsplash.com')) {
+    return url
   }
   // Si la imagen proviene de Supabase o servicios externos que bloquean crawlers de Google (x-robots-tag),
   // se sirve a través de nuestro proxy oficial en omnitag.site
@@ -141,21 +144,24 @@ export function generateLoyaltyWalletUrl(params: LoyaltyPassParams): {
   }
 
   try {
-    const classSuffix = sanitizeWalletId(`loyalty_${params.programSlug}_v2`)
+    const classSuffix = sanitizeWalletId(`loyalty_${params.programSlug}_v4`)
     const objectSuffix = sanitizeWalletId(
-      `loyalty_${params.programSlug}_${params.customerPhone.replace(/\D/g, '') || 'client'}`
+      `loyalty_${params.programSlug}_${params.customerPhone.replace(/\D/g, '') || 'client'}_v4`
     )
 
     const classId = `${issuerId}.${classSuffix}`
     const objectId = `${issuerId}.${objectSuffix}`
 
-    const brandColor = sanitizeHexColor(params.primaryColor)
-    const logoUri = getProxiedImageUrl(params.logoUrl)
+    const brandColor = sanitizeHexColor(params.primaryColor || '#D97706')
+    const defaultLoyaltyLogo = 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&h=400&fit=crop&q=85'
+    const logoUri = getProxiedImageUrl(params.logoUrl || defaultLoyaltyLogo)
+    const defaultLoyaltyHero = 'https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=1032&h=336&fit=crop&q=85'
+    const heroUri = getProxiedImageUrl(defaultLoyaltyHero)
 
     // 1. Plantilla de Clase (Class)
     const loyaltyClass: any = {
       id: classId,
-      issuerName: params.businessName || 'OmniTag',
+      issuerName: params.businessName || 'OmniTag Rewards',
       programName: params.rewardTitle || 'Club de Recompensas',
       programLogo: {
         sourceUri: {
@@ -165,6 +171,15 @@ export function generateLoyaltyWalletUrl(params: LoyaltyPassParams): {
           defaultValue: {
             language: 'es',
             value: `Logo de ${params.businessName}`
+          }
+        }
+      },
+      heroImage: {
+        sourceUri: { uri: heroUri },
+        contentDescription: {
+          defaultValue: {
+            language: 'es',
+            value: `Club VIP ${params.businessName}`
           }
         }
       },
@@ -197,6 +212,15 @@ export function generateLoyaltyWalletUrl(params: LoyaltyPassParams): {
           string: `${params.currentStamps} de ${params.totalStampsRequired} sellos ⭐`
         }
       },
+      heroImage: {
+        sourceUri: { uri: heroUri },
+        contentDescription: {
+          defaultValue: {
+            language: 'es',
+            value: `Club VIP ${params.businessName}`
+          }
+        }
+      },
       barcode: {
         type: 'QR_CODE',
         value: params.publicUrl,
@@ -208,7 +232,7 @@ export function generateLoyaltyWalletUrl(params: LoyaltyPassParams): {
           body: params.rewardTitle
         },
         {
-          header: 'Progreso del Club',
+          header: '⭐ Progreso del Club',
           body: `Llevas ${params.currentStamps} de ${params.totalStampsRequired} sellos acumulados en tus visitas.`
         }
       ],
@@ -275,15 +299,17 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
   }
 
   try {
-    const classSuffix = sanitizeWalletId(`vcard_${params.vcardSlug}_v2`)
-    const objectSuffix = sanitizeWalletId(`vcard_${params.vcardSlug}_obj_v2`)
+    const classSuffix = sanitizeWalletId(`vcard_${params.vcardSlug}_v4`)
+    const objectSuffix = sanitizeWalletId(`vcard_${params.vcardSlug}_obj_v4`)
 
     const classId = `${issuerId}.${classSuffix}`
     const objectId = `${issuerId}.${objectSuffix}`
 
-    const brandColor = sanitizeHexColor(params.primaryColor)
-    const logoUri = getProxiedImageUrl(params.avatarUrl || params.coverUrl)
-    const coverUri = params.coverUrl ? getProxiedImageUrl(params.coverUrl) : ''
+    const brandColor = sanitizeHexColor(params.primaryColor || '#0F172A')
+    const defaultAvatar = 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&h=400&fit=crop&q=85'
+    const logoUri = getProxiedImageUrl(params.avatarUrl || params.coverUrl || defaultAvatar)
+    const defaultVCardCover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1032&h=336&fit=crop&q=85'
+    const coverUri = getProxiedImageUrl(params.coverUrl || defaultVCardCover)
 
     const displayName = params.companyName || params.fullName || 'OmniTag'
     const displaySubtitle = params.jobTitle || 'Contacto Profesional'
@@ -300,6 +326,17 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
           defaultValue: {
             language: 'es',
             value: `Logo de ${displayName}`
+          }
+        }
+      },
+      heroImage: {
+        sourceUri: {
+          uri: coverUri
+        },
+        contentDescription: {
+          defaultValue: {
+            language: 'es',
+            value: `Portada de ${displayName}`
           }
         }
       },
@@ -322,28 +359,28 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
 
     if (params.phone) {
       textModules.push({
-        header: 'Teléfono / WhatsApp',
+        header: '📱 Teléfono / WhatsApp',
         body: params.phone
       })
     }
 
     if (params.email) {
       textModules.push({
-        header: 'Correo Electrónico',
+        header: '✉️ Correo Electrónico',
         body: params.email
       })
     }
 
     if (params.address) {
       textModules.push({
-        header: 'Ubicación / Dirección',
+        header: '📍 Ubicación / Dirección',
         body: params.address
       })
     }
 
     if (params.bio) {
       textModules.push({
-        header: 'Sobre Nosotros',
+        header: 'ℹ️ Sobre Nosotros',
         body: params.bio.length > 250 ? `${params.bio.slice(0, 247)}...` : params.bio
       })
     }
@@ -351,7 +388,7 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
     const links: any[] = [
       {
         uri: params.publicUrl,
-        description: 'Ver Perfil Digital'
+        description: 'Ver Perfil Digital Oficial'
       }
     ]
 
@@ -373,7 +410,7 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
       cardTitle: {
         defaultValue: {
           language: 'es',
-          value: displayName
+          value: `${displayName} • Contacto Oficial`
         }
       },
       header: {
@@ -399,20 +436,7 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
           }
         }
       },
-      barcode: {
-        type: 'QR_CODE',
-        value: params.publicUrl,
-        alternateText: 'Escanear para abrir contacto'
-      },
-      textModulesData: textModules,
-      linksModuleData: {
-        uris: links
-      }
-    }
-
-    // Si la tarjeta tiene imagen de portada panorámica, se agrega como Hero Banner de Google Wallet
-    if (coverUri) {
-      genericObject.heroImage = {
+      heroImage: {
         sourceUri: {
           uri: coverUri
         },
@@ -422,6 +446,15 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
             value: `Portada de ${displayName}`
           }
         }
+      },
+      barcode: {
+        type: 'QR_CODE',
+        value: params.publicUrl,
+        alternateText: 'Escanear para abrir contacto'
+      },
+      textModulesData: textModules,
+      linksModuleData: {
+        uris: links
       }
     }
 
@@ -455,3 +488,194 @@ export function generateVCardWalletUrl(params: VCardPassParams): {
     }
   }
 }
+
+/**
+/**
+ * Colección de banners de alta resolución para pases de Google Wallet según la temática
+ */
+const THEME_HERO_IMAGES: Record<string, string> = {
+  luxury_gold: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1032&h=336&fit=crop&q=85', // Oro y destellos negros de lujo
+  spa_rose: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1032&h=336&fit=crop&q=85', // Spa sereno con piedras y flores rosas
+  emerald_botanic: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=1032&h=336&fit=crop&q=85', // Piedras de spa zen esmeralda y bambú
+  champagne: 'https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=1032&h=336&fit=crop&q=85', // Tonos dorados champagne de celebración
+  festive_red: 'https://images.unsplash.com/photo-1512909006721-3d6018887383?w=1032&h=336&fit=crop&q=85', // Lazo festivo rojo rubí de regalo
+}
+
+/**
+ * Genera un pase nativo de Google Wallet (Gift Card / Voucher Pass)
+ */
+export function createGoogleWalletGiftCardPass(params: {
+  card: {
+    code: string
+    title: string
+    card_type: string
+    service_name?: string | null
+    current_balance: number
+    currency_symbol?: string
+    recipient_name: string
+    buyer_name?: string | null
+    gift_message?: string | null
+    theme_color?: string
+    card_image_url?: string | null
+    expires_at?: string | null
+  }
+  businessName: string
+  logoUrl?: string | null
+  publicUrl: string
+}): {
+  success: boolean
+  url?: string
+  error?: string
+} {
+  const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID
+  const clientEmail = process.env.GOOGLE_WALLET_CLIENT_EMAIL
+  const privateKey = process.env.GOOGLE_WALLET_PRIVATE_KEY
+
+  if (!issuerId || !clientEmail || !privateKey) {
+    return {
+      success: false,
+      error: 'Credenciales de Google Wallet no configuradas.'
+    }
+  }
+
+  try {
+    const classSuffix = sanitizeWalletId(`giftcard_${params.card.code}_v4`)
+    const objectSuffix = sanitizeWalletId(`giftcard_${params.card.code}_obj_v4`)
+    const classId = `${issuerId}.${classSuffix}`
+    const objectId = `${issuerId}.${objectSuffix}`
+
+    const brandColor = sanitizeHexColor(params.card.theme_color || '#78350F')
+
+    // Logo oficial del negocio o fallback de regalo de lujo
+    const defaultGiftLogo = 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&h=400&fit=crop&q=85'
+    const rawLogo = (params.logoUrl && params.logoUrl.startsWith('http')) ? params.logoUrl : defaultGiftLogo
+    const logoUri = getProxiedImageUrl(rawLogo)
+
+    // Hero banner temático para Google Wallet
+    const themeKey = params.card.card_image_url || 'luxury_gold'
+    const rawHero = (params.card.card_image_url && params.card.card_image_url.startsWith('http'))
+      ? params.card.card_image_url
+      : (THEME_HERO_IMAGES[themeKey] || THEME_HERO_IMAGES.luxury_gold)
+    const heroUri = getProxiedImageUrl(rawHero)
+
+    const genericClass: any = {
+      id: classId,
+      issuerName: params.businessName || 'OmniTag Gift Card',
+      reviewStatus: 'UNDER_REVIEW',
+      hexBackgroundColor: brandColor,
+      logo: {
+        sourceUri: { uri: logoUri },
+        contentDescription: { defaultValue: { language: 'es', value: `Logo de ${params.businessName}` } }
+      }
+    }
+
+    const valueDisplay = params.card.card_type === 'service'
+      ? (params.card.service_name || '1x Servicio Completo')
+      : `${params.card.currency_symbol || 'L.'} ${Number(params.card.current_balance).toLocaleString('es-HN', { minimumFractionDigits: 2 })}`
+
+    const genericObject: any = {
+      id: objectId,
+      classId: classId,
+      state: 'ACTIVE',
+      hexBackgroundColor: brandColor,
+      cardTitle: {
+        defaultValue: {
+          language: 'es',
+          value: `${params.businessName} • Gift Card`
+        }
+      },
+      subheader: {
+        defaultValue: {
+          language: 'es',
+          value: `Para: ${params.card.recipient_name}`
+        }
+      },
+      header: {
+        defaultValue: {
+          language: 'es',
+          value: valueDisplay
+        }
+      },
+      logo: {
+        sourceUri: { uri: logoUri },
+        contentDescription: { defaultValue: { language: 'es', value: `Logo de ${params.businessName}` } }
+      },
+      heroImage: {
+        sourceUri: { uri: heroUri },
+        contentDescription: {
+          defaultValue: {
+            language: 'es',
+            value: `Tarjeta de Regalo ${params.businessName}`
+          }
+        }
+      },
+      barcode: {
+        type: 'QR_CODE',
+        value: params.publicUrl,
+        alternateText: params.card.code
+      },
+      textModulesData: [
+        {
+          header: '🎁 De parte de',
+          body: params.card.buyer_name || 'Un ser querido'
+        },
+        {
+          header: '💬 Dedicatoria',
+          body: params.card.gift_message || '¡Disfruta mucho tu regalo!'
+        },
+        {
+          header: '💳 N° de Serie / Código',
+          body: params.card.code
+        },
+        {
+          header: '📅 Vencimiento',
+          body: params.card.expires_at 
+            ? new Date(params.card.expires_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })
+            : 'Sin fecha de vencimiento (Válido siempre)'
+        },
+        {
+          header: 'ℹ️ Instrucciones de Canje',
+          body: `Presenta este pase o su código QR en caja al pagar tus servicios en ${params.businessName}.`
+        }
+      ],
+      linksModuleData: {
+        uris: [
+          {
+            uri: params.publicUrl,
+            description: 'Ver voucher oficial y saldo en vivo'
+          }
+        ]
+      }
+    }
+
+    const now = Math.floor(Date.now() / 1000)
+    const claims = {
+      iss: clientEmail,
+      aud: 'google',
+      typ: 'savetowallet',
+      iat: now,
+      origins: [
+        'https://omnitag.site',
+        'https://www.omnitag.site',
+        'http://localhost:3000'
+      ],
+      payload: {
+        genericClasses: [genericClass],
+        genericObjects: [genericObject]
+      }
+    }
+
+    const token = signGoogleWalletJwt(claims, clientEmail, privateKey)
+    return {
+      success: true,
+      url: `https://pay.google.com/gp/v/save/${token}`
+    }
+  } catch (err: any) {
+    console.error('Error generando Google Wallet Gift Card Pass:', err)
+    return {
+      success: false,
+      error: err.message || 'Error al firmar el pase de Google Wallet.'
+    }
+  }
+}
+

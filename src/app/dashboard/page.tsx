@@ -529,6 +529,28 @@ export default async function DashboardPage() {
             </Link>
           )}
 
+          {/* Tarjetas de Regalo & Vouchers */}
+          {accountType !== 'professional' && (
+            <Link 
+              href="/dashboard/gift-cards" 
+              className="group p-5 border border-pink-200/80 rounded-2xl bg-pink-50/40 hover:bg-pink-50 hover:border-pink-300 transition-all flex flex-col justify-between"
+            >
+              <div>
+                <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-pink-600 mb-3 group-hover:scale-105 transition-transform">
+                  <Gift className="w-6 h-6" />
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <h3 className="font-bold text-base text-gray-900">Tarjetas de Regalo (Gift Cards)</h3>
+                  <span className="text-[9px] bg-pink-200 text-pink-900 font-extrabold px-1.5 py-0.2 rounded">NUEVO</span>
+                </div>
+                <p className="text-gray-500 text-xs leading-relaxed">Emite certificados y tarjetas de regalo de lujo físicas y digitales para Google Wallet con cobro en caja.</p>
+              </div>
+              <span className="mt-4 text-xs font-bold text-pink-700 inline-flex items-center gap-1 group-hover:underline">
+                Gestionar Gift Cards <ArrowRight className="w-3.5 h-3.5" />
+              </span>
+            </Link>
+          )}
+
           {/* Contactos CRM */}
           <Link 
             href="/dashboard/leads" 

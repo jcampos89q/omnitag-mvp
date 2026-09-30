@@ -115,6 +115,23 @@ const BUSINESS_FEATURES: FeatureAd[] = [
     iconBg: 'bg-emerald-600 text-white',
     accentColor: 'border-emerald-500/30 bg-emerald-50/40 text-emerald-900',
     ctaText: 'Desbloquear Estudio QR HD por L. 550/mes'
+  },
+  {
+    id: 'gift_cards',
+    tag: 'FLUJO DE CAJA ANTICIPADO',
+    title: 'Tarjetas de Regalo & Vouchers Digitales de Lujo',
+    subtitle: 'Vende certificados antes de entregar el servicio y capta nuevos clientes',
+    description: 'Permite a tus clientes obsequiar tratamientos de spa, cenas o servicios a sus seres queridos con certificados tradicionales para imprimir o guardar en Google Wallet.',
+    benefits: [
+      'Genera ingresos por adelantado inyectando liquidez inmediata a tu negocio',
+      'Certificados de lujo para imprimir en 1 página con filigranas victorianas',
+      'Pases nativos para Google Wallet con hero banner HD y chip EMV digital',
+      'Control de canje total o parcial en mostrador con auditoría en vivo'
+    ],
+    icon: Gift,
+    iconBg: 'bg-pink-600 text-white',
+    accentColor: 'border-pink-500/30 bg-pink-50/40 text-pink-900',
+    ctaText: 'Emitir Gift Cards por L. 550/mes'
   }
 ]
 

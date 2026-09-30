@@ -253,6 +253,57 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 11. Generar automáticamente Gift Card / Certificado Digital Oficial para el Premio
+    let generatedGiftCard: any = null
+    try {
+      const cleanCoupon = (couponCode || '').replace(/[^A-Z0-9]/gi, '').slice(0, 4)
+      const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase()
+      const gcCode = `RUL-${cleanCoupon || randomSuffix}`
+      const pinCode = Math.floor(1000 + Math.random() * 9000).toString()
+
+      const isService = selectedItem.reward_type === 'free_item'
+      const title = `Premio Ruleta: ${selectedItem.label}`
+
+      // Si el texto incluye valor monetario (ej: $10, L. 200, 150)
+      let rewardAmount = 0
+      const matchNumber = selectedItem.label.match(/\d+/)
+      if (matchNumber && !isService) {
+        rewardAmount = parseFloat(matchNumber[0]) || 0
+      }
+
+      const { data: newGc } = await supabase
+        .from('gift_cards')
+        .insert({
+          user_id: wheel.user_id,
+          code: gcCode,
+          security_pin: pinCode,
+          title,
+          card_type: isService ? 'service' : 'amount',
+          service_name: isService ? selectedItem.label : null,
+          initial_amount: rewardAmount,
+          current_balance: rewardAmount,
+          currency: 'HNL',
+          currency_symbol: 'L.',
+          status: 'active',
+          buyer_name: 'Ruleta de la Fortuna VIP',
+          recipient_name: cleanName,
+          recipient_phone: cleanPhone,
+          gift_message: `¡Felicidades ${cleanName}! Has ganado este premio girando la Ruleta de la Fortuna.`,
+          theme_color: selectedItem.bg_color || '#d97706',
+          expires_at: expiresAt,
+          source: 'prize_wheel',
+          source_id: wheel.id
+        })
+        .select()
+        .maybeSingle()
+
+      if (newGc) {
+        generatedGiftCard = newGc
+      }
+    } catch (gcErr) {
+      console.error('Error generando gift card desde la ruleta:', gcErr)
+    }
+
     return NextResponse.json({
       success: true,
       winningIndex,
@@ -262,7 +313,10 @@ export async function POST(request: NextRequest) {
         label: selectedItem.label,
         icon: selectedItem.icon,
         reward_type: selectedItem.reward_type,
-        stamp_count: selectedItem.stamp_count
+        stamp_count: selectedItem.stamp_count,
+        gift_card_code: generatedGiftCard?.code || couponCode,
+        gift_card_url: generatedGiftCard ? `/g/${generatedGiftCard.code}` : null,
+        security_pin: generatedGiftCard?.security_pin || null
       },
       expiresAt
     })

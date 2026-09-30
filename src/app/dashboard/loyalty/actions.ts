@@ -312,10 +312,58 @@ export async function claimLoyaltyReward(formData: FormData) {
     console.error('Error invocando updateLoyaltyMemberStamps tras canje:', gwErr)
   }
 
+  // Emitir automáticamente Gift Card / Certificado Digital Oficial de Recompensa
+  let loyaltyGiftCard: any = null
+  try {
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+    let rand = ''
+    for (let i = 0; i < 4; i++) rand += chars.charAt(Math.floor(Math.random() * chars.length))
+    const gcCode = `LOY-${rand}`
+    const pinCode = Math.floor(1000 + Math.random() * 9000).toString()
+
+    const { data: newGc } = await supabase
+      .from('gift_cards')
+      .insert({
+        user_id: program.user_id,
+        code: gcCode,
+        security_pin: pinCode,
+        title: `Recompensa de Fidelidad: ${program.reward_title}`,
+        card_type: 'service',
+        service_name: program.reward_title,
+        initial_amount: 0,
+        current_balance: 0,
+        currency: 'HNL',
+        currency_symbol: 'L.',
+        status: 'active',
+        buyer_name: 'Programa de Sellos VIP',
+        recipient_name: member.customer_name || 'Cliente Frecuente',
+        recipient_phone: phone,
+        gift_message: `¡Felicitaciones! Has completado tus ${program.total_stamps_required} sellos de fidelidad en ${program.name}. Presenta este certificado en caja para disfrutar tu recompensa.`,
+        theme_color: '#059669',
+        source: 'loyalty_reward',
+        source_id: program.id
+      })
+      .select()
+      .maybeSingle()
+
+    if (newGc) {
+      loyaltyGiftCard = newGc
+    }
+  } catch (err) {
+    console.error('Error generando gift card de lealtad:', err)
+  }
+
   revalidatePath(`/l/${program.slug}`)
   revalidatePath('/dashboard/loyalty')
+  revalidatePath('/dashboard/gift-cards')
 
-  return { success: true, message: '¡Premio canjeado con éxito!' }
+  return { 
+    success: true, 
+    message: '¡Premio canjeado con éxito!',
+    rewardTitle: program.reward_title,
+    giftCardCode: loyaltyGiftCard?.code || null,
+    giftCardUrl: loyaltyGiftCard ? `/g/${loyaltyGiftCard.code}` : null
+  }
 }
 
 // Acción para enviar mensajes Push de Marketing a las billeteras de los clientes
