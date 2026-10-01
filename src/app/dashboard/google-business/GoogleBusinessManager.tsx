@@ -458,16 +458,19 @@ export default function GoogleBusinessManager({
   const handleGenerateGooglePost = () => {
     const biz = selectedPlace?.name || bizForm.name || businessName || 'nuestro negocio'
     if (postType === 'promo') {
+      const topic = postHighlight.trim() || 'Aprovecha nuestras promociones especiales'
       setGeneratedPost(
-        `✨ ¡Promoción Especial en ${biz}! ✨\n\n${postHighlight}.\n\nVen y disfruta de una experiencia única con atención de primera calidad. ¡Aprovecha hoy mismo!\n\n📍 Visítanos o contáctanos por WhatsApp para agendar tu cita o consultar el catálogo digital.`
+        `✨ ¡Promoción Especial en ${biz}! ✨\n\n🎉 ${topic}.\n\nVen y disfruta de la mejor atención y calidad garantizada. ¡Oferta por tiempo limitado!\n\n📍 Contáctanos por WhatsApp o visita nuestro catálogo digital para aprovechar esta promoción.`
       )
     } else if (postType === 'weekly_tip') {
+      const topic = postHighlight.trim() || 'cuidar cada detalle en tu negocio marca la diferencia'
       setGeneratedPost(
-        `💡 Consejo de la Semana por ${biz} 💡\n\n¿Sabías que cuidar de los pequeños detalles marca toda la diferencia? En ${biz} estamos comprometidos con tu bienestar y satisfacción.\n\n👉 Descubre todos nuestros servicios disponibles esta semana. ¡Te esperamos!`
+        `💡 Consejo de la Semana por ${biz} 💡\n\n👉 ${topic.charAt(0).toUpperCase() + topic.slice(1)}.\n\nEn ${biz} estamos comprometidos con ayudarte a alcanzar los mejores resultados con atención profesional y soluciones a tu medida.\n\n📲 ¡Escríbenos hoy por WhatsApp y conversemos sobre tu proyecto!`
       )
     } else {
+      const topic = postHighlight.trim() || 'Nuevas soluciones y servicios disponibles'
       setGeneratedPost(
-        `🎉 ¡Nuevo Servicio Disponible en ${biz}! 🎉\n\nAmpliamos nuestras opciones para ofrecerte lo mejor: ${postHighlight}.\n\nConsulta detalles, precios y adquiere también tus Tarjetas de Regalo oficiales para consentir a alguien especial. ¡Escríbenos ahora!`
+        `🎉 ¡Novedad en ${biz}! 🎉\n\n🚀 ${topic}.\n\nAmpliamos nuestras opciones para ofrecerte siempre lo más innovador con el respaldo de nuestro equipo.\n\n📲 Consulta detalles, disponibilidad y cotizaciones directamente con nosotros. ¡Te esperamos!`
       )
     }
   }
@@ -1553,6 +1556,16 @@ export default function GoogleBusinessManager({
                 {copiedText === 'ai_post' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
                 <span>{copiedText === 'ai_post' ? '¡Copiado!' : 'Copiar Texto del Post'}</span>
               </button>
+
+              <a
+                href={selectedPlace?.google_maps_url || 'https://business.google.com'}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition flex items-center justify-center gap-2 text-center"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Abrir Google Maps para Publicar Novedad</span>
+              </a>
             </div>
           </div>
         </div>
