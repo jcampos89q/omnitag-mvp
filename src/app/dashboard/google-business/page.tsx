@@ -15,19 +15,35 @@ export default async function GoogleBusinessPage() {
     redirect('/login')
   }
 
-  const [planInfo, { data: profile }, { data: devices }, { data: vcard }] = await Promise.all([
+  const [planInfo, { data: profile }, { data: devices }, { data: vcard }, { data: menus }] = await Promise.all([
     getUserPlanInfo(supabase, user.id),
     supabase.from('users').select('full_name, currency, currency_symbol').eq('id', user.id).maybeSingle(),
-    supabase.from('devices').select('id, name, device_type, redirect_url, google_place_id, business_name').eq('user_id', user.id),
-    supabase.from('vcards').select('company_name, first_name, slug, phone, website').eq('user_id', user.id).limit(1).maybeSingle()
+    supabase.from('devices').select('id, name, device_type, redirect_url, place_id, business_name, tag_id, review_filter_enabled').eq('user_id', user.id),
+    supabase.from('vcards').select('id, company_name, first_name, slug, phone, website, business_address, business_hours, bio, avatar_url, cover_url').eq('user_id', user.id).limit(1).maybeSingle(),
+    supabase.from('menus').select('id, name, slug').eq('user_id', user.id).limit(5)
   ])
 
+  // Obtener dispositivos y sus quejas privadas capturadas por el Escudo Anti-Quejas
+  const userDevices = devices || []
+  const deviceIds = userDevices.map(d => d.id)
+
+  let privateFeedbacks: any[] = []
+  if (deviceIds.length > 0) {
+    const { data: feedbacks } = await supabase
+      .from('private_feedbacks')
+      .select('id, device_id, rating, message, customer_name, customer_phone, customer_email, status, resolution_notes, created_at, devices(tag_id, business_name)')
+      .in('device_id', deviceIds)
+      .order('created_at', { ascending: false })
+
+    privateFeedbacks = feedbacks || []
+  }
+
   // Detectar si el usuario ya tiene un Place ID configurado en alguna de sus placas
-  const deviceWithPlace = devices?.find(d => d.google_place_id || (d.redirect_url && d.redirect_url.includes('placeid=')))
+  const deviceWithPlace = userDevices.find(d => d.place_id || (d.redirect_url && d.redirect_url.includes('placeid=')))
   let preloadedPlaceId: string | null = null
 
-  if (deviceWithPlace?.google_place_id) {
-    preloadedPlaceId = deviceWithPlace.google_place_id
+  if (deviceWithPlace?.place_id) {
+    preloadedPlaceId = deviceWithPlace.place_id
   } else if (deviceWithPlace?.redirect_url && deviceWithPlace.redirect_url.includes('placeid=')) {
     const match = deviceWithPlace.redirect_url.match(/placeid=([^&]+)/)
     if (match) preloadedPlaceId = match[1]
@@ -41,7 +57,10 @@ export default async function GoogleBusinessPage() {
         isPro={planInfo.isPro}
         businessName={defaultBusinessName}
         preloadedPlaceId={preloadedPlaceId}
-        userDevices={devices || []}
+        userDevices={userDevices}
+        initialFeedbacks={privateFeedbacks}
+        vcardProfile={vcard || null}
+        userMenus={menus || []}
       />
     </div>
   )
