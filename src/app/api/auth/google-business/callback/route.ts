@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get('state')
 
   const origin = new URL(request.url).origin
-  const redirectTarget = new URL('/dashboard/google-business', origin)
+  const redirectTarget = new URL('/dashboard/google-business?tab=api', origin)
 
   if (error || !code) {
     console.error('Google OAuth callback error:', error)

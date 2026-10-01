@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { 
   Building2, 
   Search, 
@@ -128,7 +129,13 @@ export default function GoogleBusinessManager({
   userMenus = [],
   initialGoogleConnection = null
 }: GoogleBusinessManagerProps) {
-  const [activeTab, setActiveTab] = useState<'profile' | 'shield' | 'audit' | 'reviews' | 'posts' | 'api' | 'verification'>('shield')
+  const searchParams = useSearchParams()
+  const tabFromUrl = searchParams.get('tab') as any
+  const isConnectedParam = searchParams.get('connected') === 'success'
+  const errorParam = searchParams.get('error')
+
+  const defaultTab = tabFromUrl || (isConnectedParam || errorParam ? 'api' : 'shield')
+  const [activeTab, setActiveTab] = useState<'profile' | 'shield' | 'audit' | 'reviews' | 'posts' | 'api' | 'verification'>(defaultTab)
   const [selectedPlace, setSelectedPlace] = useState<PlaceFullData | null>(null)
   const [isLoadingDetails, setIsLoadingDetails] = useState<boolean>(false)
   const [copiedText, setCopiedText] = useState<string | null>(null)
@@ -1791,6 +1798,32 @@ export default function GoogleBusinessManager({
                 </div>
               )}
             </div>
+
+            {/* Alertas de Retorno OAuth */}
+            {errorParam && (
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold space-y-1">
+                <div className="flex items-center gap-2 text-rose-800 font-black">
+                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>
+                    {errorParam === 'missing_credentials_in_vercel'
+                      ? 'Atención: Faltan credenciales en Vercel'
+                      : 'Aviso de autenticación de Google'}
+                  </span>
+                </div>
+                <p className="font-normal text-rose-700 leading-relaxed">
+                  {errorParam === 'missing_credentials_in_vercel'
+                    ? 'Para que el botón funcione en www.omnitag.site, debes agregar GOOGLE_OAUTH_CLIENT_ID y GOOGLE_OAUTH_CLIENT_SECRET en las Variables de Entorno de Vercel y hacer un Redeploy.'
+                    : `Google devolvió el estado: "${errorParam}". Revisa que la aplicación en Google Cloud esté en Producción o que tu correo esté agregado como usuario de prueba.`}
+                </p>
+              </div>
+            )}
+
+            {isConnectedParam && (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span>¡Tu cuenta de Google Business Profile ha sido vinculada con éxito! Ya puedes gestionar respuestas y novedades directas.</span>
+              </div>
+            )}
 
             {/* Estado de Conexión Actual */}
             {googleConnection ? (

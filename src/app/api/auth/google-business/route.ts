@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID
   if (!clientId) {
     return NextResponse.redirect(
-      new URL('/dashboard/google-business?setup_oauth=true', request.url)
+      new URL('/dashboard/google-business?tab=api&error=missing_credentials_in_vercel', request.url)
     )
   }
 

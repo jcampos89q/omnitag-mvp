@@ -7,6 +7,8 @@ import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { getUserPlanInfo } from '@/lib/plans'
 import GoogleBusinessManager from './GoogleBusinessManager'
 
+import { Suspense } from 'react'
+
 export default async function GoogleBusinessPage() {
   const supabase = await createClient()
   const { user } = await getEffectiveUser(supabase)
@@ -54,16 +56,18 @@ export default async function GoogleBusinessPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      <GoogleBusinessManager
-        isPro={planInfo.isPro}
-        businessName={defaultBusinessName}
-        preloadedPlaceId={preloadedPlaceId}
-        userDevices={userDevices}
-        initialFeedbacks={privateFeedbacks}
-        vcardProfile={vcard || null}
-        userMenus={menus || []}
-        initialGoogleConnection={googleConnection || null}
-      />
+      <Suspense fallback={<div className="p-8 text-center text-gray-400 font-bold">Cargando Centro de Control...</div>}>
+        <GoogleBusinessManager
+          isPro={planInfo.isPro}
+          businessName={defaultBusinessName}
+          preloadedPlaceId={preloadedPlaceId}
+          userDevices={userDevices}
+          initialFeedbacks={privateFeedbacks}
+          vcardProfile={vcard || null}
+          userMenus={menus || []}
+          initialGoogleConnection={googleConnection || null}
+        />
+      </Suspense>
     </div>
   )
 }
