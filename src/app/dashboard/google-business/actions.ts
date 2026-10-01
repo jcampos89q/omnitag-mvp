@@ -181,6 +181,58 @@ async function getFreshAccessToken(connection: any, supabase: any) {
 }
 
 /**
+ * Asegura que se tengan el Account ID y Location ID de Google Business
+ */
+async function resolveAccountAndLocation(connection: any, accessToken: string, supabase: any) {
+  let accountId = connection.account_id
+  let locationId = connection.location_id
+  let businessName = connection.business_name
+
+  if (!accountId || !locationId) {
+    try {
+      const accRes = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+      if (accRes.ok) {
+        const accData = await accRes.json()
+        const primaryAccount = accData.accounts?.[0]
+        if (primaryAccount?.name) {
+          accountId = primaryAccount.name
+          const locRes = await fetch(
+            `https://mybusinessbusinessinformation.googleapis.com/v1/${primaryAccount.name}/locations?readMask=name,title,storefrontAddress`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          )
+          if (locRes.ok) {
+            const locData = await locRes.json()
+            const primaryLocation = locData.locations?.[0]
+            if (primaryLocation?.name) {
+              locationId = primaryLocation.name
+              businessName = primaryLocation.title || businessName
+            }
+          }
+        }
+
+        if (accountId || locationId) {
+          await supabase
+            .from('google_business_connections')
+            .update({
+              account_id: accountId || null,
+              location_id: locationId || null,
+              business_name: businessName || null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', connection.id)
+        }
+      }
+    } catch (e) {
+      console.warn('Error resolving Google Business account/location:', e)
+    }
+  }
+
+  return { accountId, locationId, businessName }
+}
+
+/**
  * Publica una respuesta oficial directamente en Google Maps
  */
 export async function publishReviewReplyDirect(reviewName: string, replyComment: string) {
@@ -204,11 +256,14 @@ export async function publishReviewReplyDirect(reviewName: string, replyComment:
 
   try {
     const accessToken = await getFreshAccessToken(connection, supabase)
+    const { accountId, locationId } = await resolveAccountAndLocation(connection, accessToken, supabase)
 
-    // Llamada oficial a Google My Business API v4
-    // Formato de reviewName: accounts/{accountId}/locations/{locationId}/reviews/{reviewId}
-    const cleanName = reviewName.startsWith('accounts/') ? reviewName : `accounts/_/locations/_/reviews/${reviewName}`
-    const url = `https://mybusiness.googleapis.com/v4/${cleanName}/reply`
+    const cleanAccount = accountId ? (accountId.startsWith('accounts/') ? accountId : `accounts/${accountId}`) : 'accounts/_'
+    const cleanLocation = locationId ? (locationId.startsWith('locations/') ? locationId : `locations/${locationId}`) : 'locations/_'
+
+    // Formato de reviewName: reviews/{reviewId} o sólo reviewId
+    const cleanReview = reviewName.includes('reviews/') ? reviewName.split('reviews/')[1] : reviewName
+    const url = `https://mybusiness.googleapis.com/v4/${cleanAccount}/${cleanLocation}/reviews/${cleanReview}/reply`
 
     const response = await fetch(url, {
       method: 'PUT',
@@ -222,16 +277,24 @@ export async function publishReviewReplyDirect(reviewName: string, replyComment:
     const result = await response.json()
 
     if (!response.ok) {
+      const errText = result.error?.message || ''
       if (response.status === 403 || result.error?.status === 'PERMISSION_DENIED') {
+        if (errText.includes('insufficient authentication scopes') || !connection.scope?.includes('business.manage')) {
+          return {
+            success: false,
+            needsReauth: true,
+            message: 'Tu cuenta de Google no tiene autorizados los permisos de gestión comercial. Por favor desvincula tu cuenta y vuelve a conectarla marcando la casilla de permisos en Google.'
+          }
+        }
         return {
           success: false,
           needsPartnerApproval: true,
-          message: 'Tu cuenta de Google está vinculada con éxito. Sin embargo, tu proyecto en Google Cloud aún requiere la aprobación del formulario de acceso a la Google Business Profile API por parte del equipo de Google. Mientras tanto, puedes usar el botón de Copiar para publicar.'
+          message: 'Tu cuenta de Google está vinculada. Sin embargo, tu proyecto en Google Cloud requiere habilitar la Google Business Profile API para publicar directamente por API. Mientras tanto, puedes usar el botón de Copiar para publicar.'
         }
       }
       return {
         success: false,
-        message: result.error?.message || 'Google rechazó la publicación de la respuesta.'
+        message: errText || 'Google rechazó la publicación de la respuesta.'
       }
     }
 
@@ -267,9 +330,13 @@ export async function publishGooglePostDirect(summary: string, actionUrl?: strin
 
   try {
     const accessToken = await getFreshAccessToken(connection, supabase)
+    const { accountId, locationId } = await resolveAccountAndLocation(connection, accessToken, supabase)
+
+    const cleanAccount = accountId ? (accountId.startsWith('accounts/') ? accountId : `accounts/${accountId}`) : 'accounts/_'
+    const cleanLocation = locationId ? (locationId.startsWith('locations/') ? locationId : `locations/${locationId}`) : 'locations/_'
 
     // Formato de post en Google Business Profile API
-    const url = `https://mybusiness.googleapis.com/v4/accounts/_/locations/_/localPosts`
+    const url = `https://mybusiness.googleapis.com/v4/${cleanAccount}/${cleanLocation}/localPosts`
     const postBody: any = {
       languageCode: 'es',
       summary,
@@ -295,7 +362,15 @@ export async function publishGooglePostDirect(summary: string, actionUrl?: strin
     const result = await response.json()
 
     if (!response.ok) {
+      const errText = result.error?.message || ''
       if (response.status === 403 || result.error?.status === 'PERMISSION_DENIED') {
+        if (errText.includes('insufficient authentication scopes') || !connection.scope?.includes('business.manage')) {
+          return {
+            success: false,
+            needsReauth: true,
+            message: 'Tu cuenta de Google fue conectada sin los permisos de administración comercial. Por favor desvincula tu cuenta en la pestaña de Conexión API y vuelve a conectar ASEGURÁNDOTE de marcar la casilla de permisos en Google.'
+          }
+        }
         return {
           success: false,
           needsPartnerApproval: true,
@@ -304,7 +379,7 @@ export async function publishGooglePostDirect(summary: string, actionUrl?: strin
       }
       return {
         success: false,
-        message: result.error?.message || 'Error al enviar la publicación a Google.'
+        message: errText || 'Error al enviar la publicación a Google.'
       }
     }
 

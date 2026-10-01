@@ -23,7 +23,7 @@ export default async function GoogleBusinessPage() {
     supabase.from('devices').select('id, name, device_type, redirect_url, place_id, business_name, tag_id, review_filter_enabled').eq('user_id', user.id),
     supabase.from('vcards').select('id, company_name, first_name, slug, phone, website, business_address, business_hours, bio, avatar_url, cover_url').eq('user_id', user.id).limit(1).maybeSingle(),
     supabase.from('menus').select('id, name, slug').eq('user_id', user.id).limit(5),
-    supabase.from('google_business_connections').select('id, email, business_name, status, created_at').eq('user_id', user.id).maybeSingle()
+    supabase.from('google_business_connections').select('id, email, business_name, account_id, location_id, scope, status, created_at').eq('user_id', user.id).maybeSingle()
   ])
 
   // Obtener dispositivos y sus quejas privadas capturadas por el Escudo Anti-Quejas

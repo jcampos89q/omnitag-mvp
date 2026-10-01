@@ -83,6 +83,9 @@ interface GoogleConnectionItem {
   id: string
   email?: string | null
   business_name?: string | null
+  account_id?: string | null
+  location_id?: string | null
+  scope?: string | null
   status?: string | null
   created_at?: string
 }
@@ -1801,20 +1804,35 @@ export default function GoogleBusinessManager({
 
             {/* Alertas de Retorno OAuth */}
             {errorParam && (
-              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold space-y-1">
-                <div className="flex items-center gap-2 text-rose-800 font-black">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>
-                    {errorParam === 'missing_credentials_in_vercel'
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-bold space-y-1.5 shadow-xs">
+                <div className="flex items-center gap-2 text-amber-900 font-black">
+                  <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+                  <span className="text-sm">
+                    {errorParam === 'missing_business_scope'
+                      ? '⚠️ Atención: Casilla de permisos de Google no marcada'
+                      : errorParam === 'missing_credentials_in_vercel'
                       ? 'Atención: Faltan credenciales en Vercel'
                       : 'Aviso de autenticación de Google'}
                   </span>
                 </div>
-                <p className="font-normal text-rose-700 leading-relaxed">
-                  {errorParam === 'missing_credentials_in_vercel'
+                <p className="font-normal text-amber-900 leading-relaxed">
+                  {errorParam === 'missing_business_scope'
+                    ? 'Al conectar con Google, apareció una pantalla con casillas de verificación. Es OBLIGATORIO marcar la casilla: "Ver, editar, crear o borrar los perfiles de tu empresa en Google". Sin marcar esa casilla, Google bloquea la publicación automática. Haz clic en "Conectar con Cuenta de Google" de nuevo y asegúrate de marcarla.'
+                    : errorParam === 'missing_credentials_in_vercel'
                     ? 'Para que el botón funcione en www.omnitag.site, debes agregar GOOGLE_OAUTH_CLIENT_ID y GOOGLE_OAUTH_CLIENT_SECRET en las Variables de Entorno de Vercel y hacer un Redeploy.'
                     : `Google devolvió el estado: "${errorParam}". Revisa que la aplicación en Google Cloud esté en Producción o que tu correo esté agregado como usuario de prueba.`}
                 </p>
+                {errorParam === 'missing_business_scope' && (
+                  <div className="pt-1">
+                    <a
+                      href="/api/auth/google-business"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs transition"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Volver a Conectar y Marcar Casilla</span>
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1830,12 +1848,19 @@ export default function GoogleBusinessManager({
               <div className="p-6 rounded-3xl bg-linear-to-br from-emerald-50/60 to-blue-50/40 border border-emerald-200/80 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                      Cuenta Administradora Activa
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                        Cuenta Administradora Activa
+                      </span>
+                      {googleConnection.business_name && (
+                        <span className="text-[10px] font-black uppercase tracking-wider text-blue-800 bg-blue-100 px-2 py-0.5 rounded-md">
+                          Ficha: {googleConnection.business_name}
+                        </span>
+                      )}
+                    </div>
                     <h4 className="text-lg font-black text-gray-900">{googleConnection.email}</h4>
                     <p className="text-xs text-gray-600">
-                      Esta cuenta tiene permisos autorizados para gestionar la ficha de <strong>{selectedPlace?.name || businessName}</strong>.
+                      Esta cuenta tiene permisos autorizados para gestionar la presencia comercial de <strong>{googleConnection.business_name || selectedPlace?.name || businessName}</strong>.
                     </p>
                   </div>
 
@@ -1849,6 +1874,19 @@ export default function GoogleBusinessManager({
                     <span>{isDisconnectingGoogle ? 'Desconectando...' : 'Desvincular Cuenta'}</span>
                   </button>
                 </div>
+
+                {/* Advertencia si no se otorgó el scope business.manage */}
+                {googleConnection.scope && !googleConnection.scope.includes('business.manage') && (
+                  <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 text-xs space-y-1">
+                    <p className="font-bold flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4 text-amber-600" />
+                      Permisos limitados detectados:
+                    </p>
+                    <p className="text-[11px] text-amber-800">
+                      Esta cuenta fue conectada sin la casilla de administración de empresa. Para poder publicar novedades y responder reseñas con 1 clic, presiona <strong>Desvincular Cuenta</strong> y luego vuelve a conectar asegurándote de marcar la casilla de verificación en la pantalla de Google.
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                   <div className="p-3 bg-white rounded-2xl border border-gray-100 space-y-1">

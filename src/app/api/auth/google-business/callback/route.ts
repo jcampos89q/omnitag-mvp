@@ -57,7 +57,15 @@ export async function GET(request: NextRequest) {
     const { access_token, refresh_token, expires_in, scope } = tokenData
     const expiresAt = new Date(Date.now() + (expires_in || 3600) * 1000).toISOString()
 
-    // 2. Obtener datos básicos de la cuenta de Google (email)
+    // 2. Comprobar si el usuario autorizó los permisos de gestión comercial (business.manage)
+    const hasBusinessScope = typeof scope === 'string' && scope.includes('business.manage')
+    if (!hasBusinessScope) {
+      console.warn('Google OAuth returned token without business.manage scope:', scope)
+      redirectTarget.searchParams.set('error', 'missing_business_scope')
+      return NextResponse.redirect(redirectTarget)
+    }
+
+    // 3. Obtener datos básicos de la cuenta de Google (email)
     let email = ''
     try {
       const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -71,17 +79,58 @@ export async function GET(request: NextRequest) {
       console.warn('Could not fetch Google userinfo:', e)
     }
 
-    // 3. Guardar conexión en Supabase
+    // 4. Intentar descubrir el Account ID y Location ID de Google Business Profile
+    let accountId = ''
+    let locationId = ''
+    let businessName = ''
+    let status = 'connected'
+
+    try {
+      // 4a. Consultar cuentas de negocio
+      const accRes = await fetch('https://mybusinessaccountmanagement.googleapis.com/v1/accounts', {
+        headers: { Authorization: `Bearer ${access_token}` }
+      })
+      if (accRes.ok) {
+        const accData = await accRes.json()
+        const primaryAccount = accData.accounts?.[0]
+        if (primaryAccount?.name) {
+          accountId = primaryAccount.name // e.g. "accounts/102938475"
+          
+          // 4b. Consultar ubicaciones (fichas) de la cuenta
+          const locRes = await fetch(
+            `https://mybusinessbusinessinformation.googleapis.com/v1/${primaryAccount.name}/locations?readMask=name,title,storefrontAddress`,
+            { headers: { Authorization: `Bearer ${access_token}` } }
+          )
+          if (locRes.ok) {
+            const locData = await locRes.json()
+            const primaryLocation = locData.locations?.[0]
+            if (primaryLocation?.name) {
+              locationId = primaryLocation.name // e.g. "locations/98765432"
+              businessName = primaryLocation.title || ''
+            }
+          }
+        }
+      } else {
+        console.warn('Google Business Account Management API response:', accRes.status, await accRes.text())
+      }
+    } catch (e) {
+      console.warn('Error discovering Google Business accounts/locations:', e)
+    }
+
+    // 5. Guardar conexión en Supabase
     const { error: dbError } = await supabase
       .from('google_business_connections')
       .upsert({
         user_id: user.id,
         email,
+        business_name: businessName || null,
+        account_id: accountId || null,
+        location_id: locationId || null,
         access_token,
         refresh_token: refresh_token || null,
         expires_at: expiresAt,
         scope,
-        status: 'connected',
+        status,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' })
 

@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     scope: scopes,
     access_type: 'offline',
     prompt: 'consent',
+    include_granted_scopes: 'true',
     state
   })
 
