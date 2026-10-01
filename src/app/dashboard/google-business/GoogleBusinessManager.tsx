@@ -136,6 +136,13 @@ export default function GoogleBusinessManager({
   const [selectedReviewIndex, setSelectedReviewIndex] = useState<number | null>(null)
   const [aiTone, setAiTone] = useState<'warm' | 'professional' | 'promotional'>('warm')
   const [generatedResponse, setGeneratedResponse] = useState<string>('')
+  
+  // Reseña manual / simulada para generar respuesta cuando Google tiene latencia de moderación
+  const [reviewTabMode, setReviewTabMode] = useState<'google' | 'manual'>('google')
+  const [customReviewText, setCustomReviewText] = useState<string>('')
+  const [customReviewRating, setCustomReviewRating] = useState<number>(5)
+  const [customReviewAuthor, setCustomReviewAuthor] = useState<string>('')
+  const [activeReviewSource, setActiveReviewSource] = useState<'google' | 'manual'>('google')
 
   // Estados para generador de publicaciones (Google Posts)
   const [postType, setPostType] = useState<'promo' | 'weekly_tip' | 'new_service'>('promo')
@@ -330,26 +337,32 @@ export default function GoogleBusinessManager({
   // ==========================================
   // GENERADOR DE RESPUESTAS CON IA
   // ==========================================
-  const handleGenerateAiResponse = (reviewText: string, rating: number, authorName: string) => {
+  const handleGenerateAiResponse = (
+    reviewText: string,
+    rating: number,
+    authorName: string,
+    toneOverride?: 'warm' | 'professional' | 'promotional'
+  ) => {
+    const tone = toneOverride || aiTone
     const biz = selectedPlace?.name || bizForm.name || businessName || 'nuestro establecimiento'
     const cleanAuthor = authorName ? authorName.split(' ')[0] : 'estimado cliente'
 
     if (rating >= 4) {
-      if (aiTone === 'warm') {
+      if (tone === 'warm') {
         setGeneratedResponse(
-          `¡Hola ${cleanAuthor}! Muchas gracias por tu excelente reseña de 5 estrellas. En ${biz} nos apasiona brindar la mejor experiencia y atención de calidad. ¡Esperamos tener el placer de atenderte nuevamente muy pronto!`
+          `¡Hola ${cleanAuthor}! Muchas gracias por tu excelente reseña de ${rating} estrellas. En ${biz} nos apasiona brindar la mejor experiencia y atención de calidad. ¡Esperamos tener el placer de atenderte nuevamente muy pronto!`
         )
-      } else if (aiTone === 'promotional') {
+      } else if (tone === 'promotional') {
         setGeneratedResponse(
           `¡Muchísimas gracias ${cleanAuthor} por visitarnos y recomendarnos! En ${biz} nos alegra que hayas disfrutado de tu visita. Recuerda que ahora puedes consultar nuestras promociones, certificados de regalo y agendar tus próximas citas directamente en línea. ¡Te esperamos pronto!`
         )
       } else {
         setGeneratedResponse(
-          `Estimado/a ${cleanAuthor}, le agradecemos sinceramente su valoración y preferencia. En ${biz} mantenemos el más alto estándar de servicio para nuestros clientes. Quedamos a su entera disposición.`
+          `Estimado/a ${cleanAuthor}, le agradecemos sinceramente su valoración de ${rating} estrellas y preferencia. En ${biz} mantenemos el más alto estándar de servicio para nuestros clientes. Quedamos a su entera disposición.`
         )
       }
     } else {
-      if (aiTone === 'professional') {
+      if (tone === 'professional') {
         setGeneratedResponse(
           `Hola ${cleanAuthor}, lamentamos profundamente que tu experiencia en ${biz} no haya cumplido con tus expectativas. Nos tomamos muy en serio la calidad de nuestro servicio. Nos gustaría conversar contigo personalmente para escuchar tus comentarios y compensar el inconveniente. Por favor contáctanos vía WhatsApp para atenderte de forma prioritaria.`
         )
@@ -933,82 +946,243 @@ export default function GoogleBusinessManager({
       {activeTab === 'reviews' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-3xl p-6 shadow-xs border border-gray-100 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
               <div>
-                <h4 className="font-black text-gray-900 text-base">Últimas Reseñas Públicas de Google Maps</h4>
-                <p className="text-xs text-gray-500">Selecciona una reseña para generar su respuesta optimizada.</p>
+                <h4 className="font-black text-gray-900 text-base">Reseñas de Clientes & Respuestas IA</h4>
+                <p className="text-xs text-gray-500">Supervisa Google Maps o responde reseñas al instante.</p>
               </div>
-              {selectedPlace?.reviews && (
-                <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg">
-                  {selectedPlace.reviews.length} mostradas
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {selectedPlace?.place_id && (
+                  <button
+                    type="button"
+                    onClick={() => fetchPlaceDetails(selectedPlace.place_id)}
+                    disabled={isLoadingDetails}
+                    className="p-2 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                    title="Actualizar y consultar a Google nuevamente"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingDetails ? 'animate-spin text-blue-600' : ''}`} />
+                    <span>Sincronizar</span>
+                  </button>
+                )}
+                {selectedPlace?.place_id && (
+                  <a
+                    href={`https://www.google.com/maps/place/?q=place_id:${selectedPlace.place_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1.5 transition"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Ver en Google</span>
+                  </a>
+                )}
+              </div>
             </div>
 
-            {selectedPlace?.reviews && selectedPlace.reviews.length > 0 ? (
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-                {selectedPlace.reviews.map((rev, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-4 rounded-2xl border transition-all ${
-                      selectedReviewIndex === idx 
-                        ? 'border-blue-500 bg-blue-50/40 ring-2 ring-blue-500' 
-                        : 'border-gray-200 hover:border-gray-300 bg-gray-50/50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        {rev.profile_photo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={rev.profile_photo_url} alt={rev.author_name} className="w-8 h-8 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
-                            {rev.author_name[0] || 'C'}
+            {/* Selector de modo: Google Maps en vivo vs Manual */}
+            <div className="flex rounded-xl bg-gray-100 p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setReviewTabMode('google')}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition cursor-pointer ${
+                  reviewTabMode === 'google' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                Google Maps en Vivo {selectedPlace?.reviews ? `(${selectedPlace.reviews.length})` : '(0)'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setReviewTabMode('manual')}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                  reviewTabMode === 'manual' ? 'bg-white text-blue-600 shadow-xs' : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Pegar / Responder Reseña Manual</span>
+              </button>
+            </div>
+
+            {reviewTabMode === 'google' ? (
+              selectedPlace?.reviews && selectedPlace.reviews.length > 0 ? (
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                  {selectedPlace.reviews.map((rev, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        activeReviewSource === 'google' && selectedReviewIndex === idx 
+                          ? 'border-blue-500 bg-blue-50/40 ring-2 ring-blue-500' 
+                          : 'border-gray-200 hover:border-gray-300 bg-gray-50/50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          {rev.profile_photo_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={rev.profile_photo_url} alt={rev.author_name} className="w-8 h-8 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                              {rev.author_name[0] || 'C'}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-bold text-xs text-gray-900">{rev.author_name}</p>
+                            <span className="text-[10px] text-gray-400">{rev.relative_time_description}</span>
                           </div>
-                        )}
-                        <div>
-                          <p className="font-bold text-xs text-gray-900">{rev.author_name}</p>
-                          <span className="text-[10px] text-gray-400">{rev.relative_time_description}</span>
+                        </div>
+
+                        <div className="flex items-center text-amber-500">
+                          {Array.from({ length: 5 }).map((_, s) => (
+                            <Star
+                              key={s}
+                              className={`w-3.5 h-3.5 ${s < rev.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
+                            />
+                          ))}
                         </div>
                       </div>
 
-                      <div className="flex items-center text-amber-500">
-                        {Array.from({ length: 5 }).map((_, s) => (
-                          <Star
-                            key={s}
-                            className={`w-3.5 h-3.5 ${s < rev.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
-                          />
-                        ))}
+                      <p className="text-xs text-gray-700 italic leading-relaxed line-clamp-3">
+                        "{rev.text || 'Sin comentario escrito.'}"
+                      </p>
+
+                      <div className="pt-3 mt-2 border-t border-gray-200/60 flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-gray-400">
+                          {rev.rating >= 4 ? '🌟 5 Estrellas' : '⚠️ Observación'}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setSelectedReviewIndex(idx)
+                            setActiveReviewSource('google')
+                            handleGenerateAiResponse(rev.text, rev.rating, rev.author_name)
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Generar Respuesta IA</span>
+                        </button>
                       </div>
                     </div>
-
-                    <p className="text-xs text-gray-700 italic leading-relaxed line-clamp-3">
-                      "{rev.text || 'Sin comentario escrito.'}"
-                    </p>
-
-                    <div className="pt-3 mt-2 border-t border-gray-200/60 flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-gray-400">
-                        {rev.rating >= 4 ? '🌟 5 Estrellas' : '⚠️ Observación'}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setSelectedReviewIndex(idx)
-                          handleGenerateAiResponse(rev.text, rev.rating, rev.author_name)
-                        }}
-                        className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Generar Respuesta IA</span>
-                      </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 bg-gradient-to-br from-amber-50/70 to-blue-50/40 rounded-2xl border border-amber-200/80 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                      <AlertCircle className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1">
+                      <h5 className="font-black text-gray-900 text-sm">
+                        Perfil conectado, pero Google aún no publica las reseñas en su API
+                      </h5>
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        ¿Ya te dejaron una reseña pero no aparece aquí? Esto es completamente normal en Google Maps debido a lo siguiente:
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="space-y-2 text-xs text-gray-700 bg-white/95 p-4 rounded-xl border border-amber-100/80 shadow-2xs">
+                    <p>
+                      ⏳ <strong>Latencia de Moderación (24 a 72 hrs):</strong> Cuando alguien publica una reseña en Google Maps, sus algoritmos antispam la revisan internamente antes de propagarla a su base de datos pública y API.
+                    </p>
+                    <p>
+                      👁️ <strong>El "Efecto Espejo" de Google:</strong> Quien escribió la reseña sí puede verla en su propio teléfono o navegador mientras esté logueado con su cuenta de Google, pero para el resto del público y para herramientas externas permanece oculta hasta que Google concluye la aprobación.
+                    </p>
+                    <p>
+                      🔒 <strong>Autorreseñas o misma red WiFi:</strong> Si la reseña fue escrita por el propietario para probar o desde la misma red WiFi del local, los filtros de Google suelen demorarla o filtrarla para evitar conflicto de intereses.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setReviewTabMode('manual')}
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Pegar el texto de mi reseña para responder con IA</span>
+                    </button>
+                    {selectedPlace?.place_id && (
+                      <a
+                        href={`https://www.google.com/maps/place/?q=place_id:${selectedPlace.place_id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="py-2.5 px-4 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 font-bold text-xs flex items-center justify-center gap-1.5 transition text-center"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Ver en Google Maps ↗</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )
             ) : (
-              <div className="p-8 text-center bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
-                <MessageSquare className="w-8 h-8 text-gray-400 mx-auto" />
-                <p className="text-xs font-bold text-gray-700">No se encontraron reseñas en vivo en este momento</p>
-                <p className="text-[11px] text-gray-400">Asegúrate de conectar tu local en el buscador superior.</p>
+              <div className="p-5 bg-gray-50 rounded-2xl border border-gray-200 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-blue-600" />
+                  <h5 className="font-black text-gray-900 text-sm">Responde Cualquier Reseña al Instante con IA</h5>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Pega aquí la reseña que te dejaron en Google Maps, WhatsApp o redes sociales para redactar la respuesta estratégica en segundos.
+                </p>
+
+                <div>
+                  <label className="block font-bold text-gray-700 text-[10px] uppercase mb-1">
+                    Nombre del Cliente (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={customReviewAuthor}
+                    onChange={e => setCustomReviewAuthor(e.target.value)}
+                    placeholder="Ej: Carlos Mejía"
+                    className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs text-gray-900 font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 text-[10px] uppercase mb-1">
+                    Calificación de la Reseña
+                  </label>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setCustomReviewRating(s)}
+                        className="p-1 rounded-lg hover:bg-white transition cursor-pointer"
+                      >
+                        <Star
+                          className={`w-6 h-6 ${s <= customReviewRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`}
+                        />
+                      </button>
+                    ))}
+                    <span className="ml-2 text-xs font-bold text-gray-600">{customReviewRating} de 5 Estrellas</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-gray-700 text-[10px] uppercase mb-1">
+                    Texto o Comentario de la Reseña *
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={customReviewText}
+                    onChange={e => setCustomReviewText(e.target.value)}
+                    placeholder="Pega aquí el texto que te escribió el cliente..."
+                    className="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs text-gray-900 font-medium resize-none focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveReviewSource('manual')
+                    setSelectedReviewIndex(null)
+                    handleGenerateAiResponse(customReviewText, customReviewRating, customReviewAuthor)
+                  }}
+                  disabled={!customReviewText.trim()}
+                  className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Generar Respuesta con IA para esta Reseña</span>
+                </button>
               </div>
             )}
           </div>
@@ -1034,9 +1208,11 @@ export default function GoogleBusinessManager({
                     type="button"
                     onClick={() => {
                       setAiTone('warm')
-                      if (selectedReviewIndex !== null && selectedPlace?.reviews?.[selectedReviewIndex]) {
+                      if (activeReviewSource === 'google' && selectedReviewIndex !== null && selectedPlace?.reviews?.[selectedReviewIndex]) {
                         const r = selectedPlace.reviews[selectedReviewIndex]
-                        handleGenerateAiResponse(r.text, r.rating, r.author_name)
+                        handleGenerateAiResponse(r.text, r.rating, r.author_name, 'warm')
+                      } else if (activeReviewSource === 'manual' && customReviewText) {
+                        handleGenerateAiResponse(customReviewText, customReviewRating, customReviewAuthor, 'warm')
                       }
                     }}
                     className={`py-2 px-2.5 rounded-xl border text-center text-xs font-bold transition cursor-pointer ${
@@ -1051,9 +1227,11 @@ export default function GoogleBusinessManager({
                     type="button"
                     onClick={() => {
                       setAiTone('professional')
-                      if (selectedReviewIndex !== null && selectedPlace?.reviews?.[selectedReviewIndex]) {
+                      if (activeReviewSource === 'google' && selectedReviewIndex !== null && selectedPlace?.reviews?.[selectedReviewIndex]) {
                         const r = selectedPlace.reviews[selectedReviewIndex]
-                        handleGenerateAiResponse(r.text, r.rating, r.author_name)
+                        handleGenerateAiResponse(r.text, r.rating, r.author_name, 'professional')
+                      } else if (activeReviewSource === 'manual' && customReviewText) {
+                        handleGenerateAiResponse(customReviewText, customReviewRating, customReviewAuthor, 'professional')
                       }
                     }}
                     className={`py-2 px-2.5 rounded-xl border text-center text-xs font-bold transition cursor-pointer ${
@@ -1068,9 +1246,11 @@ export default function GoogleBusinessManager({
                     type="button"
                     onClick={() => {
                       setAiTone('promotional')
-                      if (selectedReviewIndex !== null && selectedPlace?.reviews?.[selectedReviewIndex]) {
+                      if (activeReviewSource === 'google' && selectedReviewIndex !== null && selectedPlace?.reviews?.[selectedReviewIndex]) {
                         const r = selectedPlace.reviews[selectedReviewIndex]
-                        handleGenerateAiResponse(r.text, r.rating, r.author_name)
+                        handleGenerateAiResponse(r.text, r.rating, r.author_name, 'promotional')
+                      } else if (activeReviewSource === 'manual' && customReviewText) {
+                        handleGenerateAiResponse(customReviewText, customReviewRating, customReviewAuthor, 'promotional')
                       }
                     }}
                     className={`py-2 px-2.5 rounded-xl border text-center text-xs font-bold transition cursor-pointer ${
@@ -1092,7 +1272,7 @@ export default function GoogleBusinessManager({
                   rows={6}
                   value={generatedResponse}
                   onChange={(e) => setGeneratedResponse(e.target.value)}
-                  placeholder="Selecciona una reseña a la izquierda para generar la respuesta automáticamente..."
+                  placeholder="Selecciona una reseña a la izquierda o pega una manual para generar la respuesta automáticamente..."
                   className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-900 font-medium focus:bg-white focus:border-blue-500 transition leading-relaxed resize-none"
                 />
               </div>
@@ -1109,17 +1289,15 @@ export default function GoogleBusinessManager({
                 <span>{copiedText === 'ai_response' ? '¡Copiado al portapapeles!' : 'Copiar Respuesta para Google Maps'}</span>
               </button>
 
-              {selectedPlace?.google_maps_url && (
-                <a
-                  href={selectedPlace.google_maps_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition flex items-center justify-center gap-2 text-center"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Abrir mi Perfil en Google Maps para Pegar</span>
-                </a>
-              )}
+              <a
+                href={selectedPlace?.place_id ? `https://search.google.com/local/writereview?placeid=${selectedPlace.place_id}` : (selectedPlace?.google_maps_url || 'https://business.google.com')}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition flex items-center justify-center gap-2 text-center"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Abrir Perfil en Google Maps para Pegar</span>
+              </a>
             </div>
           </div>
         </div>
