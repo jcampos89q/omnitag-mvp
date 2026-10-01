@@ -34,10 +34,21 @@ import {
   TrendingUp,
   Sliders,
   Store,
-  Tag
+  Tag,
+  Key,
+  Link2,
+  Unlink
 } from 'lucide-react'
 import GooglePlaceSearchInput, { PlaceDetails } from '@/components/GooglePlaceSearchInput'
-import { toggleShieldFilter, createShieldLink, resolvePrivateFeedback, generateLocalSeoDescription } from './actions'
+import { 
+  toggleShieldFilter, 
+  createShieldLink, 
+  resolvePrivateFeedback, 
+  generateLocalSeoDescription,
+  disconnectGoogleBusiness,
+  publishReviewReplyDirect,
+  publishGooglePostDirect
+} from './actions'
 
 interface DeviceItem {
   id: string
@@ -67,6 +78,14 @@ interface PrivateFeedbackItem {
   }
 }
 
+interface GoogleConnectionItem {
+  id: string
+  email?: string | null
+  business_name?: string | null
+  status?: string | null
+  created_at?: string
+}
+
 interface GoogleBusinessManagerProps {
   isPro: boolean
   businessName: string
@@ -75,6 +94,7 @@ interface GoogleBusinessManagerProps {
   initialFeedbacks?: PrivateFeedbackItem[]
   vcardProfile?: any | null
   userMenus?: any[]
+  initialGoogleConnection?: GoogleConnectionItem | null
 }
 
 interface PlaceFullData extends PlaceDetails {
@@ -105,13 +125,20 @@ export default function GoogleBusinessManager({
   userDevices,
   initialFeedbacks = [],
   vcardProfile,
-  userMenus = []
+  userMenus = [],
+  initialGoogleConnection = null
 }: GoogleBusinessManagerProps) {
-  const [activeTab, setActiveTab] = useState<'profile' | 'shield' | 'audit' | 'reviews' | 'posts' | 'verification'>('shield')
+  const [activeTab, setActiveTab] = useState<'profile' | 'shield' | 'audit' | 'reviews' | 'posts' | 'api' | 'verification'>('shield')
   const [selectedPlace, setSelectedPlace] = useState<PlaceFullData | null>(null)
   const [isLoadingDetails, setIsLoadingDetails] = useState<boolean>(false)
   const [copiedText, setCopiedText] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  // Conexión Google Business Profile (OAuth)
+  const [googleConnection, setGoogleConnection] = useState<GoogleConnectionItem | null>(initialGoogleConnection)
+  const [isDisconnectingGoogle, setIsDisconnectingGoogle] = useState<boolean>(false)
+  const [isPublishingDirect, setIsPublishingDirect] = useState<boolean>(false)
+  const [directActionResult, setDirectActionResult] = useState<{ success: boolean; message: string } | null>(null)
 
   // Dispositivos y Escudo Anti-Quejas
   const [devices, setDevices] = useState<DeviceItem[]>(userDevices)
@@ -152,6 +179,57 @@ export default function GoogleBusinessManager({
   // Modal para resolver queja privada
   const [resolvingFeedbackId, setResolvingFeedbackId] = useState<string | null>(null)
   const [resolutionNoteInput, setResolutionNoteInput] = useState<string>('')
+
+  // Handlers para Publicación Directa y OAuth
+  const handleDisconnectGoogle = () => {
+    if (!confirm('¿Estás seguro de que deseas desvincular tu cuenta de Google Business?')) return
+    setIsDisconnectingGoogle(true)
+    startTransition(async () => {
+      try {
+        await disconnectGoogleBusiness()
+        setGoogleConnection(null)
+      } catch (err: any) {
+        alert(err.message || 'Error al desconectar')
+      } finally {
+        setIsDisconnectingGoogle(false)
+      }
+    })
+  }
+
+  const handlePublishReviewReply = async (reviewName: string, replyText: string) => {
+    setIsPublishingDirect(true)
+    setDirectActionResult(null)
+    try {
+      const res = await publishReviewReplyDirect(reviewName, replyText)
+      if (res.success) {
+        setDirectActionResult({ success: true, message: '¡Respuesta publicada oficialmente en Google Maps con éxito!' })
+      } else {
+        setDirectActionResult({ success: false, message: res.message || 'No se pudo publicar la respuesta.' })
+      }
+    } catch (err: any) {
+      setDirectActionResult({ success: false, message: err.message || 'Error al conectar con Google' })
+    } finally {
+      setIsPublishingDirect(false)
+    }
+  }
+
+  const handlePublishGooglePost = async () => {
+    if (!generatedPost.trim()) return
+    setIsPublishingDirect(true)
+    setDirectActionResult(null)
+    try {
+      const res = await publishGooglePostDirect(generatedPost)
+      if (res.success) {
+        setDirectActionResult({ success: true, message: '¡Novedad publicada oficialmente en Google Maps con éxito!' })
+      } else {
+        setDirectActionResult({ success: false, message: res.message || 'No se pudo publicar la novedad.' })
+      }
+    } catch (err: any) {
+      setDirectActionResult({ success: false, message: err.message || 'Error al conectar con Google' })
+    } finally {
+      setIsPublishingDirect(false)
+    }
+  }
 
   // Cargar perfil predeterminado si existe Place ID
   useEffect(() => {
@@ -537,6 +615,25 @@ export default function GoogleBusinessManager({
         >
           <Award className="w-4 h-4" />
           <span>Auditoría de Salud (Score)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('api')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-black text-xs transition cursor-pointer shrink-0 ${
+            activeTab === 'api'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+          }`}
+        >
+          <Link2 className="w-4 h-4" />
+          <span>Conexión API Oficial</span>
+          {googleConnection ? (
+            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          ) : (
+            <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-full">
+              OAuth
+            </span>
+          )}
         </button>
 
         <button
@@ -1278,12 +1375,36 @@ export default function GoogleBusinessManager({
               </div>
             </div>
 
+            {directActionResult && (
+              <div className={`p-3 rounded-2xl text-xs font-bold ${
+                directActionResult.success ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+              }`}>
+                {directActionResult.message}
+              </div>
+            )}
+
             <div className="space-y-2 pt-3 border-t border-gray-100">
+              {googleConnection && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rev = (selectedReviewIndex !== null && selectedPlace?.reviews?.[selectedReviewIndex]) ? selectedPlace.reviews[selectedReviewIndex] : null
+                    const revName = rev?.time ? `rev_${rev.time}` : 'review_1'
+                    handlePublishReviewReply(revName, generatedResponse)
+                  }}
+                  disabled={!generatedResponse || isPublishingDirect}
+                  className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  <Zap className="w-4 h-4 text-emerald-200" />
+                  <span>{isPublishingDirect ? 'Publicando en Google Maps...' : '⚡ Publicar Respuesta Directa a Google Maps'}</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => copyToClipboard(generatedResponse, 'ai_response')}
                 disabled={!generatedResponse}
-                className="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                className="w-full py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
                 {copiedText === 'ai_response' ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
                 <span>{copiedText === 'ai_response' ? '¡Copiado al portapapeles!' : 'Copiar Respuesta para Google Maps'}</span>
@@ -1402,6 +1523,26 @@ export default function GoogleBusinessManager({
                   className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-xs text-gray-900 font-medium focus:bg-white leading-relaxed resize-none"
                 />
               </div>
+
+              {directActionResult && (
+                <div className={`p-3 rounded-xl text-xs font-bold ${
+                  directActionResult.success ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                }`}>
+                  {directActionResult.message}
+                </div>
+              )}
+
+              {googleConnection && (
+                <button
+                  type="button"
+                  onClick={handlePublishGooglePost}
+                  disabled={!generatedPost || isPublishingDirect}
+                  className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  <Zap className="w-4 h-4 text-emerald-200" />
+                  <span>{isPublishingDirect ? 'Publicando en Google Maps...' : '⚡ Publicar Novedad Directa a Google Maps'}</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -1601,6 +1742,226 @@ export default function GoogleBusinessManager({
                 <li>No uses direcciones falsas ni apartados postales.</li>
                 <li>Asegúrate de que el letrero físico coincida letra por letra con el perfil.</li>
               </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 7: CONEXIÓN API OFICIAL (OAUTH & ESCRITURA DIRECTA) */}
+      {activeTab === 'api' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-gray-100 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                  <Link2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900">
+                    Conexión Oficial con Google Business Profile (OAuth 2.0)
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Habilita la escritura directa para responder reseñas y publicar novedades en Google Maps en 1 clic.
+                  </p>
+                </div>
+              </div>
+
+              {googleConnection ? (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black self-start sm:self-auto">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Conectado a Google</span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-black self-start sm:self-auto">
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
+                  <span>Configuración Requerida</span>
+                </div>
+              )}
+            </div>
+
+            {/* Estado de Conexión Actual */}
+            {googleConnection ? (
+              <div className="p-6 rounded-3xl bg-linear-to-br from-emerald-50/60 to-blue-50/40 border border-emerald-200/80 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                      Cuenta Administradora Activa
+                    </span>
+                    <h4 className="text-lg font-black text-gray-900">{googleConnection.email}</h4>
+                    <p className="text-xs text-gray-600">
+                      Esta cuenta tiene permisos autorizados para gestionar la ficha de <strong>{selectedPlace?.name || businessName}</strong>.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleDisconnectGoogle}
+                    disabled={isDisconnectingGoogle}
+                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 font-bold text-xs transition cursor-pointer flex items-center gap-1.5 self-start sm:self-auto shadow-2xs"
+                  >
+                    <Unlink className="w-4 h-4" />
+                    <span>{isDisconnectingGoogle ? 'Desconectando...' : 'Desvincular Cuenta'}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div className="p-3 bg-white rounded-2xl border border-gray-100 space-y-1">
+                    <span className="text-[10px] font-bold text-gray-400 block">RESPUESTAS A RESEÑAS</span>
+                    <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> Escritura Directa Habilitada
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white rounded-2xl border border-gray-100 space-y-1">
+                    <span className="text-[10px] font-bold text-gray-400 block">GOOGLE POSTS (NOVEDADES)</span>
+                    <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> Publicación en 1 Clic
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white rounded-2xl border border-gray-100 space-y-1">
+                    <span className="text-[10px] font-bold text-gray-400 block">ESCUDO ANTI-QUEJAS</span>
+                    <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> Filtro Activo
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 rounded-3xl bg-linear-to-br from-indigo-50/70 to-blue-50/40 border border-indigo-200/80 space-y-4">
+                <div className="max-w-2xl space-y-2">
+                  <h4 className="text-base font-black text-gray-900">
+                    Vincular Cuenta de Administrador de Google Maps
+                  </h4>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Al conectar tu cuenta mediante el protocolo seguro OAuth 2.0 de Google, tus respuestas sugeridas por la Inteligencia Artificial y tus publicaciones semanales se enviarán directamente a Google Maps sin que tengas que copiar y pegar manualmente.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2">
+                  <a
+                    href="/api/auth/google-business"
+                    className="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs transition flex items-center gap-2 cursor-pointer shadow-md"
+                  >
+                    <Zap className="w-4 h-4 text-amber-300" />
+                    <span>Conectar con Cuenta de Google (OAuth 2.0)</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </a>
+
+                  <span className="text-[11px] text-gray-500 italic">
+                    * Inicia sesión con el correo Gmail dueño del negocio.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* GUÍA PASO A PASO: APROBACIÓN DE GOOGLE PARTNER */}
+            <div className="p-6 rounded-3xl bg-gray-50 border border-gray-200/80 space-y-6">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+                  <Key className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-black text-gray-900 text-base">
+                    Guía de Aprobación de la Google Business Profile API
+                  </h4>
+                  <p className="text-xs text-gray-500">
+                    Google exige un proceso de aprobación formal antes de otorgar cuotas de escritura masivas para proteger la seguridad de los negocios.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Paso 1 */}
+                <div className="p-4 rounded-2xl bg-white border border-gray-200 space-y-2">
+                  <div className="flex items-center gap-2 font-black text-xs text-blue-700">
+                    <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">1</span>
+                    <span>Credenciales en Google Cloud</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    En <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-blue-600 underline font-bold">Google Cloud Console</a>, crea un <strong>ID de cliente de OAuth 2.0</strong> (tipo Aplicación Web).
+                  </p>
+                  <div className="p-2.5 bg-gray-50 rounded-xl border border-gray-200 text-[10px] space-y-1">
+                    <span className="font-bold text-gray-500 block">URI de redireccionamiento autorizado:</span>
+                    <code className="text-blue-600 break-all select-all font-mono font-bold">
+                      https://www.omnitag.site/api/auth/google-business/callback
+                    </code>
+                  </div>
+                </div>
+
+                {/* Paso 2 */}
+                <div className="p-4 rounded-2xl bg-white border border-gray-200 space-y-2">
+                  <div className="flex items-center gap-2 font-black text-xs text-blue-700">
+                    <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">2</span>
+                    <span>Formulario de Acceso a la API</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Aplica formalmente ante el equipo de Google llenando el formulario oficial de solicitud de acceso a la <strong>Google Business Profile API</strong>.
+                  </p>
+                  <a
+                    href="https://developers.google.com/my-business/content/prereqs#request-access"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-indigo-600 font-bold hover:underline"
+                  >
+                    <span>Abrir Formulario de Solicitud Google</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
+                {/* Paso 3 */}
+                <div className="p-4 rounded-2xl bg-white border border-gray-200 space-y-2">
+                  <div className="flex items-center gap-2 font-black text-xs text-blue-700">
+                    <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs">3</span>
+                    <span>Aprobación & Activación</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    Google revisará la legitimidad de tu herramienta (tarda entre 2 y 4 semanas). Una vez aprobada, tus clientes podrán publicar y contestar con 1 clic sin límites.
+                  </p>
+                </div>
+              </div>
+
+              {/* Plantilla de Respuestas Aprobadas */}
+              <div className="p-5 rounded-2xl bg-white border border-gray-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h5 className="font-black text-gray-900 text-xs uppercase tracking-wider">
+                    Plantilla de Respuestas para el Formulario de Google (Copiar y Pegar)
+                  </h5>
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    Optimizado para Aprobación Rápida
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-1">
+                    <span className="font-bold text-gray-700 block text-[11px]">¿Cuál es el propósito de tu aplicación?</span>
+                    <p className="text-gray-600 text-[11px] leading-relaxed">
+                      "OmniTag es una plataforma integral para comercios locales y pymes que les permite sincronizar sus datos, publicar actualizaciones semanales y responder de forma eficiente y oportuna a las opiniones de sus clientes."
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard('OmniTag es una plataforma integral para comercios locales y pymes que les permite sincronizar sus datos, publicar actualizaciones semanales y responder de forma eficiente y oportuna a las opiniones de sus clientes.', 'tpl_1')}
+                      className="text-blue-600 hover:text-blue-800 font-bold text-[10px] flex items-center gap-1 cursor-pointer pt-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>{copiedText === 'tpl_1' ? '¡Copiado!' : 'Copiar respuesta'}</span>
+                    </button>
+                  </div>
+
+                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-1">
+                    <span className="font-bold text-gray-700 block text-[11px]">¿Por qué requieres acceso de escritura a reseñas?</span>
+                    <p className="text-gray-600 text-[11px] leading-relaxed">
+                      "Para permitir que los dueños de negocios locales puedan responder a los comentarios de sus clientes en Google Maps directamente desde su panel unificado con plantillas profesionales y asistencia de IA."
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard('Para permitir que los dueños de negocios locales puedan responder a los comentarios de sus clientes en Google Maps directamente desde su panel unificado con plantillas profesionales y asistencia de IA.', 'tpl_2')}
+                      className="text-blue-600 hover:text-blue-800 font-bold text-[10px] flex items-center gap-1 cursor-pointer pt-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>{copiedText === 'tpl_2' ? '¡Copiado!' : 'Copiar respuesta'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

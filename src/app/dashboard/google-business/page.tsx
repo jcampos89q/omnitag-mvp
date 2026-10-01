@@ -15,12 +15,13 @@ export default async function GoogleBusinessPage() {
     redirect('/login')
   }
 
-  const [planInfo, { data: profile }, { data: devices }, { data: vcard }, { data: menus }] = await Promise.all([
+  const [planInfo, { data: profile }, { data: devices }, { data: vcard }, { data: menus }, { data: googleConnection }] = await Promise.all([
     getUserPlanInfo(supabase, user.id),
     supabase.from('users').select('full_name, currency, currency_symbol').eq('id', user.id).maybeSingle(),
     supabase.from('devices').select('id, name, device_type, redirect_url, place_id, business_name, tag_id, review_filter_enabled').eq('user_id', user.id),
     supabase.from('vcards').select('id, company_name, first_name, slug, phone, website, business_address, business_hours, bio, avatar_url, cover_url').eq('user_id', user.id).limit(1).maybeSingle(),
-    supabase.from('menus').select('id, name, slug').eq('user_id', user.id).limit(5)
+    supabase.from('menus').select('id, name, slug').eq('user_id', user.id).limit(5),
+    supabase.from('google_business_connections').select('id, email, business_name, status, created_at').eq('user_id', user.id).maybeSingle()
   ])
 
   // Obtener dispositivos y sus quejas privadas capturadas por el Escudo Anti-Quejas
@@ -61,6 +62,7 @@ export default async function GoogleBusinessPage() {
         initialFeedbacks={privateFeedbacks}
         vcardProfile={vcard || null}
         userMenus={menus || []}
+        initialGoogleConnection={googleConnection || null}
       />
     </div>
   )
