@@ -1397,41 +1397,49 @@ export default function GoogleBusinessManager({
             )}
 
             <div className="space-y-2 pt-3 border-t border-gray-100">
-              {googleConnection && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const rev = (selectedReviewIndex !== null && selectedPlace?.reviews?.[selectedReviewIndex]) ? selectedPlace.reviews[selectedReviewIndex] : null
-                    const revName = rev?.time ? `rev_${rev.time}` : 'review_1'
-                    handlePublishReviewReply(revName, generatedResponse)
-                  }}
-                  disabled={!generatedResponse || isPublishingDirect}
-                  className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
-                >
-                  <Zap className="w-4 h-4 text-emerald-200" />
-                  <span>{isPublishingDirect ? 'Publicando en Google Maps...' : '⚡ Publicar Respuesta Directa a Google Maps'}</span>
-                </button>
-              )}
-
+              {/* Botón principal de respuesta rápida en 1 Clic */}
               <button
                 type="button"
-                onClick={() => copyToClipboard(generatedResponse, 'ai_response')}
+                onClick={() => {
+                  copyToClipboard(generatedResponse, 'ai_response')
+                  const targetUrl = selectedPlace?.google_maps_url || 'https://business.google.com'
+                  window.open(targetUrl, '_blank')
+                }}
                 disabled={!generatedResponse}
-                className="w-full py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                className="w-full py-3.5 rounded-2xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
-                {copiedText === 'ai_response' ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedText === 'ai_response' ? '¡Copiado al portapapeles!' : 'Copiar Respuesta para Google Maps'}</span>
+                {copiedText === 'ai_response' ? <Check className="w-4 h-4 text-emerald-300" /> : <Sparkles className="w-4 h-4 text-amber-300" />}
+                <span>{copiedText === 'ai_response' ? '¡Copiado! Abriendo Google Maps...' : '🚀 Copiar y Abrir Google Maps para Responder (1 Clic)'}</span>
               </button>
 
-              <a
-                href={selectedPlace?.place_id ? `https://search.google.com/local/writereview?placeid=${selectedPlace.place_id}` : (selectedPlace?.google_maps_url || 'https://business.google.com')}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition flex items-center justify-center gap-2 text-center"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Abrir Perfil en Google Maps para Pegar</span>
-              </a>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(generatedResponse, 'ai_response')}
+                  disabled={!generatedResponse}
+                  className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-40 text-gray-800 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {copiedText === 'ai_response' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedText === 'ai_response' ? '¡Copiado!' : 'Solo Copiar Texto'}</span>
+                </button>
+
+                {googleConnection && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rev = (selectedReviewIndex !== null && selectedPlace?.reviews?.[selectedReviewIndex]) ? selectedPlace.reviews[selectedReviewIndex] : null
+                      const revName = rev?.time ? `rev_${rev.time}` : 'review_1'
+                      handlePublishReviewReply(revName, generatedResponse)
+                    }}
+                    disabled={!generatedResponse || isPublishingDirect}
+                    className="py-2.5 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-200 disabled:opacity-40 text-gray-700 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                    title="Intenta publicar por API en segundo plano"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{isPublishingDirect ? 'Enviando...' : 'Publicar por API'}</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1545,37 +1553,45 @@ export default function GoogleBusinessManager({
                 </div>
               )}
 
-              {googleConnection && (
-                <button
-                  type="button"
-                  onClick={handlePublishGooglePost}
-                  disabled={!generatedPost || isPublishingDirect}
-                  className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
-                >
-                  <Zap className="w-4 h-4 text-emerald-200" />
-                  <span>{isPublishingDirect ? 'Publicando en Google Maps...' : '⚡ Publicar Novedad Directa a Google Maps'}</span>
-                </button>
-              )}
-
+              {/* Botón principal de publicación rápida en 1 Clic */}
               <button
                 type="button"
-                onClick={() => copyToClipboard(generatedPost, 'ai_post')}
+                onClick={() => {
+                  copyToClipboard(generatedPost, 'ai_post')
+                  const targetUrl = selectedPlace?.google_maps_url || 'https://business.google.com'
+                  window.open(targetUrl, '_blank')
+                }}
                 disabled={!generatedPost}
-                className="w-full py-2.5 rounded-xl bg-gray-900 hover:bg-black disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                className="w-full py-3.5 rounded-2xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-40 text-white font-black text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
-                {copiedText === 'ai_post' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedText === 'ai_post' ? '¡Copiado!' : 'Copiar Texto del Post'}</span>
+                {copiedText === 'ai_post' ? <Check className="w-4 h-4 text-emerald-300" /> : <Sparkles className="w-4 h-4 text-amber-300" />}
+                <span>{copiedText === 'ai_post' ? '¡Copiado! Abriendo Google Maps...' : '🚀 Copiar y Abrir Google Maps para Publicar (1 Clic)'}</span>
               </button>
 
-              <a
-                href={selectedPlace?.google_maps_url || 'https://business.google.com'}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition flex items-center justify-center gap-2 text-center"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Abrir Google Maps para Publicar Novedad</span>
-              </a>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(generatedPost, 'ai_post')}
+                  disabled={!generatedPost}
+                  className="flex-1 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-40 text-gray-800 font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {copiedText === 'ai_post' ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedText === 'ai_post' ? '¡Copiado!' : 'Solo Copiar Texto'}</span>
+                </button>
+
+                {googleConnection && (
+                  <button
+                    type="button"
+                    onClick={handlePublishGooglePost}
+                    disabled={!generatedPost || isPublishingDirect}
+                    className="py-2.5 px-3 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-200 disabled:opacity-40 text-gray-700 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer"
+                    title="Intenta publicar por API en segundo plano"
+                  >
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{isPublishingDirect ? 'Enviando...' : 'Publicar por API'}</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
