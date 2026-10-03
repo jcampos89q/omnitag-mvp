@@ -101,3 +101,72 @@ export async function updateLeadNotesAndCategory(params: {
   revalidatePath('/dashboard/leads')
   return { success: true }
 }
+
+export async function createManualLead(params: {
+  name: string
+  phone?: string | null
+  email?: string | null
+  category?: string | null
+  status?: LeadStatus
+  deal_value?: number
+  notes?: string | null
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'No autenticado.' }
+  }
+
+  const trimmedName = params.name?.trim()
+  if (!trimmedName) {
+    return { success: false, error: 'El nombre es obligatorio.' }
+  }
+
+  const { data, error } = await supabase
+    .from('leads')
+    .insert({
+      user_id: user.id,
+      name: trimmedName,
+      phone: params.phone?.trim() || null,
+      email: params.email?.trim() || null,
+      source: 'manual',
+      status: params.status || 'lead',
+      category: params.category?.trim() || null,
+      deal_value: params.deal_value || 0,
+      notes: params.notes?.trim() || null
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creando lead manual:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/dashboard/leads')
+  return { success: true, lead: data }
+}
+
+export async function deleteLead(leadId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'No autenticado.' }
+  }
+
+  const { error } = await supabase
+    .from('leads')
+    .delete()
+    .eq('id', leadId)
+
+  if (error) {
+    console.error('Error eliminando lead:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/dashboard/leads')
+  return { success: true }
+}
+

@@ -6,7 +6,6 @@ import {
   Mail, 
   Phone, 
   Calendar, 
-  Download, 
   MessageSquare, 
   Search, 
   FileSpreadsheet, 
@@ -14,28 +13,25 @@ import {
   Gift, 
   UserCircle, 
   Sparkles, 
-  Lock, 
   ArrowRight, 
-  Building2, 
-  Zap, 
   Scissors, 
   Coffee, 
   Star,
   CheckCircle2,
-  Clock,
   TrendingUp,
-  Tag,
   Loader2,
-  Filter,
-  Layers,
   Copy,
   Check,
   X,
-  Wallet
+  Wallet,
+  Plus,
+  Trash2
 } from 'lucide-react'
+
 import Link from 'next/link'
 import ProFeatureModal from '@/components/ProFeatureModal'
-import { updateLeadStatus, LeadStatus } from './actions'
+import { updateLeadStatus, createManualLead, deleteLead, LeadStatus } from './actions'
+
 
 export interface Lead {
   id: string
@@ -236,11 +232,103 @@ export default function LeadsClient({
   const [activeTemplateTab, setActiveTemplateTab] = useState<LeadStatus>('lead')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
+  // Nuevo contacto manual modal
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createLoading, setCreateLoading] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [newLeadForm, setNewLeadForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    status: 'lead' as LeadStatus,
+    category: '',
+    notes: ''
+  })
+
+  // Eliminar contacto
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newLeadForm.name.trim()) {
+      setCreateError('El nombre es obligatorio.')
+      return
+    }
+
+    setCreateLoading(true)
+    setCreateError(null)
+
+    try {
+      const res = await createManualLead({
+        name: newLeadForm.name,
+        phone: newLeadForm.phone || null,
+        email: newLeadForm.email || null,
+        status: newLeadForm.status,
+        category: newLeadForm.category || null,
+        notes: newLeadForm.notes || null
+      })
+
+      if (res.success && res.lead) {
+        const created: Lead = {
+          id: res.lead.id,
+          name: res.lead.name,
+          phone: res.lead.phone,
+          email: res.lead.email,
+          created_at: res.lead.created_at,
+          source: 'vcard',
+          status: (res.lead.status as LeadStatus) || 'lead',
+          category: res.lead.category,
+          notes: res.lead.notes,
+          deal_value: res.lead.deal_value || 0
+        }
+        setLeadsList(prev => [created, ...prev])
+        setShowCreateModal(false)
+        setNewLeadForm({
+          name: '',
+          phone: '',
+          email: '',
+          status: 'lead',
+          category: '',
+          notes: ''
+        })
+      } else {
+        setCreateError(res.error || 'No se pudo guardar el contacto.')
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error inesperado al guardar contacto.'
+      setCreateError(msg)
+    } finally {
+      setCreateLoading(false)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!leadToDelete) return
+    setDeleteLoading(true)
+    try {
+      const res = await deleteLead(leadToDelete.id)
+      if (res.success) {
+        setLeadsList(prev => prev.filter(l => l.id !== leadToDelete.id))
+        setLeadToDelete(null)
+      } else {
+        alert(res.error || 'No se pudo eliminar el contacto.')
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al eliminar contacto.'
+      alert(msg)
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+
   const handleCopyTemplate = (text: string, key: string) => {
     navigator.clipboard.writeText(text)
     setCopiedKey(key)
     setTimeout(() => setCopiedKey(null), 2500)
   }
+
 
   // Recuento de prospectos por fase del embudo
   const counts = {
@@ -279,10 +367,11 @@ export default function LeadsClient({
         setLeadsList(prev => prev.map(item => item.id === lead.id ? { ...item, status: previousStatus } : item))
         alert('No se pudo actualizar el estatus: ' + (res.error || 'Error desconocido'))
       }
-    } catch (err: any) {
+    } catch {
       setLeadsList(prev => prev.map(item => item.id === lead.id ? { ...item, status: previousStatus } : item))
       alert('Error de conexión al actualizar el estatus.')
     } finally {
+
       setUpdatingId(null)
     }
   }
@@ -531,12 +620,25 @@ export default function LeadsClient({
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <button
             type="button"
+            onClick={() => {
+              setCreateError(null)
+              setShowCreateModal(true)
+            }}
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition shadow-xs whitespace-nowrap cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nuevo Contacto</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setShowTemplatesModal(true)}
             className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 transition shadow-2xs whitespace-nowrap cursor-pointer"
           >
             <MessageSquare className="w-4 h-4 text-indigo-600" />
             <span>Guía de Mensajes</span>
           </button>
+
 
           <button
             onClick={handleExportCSV}
@@ -626,15 +728,26 @@ export default function LeadsClient({
                       </p>
                     </div>
 
-                    <button
-                      onClick={() => handleSaveToPhone(lead)}
-                      title="Guardar en agenda del móvil"
-                      className="p-2 rounded-xl bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 transition flex items-center gap-1.5 text-xs font-bold shadow-xs cursor-pointer shrink-0"
-                    >
-                      <UserPlus className="w-4 h-4 text-blue-600" />
-                      <span>Guardar</span>
-                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => handleSaveToPhone(lead)}
+                        title="Guardar en agenda del móvil"
+                        className="p-2 rounded-xl bg-white text-gray-700 border border-gray-200 hover:bg-gray-100 transition flex items-center gap-1.5 text-xs font-bold shadow-xs cursor-pointer"
+                      >
+                        <UserPlus className="w-4 h-4 text-blue-600" />
+                        <span>Guardar</span>
+                      </button>
+
+                      <button
+                        onClick={() => setLeadToDelete(lead)}
+                        title="Eliminar contacto del CRM"
+                        className="p-2 rounded-xl bg-white text-gray-400 hover:text-red-600 border border-gray-200 hover:border-red-200 hover:bg-red-50 transition flex items-center justify-center text-xs shadow-xs cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
+
 
                   {/* Selector de Nivel / Estatus en Móvil */}
                   <div className="pt-1">
@@ -871,8 +984,17 @@ export default function LeadsClient({
                               <span>WhatsApp</span>
                             </a>
                           )}
+
+                          <button
+                            onClick={() => setLeadToDelete(lead)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
+                            title="Eliminar contacto del CRM"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
+
                     </tr>
                   )
                 })}
@@ -990,8 +1112,9 @@ export default function LeadsClient({
                       </div>
 
                       <p className="text-xs text-gray-700 leading-relaxed font-sans bg-white p-3 rounded-lg border border-gray-100">
-                        "{item.text}"
+                        &ldquo;{item.text}&rdquo;
                       </p>
+
                     </div>
                   )
                 })}
@@ -1011,6 +1134,197 @@ export default function LeadsClient({
           </div>
         </div>
       )}
+
+      {/* Modal Registrar Nuevo Contacto Manual */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-900 to-blue-950 text-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-400">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base">Nuevo Contacto (CRM)</h3>
+                  <p className="text-[11px] text-gray-300">Agrega un cliente o prospecto a tu libreta</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSubmit} className="p-5 overflow-y-auto space-y-4">
+              {createError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+                  {createError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Nombre Completo *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Roberto Gómez"
+                  value={newLeadForm.name}
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 text-sm font-medium focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Teléfono / WhatsApp
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Ej. +504 9988-0000"
+                    value={newLeadForm.phone}
+                    onChange={(e) => setNewLeadForm(prev => ({ ...prev, phone: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 text-sm font-medium focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Correo Electrónico
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="cliente@correo.com"
+                    value={newLeadForm.email}
+                    onChange={(e) => setNewLeadForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 text-sm font-medium focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Fase en el Embudo
+                  </label>
+                  <select
+                    value={newLeadForm.status}
+                    onChange={(e) => setNewLeadForm(prev => ({ ...prev, status: e.target.value as LeadStatus }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 text-xs font-bold focus:outline-none bg-white"
+                  >
+                    <option value="lead">🟡 Nuevo Prospecto</option>
+                    <option value="contacted">🔵 Contactado</option>
+                    <option value="negotiation">🟣 En Negociación</option>
+                    <option value="won">🟢 Venta Ganada</option>
+                    <option value="lost">⚪ Descartado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Etiqueta / Sector
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Inmobiliaria, VIP..."
+                    value={newLeadForm.category}
+                    onChange={(e) => setNewLeadForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 text-sm font-medium focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Notas / Observaciones
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Detalles sobre lo que busca o de dónde lo conociste..."
+                  value={newLeadForm.notes}
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, notes: e.target.value }))}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 text-sm font-medium focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-100 transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={createLoading}
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {createLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Guardar Contacto</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmación de Eliminación */}
+      {leadToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-gray-200 overflow-hidden p-6 space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-base text-gray-900">¿Eliminar contacto?</h3>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                ¿Estás seguro de que deseas eliminar a <b>{leadToDelete.name}</b> de tu lista de contactos? Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => setLeadToDelete(null)}
+                className="w-1/2 py-2.5 px-4 rounded-xl border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-100 transition cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={handleConfirmDelete}
+                className="w-1/2 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {deleteLoading ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Eliminando...</span>
+                  </>
+                ) : (
+                  <span>Eliminar</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
+
 }
