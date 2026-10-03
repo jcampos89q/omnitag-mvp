@@ -19,6 +19,7 @@ export default function LeadCaptureModal({
   const [isOpen, setIsOpen] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(true)
 
   const primaryColor = theme?.primary_color || mainColor || '#0F172A'
@@ -44,14 +45,22 @@ export default function LeadCaptureModal({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
-    const formData = new FormData(e.currentTarget)
-    await saveLead(formData)
+    setErrorMsg(null)
+    const formElement = e.currentTarget
+    const formData = new FormData(formElement)
+    const res = await saveLead(formData)
     setLoading(false)
-    setSubmitted(true)
-    setTimeout(() => {
-      setIsOpen(false)
-      setSubmitted(false)
-    }, 2800)
+
+    if (res?.success) {
+      setSubmitted(true)
+      formElement.reset()
+      setTimeout(() => {
+        setIsOpen(false)
+        setSubmitted(false)
+      }, 2800)
+    } else {
+      setErrorMsg(res?.error || 'No se pudo guardar la información. Por favor verifica tus datos e intenta de nuevo.')
+    }
   }
 
   return (
@@ -109,6 +118,12 @@ export default function LeadCaptureModal({
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                   <input type="hidden" name="vcard_id" value={vcardId} />
                   <input type="hidden" name="slug" value={slug} />
+
+                  {errorMsg && (
+                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs font-semibold leading-relaxed">
+                      {errorMsg}
+                    </div>
+                  )}
                   
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider opacity-80 mb-1.5" style={{ color: textColor }}>

@@ -125,7 +125,7 @@ export async function createPublicBooking(formData: FormData) {
     }
   }
 
-  const { data: booking, error } = await supabase
+  const { error } = await supabase
     .from('bookings')
     .insert({
       business_id: businessId,
@@ -139,8 +139,6 @@ export async function createPublicBooking(formData: FormData) {
       notes,
       status: 'confirmed'
     })
-    .select()
-    .single()
 
   if (error) {
     console.error('Error creando reserva:', error)
@@ -209,7 +207,7 @@ export async function createPublicBooking(formData: FormData) {
     console.error('Error revalidando ruta:', revErr)
   }
 
-  return { success: true, booking, assignedSpecialistName }
+  return { success: true, assignedSpecialistName }
 }
 
 export async function createSpecialistReview(formData: FormData) {

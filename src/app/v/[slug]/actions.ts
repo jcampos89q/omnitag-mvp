@@ -20,15 +20,37 @@ export async function saveLead(formData: FormData) {
   }
 
   // Obtener primero la vCard para conocer al dueño
-  const { data: vcard } = await supabase
-    .from('vcards')
-    .select('user_id')
-    .eq('id', vcardId)
-    .maybeSingle()
+  let targetUserId: string | null = null
+  let actualVcardId = vcardId
 
-  const { data, error } = await supabase.from('leads').insert({
-    vcard_id: vcardId,
-    user_id: vcard?.user_id || null,
+  if (vcardId) {
+    const { data: vcard } = await supabase
+      .from('vcards')
+      .select('id, user_id')
+      .eq('id', vcardId)
+      .maybeSingle()
+    if (vcard?.user_id) {
+      targetUserId = vcard.user_id
+      actualVcardId = vcard.id
+    }
+  }
+
+  if (!targetUserId && slug) {
+    const { data: vcardBySlug } = await supabase
+      .from('vcards')
+      .select('id, user_id')
+      .eq('slug', slug)
+      .maybeSingle()
+    if (vcardBySlug?.user_id) {
+      targetUserId = vcardBySlug.user_id
+      actualVcardId = vcardBySlug.id
+    }
+  }
+
+  // Guardar en leads sin .select().single() para evitar violación de RLS por consulta de retorno de rol anónimo
+  const { error } = await supabase.from('leads').insert({
+    vcard_id: actualVcardId,
+    user_id: targetUserId,
     name,
     email: email || null,
     phone: phone || null,
@@ -36,7 +58,7 @@ export async function saveLead(formData: FormData) {
     status: 'lead',
     notes,
     category
-  }).select().single()
+  })
 
   if (error) {
     console.error('Error guardando lead en base de datos:', error)
@@ -45,10 +67,10 @@ export async function saveLead(formData: FormData) {
 
   // Enviar notificación interna y Notificación Push Flotante al celular del usuario
   try {
-    if (vcard?.user_id) {
+    if (targetUserId) {
       // 1. Guardar en base de datos
       await supabase.from('notifications').insert({
-        user_id: vcard.user_id,
+        user_id: targetUserId,
         title: '👤 ¡Nuevo Contacto Capturado!',
         message: `${name}${phone ? ` (${phone})` : ''} ha guardado tu vCard y te ha compartido sus datos.`,
         type: 'success',
@@ -56,7 +78,7 @@ export async function saveLead(formData: FormData) {
       })
 
       // 2. Disparar Push Flotante al sistema operativo / celular bloqueado
-      await sendPushNotificationToUser(vcard.user_id, {
+      await sendPushNotificationToUser(targetUserId, {
         title: '👤 ¡Nuevo Contacto Capturado en OmniTag!',
         body: `${name}${phone ? ` (${phone})` : ''} te ha dejado sus datos de contacto. Toca para verlos.`,
         url: '/dashboard/leads'
@@ -73,5 +95,5 @@ export async function saveLead(formData: FormData) {
   revalidatePath('/dashboard/admin')
   revalidatePath('/dashboard/analytics')
 
-  return { success: true, data }
+  return { success: true }
 }
