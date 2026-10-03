@@ -4,6 +4,12 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPushNotificationToUser } from '@/lib/push'
 
+function isValidUUID(str: string | null | undefined): boolean {
+  if (!str) return false
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  return uuidRegex.test(str.trim())
+}
+
 export async function saveLead(formData: FormData) {
   const supabase = await createClient()
   
@@ -15,15 +21,15 @@ export async function saveLead(formData: FormData) {
   const notes = (formData.get('notes') as string)?.trim() || null
   const category = (formData.get('category') as string)?.trim() || null
 
-  if (!vcardId || !name) {
+  if ((!vcardId && !slug) || !name) {
     return { success: false, error: 'Nombre y vCard requeridos' }
   }
 
-  // Obtener primero la vCard para conocer al dueño
+  // Obtener primero la vCard para conocer al dueño de forma ultra-segura
   let targetUserId: string | null = null
-  let actualVcardId = vcardId
+  let actualVcardId: string | null = null
 
-  if (vcardId) {
+  if (vcardId && isValidUUID(vcardId)) {
     const { data: vcard } = await supabase
       .from('vcards')
       .select('id, user_id')
@@ -49,7 +55,7 @@ export async function saveLead(formData: FormData) {
 
   // Guardar en leads sin .select().single() para evitar violación de RLS por consulta de retorno de rol anónimo
   const { error } = await supabase.from('leads').insert({
-    vcard_id: actualVcardId,
+    vcard_id: isValidUUID(actualVcardId) ? actualVcardId : null,
     user_id: targetUserId,
     name,
     email: email || null,
