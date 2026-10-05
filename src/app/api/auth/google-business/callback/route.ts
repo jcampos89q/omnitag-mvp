@@ -11,17 +11,50 @@ export async function GET(request: NextRequest) {
   const origin = new URL(request.url).origin
   const redirectTarget = new URL('/dashboard/google-business?tab=api', origin)
 
+  const makeRedirect = (url: URL) => {
+    const res = NextResponse.redirect(url)
+    res.cookies.delete('google_oauth_state')
+    return res
+  }
+
   if (error || !code) {
     console.error('Google OAuth callback error:', error)
     redirectTarget.searchParams.set('error', error || 'no_code')
-    return NextResponse.redirect(redirectTarget)
+    return makeRedirect(redirectTarget)
   }
 
   const supabase = await createClient()
   const { user } = await getEffectiveUser(supabase)
 
   if (!user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return makeRedirect(new URL('/login', request.url))
+  }
+
+  // Validate CSRF state
+  const savedStateCookie = request.cookies.get('google_oauth_state')?.value
+  if (!state || !savedStateCookie) {
+    console.error('Google OAuth CSRF state missing')
+    redirectTarget.searchParams.set('error', 'invalid_state')
+    return makeRedirect(redirectTarget)
+  }
+
+  try {
+    const parsedState = JSON.parse(Buffer.from(state, 'base64url').toString('utf8'))
+    if (!parsedState?.csrf || parsedState.csrf !== savedStateCookie) {
+      console.error('Google OAuth CSRF token mismatch')
+      redirectTarget.searchParams.set('error', 'csrf_mismatch')
+      return makeRedirect(redirectTarget)
+    }
+
+    if (parsedState.userId && parsedState.userId !== user.id) {
+      console.error('Google OAuth user session mismatch')
+      redirectTarget.searchParams.set('error', 'user_mismatch')
+      return makeRedirect(redirectTarget)
+    }
+  } catch (stateErr) {
+    console.error('Google OAuth state parse error:', stateErr)
+    redirectTarget.searchParams.set('error', 'invalid_state_format')
+    return makeRedirect(redirectTarget)
   }
 
   const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID
@@ -30,7 +63,7 @@ export async function GET(request: NextRequest) {
 
   if (!clientId || !clientSecret) {
     redirectTarget.searchParams.set('error', 'missing_client_credentials')
-    return NextResponse.redirect(redirectTarget)
+    return makeRedirect(redirectTarget)
   }
 
   try {
@@ -51,7 +84,7 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) {
       console.error('Error exchanging Google OAuth code:', tokenData)
       redirectTarget.searchParams.set('error', tokenData.error || 'token_exchange_failed')
-      return NextResponse.redirect(redirectTarget)
+      return makeRedirect(redirectTarget)
     }
 
     const { access_token, refresh_token, expires_in, scope } = tokenData
@@ -62,7 +95,7 @@ export async function GET(request: NextRequest) {
     if (!hasBusinessScope) {
       console.warn('Google OAuth returned token without business.manage scope:', scope)
       redirectTarget.searchParams.set('error', 'missing_business_scope')
-      return NextResponse.redirect(redirectTarget)
+      return makeRedirect(redirectTarget)
     }
 
     // 3. Obtener datos básicos de la cuenta de Google (email)
@@ -137,14 +170,14 @@ export async function GET(request: NextRequest) {
     if (dbError) {
       console.error('Error saving Google Business connection to database:', dbError)
       redirectTarget.searchParams.set('error', 'db_save_failed')
-      return NextResponse.redirect(redirectTarget)
+      return makeRedirect(redirectTarget)
     }
 
     redirectTarget.searchParams.set('connected', 'success')
-    return NextResponse.redirect(redirectTarget)
+    return makeRedirect(redirectTarget)
   } catch (err: any) {
     console.error('Google OAuth callback unexpected error:', err)
     redirectTarget.searchParams.set('error', err.message || 'unknown_error')
-    return NextResponse.redirect(redirectTarget)
+    return makeRedirect(redirectTarget)
   }
 }

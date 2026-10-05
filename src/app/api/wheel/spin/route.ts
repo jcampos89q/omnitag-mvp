@@ -67,23 +67,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Validar Cooldown de 24 horas por Teléfono
+    // 3. Validar Cooldown de 24 horas y Límites vía RPC seguro
     const cooldownHours = wheel.cooldown_hours || 24
-    const cooldownThreshold = new Date(Date.now() - cooldownHours * 3600 * 1000).toISOString()
+    const { data: eligibility } = await supabase.rpc('check_wheel_spin_eligibility', {
+      p_wheel_id: wheel.id,
+      p_phone: cleanPhone,
+      p_cooldown_hours: cooldownHours
+    })
 
-    const { data: recentSpin } = await supabase
-      .from('prize_wheel_spins')
-      .select('created_at')
-      .eq('wheel_id', wheel.id)
-      .eq('customer_phone', cleanPhone)
-      .gte('created_at', cooldownThreshold)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (recentSpin) {
+    if (eligibility && !eligibility.eligible) {
       return NextResponse.json(
-        { error: `Ya participaste recientemente con este número. Podrás girar de nuevo en tu próxima visita.` },
+        { error: 'Ya participaste recientemente con este número. Podrás girar de nuevo en tu próxima visita.' },
         { status: 429 }
       )
     }
@@ -104,19 +98,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Escudo Anti-Sobregiros (Verificar stock diario de cada premio)
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
-
-    const { data: todaySpins } = await supabase
-      .from('prize_wheel_spins')
-      .select('item_id')
-      .eq('wheel_id', wheel.id)
-      .gte('created_at', todayStart.toISOString())
-
-    const spinsCountByItem: Record<string, number> = {}
-    todaySpins?.forEach(s => {
-      spinsCountByItem[s.item_id] = (spinsCountByItem[s.item_id] || 0) + 1
-    })
+    const spinsCountByItem: Record<string, number> = eligibility?.spins_today_by_item || {}
 
     // Filtrar premios disponibles según stock diario
     const eligibleItems = items.map(item => {

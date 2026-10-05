@@ -286,20 +286,13 @@ export async function getGiftCardPublic(code: string) {
   const supabase = await createClient()
   const cleanCode = code.trim().toUpperCase()
 
-  const { data: card, error } = await supabase
-    .from('gift_cards')
-    .select(`
-      *,
-      users:user_id (
-        full_name,
-        avatar_url,
-        industry
-      )
-    `)
-    .eq('code', cleanCode)
-    .maybeSingle()
+  const { data: rpcData, error } = await supabase
+    .rpc('get_public_gift_card', { p_code: cleanCode })
 
-  if (error || !card) return null
+  if (error || !rpcData || !rpcData.card) return null
+
+  const card = rpcData.card
+  const redemptions = rpcData.redemptions || []
 
   // Obtener negocio emisor desde vCards si existe
   const { data: vcard } = await supabase
@@ -309,13 +302,6 @@ export async function getGiftCardPublic(code: string) {
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
-
-  // Historial de consumos
-  const { data: redemptions } = await supabase
-    .from('gift_card_redemptions')
-    .select('id, amount, previous_balance, new_balance, notes, created_at')
-    .eq('gift_card_id', card.id)
-    .order('created_at', { ascending: false })
 
   const vcardTheme = typeof vcard?.theme === 'object' && vcard.theme !== null ? (vcard.theme as any) : {}
   const vcardContact = typeof vcard?.contact_info === 'object' && vcard.contact_info !== null ? (vcard.contact_info as any) : {}
@@ -330,7 +316,7 @@ export async function getGiftCardPublic(code: string) {
       avatar: card.users?.avatar_url || null,
       logo: detectedLogo
     },
-    redemptions: redemptions || []
+    redemptions
   }
 }
 

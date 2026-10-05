@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import crypto from 'crypto'
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -18,7 +19,12 @@ export async function GET(request: NextRequest) {
   }
 
   const redirectUri = `${new URL(request.url).origin}/api/auth/google-business/callback`
-  const state = Buffer.from(JSON.stringify({ userId: user.id, timestamp: Date.now() })).toString('base64url')
+  const csrfToken = crypto.randomBytes(32).toString('hex')
+  const state = Buffer.from(JSON.stringify({ 
+    userId: user.id, 
+    csrf: csrfToken, 
+    timestamp: Date.now() 
+  })).toString('base64url')
 
   const scopes = [
     'openid',
@@ -38,5 +44,16 @@ export async function GET(request: NextRequest) {
     state
   })
 
-  return NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`)
+  const response = NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`)
+
+  // Store CSRF state token in HttpOnly secure cookie valid for 10 minutes
+  response.cookies.set('google_oauth_state', csrfToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 600, // 10 minutes
+    path: '/'
+  })
+
+  return response
 }
