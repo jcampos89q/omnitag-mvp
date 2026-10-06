@@ -140,10 +140,12 @@ export default async function PublicVCardPage({
 
   let isOwner = false
   let isAdmin = false
+  let currentUser: any = null
 
   if (hasAuthCookie) {
     try {
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const { data } = await supabase.auth.getUser()
+      currentUser = data?.user || null
       if (currentUser) {
         isOwner = currentUser.id === ownerId
         if (!isOwner) {
@@ -180,7 +182,7 @@ export default async function PublicVCardPage({
       ? supabase.from('loyalty_programs').select('id, slug, title, reward_text').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
       : Promise.resolve({ data: null }),
     businessInfo.show_reviews !== false
-      ? supabase.from('devices').select('id, tag_id, name').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
+      ? supabase.from('devices').select('id, tag_id').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
       : Promise.resolve({ data: null })
   ])
 

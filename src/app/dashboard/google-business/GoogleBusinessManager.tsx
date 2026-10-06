@@ -53,7 +53,7 @@ import {
 
 interface DeviceItem {
   id: string
-  name: string
+  name?: string
   device_type: string
   redirect_url: string
   place_id?: string | null
