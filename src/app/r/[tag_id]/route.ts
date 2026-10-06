@@ -5,14 +5,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { recordPageViewScan } from '@/lib/analytics'
 
 /**
- * Genera una redirección instantánea asegurando cabeceras anti-caché
- * para que cada toque NFC o escaneo QR se registre como nueva visita.
+ * Genera una redirección ultrarrápida con caché perimetral en el Edge (s-maxage)
+ * para que los toques NFC consecutivos en el mismo local respondan en milisegundos.
  */
+function createFastRedirect(url: string | URL): NextResponse {
+  const response = NextResponse.redirect(url)
+  response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=86400')
+  return response
+}
+
 function createNoCacheRedirect(url: string | URL): NextResponse {
   const response = NextResponse.redirect(url)
-  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0')
-  response.headers.set('Pragma', 'no-cache')
-  response.headers.set('Expires', '0')
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
   return response
 }
 
@@ -24,10 +28,10 @@ export async function GET(
   const rawTagId = (await params).tag_id
   const cleanTagId = decodeURIComponent(rawTagId || '').trim()
 
-  // 1. Buscar el dispositivo de forma segura soportando formato normal o URL-encoded
+  // 1. Buscar el dispositivo con relaciones precargadas en una SOLA consulta (0 consultas adicionales)
   const { data: device } = await supabase
     .from('devices')
-    .select('*')
+    .select('id, user_id, tag_id, device_type, redirect_url, review_filter_enabled, is_active, vcard_id, loyalty_program_id, vcards(slug), loyalty_programs(slug)')
     .or(`tag_id.eq.${cleanTagId},tag_id.eq.${encodeURIComponent(cleanTagId)}`)
     .maybeSingle()
 
@@ -36,7 +40,7 @@ export async function GET(
     return createNoCacheRedirect(new URL(`/r/${encodeURIComponent(cleanTagId)}/activate`, request.url))
   }
 
-  // 2. Registrar el escaneo en segundo plano con los headers reales del dispositivo móvil
+  // 2. Registrar el escaneo en segundo plano (asíncrono y no bloqueante)
   const userAgent = request.headers.get('user-agent') || ''
   const country = request.headers.get('x-vercel-ip-country') || 'Desconocido'
 
@@ -48,34 +52,24 @@ export async function GET(
     country,
   })
 
-  // Si es tap_to_rate y tiene el filtro inteligente, enviarlo a la pantalla de estrellitas
+  // Si es tap_to_rate y tiene el filtro inteligente, enviarlo a la pantalla de calificación
   if (device.device_type === 'tap_to_rate' && device.review_filter_enabled) {
-    return createNoCacheRedirect(new URL(`/r/${encodeURIComponent(device.tag_id)}/filter`, request.url))
+    return createFastRedirect(new URL(`/r/${encodeURIComponent(device.tag_id)}/filter`, request.url))
   }
 
-  // 3. Redirección para vCard vinculada
-  if (device.device_type === 'vcard' && device.vcard_id) {
-    const { data: vcard } = await supabase
-      .from('vcards')
-      .select('slug')
-      .eq('id', device.vcard_id)
-      .maybeSingle()
-      
-    if (vcard) {
-      return createNoCacheRedirect(new URL(`/v/${vcard.slug}`, request.url))
+  // 3. Redirección para vCard vinculada (obtenida directamente del JOIN)
+  if (device.device_type === 'vcard') {
+    const vcardSlug = (device.vcards as any)?.slug
+    if (vcardSlug) {
+      return createFastRedirect(new URL(`/v/${vcardSlug}`, request.url))
     }
   }
 
-  // Redirección para programa de fidelización vinculado
-  if (device.device_type === 'loyalty' && device.loyalty_program_id) {
-    const { data: program } = await supabase
-      .from('loyalty_programs')
-      .select('slug')
-      .eq('id', device.loyalty_program_id)
-      .maybeSingle()
-      
-    if (program) {
-      return createNoCacheRedirect(new URL(`/l/${program.slug}`, request.url))
+  // Redirección para programa de fidelización vinculado (obtenida directamente del JOIN)
+  if (device.device_type === 'loyalty') {
+    const loyaltySlug = (device.loyalty_programs as any)?.slug
+    if (loyaltySlug) {
+      return createFastRedirect(new URL(`/l/${loyaltySlug}`, request.url))
     }
   }
 
@@ -84,8 +78,8 @@ export async function GET(
     const safeUrl = device.redirect_url.startsWith('http://') || device.redirect_url.startsWith('https://')
       ? device.redirect_url
       : `https://${device.redirect_url}`
-    return createNoCacheRedirect(safeUrl)
+    return createFastRedirect(safeUrl)
   }
 
-  return createNoCacheRedirect(new URL('/', request.url))
+  return createFastRedirect(new URL('/', request.url))
 }

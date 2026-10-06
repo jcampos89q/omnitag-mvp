@@ -31,7 +31,7 @@ import BusinessHoursWidget from './BusinessHoursWidget'
 import GoogleWalletButton from '@/components/GoogleWalletButton'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
-import { getUserPlanInfo } from '@/lib/plans'
+import { cookies } from 'next/headers'
 
 const getVCard = cache(async (slug: string) => {
   const supabase = await createClient()
@@ -134,39 +134,59 @@ export default async function PublicVCardPage({
     lead_capture_enabled 
   } = vcard
 
-    // 2. Comprobar sesión de usuario (para modo propietario/admin) y módulos del ecosistema
+  // 2. Comprobar sesión de usuario únicamente si existen cookies de Supabase (evita network roundtrips para visitantes)
+  const cookieStore = await cookies()
+  const hasAuthCookie = cookieStore.getAll().some(c => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'))
+
+  let isOwner = false
+  let isAdmin = false
+
+  if (hasAuthCookie) {
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (currentUser) {
+        isOwner = currentUser.id === ownerId
+        if (!isOwner) {
+          const { data: userProfile } = await supabase
+            .from('users')
+            .select('is_admin')
+            .eq('id', currentUser.id)
+            .maybeSingle()
+          isAdmin = Boolean(userProfile?.is_admin)
+        }
+      }
+    } catch {
+      // Ignorar fallos de auth en navegación pública
+    }
+  }
+
+  const canManage = isOwner || isAdmin
+  const businessInfo = business_info || {}
+
+  // 3. Consultar módulos del ecosistema en paralelo solo si están activos en business_info
   const [
-    { data: { user: currentUser } },
-    { isPro: ownerIsPro },
     { data: activeMenu },
     { data: activeAppointment },
     { data: activeLoyalty },
     { data: activeDevice }
   ] = await Promise.all([
-    supabase.auth.getUser(),
-    getUserPlanInfo(supabase, ownerId),
-    supabase.from('menus').select('id, slug, name, business_type').eq('user_id', ownerId).eq('is_active', true).maybeSingle(),
-    supabase.from('appointment_businesses').select('id, slug, name, category').eq('user_id', ownerId).eq('is_active', true).maybeSingle(),
-    supabase.from('loyalty_programs').select('id, slug, title, reward_text').eq('user_id', ownerId).eq('is_active', true).maybeSingle(),
-    supabase.from('devices').select('id, tag_id, name').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
+    businessInfo.show_menu !== false
+      ? supabase.from('menus').select('id, slug, name, business_type').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
+      : Promise.resolve({ data: null }),
+    businessInfo.show_appointments !== false
+      ? supabase.from('appointment_businesses').select('id, slug, name, category').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
+      : Promise.resolve({ data: null }),
+    businessInfo.show_loyalty !== false
+      ? supabase.from('loyalty_programs').select('id, slug, title, reward_text').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
+      : Promise.resolve({ data: null }),
+    businessInfo.show_reviews !== false
+      ? supabase.from('devices').select('id, tag_id, name').eq('user_id', ownerId).eq('is_active', true).maybeSingle()
+      : Promise.resolve({ data: null })
   ])
-
-  const isOwner = Boolean(currentUser && currentUser.id === ownerId)
-  let isAdmin = false
-  if (currentUser && !isOwner) {
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('is_admin')
-      .eq('id', currentUser.id)
-      .maybeSingle()
-    isAdmin = Boolean(userProfile?.is_admin)
-  }
-  const canManage = isOwner || isAdmin
 
   // La captura de contactos en vCard está habilitada para todos los usuarios que la activen
   const canCaptureLeads = Boolean(lead_capture_enabled)
 
-  const businessInfo = business_info || {}
   const isBusiness = card_type === 'business'
   const titleName = isBusiness 
     ? (first_name || company_name || 'Empresa')
