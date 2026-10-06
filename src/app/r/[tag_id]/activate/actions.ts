@@ -9,19 +9,29 @@ export async function activatePlateAndRegister(formData: FormData) {
   const supabase = await createClient()
 
   const tagId = (formData.get('tag_id') as string)?.trim()
-  const placeId = (formData.get('place_id') as string)?.trim()
-  const businessName = (formData.get('business_name') as string)?.trim()
-  const businessAddress = (formData.get('business_address') as string)?.trim()
-  const businessPhone = (formData.get('business_phone') as string)?.trim()
-  const directReviewUrl = (formData.get('direct_review_url') as string)?.trim()
+  const isNoGooglePlace = formData.get('no_google_place') === 'true'
+  const manualBusinessName = (formData.get('manual_business_name') as string)?.trim()
+  const manualAddress = (formData.get('manual_business_address') as string)?.trim() || null
+  const manualPhone = (formData.get('manual_business_phone') as string)?.trim() || null
+  const manualCategory = (formData.get('manual_category') as string)?.trim() || 'Comercio'
+
+  const placeId = isNoGooglePlace ? null : (formData.get('place_id') as string)?.trim()
+  const businessName = isNoGooglePlace ? manualBusinessName : (formData.get('business_name') as string)?.trim()
+  const businessAddress = isNoGooglePlace ? manualAddress : (formData.get('business_address') as string)?.trim()
+  const businessPhone = isNoGooglePlace ? manualPhone : (formData.get('business_phone') as string)?.trim()
+  const directReviewUrl = isNoGooglePlace ? null : (formData.get('direct_review_url') as string)?.trim()
   const reviewFilter = formData.get('review_filter') === 'on'
   const googleTypesRaw = (formData.get('google_types') as string) || '[]'
 
   let googleTypes: string[] = []
-  try {
-    googleTypes = JSON.parse(googleTypesRaw)
-  } catch {
-    googleTypes = []
+  if (isNoGooglePlace) {
+    googleTypes = [manualCategory]
+  } else {
+    try {
+      googleTypes = JSON.parse(googleTypesRaw)
+    } catch {
+      googleTypes = []
+    }
   }
 
   // Datos personales del cliente
@@ -30,8 +40,14 @@ export async function activatePlateAndRegister(formData: FormData) {
   const email = (formData.get('email') as string)?.trim()
   const password = (formData.get('password') as string)
 
-  if (!tagId || !placeId || !directReviewUrl) {
-    redirect(`/r/${tagId}/activate?error=Faltan+datos+del+negocio`)
+  if (isNoGooglePlace) {
+    if (!tagId || !manualBusinessName) {
+      redirect(`/r/${tagId}/activate?error=Por+favor+ingresa+el+nombre+de+tu+negocio`)
+    }
+  } else {
+    if (!tagId || !placeId || !directReviewUrl) {
+      redirect(`/r/${tagId}/activate?error=Faltan+datos+del+negocio`)
+    }
   }
 
   const { data: { user: existingAuthUser } } = await supabase.auth.getUser()
@@ -105,14 +121,14 @@ export async function activatePlateAndRegister(formData: FormData) {
       .update({
         user_id: targetUserId,
         device_type: 'tap_to_rate',
-        redirect_url: directReviewUrl,
-        place_id: placeId,
+        redirect_url: directReviewUrl || null,
+        place_id: placeId || null,
         business_name: businessName,
         business_address: businessAddress,
         business_phone: businessPhone,
         google_types: googleTypes,
         review_filter_enabled: reviewFilter,
-        is_active: true
+        is_active: isNoGooglePlace ? false : true
       })
       .eq('id', existingDevice.id)
   } else {
@@ -122,14 +138,14 @@ export async function activatePlateAndRegister(formData: FormData) {
         tag_id: tagId,
         user_id: targetUserId,
         device_type: 'tap_to_rate',
-        redirect_url: directReviewUrl,
-        place_id: placeId,
+        redirect_url: directReviewUrl || null,
+        place_id: placeId || null,
         business_name: businessName,
         business_address: businessAddress,
         business_phone: businessPhone,
         google_types: googleTypes,
         review_filter_enabled: reviewFilter,
-        is_active: true
+        is_active: isNoGooglePlace ? false : true
       })
   }
 
@@ -164,25 +180,47 @@ export async function activatePlateAndRegister(formData: FormData) {
 
   // 6. Notificación in-app en la campana
   try {
-    await supabase.from('notifications').insert({
-      user_id: targetUserId,
-      title: '🎉 ¡Tu Placa de Reseñas NFC está Activa!',
-      message: `Tu placa física para "${businessName || 'tu negocio'}" quedó configurada con 365 días de servicio PRO y Escudo Anti-Quejas.`,
-      type: 'success',
-      link: '/dashboard/devices'
-    })
+    if (isNoGooglePlace) {
+      await supabase.from('notifications').insert({
+        user_id: targetUserId,
+        title: '⏳ Placa Registrada: En Espera de Verificación de Google',
+        message: `Tu placa física para "${businessName || 'tu negocio'}" quedó vinculada con 365 días de garantía. Recuerda no colocarla en tu mostrador todavía hasta que Google verifique tu local comercial.`,
+        type: 'warning',
+        link: '/dashboard/google-business'
+      })
 
-    await sendPushNotificationToUser(targetUserId, {
-      title: '🎉 ¡Placa de Reseñas NFC Activada!',
-      body: `Tu placa para "${businessName || 'tu negocio'}" ya está vinculada con 1 año de membresía PRO.`,
-      url: '/dashboard/devices'
-    })
+      await sendPushNotificationToUser(targetUserId, {
+        title: '⏳ Placa en Espera de Aprobación de Google',
+        body: `Tu placa para "${businessName || 'tu negocio'}" está registrada. Recuerda no colocarla en tu mostrador todavía hasta que Google apruebe tu local.`,
+        url: '/dashboard/google-business'
+      })
+    } else {
+      await supabase.from('notifications').insert({
+        user_id: targetUserId,
+        title: '🎉 ¡Tu Placa de Reseñas NFC está Activa!',
+        message: `Tu placa física para "${businessName || 'tu negocio'}" quedó configurada con 365 días de servicio PRO y Escudo Anti-Quejas.`,
+        type: 'success',
+        link: '/dashboard/devices'
+      })
+
+      await sendPushNotificationToUser(targetUserId, {
+        title: '🎉 ¡Placa de Reseñas NFC Activada!',
+        body: `Tu placa para "${businessName || 'tu negocio'}" ya está vinculada con 1 año de membresía PRO.`,
+        url: '/dashboard/devices'
+      })
+    }
   } catch (notifErr) {
     console.error('Error creando notificación de activación:', notifErr)
   }
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/devices')
+  revalidatePath('/dashboard/google-business')
   revalidatePath('/dashboard/admin')
-  redirect('/dashboard/devices?success=plate_activated')
+
+  if (isNoGooglePlace) {
+    redirect('/dashboard/google-business?pending_plate=' + encodeURIComponent(tagId))
+  } else {
+    redirect('/dashboard/devices?success=plate_activated')
+  }
 }

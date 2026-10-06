@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, ShieldCheck, ArrowRight, User, Mail, Lock, Phone, Sparkles, AlertCircle } from 'lucide-react'
+import { Star, ShieldCheck, ArrowRight, User, Mail, Lock, Phone, Sparkles, AlertCircle, Building2, MapPin, Tag, Hourglass, Search } from 'lucide-react'
 import GooglePlaceSearchInput, { PlaceDetails } from '@/components/GooglePlaceSearchInput'
 import { activatePlateAndRegister } from './actions'
 
@@ -16,9 +16,16 @@ export default function ActivatePlateClient({
   currentUser,
   serverError
 }: ActivatePlateClientProps) {
+  const [noGooglePlace, setNoGooglePlace] = useState(false)
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | null>(null)
   const [reviewFilter, setReviewFilter] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+
+  // Campos manuales para cuando aún no está en Google Maps
+  const [manualBusinessName, setManualBusinessName] = useState('')
+  const [manualCategory, setManualCategory] = useState('Comercio / Tienda')
+  const [manualAddress, setManualAddress] = useState('')
+  const [manualPhone, setManualPhone] = useState('')
 
   // Campos personales
   const [fullName, setFullName] = useState('')
@@ -26,6 +33,10 @@ export default function ActivatePlateClient({
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false)
+
+  const isFormValid = noGooglePlace
+    ? manualBusinessName.trim().length > 0 && manualAddress.trim().length > 0 && (currentUser || (fullName.trim() && personalPhone.trim() && email.trim() && password.length >= 6 && acceptedPrivacy))
+    : Boolean(selectedPlace) && (currentUser || (fullName.trim() && personalPhone.trim() && email.trim() && password.length >= 6 && acceptedPrivacy))
 
   return (
     <div className="max-w-md w-full bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95">
@@ -53,29 +64,135 @@ export default function ActivatePlateClient({
         </div>
       )}
 
+      {/* Selector de modo: Con Google Maps o Sin Google Maps */}
+      <div className="grid grid-cols-2 p-1 bg-white/5 border border-white/10 rounded-2xl gap-1 text-xs font-bold text-center">
+        <button
+          type="button"
+          onClick={() => setNoGooglePlace(false)}
+          className={`py-2.5 px-2 rounded-xl transition flex items-center justify-center gap-1.5 ${!noGooglePlace ? 'bg-amber-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}
+        >
+          <Search className="w-3.5 h-3.5" />
+          <span>Ya estoy en Google</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setNoGooglePlace(true)}
+          className={`py-2.5 px-2 rounded-xl transition flex items-center justify-center gap-1.5 ${noGooglePlace ? 'bg-amber-500 text-black shadow-md' : 'text-gray-400 hover:text-white'}`}
+        >
+          <Building2 className="w-3.5 h-3.5" />
+          <span>Aún no estoy en Google</span>
+        </button>
+      </div>
+
       <form action={activatePlateAndRegister} onSubmit={() => setSubmitting(true)} className="space-y-5">
         <input type="hidden" name="tag_id" value={tagId} />
 
-        {/* 1. Buscador oficial de Google Maps */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-300">
-            1. Busca tu Negocio en Google Maps *
-          </label>
-          <GooglePlaceSearchInput
-            onPlaceSelected={(place) => {
-              setSelectedPlace(place)
-            }}
-            initialPlace={selectedPlace}
-          />
-        </div>
+        {/* MODO 1: Búsqueda oficial en Google Maps */}
+        {!noGooglePlace ? (
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-300">
+              1. Busca tu Negocio en Google Maps *
+            </label>
+            <GooglePlaceSearchInput
+              onPlaceSelected={(place) => {
+                setSelectedPlace(place)
+              }}
+              initialPlace={selectedPlace}
+            />
+            {/* Campos ocultos de Google Places para enviar en el FormData */}
+            <input type="hidden" name="no_google_place" value="false" />
+            <input type="hidden" name="place_id" value={selectedPlace?.place_id || ''} />
+            <input type="hidden" name="business_name" value={selectedPlace?.name || ''} />
+            <input type="hidden" name="business_address" value={selectedPlace?.formatted_address || ''} />
+            <input type="hidden" name="business_phone" value={selectedPlace?.formatted_phone_number || ''} />
+            <input type="hidden" name="direct_review_url" value={selectedPlace?.direct_review_url || ''} />
+            <input type="hidden" name="google_types" value={JSON.stringify(selectedPlace?.types || [])} />
+          </div>
+        ) : (
+          /* MODO 2: Aún no tiene perfil en Google Maps */
+          <div className="space-y-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl animate-in fade-in">
+            <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs uppercase tracking-wider">
+              <Hourglass className="w-4 h-4" />
+              <span>Alta comercial en proceso</span>
+            </div>
 
-        {/* Campos ocultos de Google Places para enviar en el FormData */}
-        <input type="hidden" name="place_id" value={selectedPlace?.place_id || ''} />
-        <input type="hidden" name="business_name" value={selectedPlace?.name || ''} />
-        <input type="hidden" name="business_address" value={selectedPlace?.formatted_address || ''} />
-        <input type="hidden" name="business_phone" value={selectedPlace?.formatted_phone_number || ''} />
-        <input type="hidden" name="direct_review_url" value={selectedPlace?.direct_review_url || ''} />
-        <input type="hidden" name="google_types" value={JSON.stringify(selectedPlace?.types || [])} />
+            <p className="text-[11px] text-amber-200/90 leading-relaxed">
+              Ingresa los datos de tu negocio para registrar tu placa con <b>365 días de garantía</b>. 
+              <strong className="text-white block mt-1">⚠️ Recuerda no colocar la placa en tu mostrador todavía hasta que Google verifique tu local.</strong>
+            </p>
+
+            <input type="hidden" name="no_google_place" value="true" />
+
+            <div>
+              <label className="block text-[11px] font-bold text-gray-300 mb-1">Nombre Comercial del Negocio *</label>
+              <div className="relative">
+                <Building2 className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="text"
+                  name="manual_business_name"
+                  required
+                  value={manualBusinessName}
+                  onChange={(e) => setManualBusinessName(e.target.value)}
+                  placeholder="Ej. Tacos El Paisa"
+                  className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-gray-300 mb-1">Categoría / Giro del Negocio *</label>
+              <div className="relative">
+                <Tag className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <select
+                  name="manual_category"
+                  value={manualCategory}
+                  onChange={(e) => setManualCategory(e.target.value)}
+                  className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:border-amber-400 focus:outline-none"
+                >
+                  <option value="Restaurante / Cafetería" className="bg-gray-900 text-white">Restaurante / Cafetería</option>
+                  <option value="Salón de Belleza / Barbería" className="bg-gray-900 text-white">Salón de Belleza / Barbería / Spa</option>
+                  <option value="Clínica / Consultorio Dental" className="bg-gray-900 text-white">Clínica / Consultorio Dental</option>
+                  <option value="Tienda / Boutique / Comercio" className="bg-gray-900 text-white">Tienda / Boutique / Comercio</option>
+                  <option value="Taller Mecánico / Car Wash" className="bg-gray-900 text-white">Taller Mecánico / Car Wash</option>
+                  <option value="Gimnasio / Deportes" className="bg-gray-900 text-white">Gimnasio / Fitness</option>
+                  <option value="Servicios Profesionales" className="bg-gray-900 text-white">Servicios Profesionales</option>
+                  <option value="Otro Negocio Local" className="bg-gray-900 text-white">Otro Negocio Local</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-gray-300 mb-1">Dirección del Establecimiento *</label>
+              <div className="relative">
+                <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="text"
+                  name="manual_business_address"
+                  required
+                  value={manualAddress}
+                  onChange={(e) => setManualAddress(e.target.value)}
+                  placeholder="Ej. Col. Palmira, Ave. República de Chile #1402"
+                  className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-gray-300 mb-1">Teléfono de Atención al Cliente</label>
+              <div className="relative">
+                <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="tel"
+                  name="manual_business_phone"
+                  value={manualPhone}
+                  onChange={(e) => setManualPhone(e.target.value)}
+                  placeholder="Ej. +504 9876-5432"
+                  className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 2. Escudo Anti-Quejas */}
         <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl space-y-2">
@@ -135,7 +252,7 @@ export default function ActivatePlateClient({
                   value={personalPhone}
                   onChange={(e) => setPersonalPhone(e.target.value)}
                   placeholder="Ej. +504 9999-9999"
-                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-emerald-400 focus:outline-none"
+                  className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-emerald-400 focus:border-emerald-400 focus:outline-none"
                 />
               </div>
               <span className="text-[10px] text-gray-400 mt-0.5 block">
@@ -213,10 +330,16 @@ export default function ActivatePlateClient({
         {/* Botón de Activación */}
         <button
           type="submit"
-          disabled={!selectedPlace || submitting || (!currentUser && !acceptedPrivacy)}
+          disabled={!isFormValid || submitting}
           className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-black font-extrabold text-sm hover:brightness-110 transition shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <span>{submitting ? 'Activando Placa...' : 'Activar Placa & 1 Año de Servicio'}</span>
+          <span>
+            {submitting 
+              ? 'Procesando registro...' 
+              : noGooglePlace 
+              ? 'Registrar Placa & Tramitar Alta en Google' 
+              : 'Activar Placa & 1 Año de Servicio'}
+          </span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </form>

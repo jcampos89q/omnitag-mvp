@@ -48,7 +48,6 @@ export async function createShieldLink(placeId: string, businessName: string, di
     .insert({
       user_id: user.id,
       device_type: 'tap_to_rate',
-      name: `Escudo Anti-Quejas - ${businessName || 'Mi Negocio'}`,
       business_name: businessName,
       place_id: placeId,
       redirect_url: redirectUrl,
@@ -389,4 +388,59 @@ export async function publishGooglePostDirect(summary: string, actionUrl?: strin
     console.error('Error publishing Google Post:', err)
     return { success: false, message: err.message || 'Error de conexión con Google' }
   }
+}
+
+/**
+ * Activa una placa NFC que estaba en espera de aprobación de Google Maps
+ */
+export async function activatePendingPlateWithGoogle(
+  deviceId: string,
+  placeId: string,
+  directReviewUrl: string,
+  businessName: string,
+  businessAddress?: string,
+  businessPhone?: string,
+  googleTypes: string[] = []
+) {
+  const supabase = await createClient()
+  const { user } = await getEffectiveUser(supabase)
+  if (!user) throw new Error('No autenticado')
+
+  const { data: updatedDevice, error } = await supabase
+    .from('devices')
+    .update({
+      place_id: placeId,
+      redirect_url: directReviewUrl,
+      business_name: businessName,
+      business_address: businessAddress || null,
+      business_phone: businessPhone || null,
+      google_types: googleTypes,
+      is_active: true
+    })
+    .eq('id', deviceId)
+    .eq('user_id', user.id)
+    .select('*')
+    .single()
+
+  if (error) {
+    console.error('Error activating pending plate:', error)
+    throw new Error('Error al activar la placa: ' + error.message)
+  }
+
+  // Notificación in-app
+  try {
+    await supabase.from('notifications').insert({
+      user_id: user.id,
+      title: '🚀 ¡Tu Placa Física ya está Activa y Lista para el Mostrador!',
+      message: `Tu negocio "${businessName}" fue vinculado exitosamente con Google Maps. Tu placa física ya está lista para colocar en el mostrador.`,
+      type: 'success',
+      link: '/dashboard/devices'
+    })
+  } catch (notifErr) {
+    console.error('Error creating notification:', notifErr)
+  }
+
+  revalidatePath('/dashboard/google-business')
+  revalidatePath('/dashboard/devices')
+  return { success: true, device: updatedDevice }
 }

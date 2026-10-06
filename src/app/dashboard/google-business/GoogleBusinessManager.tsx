@@ -41,6 +41,7 @@ import {
   Unlink
 } from 'lucide-react'
 import GooglePlaceSearchInput, { PlaceDetails } from '@/components/GooglePlaceSearchInput'
+import PendingPlateAlert from './PendingPlateAlert'
 import { 
   toggleShieldFilter, 
   createShieldLink, 
@@ -58,8 +59,12 @@ interface DeviceItem {
   redirect_url: string
   place_id?: string | null
   business_name?: string | null
+  business_address?: string | null
+  business_phone?: string | null
   tag_id?: string | null
   review_filter_enabled?: boolean | null
+  is_active?: boolean | null
+  google_types?: string[]
 }
 
 interface PrivateFeedbackItem {
@@ -531,6 +536,21 @@ export default function GoogleBusinessManager({
           </div>
         )}
       </div>
+
+      {/* PLACAS NFC EN ESPERA DE APROBACIÓN DE GOOGLE */}
+      {devices.filter(d => !d.place_id || !d.redirect_url || d.is_active === false).length > 0 && (
+        <div className="space-y-4">
+          {devices.filter(d => !d.place_id || !d.redirect_url || d.is_active === false).map(plate => (
+            <PendingPlateAlert
+              key={plate.id}
+              plate={plate}
+              onActivated={(updatedDevice) => {
+                setDevices(prev => prev.map(d => d.id === updatedDevice.id ? { ...d, ...updatedDevice } : d))
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* 2. SELECTOR DE PERFIL DE GOOGLE MAPS */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-xs border border-gray-100 space-y-3">
