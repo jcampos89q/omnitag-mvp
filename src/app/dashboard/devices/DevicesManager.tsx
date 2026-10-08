@@ -28,7 +28,7 @@ import {
   BarChart3,
   Loader2
 } from 'lucide-react'
-import { createDevice, deleteDevice, toggleReviewFilter } from './actions'
+import { createDevice, deleteDevice, toggleReviewFilter, claimPhysicalPlate } from './actions'
 import ProFeatureModal from '@/components/ProFeatureModal'
 import NfcCardWriterModal from '@/components/NfcCardWriterModal'
 import GooglePlaceSearchInput, { PlaceDetails } from '@/components/GooglePlaceSearchInput'
@@ -59,6 +59,7 @@ export default function DevicesManager({
   const [showGoogleHelp, setShowGoogleHelp] = useState<boolean>(false)
   const [showProModal, setShowProModal] = useState<boolean>(false)
   const [proModalFeature, setProModalFeature] = useState({ name: '', desc: '' })
+  const [showClaimPlateModal, setShowClaimPlateModal] = useState<boolean>(false)
 
   // Estado del Grabador Web NFC
   const [showNfcWriter, setShowNfcWriter] = useState<boolean>(false)
@@ -219,12 +220,20 @@ export default function DevicesManager({
             </p>
           </div>
           {devices.length > 0 && devices[0]?.tag_id && (
-            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+              <button
+                type="button"
+                onClick={() => setShowClaimPlateModal(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-3.5 py-2.5 rounded-xl text-xs transition shadow-md cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Vincular Otra Placa</span>
+              </button>
               <a
                 href={`/r/${devices[0].tag_id}`}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-4 py-2.5 rounded-xl text-xs transition shadow-md"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-extrabold px-3.5 py-2.5 rounded-xl text-xs transition border border-white/20"
               >
                 Probar mi Placa
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -597,19 +606,29 @@ export default function DevicesManager({
           </div>
         )}
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h2 className="text-base sm:text-lg font-bold text-gray-900">
-            {accountType === 'review_plate' ? 'Tu Placa Inteligente de Reseñas' : `Placas y Puntos de Contacto Registrados (${devicesList.length})`}
+            {accountType === 'review_plate' ? `Tus Placas de Reseñas Google (${devicesList.length})` : `Placas y Puntos de Contacto Registrados (${devicesList.length})`}
           </h2>
-          {accountType !== 'review_plate' && (
-            <Link
-              href="/dashboard/qr-studio"
-              className="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowClaimPlateModal(true)}
+              className="text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <QrCode className="w-3.5 h-3.5" />
-              <span>Ir al Estudio QR para Imprimir</span>
-            </Link>
-          )}
+              <Plus className="w-3.5 h-3.5" />
+              <span>Vincular Otra Placa Física</span>
+            </button>
+            {accountType !== 'review_plate' && (
+              <Link
+                href="/dashboard/qr-studio"
+                className="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-xl transition flex items-center gap-1.5"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                <span>Ir al Estudio QR para Imprimir</span>
+              </Link>
+            )}
+          </div>
         </div>
 
         {devicesList.length === 0 ? (
@@ -852,6 +871,80 @@ export default function DevicesManager({
         initialUrl={nfcWriterUrl}
         initialTitle={nfcWriterTitle}
       />
+
+      {/* Modal para Vincular Otra Placa Física */}
+      {showClaimPlateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-2 text-amber-600 font-extrabold text-sm">
+                <Star className="w-5 h-5 fill-amber-500" />
+                <span>Vincular Otra Placa Física de Google</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowClaimPlateModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-lg font-bold p-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-600 leading-relaxed">
+              Ingresa el <b>Código / Tag ID</b> de tu placa física (el código impreso en la placa o visible en el enlace <span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-gray-800">/r/...</span>) para activarla y vincularla a tu negocio con 1 año de servicio.
+            </p>
+
+            <form action={claimPhysicalPlate} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Código / Tag ID de la Placa *
+                </label>
+                <input
+                  type="text"
+                  name="tag_id"
+                  required
+                  placeholder="Ej. REV-1234 o el Tag ID"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm font-mono font-bold uppercase focus:border-amber-500 focus:outline-none"
+                />
+              </div>
+
+              {devices.length > 0 && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Copiar datos de negocio de:
+                  </label>
+                  <select
+                    name="source_device_id"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:border-amber-500 focus:outline-none"
+                  >
+                    {devices.map(d => (
+                      <option key={d.id} value={d.id}>
+                        {d.business_name || `Placa ${d.tag_id}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowClaimPlateModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl text-xs font-extrabold bg-amber-500 hover:bg-amber-400 text-black transition shadow-sm cursor-pointer"
+                >
+                  Vincular Placa
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

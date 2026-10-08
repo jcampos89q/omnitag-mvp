@@ -177,3 +177,114 @@ export async function toggleReviewFilter(deviceId: string) {
   revalidatePath('/dashboard/admin')
   return { success: true, enabled: newStatus }
 }
+
+/**
+ * Permite a un usuario vincular una placa física adicional directamente desde su panel
+ */
+export async function claimPhysicalPlate(formData: FormData) {
+  const supabase = await createClient()
+  const { user } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+
+  const rawTagId = (formData.get('tag_id') as string)?.trim()
+  if (!rawTagId) {
+    redirect('/dashboard/devices?error=' + encodeURIComponent('Por favor ingresa el código o ID de la placa'))
+  }
+
+  const cleanTagId = decodeURIComponent(rawTagId).trim()
+
+  // 1. Verificar si la placa ya pertenece a otro usuario activo con destino configurado
+  const { data: existingDevice } = await supabase
+    .from('devices')
+    .select('id, user_id, is_active, business_name, redirect_url')
+    .or(`tag_id.eq.${cleanTagId},tag_id.eq.${encodeURIComponent(cleanTagId)},tag_id.ilike.${cleanTagId}`)
+    .maybeSingle()
+
+  if (existingDevice && existingDevice.user_id && existingDevice.user_id !== user.id && existingDevice.is_active && existingDevice.redirect_url) {
+    redirect('/dashboard/devices?error=' + encodeURIComponent('Esta placa ya se encuentra vinculada a otra cuenta.'))
+  }
+
+  // 2. Obtener datos de negocio base del usuario (para clonar el mismo negocio a la nueva placa)
+  const sourceDeviceId = (formData.get('source_device_id') as string)?.trim()
+  let baseDevice: any = null
+
+  if (sourceDeviceId) {
+    const { data: src } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('id', sourceDeviceId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    baseDevice = src
+  }
+
+  if (!baseDevice) {
+    const { data: latest } = await supabase
+      .from('devices')
+      .select('*')
+      .eq('user_id', user.id)
+      .not('business_name', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    baseDevice = latest
+  }
+
+  const businessName = baseDevice?.business_name || 'Mi Negocio'
+  const placeId = baseDevice?.place_id || null
+  const redirectUrl = baseDevice?.redirect_url || null
+  const businessAddress = baseDevice?.business_address || null
+  const businessPhone = baseDevice?.business_phone || null
+  const googleTypes = Array.isArray(baseDevice?.google_types) ? baseDevice.google_types : []
+  const reviewFilter = baseDevice?.review_filter_enabled ?? true
+
+  if (existingDevice) {
+    await supabase
+      .from('devices')
+      .update({
+        user_id: user.id,
+        device_type: 'tap_to_rate',
+        business_name: businessName,
+        place_id: placeId,
+        redirect_url: redirectUrl,
+        business_address: businessAddress,
+        business_phone: businessPhone,
+        google_types: googleTypes,
+        review_filter_enabled: reviewFilter,
+        is_active: Boolean(redirectUrl)
+      })
+      .eq('id', existingDevice.id)
+  } else {
+    await supabase
+      .from('devices')
+      .insert({
+        tag_id: cleanTagId,
+        user_id: user.id,
+        device_type: 'tap_to_rate',
+        business_name: businessName,
+        place_id: placeId,
+        redirect_url: redirectUrl,
+        business_address: businessAddress,
+        business_phone: businessPhone,
+        google_types: googleTypes,
+        review_filter_enabled: reviewFilter,
+        is_active: Boolean(redirectUrl)
+      })
+  }
+
+  // Actualizar estado en nfc_cards si existe
+  await supabase
+    .from('nfc_cards')
+    .update({
+      status: 'active',
+      claimed_by_user_id: user.id,
+      claimed_at: new Date().toISOString()
+    })
+    .or(`card_token.eq.${cleanTagId},card_token.ilike.${cleanTagId}`)
+
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/devices')
+  revalidatePath('/dashboard/google-business')
+
+  redirect('/dashboard/devices?success=' + encodeURIComponent(`¡Placa ${cleanTagId} vinculada exitosamente a ${businessName}!`))
+}
