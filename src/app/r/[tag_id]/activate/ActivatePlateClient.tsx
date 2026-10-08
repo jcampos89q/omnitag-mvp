@@ -391,6 +391,19 @@ export default function ActivatePlateClient({
               <p className="text-[11px] text-amber-200/80 leading-relaxed">
                 Esta nueva placa se configurará con las mismas reseñas oficiales de <b>{activeExistingBiz.businessName}</b> y sumará 365 días de garantía.
               </p>
+
+              <div className="flex items-center justify-between pt-1 border-t border-amber-500/20">
+                <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Negocio listo para vincular
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setBizMode('new')}
+                  className="text-[11px] text-amber-300 hover:text-white underline font-semibold cursor-pointer"
+                >
+                  Buscar o cambiar en Google Maps
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -411,12 +424,18 @@ export default function ActivatePlateClient({
             <input type="hidden" name="use_existing_business" value="true" />
             <input type="hidden" name="existing_device_id" value={activeExistingBiz.id} />
             <input type="hidden" name="business_name" value={activeExistingBiz.businessName} />
+            <input type="hidden" name="manual_business_name" value={activeExistingBiz.businessName} />
             <input type="hidden" name="place_id" value={activeExistingBiz.placeId || ''} />
-            <input type="hidden" name="direct_review_url" value={activeExistingBiz.directReviewUrl || ''} />
+            <input 
+              type="hidden" 
+              name="direct_review_url" 
+              value={activeExistingBiz.directReviewUrl || (activeExistingBiz.placeId ? `https://search.google.com/local/writereview?placeid=${activeExistingBiz.placeId}` : '')} 
+            />
             <input type="hidden" name="business_address" value={activeExistingBiz.businessAddress || ''} />
+            <input type="hidden" name="manual_business_address" value={activeExistingBiz.businessAddress || ''} />
             <input type="hidden" name="business_phone" value={activeExistingBiz.businessPhone || ''} />
             <input type="hidden" name="google_types" value={JSON.stringify(activeExistingBiz.googleTypes || [])} />
-            <input type="hidden" name="no_google_place" value={activeExistingBiz.placeId ? 'false' : 'true'} />
+            <input type="hidden" name="no_google_place" value={(!activeExistingBiz.placeId && !activeExistingBiz.directReviewUrl) ? 'true' : 'false'} />
           </>
         )}
 

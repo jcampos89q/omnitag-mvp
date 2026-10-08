@@ -19,11 +19,11 @@ export async function activatePlateAndRegister(formData: FormData) {
   let manualPhone = (formData.get('manual_business_phone') as string)?.trim() || null
   let manualCategory = (formData.get('manual_category') as string)?.trim() || 'Comercio'
 
-  let placeId = isNoGooglePlace ? null : (formData.get('place_id') as string)?.trim()
-  let businessName = isNoGooglePlace ? manualBusinessName : (formData.get('business_name') as string)?.trim()
-  let businessAddress = isNoGooglePlace ? manualAddress : (formData.get('business_address') as string)?.trim()
-  let businessPhone = isNoGooglePlace ? manualPhone : (formData.get('business_phone') as string)?.trim()
-  let directReviewUrl = isNoGooglePlace ? null : (formData.get('direct_review_url') as string)?.trim()
+  let placeId = (formData.get('place_id') as string)?.trim() || null
+  let businessName = (formData.get('business_name') as string)?.trim() || manualBusinessName || null
+  let businessAddress = (formData.get('business_address') as string)?.trim() || manualAddress || null
+  let businessPhone = (formData.get('business_phone') as string)?.trim() || manualPhone || null
+  let directReviewUrl = (formData.get('direct_review_url') as string)?.trim() || null
   const reviewFilter = formData.get('review_filter') === 'on' || formData.get('review_filter') === 'true'
   const googleTypesRaw = (formData.get('google_types') as string) || '[]'
 
@@ -36,6 +36,14 @@ export async function activatePlateAndRegister(formData: FormData) {
     } catch {
       googleTypes = []
     }
+  }
+
+  // Si viene placeId pero falta directReviewUrl (o viceversa), auto-completar
+  if (placeId && !directReviewUrl) {
+    directReviewUrl = `https://search.google.com/local/writereview?placeid=${placeId}`
+  } else if (!placeId && directReviewUrl && directReviewUrl.includes('placeid=')) {
+    const match = directReviewUrl.match(/placeid=([^&]+)/)
+    if (match) placeId = match[1]
   }
 
   // Datos personales del cliente
@@ -127,7 +135,7 @@ export async function activatePlateAndRegister(formData: FormData) {
   }
 
   // 2. Si el usuario seleccionó vincular a un negocio existente (o no completó Google Maps porque ya tiene negocio registrado):
-  if (useExistingBiz || (!businessName && !placeId)) {
+  if (useExistingBiz || (!businessName && !placeId && !directReviewUrl)) {
     let srcQuery = supabase
       .from('devices')
       .select('*')
@@ -142,24 +150,40 @@ export async function activatePlateAndRegister(formData: FormData) {
     const { data: existingBizDev } = await srcQuery.maybeSingle()
 
     if (existingBizDev) {
-      businessName = businessName || existingBizDev.business_name
-      placeId = placeId || existingBizDev.place_id
-      directReviewUrl = directReviewUrl || existingBizDev.redirect_url
-      businessAddress = businessAddress || existingBizDev.business_address
-      businessPhone = businessPhone || existingBizDev.business_phone
-      googleTypes = (googleTypes && googleTypes.length > 0) ? googleTypes : (Array.isArray(existingBizDev.google_types) ? existingBizDev.google_types : [])
-      isNoGooglePlace = isNoGooglePlace || (!existingBizDev.place_id && !existingBizDev.redirect_url)
+      businessName = existingBizDev.business_name || businessName || 'Mi Negocio'
+      placeId = existingBizDev.place_id || placeId
+      directReviewUrl = existingBizDev.redirect_url || directReviewUrl
+      businessAddress = existingBizDev.business_address || businessAddress
+      businessPhone = existingBizDev.business_phone || businessPhone
+      googleTypes = (Array.isArray(existingBizDev.google_types) && existingBizDev.google_types.length > 0)
+        ? existingBizDev.google_types
+        : (googleTypes.length > 0 ? googleTypes : ['Comercio'])
+
+      if (placeId && !directReviewUrl) {
+        directReviewUrl = `https://search.google.com/local/writereview?placeid=${placeId}`
+      } else if (!placeId && directReviewUrl && directReviewUrl.includes('placeid=')) {
+        const match = directReviewUrl.match(/placeid=([^&]+)/)
+        if (match) placeId = match[1]
+      }
+
+      isNoGooglePlace = !directReviewUrl && !placeId
     }
   }
 
   // Validación de datos del negocio
   if (isNoGooglePlace) {
-    if (!manualBusinessName && !businessName) {
+    if (!businessName) {
       redirect(`/r/${encodeURIComponent(tagId)}/activate?error=${encodeURIComponent('Por favor ingresa el nombre de tu negocio')}`)
     }
-    if (!businessName) businessName = manualBusinessName
   } else {
-    if (!placeId || !directReviewUrl) {
+    if (placeId && !directReviewUrl) {
+      directReviewUrl = `https://search.google.com/local/writereview?placeid=${placeId}`
+    } else if (!placeId && directReviewUrl && directReviewUrl.includes('placeid=')) {
+      const match = directReviewUrl.match(/placeid=([^&]+)/)
+      if (match) placeId = match[1]
+    }
+
+    if (!directReviewUrl && !placeId) {
       redirect(`/r/${encodeURIComponent(tagId)}/activate?error=${encodeURIComponent('Faltan datos del negocio en Google Maps. Por favor selecciona tu negocio.')}`)
     }
   }
