@@ -98,6 +98,10 @@ export default function DashboardNavbar({
   } else if (canAccessProSuite) {
     // 2. PLAN PRO ACTIVO O PRUEBA GRATUITA:
     filteredBaseItems = baseNavItems.filter(item => {
+      // Excluir rutas irrelevantes definidas para esta industria
+      if (industryConfig.hiddenHrefs && industryConfig.hiddenHrefs.includes(item.href)) {
+        return false
+      }
       // Pacientes solo para salud o administradores
       if (normalizedIndustry !== 'health' && item.href === '/dashboard/patients') return false
       return true

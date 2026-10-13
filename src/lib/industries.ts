@@ -26,6 +26,8 @@ export interface IndustryConfig {
   priorityHrefs: string[]
   // Rutas que tienen menor relevancia (se agrupan o pliegan)
   secondaryHrefs: string[]
+  // Rutas totalmente ocultas para esta industria (irrelevantes)
+  hiddenHrefs?: string[]
   // Barra móvil inferior de 4 accesos rápidos
   bottomBar: {
     name: string
@@ -114,8 +116,10 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
       '/dashboard/leads'
     ],
     secondaryHrefs: [
+      '/dashboard/vcard'
+    ],
+    hiddenHrefs: [
       '/dashboard/appointments',
-      '/dashboard/vcard',
       '/dashboard/patients'
     ],
     bottomBar: [
@@ -249,6 +253,9 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
       '/dashboard/qr-studio'
     ],
     secondaryHrefs: [
+      '/dashboard/feedback'
+    ],
+    hiddenHrefs: [
       '/dashboard/menus',
       '/dashboard/patients'
     ],
@@ -376,7 +383,8 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
       '/dashboard/leads',
       '/dashboard/qr-studio'
     ],
-    secondaryHrefs: [
+    secondaryHrefs: [],
+    hiddenHrefs: [
       '/dashboard/menus',
       '/dashboard/loyalty',
       '/dashboard/ruleta',
@@ -507,8 +515,11 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
       '/dashboard/leads'
     ],
     secondaryHrefs: [
-      '/dashboard/appointments',
       '/dashboard/vcard',
+      '/dashboard/feedback'
+    ],
+    hiddenHrefs: [
+      '/dashboard/appointments',
       '/dashboard/patients'
     ],
     bottomBar: [
@@ -625,6 +636,9 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
       '/dashboard/qr-studio'
     ],
     secondaryHrefs: [
+      '/dashboard/feedback'
+    ],
+    hiddenHrefs: [
       '/dashboard/menus',
       '/dashboard/loyalty',
       '/dashboard/ruleta',
