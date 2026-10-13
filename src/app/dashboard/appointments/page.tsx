@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
-import { Scissors, Sparkles } from 'lucide-react'
+import { Scissors, Sparkles, Stethoscope } from 'lucide-react'
 import AppointmentsManager from './AppointmentsManager'
 import { createOrUpdateBusiness } from './actions'
 import { getUserPlanInfo } from '@/lib/plans'
@@ -58,17 +58,34 @@ export default async function AppointmentsDashboardPage() {
     reviews = revs || []
   }
 
+  const userIndustry = user?.industry || 'general'
+  const isHealth = userIndustry === 'health'
+  const isProfessional = userIndustry === 'professional'
+
+  const HeaderIcon = isHealth ? Stethoscope : Scissors
+  const pageTitle = isHealth
+    ? 'Citas Médicas & Doctores'
+    : isProfessional
+    ? 'Agenda de Asesorías & Consultas'
+    : 'Agendas de Citas & Especialistas'
+
+  const pageSubtitle = isHealth
+    ? 'Organiza los turnos de pacientes, doctores por especialidad y control de horarios de consultorio.'
+    : isProfessional
+    ? 'Permite a tus clientes reservar reuniones, consultas legales o asesorías comerciales en tu calendario.'
+    : 'Diseñado para Barberías, Salones de Belleza y Spas: turnos online y portal móvil para especialistas.'
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 sm:p-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 flex items-center gap-2">
-              <Scissors className="w-6 h-6 text-purple-600" />
-              Agendas de Citas & Especialistas
+              <HeaderIcon className={`w-6 h-6 ${isHealth ? 'text-emerald-600' : 'text-purple-600'}`} />
+              {pageTitle}
             </h1>
             <p className="text-gray-500 text-xs sm:text-sm mt-1">
-              Diseñado para <b>Barberías, Salones de Belleza, Spas y Clínicas</b>. Permite a tus clientes reservar turnos, elegir su especialista favorito y calificar la atención.
+              {pageSubtitle}
             </p>
           </div>
         </div>

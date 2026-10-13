@@ -30,9 +30,10 @@ export interface UserPlanInfo {
   canAccessVCard: boolean       // Mi vCard: 1 año con Tarjeta NFC, mes gratis, suscripción mensual o Admin
   canAccessLeads: boolean       // Contactos CRM: 1 año con Tarjeta NFC, mes gratis, suscripción mensual o Admin
   canAccessReviewPlate: boolean // Mi Placa: 1 año con Placa NFC, mes gratis, suscripción mensual o Admin
-  canAccessFeedback: boolean    // Quejas Privadas: 1 año con Placa NFC, mes gratis, suscripción mensual o Admin
-  canAccessAnalytics: boolean   // Estadísticas: 1 año con cualquier hardware, mes gratis, suscripción mensual o Admin
-  canAccessProSuite: boolean    // Ruleta, Fidelización/Sellos, Citas, Menús, QR Studio: Solo mes gratis o suscripción mensual
+  canAccessFeedback: boolean       // Quejas Privadas: 1 año con Placa NFC, mes de cortesía, suscripción mensual o Admin
+  canAccessGoogleBusiness: boolean // Google Maps & SEO: 1 año con Placa NFC, mes de cortesía, suscripción mensual o Admin
+  canAccessAnalytics: boolean      // Estadísticas: 1 año con cualquier hardware, mes de cortesía, suscripción mensual o Admin
+  canAccessProSuite: boolean       // Ruleta, Fidelización/Sellos, Citas, Menús: 1 mes de cortesía por compra de hardware o suscripción mensual
 
   // Información adicional de compatibilidad
   isDiscountEligible?: boolean
@@ -74,6 +75,7 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
       canAccessLeads: false,
       canAccessReviewPlate: false,
       canAccessFeedback: false,
+      canAccessGoogleBusiness: false,
       canAccessAnalytics: false,
       canAccessProSuite: false,
       nfcCardToken: null
@@ -131,6 +133,7 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
       canAccessLeads: true,
       canAccessReviewPlate: true,
       canAccessFeedback: true,
+      canAccessGoogleBusiness: true,
       canAccessAnalytics: true,
       canAccessProSuite: true,
       nfcCardToken: null,
@@ -187,12 +190,12 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     ? Math.max(1, Math.ceil((latestHardwareExpires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : 0
 
-  // 4. Cálculo del Mes Gratis de Prueba Completa (30 días con todas las funciones)
+  // 4. Cálculo del Mes de Cortesía en la Suite PRO (30 días otorgados EXCLUSIVAMENTE al comprar/activar hardware)
   let trialEndDate: Date | null = profile?.trial_expires_at ? new Date(profile.trial_expires_at) : null
 
-  if (!trialEndDate) {
-    // Si no tiene fecha explícita, calcular 30 días desde la fecha de activación de hardware o de creación de cuenta
-    let startEpoch: number = profile?.created_at ? new Date(profile.created_at).getTime() : 0
+  // El mes de cortesía SOLO se activa para quienes tienen hardware físico activo
+  if (!trialEndDate && isHardwareActive) {
+    let startEpoch: number = 0
     for (const card of activeCards) {
       if (card.claimed_at) {
         const cTime = new Date(card.claimed_at).getTime()
@@ -206,13 +209,17 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
       }
     }
 
+    if (startEpoch === 0 && latestHardwareExpires) {
+      startEpoch = latestHardwareExpires.getTime() - (365 * 24 * 60 * 60 * 1000)
+    }
+
     if (startEpoch > 0) {
-      // 30 días de cortesía con todas las funciones abiertas
       trialEndDate = new Date(startEpoch + 30 * 24 * 60 * 60 * 1000)
     }
   }
 
-  const isTrial = Boolean(trialEndDate && now <= trialEndDate)
+  // La prueba/mes de cortesía PRO solo existe si tiene hardware activo o fecha explícita
+  const isTrial = Boolean(isHardwareActive && trialEndDate && now <= trialEndDate)
   const trialDaysLeft = isTrial && trialEndDate
     ? Math.max(1, Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : 0
@@ -224,7 +231,6 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
 
   if (profile?.subscription_expires_at) {
     subExpiresDate = new Date(profile.subscription_expires_at)
-    // Es mensual si la fecha es futura y supera o es independiente del mes de prueba
     if (subExpiresDate > now) {
       const isPastTrial = !trialEndDate || subExpiresDate.getTime() > trialEndDate.getTime()
       if (isPastTrial || !isTrial) {
@@ -235,16 +241,17 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
   }
 
   // 6. Matriz de Permisos por Funcionalidad
-  // Pro Suite (Ruleta, Sellos, Citas, Menús, QR Studio HD): Solo durante el mes gratis o con suscripción mensual activa
+  // Pro Suite (Ruleta, Sellos/Fidelidad, Citas, Menús, Catálogos): Solo durante el mes de cortesía de hardware o suscripción mensual
   const canAccessProSuite = isTrial || isMonthlyPro
 
-  // Mi vCard y Contactos CRM: Abiertos por 1 año para quienes compraron Tarjeta NFC, o si tienen Pro Suite
+  // Mi vCard y Contactos CRM: Abiertos por 1 año garantizado para quienes compraron Tarjeta NFC, o con Pro Suite
   const canAccessVCard = canAccessProSuite || (isHardwareActive && hasNfcCard)
   const canAccessLeads = canAccessProSuite || (isHardwareActive && hasNfcCard)
 
-  // Placa de Reseñas y Quejas: Abiertos por 1 año para quienes compraron Placa NFC, o si tienen Pro Suite
+  // Placa de Reseñas, Quejas Privadas y Google Maps: Abiertos por 1 año garantizado para quienes compraron Placa NFC, o con Pro Suite
   const canAccessReviewPlate = canAccessProSuite || (isHardwareActive && hasReviewPlate)
   const canAccessFeedback = canAccessProSuite || (isHardwareActive && hasReviewPlate)
+  const canAccessGoogleBusiness = canAccessProSuite || (isHardwareActive && hasReviewPlate)
 
   // Estadísticas: Abiertas por 1 año para cualquier comprador de hardware, o con Pro Suite
   const canAccessAnalytics = canAccessProSuite || isHardwareActive
@@ -285,6 +292,7 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     canAccessLeads,
     canAccessReviewPlate,
     canAccessFeedback,
+    canAccessGoogleBusiness,
     canAccessAnalytics,
     canAccessProSuite,
     isDiscountEligible: isTrial && trialDaysLeft > 25,

@@ -45,16 +45,37 @@ export default async function MenusPage() {
     categories = cats || []
   }
 
+  const userIndustry = user?.industry || 'general'
+  const isRetail = userIndustry === 'retail'
+  const isRestaurant = userIndustry === 'restaurant'
+  const isBeauty = userIndustry === 'beauty'
+
+  const pageTitle = isRetail 
+    ? 'Catálogo de Productos & WhatsApp' 
+    : isRestaurant 
+    ? 'Menú Digital Gastronómico & Comandas' 
+    : isBeauty 
+    ? 'Catálogo de Servicios & Estética' 
+    : 'Catálogo Interactivo y Menú Digital'
+
+  const pageSubtitle = isRetail
+    ? 'Exhibe tus productos con fotos, precios y variantes para recibir compras directas a WhatsApp.'
+    : isRestaurant
+    ? 'Publica tus platillos, bebidas, precios del día y recibe pedidos organizados por número de mesa.'
+    : isBeauty
+    ? 'Muestra tus tratamientos capilares, cortes y cambios de look con precios actualizados.'
+    : 'Diseñado para Restaurantes, Tiendas, Salones de Belleza y Comercio.'
+
   return (
     <div className="space-y-8">
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 sm:p-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-              Catálogo Interactivo y Menú Digital
+              {pageTitle}
             </h1>
             <p className="text-gray-500 text-xs sm:text-sm mt-1">
-              Diseñado para <b>Restaurantes, Cafeterías, Salones de Belleza, Barberías y Clínicas Dentales</b>.
+              {pageSubtitle}
             </p>
           </div>
           {menu && (

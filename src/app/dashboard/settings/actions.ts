@@ -45,3 +45,31 @@ export async function updateCurrencySetting(formData: FormData) {
 
   return { success: true }
 }
+
+export async function updateIndustrySetting(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
+
+  const industry = (formData.get('industry') as string)?.trim() || 'general'
+
+  const { error: userError } = await supabase
+    .from('users')
+    .update({ industry })
+    .eq('id', user.id)
+
+  if (userError) throw new Error(userError.message)
+
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/settings')
+  revalidatePath('/dashboard/menus')
+  revalidatePath('/dashboard/appointments')
+  revalidatePath('/dashboard/devices')
+  revalidatePath('/dashboard/loyalty')
+  revalidatePath('/dashboard/patients')
+  revalidatePath('/dashboard/leads')
+  revalidatePath('/', 'layout')
+
+  return { success: true, industry }
+}
+

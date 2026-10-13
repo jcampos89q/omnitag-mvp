@@ -20,11 +20,15 @@ export interface AdminUser {
   out_leads_count: number
   out_has_hardware?: boolean
   out_is_trial?: boolean
+  hardwareType?: 'vcard' | 'review_plate' | 'both' | null
+  hardwareExpiresAt?: string | null
+  isHardwareActive?: boolean
+  hardwareDaysLeft?: number
 }
 
 export default function AdminUserTable({ users }: { users: AdminUser[] }) {
   const [searchTerm, setSearchTerm] = useState('')
-  const [planFilter, setPlanFilter] = useState<'all' | 'pro' | 'trial' | 'free' | 'with_phone'>('all')
+  const [planFilter, setPlanFilter] = useState<'all' | 'hardware' | 'pro' | 'trial' | 'free' | 'with_phone'>('all')
   const [impersonatingId, setImpersonatingId] = useState<string | null>(null)
 
   const handleImpersonate = async (userId: string) => {
@@ -45,9 +49,10 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
 
     if (!matchesSearch) return false
 
-    if (planFilter === 'pro') return u.out_plan === 'pro'
+    if (planFilter === 'hardware') return Boolean(u.isHardwareActive)
+    if (planFilter === 'pro') return u.out_plan === 'pro' && !u.isHardwareActive
     if (planFilter === 'trial') return u.out_plan === 'trial'
-    if (planFilter === 'free') return u.out_plan === 'free' || !u.out_plan
+    if (planFilter === 'free') return (u.out_plan === 'free' || !u.out_plan) && !u.isHardwareActive
     if (planFilter === 'with_phone') return Boolean(u.out_phone)
 
     return true
@@ -108,12 +113,20 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
             Todos ({users.length})
           </button>
           <button
+            onClick={() => setPlanFilter('hardware')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+              planFilter === 'hardware' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+            }`}
+          >
+            🎴 Hardware Anual ({users.filter(u => u.isHardwareActive).length})
+          </button>
+          <button
             onClick={() => setPlanFilter('pro')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap cursor-pointer ${
               planFilter === 'pro' ? 'bg-black text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
-            ★ PRO ({users.filter(u => u.out_plan === 'pro').length})
+            ★ PRO Mensual ({users.filter(u => u.out_plan === 'pro' && !u.isHardwareActive).length})
           </button>
           <button
             onClick={() => setPlanFilter('trial')}
@@ -121,7 +134,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               planFilter === 'trial' ? 'bg-amber-500 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
-            ⏳ En Prueba ({users.filter(u => u.out_plan === 'trial').length})
+            ⏳ Cortesía ({users.filter(u => u.out_plan === 'trial').length})
           </button>
           <button
             onClick={() => setPlanFilter('free')}
@@ -129,7 +142,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               planFilter === 'free' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-100'
             }`}
           >
-            🔒 Vencidos ({users.filter(u => u.out_plan === 'free' || !u.out_plan).length})
+            🔒 Vencidos ({users.filter(u => (u.out_plan === 'free' || !u.out_plan) && !u.isHardwareActive).length})
           </button>
           <button
             onClick={() => setPlanFilter('with_phone')}
@@ -161,12 +174,15 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
           {/* Vista Móvil (Tarjetas detalladas) */}
           <div className="block md:hidden space-y-3">
             {filteredUsers.map((u) => {
-              const isPro = u.out_plan === 'pro'
-              const isTrial = u.out_plan === 'trial'
-              const isFree = u.out_plan === 'free' || !u.out_plan
+              const isHardware = Boolean(u.isHardwareActive)
+              const isPro = u.out_plan === 'pro' && !isHardware
+              const isTrial = u.out_plan === 'trial' && !isHardware
+              const isFree = (u.out_plan === 'free' || !u.out_plan) && !isHardware
               const expiresDate = u.out_expires_at ? new Date(u.out_expires_at) : null
-              const isExpired = isFree || (expiresDate ? expiresDate < new Date() : false)
-              const daysLeft = expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null
+              const isExpired = isFree || (!isHardware && expiresDate ? expiresDate < new Date() : false)
+              const daysLeft = isHardware 
+                ? (u.hardwareDaysLeft || 365)
+                : (expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null)
               
               // Calcular descuento para cuentas nuevas
               const createdDate = new Date(u.out_created_at)
@@ -185,7 +201,9 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                        isExpired || isFree
+                        isHardware
+                          ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                          : isExpired || isFree
                           ? 'bg-red-100 text-red-700 border border-red-200'
                           : isPro
                           ? 'bg-black text-yellow-400 border border-yellow-500/40' 
@@ -193,14 +211,14 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                           ? 'bg-amber-100 text-amber-800 border border-amber-200'
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {isExpired || isFree 
-                          ? '🔒 Bloqueado' 
+                        {isHardware
+                          ? `🎴 ${u.hardwareType === 'review_plate' ? 'Placa NFC' : 'Tarjeta NFC'} (${daysLeft}d)`
+                          : isExpired || isFree 
+                          ? '🔒 Vencido / Básico' 
                           : isPro 
-                          ? daysLeft && daysLeft > 60 
-                            ? '★ PRO (Hardware Anual)' 
-                            : `★ PRO (${daysLeft || 30}d)` 
+                          ? `★ PRO Mensual (${daysLeft || 30}d)` 
                           : isTrial 
-                          ? `⏳ Prueba (${daysLeft || 10}d)` 
+                          ? `⏳ Cortesía (${daysLeft || 30}d)` 
                           : 'Sin Plan'}
                       </span>
                       {!isExpired && isDiscountEligible && (
@@ -211,20 +229,32 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                     </div>
                   </div>
 
-                  {/* Estado de Vencimiento Mensual */}
-                  {expiresDate && (
-                    <div className={`p-2 rounded-xl text-xs flex items-center justify-between font-medium ${
-                      isExpired ? 'bg-red-50 text-red-800' : daysLeft && daysLeft <= 5 ? 'bg-amber-50 text-amber-900' : 'bg-purple-50 text-purple-900'
-                    }`}>
-                      <span className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5" />
-                        {isExpired ? 'Prueba/Plan Vencido' : `${daysLeft} días restantes`}
-                      </span>
-                      <span className="text-[10px] opacity-80">
-                        Vence: {expiresDate.toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
+                  {/* Estado de Vencimiento Mensual o Hardware */}
+                  <div className={`p-2 rounded-xl text-xs flex items-center justify-between font-medium ${
+                    isHardware 
+                      ? 'bg-blue-50 text-blue-950 border border-blue-100'
+                      : isExpired 
+                      ? 'bg-red-50 text-red-800' 
+                      : daysLeft && daysLeft <= 5 
+                      ? 'bg-amber-50 text-amber-900' 
+                      : 'bg-purple-50 text-purple-900'
+                  }`}>
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      {isHardware
+                        ? `Hardware Anual Activo: ${daysLeft} días restantes`
+                        : isExpired 
+                        ? 'Suscripción/Prueba Vencida' 
+                        : `${daysLeft} días restantes`}
+                    </span>
+                    <span className="text-[10px] opacity-80">
+                      {isHardware && u.hardwareExpiresAt
+                        ? `Vence: ${new Date(u.hardwareExpiresAt).toLocaleDateString()}`
+                        : expiresDate
+                        ? `Vence: ${expiresDate.toLocaleDateString()}`
+                        : '1 Año'}
+                    </span>
+                  </div>
 
                   {u.out_phone && (
                     <div className="flex items-center justify-between text-xs bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-100">
@@ -371,12 +401,15 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredUsers.map((u) => {
-                  const isPro = u.out_plan === 'pro'
-                  const isTrial = u.out_plan === 'trial'
-                  const isFree = u.out_plan === 'free' || !u.out_plan
+                  const isHardware = Boolean(u.isHardwareActive)
+                  const isPro = u.out_plan === 'pro' && !isHardware
+                  const isTrial = u.out_plan === 'trial' && !isHardware
+                  const isFree = (u.out_plan === 'free' || !u.out_plan) && !isHardware
                   const expiresDate = u.out_expires_at ? new Date(u.out_expires_at) : null
-                  const isExpired = isFree || (expiresDate ? expiresDate < new Date() : false)
-                  const daysLeft = expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null
+                  const isExpired = isFree || (!isHardware && expiresDate ? expiresDate < new Date() : false)
+                  const daysLeft = isHardware 
+                    ? (u.hardwareDaysLeft || 365)
+                    : (expiresDate ? Math.max(0, Math.ceil((expiresDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : null)
                   
                   // Calcular descuento para cuentas nuevas
                   const createdDate = new Date(u.out_created_at)
@@ -396,7 +429,9 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                       <td className="px-6 py-4">
                         <div className="flex flex-col items-start gap-1">
                           <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full ${
-                            isExpired || isFree
+                            isHardware
+                              ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                              : isExpired || isFree
                               ? 'bg-red-100 text-red-700 border border-red-200'
                               : isPro
                               ? 'bg-black text-yellow-400 border border-yellow-500/40' 
@@ -404,21 +439,23 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                               ? 'bg-amber-100 text-amber-800 border border-amber-200'
                               : 'bg-gray-100 text-gray-600'
                           }`}>
-                            {isExpired || isFree 
-                              ? '🔒 Bloqueado' 
+                            {isHardware
+                              ? `🎴 ${u.hardwareType === 'review_plate' ? 'Placa NFC' : 'Tarjeta NFC'} (${daysLeft}d)`
+                              : isExpired || isFree 
+                              ? '🔒 Vencido / Básico' 
                               : isPro 
-                              ? daysLeft && daysLeft > 60 
-                                ? '★ PRO (Hardware Anual)' 
-                                : `★ PRO (${daysLeft || 30}d)` 
+                              ? `★ PRO Mensual (${daysLeft || 30}d)` 
                               : isTrial 
-                              ? `⏳ Prueba (${daysLeft || 10}d)` 
+                              ? `⏳ Cortesía (${daysLeft || 30}d)` 
                               : 'Sin Plan'}
                           </span>
-                          {expiresDate && (
-                            <span className={`text-[11px] font-medium ${isExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
-                              {isExpired ? 'Vencida' : `${daysLeft}d restantes`}
-                            </span>
-                          )}
+                          <span className={`text-[11px] font-medium ${isHardware ? 'text-blue-700 font-bold' : isExpired ? 'text-red-600 font-bold' : 'text-gray-500'}`}>
+                            {isHardware
+                              ? `${daysLeft}d hardware activo`
+                              : isExpired 
+                              ? 'Vencida' 
+                              : `${daysLeft}d restantes`}
+                          </span>
                           {!isExpired && isDiscountEligible && (
                             <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 rounded-sm">
                               50% OFF ({discountDaysLeft}d)

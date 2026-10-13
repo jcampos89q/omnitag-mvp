@@ -51,7 +51,9 @@ export default async function AdminDashboardPage() {
     { data: creationsData },
     { data: contactsData },
     { data: transfersData },
-    { data: batchesData }
+    { data: batchesData },
+    { data: claimedCardsData },
+    { data: userProfilesData }
   ] = await Promise.all([
     supabase.rpc('get_admin_metrics'),
     supabase.rpc('get_admin_users_list'),
@@ -61,10 +63,71 @@ export default async function AdminDashboardPage() {
     supabase
       .from('nfc_batches')
       .select('*, nfc_cards(*)')
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('nfc_cards')
+      .select('id, card_token, claimed_by_user_id, status, plan_duration_days, nfc_batches(batch_type)')
+      .eq('status', 'active')
+      .not('claimed_by_user_id', 'is', null),
+    supabase
+      .from('users')
+      .select('id, hardware_type, hardware_expires_at, account_type')
   ])
 
-  const users: AdminUser[] = usersData || []
+  const userProfilesMap = new Map((userProfilesData || []).map(p => [p.id, p]))
+  const claimedCardsByUser = new Map<string, any[]>()
+  for (const c of (claimedCardsData || [])) {
+    if (c.claimed_by_user_id) {
+      const list = claimedCardsByUser.get(c.claimed_by_user_id) || []
+      list.push(c)
+      claimedCardsByUser.set(c.claimed_by_user_id, list)
+    }
+  }
+
+  const rawUsers: AdminUser[] = usersData || []
+  const now = new Date()
+
+  // Enriquecer cada usuario con su información real de hardware físico (1 año garantizado)
+  const users: AdminUser[] = rawUsers.map(u => {
+    const profile = userProfilesMap.get(u.out_user_id)
+    const userCards = claimedCardsByUser.get(u.out_user_id) || []
+    const hasCardHw = userCards.some(c => (c.nfc_batches as any)?.batch_type !== 'review_plate')
+    const hasPlateHw = userCards.some(c => (c.nfc_batches as any)?.batch_type === 'review_plate')
+
+    const hardwareType = 
+      (profile?.hardware_type === 'both' || (hasCardHw && hasPlateHw))
+        ? 'both'
+        : (profile?.hardware_type === 'review_plate' || hasPlateHw || profile?.account_type === 'review_plate')
+        ? 'review_plate'
+        : (profile?.hardware_type === 'vcard' || hasCardHw)
+        ? 'vcard'
+        : null
+
+    const hardwareExpiresAt = profile?.hardware_expires_at || null
+    let isHardwareActive = false
+    let hardwareDaysLeft = 0
+
+    if (hardwareExpiresAt) {
+      const exp = new Date(hardwareExpiresAt)
+      if (exp > now) {
+        isHardwareActive = true
+        hardwareDaysLeft = Math.max(0, Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+      }
+    } else if (hardwareType && userCards.length > 0) {
+      // Si tiene tarjeta física activa pero no se había computado fecha, tiene 1 año por defecto
+      isHardwareActive = true
+      hardwareDaysLeft = 365
+    }
+
+    return {
+      ...u,
+      hardwareType,
+      hardwareExpiresAt,
+      isHardwareActive,
+      hardwareDaysLeft
+    }
+  })
+
   const creations: AdminCreationsData = creationsData || {
     vcards: [],
     menus: [],

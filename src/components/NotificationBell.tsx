@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Bell, Check, Sparkles, AlertCircle, Info, ExternalLink, X } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { showToast } from './GlobalToast'
 
 export interface AppNotification {
   id: string
@@ -13,6 +14,18 @@ export interface AppNotification {
   link?: string | null
   is_read: boolean
   created_at: string
+}
+
+function formatRelativeTime(dateString: string) {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+
+  if (diffInSeconds < 60) return 'Ahora mismo'
+  if (diffInSeconds < 3600) return `Hace ${Math.floor(diffInSeconds / 60)} min`
+  if (diffInSeconds < 86400) return `Hace ${Math.floor(diffInSeconds / 3600)} h`
+  if (diffInSeconds < 172800) return 'Ayer'
+  return date.toLocaleDateString('es-HN', { day: 'numeric', month: 'short' })
 }
 
 export default function NotificationBell({ 
@@ -41,7 +54,31 @@ export default function NotificationBell({
     }
 
     fetchNotifications()
-  }, [userId, supabase])
+
+    // Suscripción Realtime con nombre de canal único por instancia
+    const channelName = `notifs-${userId}-${position}-${Math.random().toString(36).slice(2, 7)}`
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          const newNotif = payload.new as AppNotification
+          setNotifications((prev) => [newNotif, ...prev])
+          showToast(`🔔 ${newNotif.title}: ${newNotif.message}`, 'success')
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [userId, position])
 
   const unreadCount = notifications.filter(n => !n.is_read).length
 
@@ -130,7 +167,7 @@ export default function NotificationBell({
                     <div className="flex items-start justify-between gap-2">
                       <p className="font-bold text-gray-900 text-xs leading-snug">{n.title}</p>
                       <span className="text-[10px] text-gray-400 shrink-0 font-medium">
-                        {new Date(n.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short' })}
+                        {formatRelativeTime(n.created_at)}
                       </span>
                     </div>
                     <p className="text-gray-600 text-[11px] leading-relaxed">{n.message}</p>

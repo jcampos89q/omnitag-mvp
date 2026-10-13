@@ -25,11 +25,16 @@ import {
   Globe,
   ExternalLink,
   Disc,
-  MapPin
+  MapPin,
+  ShoppingBag,
+  Stethoscope,
+  ChevronDown
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 import NotificationBell from './NotificationBell'
 import { UserPlanInfo } from '@/lib/plans'
+import IndustrySwitcher from './IndustrySwitcher'
+import { getIndustryConfig, normalizeIndustry, IndustryId } from '@/lib/industries'
 
 interface NavItem {
   name: string
@@ -39,6 +44,7 @@ interface NavItem {
   accent?: boolean
   adminOnly?: boolean
   section?: string
+  priority?: boolean
 }
 
 const baseNavItems: NavItem[] = [
@@ -75,6 +81,8 @@ export default function DashboardNavbar({
 }) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const normalizedIndustry = normalizeIndustry(userIndustry)
+  const industryConfig = getIndustryConfig(userIndustry)
 
   // Filtrado de navegación según el plan real y compra de hardware
   let filteredBaseItems: NavItem[] = []
@@ -86,57 +94,87 @@ export default function DashboardNavbar({
   if (isAdmin) {
     // 1. EL SUPERADMINISTRADOR TIENE ACCESO TOTAL A TODAS LAS HERRAMIENTAS
     filteredBaseItems = [...baseNavItems]
-    filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Users, badge: 'Salud', section: 'gestion' })
+    filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Stethoscope, badge: 'Salud', section: 'gestion' })
   } else if (canAccessProSuite) {
-    // 2. MES GRATIS (30 DÍAS) O SUSCRIPCIÓN MENSUAL PRO ACTIVA: ACCESO A TODAS LAS HERRAMIENTAS
+    // 2. PLAN PRO ACTIVO O PRUEBA GRATUITA:
     filteredBaseItems = baseNavItems.filter(item => {
-      if (userIndustry === 'health') {
-        if (item.href === '/dashboard/menus') return false
-      } else {
-        if (item.href === '/dashboard/patients') return false
-      }
+      // Pacientes solo para salud o administradores
+      if (normalizedIndustry !== 'health' && item.href === '/dashboard/patients') return false
       return true
     })
 
-    if (userIndustry === 'health') {
-      filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Users, badge: 'Salud', section: 'gestion' })
+    if (normalizedIndustry === 'health') {
+      filteredBaseItems.splice(1, 0, { 
+        name: 'Pacientes & ECE', 
+        href: '/dashboard/patients', 
+        icon: Stethoscope, 
+        badge: 'Médico', 
+        section: 'creaciones' 
+      })
     }
   } else {
-    // 3. SIN SUSCRIPCIÓN MENSUAL (FUERA DEL MES GRATIS): SOLO HARDWARE FÍSICO ACTIVO (1 AÑO)
+    // 3. SIN SUSCRIPCIÓN MENSUAL (FUERA DEL MES GRATIS): SOLO HARDWARE FÍSICO ACTIVO
     const allowedHrefs: string[] = ['/dashboard']
 
-    // Si compró Tarjeta NFC -> Mi vCard, Contactos CRM, Estadísticas
     if (hasNfc) {
       allowedHrefs.push('/dashboard/vcard', '/dashboard/leads', '/dashboard/analytics')
     }
 
-    // Si compró Placa de Reseñas -> Mi Placa, Quejas Privadas, Métricas/Estadísticas
     if (hasPlate) {
       if (!allowedHrefs.includes('/dashboard/devices')) allowedHrefs.push('/dashboard/devices')
       if (!allowedHrefs.includes('/dashboard/feedback')) allowedHrefs.push('/dashboard/feedback')
       if (!allowedHrefs.includes('/dashboard/analytics')) allowedHrefs.push('/dashboard/analytics')
     }
 
-    // Si no tiene ningún hardware activo
     if (!hasNfc && !hasPlate) {
       allowedHrefs.push('/dashboard/analytics')
     }
 
-    // Siempre disponible facturación para que pueda suscribirse
     allowedHrefs.push('/dashboard/billing')
-
     filteredBaseItems = baseNavItems.filter(item => allowedHrefs.includes(item.href))
   }
 
+  // 4. Adaptar nombres, iconos y badges según la industria del usuario
+  filteredBaseItems = filteredBaseItems.map(item => {
+    const override = industryConfig.routeLabels[item.href]
+    let currentIcon = item.icon
 
-  
-  // Add Settings to the end
+    // Iconos contextuales
+    if (item.href === '/dashboard/menus' && normalizedIndustry === 'retail') {
+      currentIcon = ShoppingBag
+    } else if (item.href === '/dashboard/appointments' && normalizedIndustry === 'health') {
+      currentIcon = Stethoscope
+    }
+
+    return {
+      ...item,
+      name: override?.name || item.name,
+      badge: override?.badge || item.badge,
+      icon: currentIcon,
+      priority: industryConfig.priorityHrefs.includes(item.href)
+    }
+  })
+
+  // 5. Ordenar según la prioridad de la industria
+  if (canAccessProSuite || isAdmin) {
+    filteredBaseItems.sort((a, b) => {
+      const indexA = industryConfig.priorityHrefs.indexOf(a.href)
+      const indexB = industryConfig.priorityHrefs.indexOf(b.href)
+      
+      const posA = indexA === -1 ? 999 : indexA
+      const posB = indexB === -1 ? 999 : indexB
+
+      return posA - posB
+    })
+  }
+
+  // Añadir Configuración al final
   filteredBaseItems.push({ name: 'Configuración', href: '/dashboard/settings', icon: UserCircle, section: 'cuenta' })
 
   const navItems = [
     ...filteredBaseItems,
     ...(isAdmin ? [
-      { name: '🎴 Lotes Tarjetas NFC', href: '/dashboard/admin?tab=nfc-batches', icon: CreditCard, adminOnly: true, section: 'admin' },
+      { name: '🏷️ Lotes Tarjetas NFC', href: '/dashboard/admin?tab=nfc-batches', icon: CreditCard, adminOnly: true, section: 'admin' },
       { name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true, section: 'admin' }
     ] : [])
   ]
@@ -145,6 +183,44 @@ export default function DashboardNavbar({
     if (href === '/dashboard') return pathname === '/dashboard'
     return pathname.startsWith(href)
   }
+
+  // Obtener icono dinámico para la barra inferior
+  const getBottomIcon = (iconKey: string) => {
+    switch (iconKey) {
+      case 'home': return Home
+      case 'menu': return normalizedIndustry === 'retail' ? ShoppingBag : Coffee
+      case 'star': return Star
+      case 'scissors': return Scissors
+      case 'stethoscope': return Stethoscope
+      case 'vcard': return UserCircle
+      case 'leads': return Users
+      case 'gift': return Gift
+      case 'loyalty': return Sparkles
+      case 'ruleta': return Disc
+      case 'analytics': return BarChart3
+      case 'shop': return ShoppingBag
+      default: return Home
+    }
+  }
+
+  // Obtener los accesos directos para la barra móvil según si tiene Pro Suite o solo Hardware
+  const allowedBottomBar = !canAccessProSuite
+    ? (hasPlate
+        ? [
+            { name: 'Inicio', href: '/dashboard', icon: 'home' },
+            { name: 'Mi Placa', href: '/dashboard/devices', icon: 'star' },
+            { name: 'Quejas', href: '/dashboard/feedback', icon: 'alert' },
+            { name: 'Métricas', href: '/dashboard/analytics', icon: 'analytics' }
+          ]
+        : hasNfc
+        ? [
+            { name: 'Inicio', href: '/dashboard', icon: 'home' },
+            { name: 'vCard', href: '/dashboard/vcard', icon: 'vcard' },
+            { name: 'Contactos', href: '/dashboard/leads', icon: 'leads' },
+            { name: 'Métricas', href: '/dashboard/analytics', icon: 'analytics' }
+          ]
+        : industryConfig.bottomBar)
+    : industryConfig.bottomBar
 
   return (
     <>
@@ -167,14 +243,9 @@ export default function DashboardNavbar({
           )}
         </Link>
 
-        <div className="flex items-center gap-1 shrink-0">
-          <Link
-            href="/"
-            className="hidden sm:inline-flex p-1.5 rounded-lg text-gray-600 hover:text-black hover:bg-gray-100 transition-colors"
-            title="Ir a la página principal de la web"
-          >
-            <Globe className="w-4 h-4" />
-          </Link>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Selector de Industria compacto en Topbar móvil */}
+          <IndustrySwitcher currentIndustry={userIndustry} variant="compact" />
 
           <NotificationBell userId={userId} position="topbar" />
 
@@ -213,10 +284,15 @@ export default function DashboardNavbar({
               </div>
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-black rounded-lg hover:bg-gray-100"
+                className="p-1.5 text-gray-400 hover:text-black rounded-lg hover:bg-gray-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
+            </div>
+
+            {/* Selector de Industria en el Drawer */}
+            <div className="mb-3">
+              <IndustrySwitcher currentIndustry={userIndustry} variant="banner" className="py-2.5 px-3" />
             </div>
 
             {userEmail && (
@@ -229,7 +305,7 @@ export default function DashboardNavbar({
                   </span>
                 ) : planInfo?.isTrial ? (
                   <span className="inline-block mt-1 text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
-                    🎁 Mes Gratis Full ({planInfo.trialDaysLeft}d)
+                    ⚡ Mes Gratis Full ({planInfo.trialDaysLeft}d)
                   </span>
                 ) : planInfo?.isMonthlyPro ? (
                   <span className="inline-block mt-1 text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
@@ -237,7 +313,7 @@ export default function DashboardNavbar({
                   </span>
                 ) : planInfo?.isHardwareActive ? (
                   <span className="inline-block mt-1 text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                    🎴 {planInfo.hasReviewPlate ? 'Placa NFC (1 Año)' : 'Tarjeta NFC (1 Año)'}
+                    🏷️ {planInfo.hasReviewPlate ? 'Placa NFC (1 Año)' : 'Tarjeta NFC (1 Año)'}
                   </span>
                 ) : null}
               </div>
@@ -294,7 +370,7 @@ export default function DashboardNavbar({
               <form action={logout}>
                 <button 
                   type="submit" 
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition"
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Cerrar Sesión</span>
@@ -332,10 +408,18 @@ export default function DashboardNavbar({
           </div>
         </div>
 
+        {/* Banner de Giro de Negocio / Switcher en Sidebar */}
+        <div className="px-3.5 py-2.5 border-b border-gray-100 bg-gray-50/50">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Modo de Negocio</span>
+          </div>
+          <IndustrySwitcher currentIndustry={userIndustry} variant="compact" className="w-full justify-between" />
+        </div>
+
         {userEmail && (
-          <div className="px-5 py-2.5 bg-gray-50/70 border-b border-gray-100">
+          <div className="px-4 py-2 border-b border-gray-100 bg-white">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Cuenta activa</p>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Cuenta</p>
               {isAdmin ? (
                 <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded">
                   ADMIN
@@ -358,7 +442,7 @@ export default function DashboardNavbar({
           </div>
         )}
         
-        <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 px-3.5 py-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
@@ -366,7 +450,7 @@ export default function DashboardNavbar({
               <Link 
                 key={item.href}
                 href={item.href} 
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                className={`flex items-center justify-between px-3 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all ${
                   active 
                     ? 'bg-black text-white shadow-xs font-bold' 
                     : item.adminOnly
@@ -374,13 +458,13 @@ export default function DashboardNavbar({
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-5 h-5 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
-                  <span>{item.name}</span>
+                <div className="flex items-center gap-2.5 truncate">
+                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
+                  <span className="truncate">{item.name}</span>
                 </div>
 
                 {item.badge && (
-                  <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
+                  <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 ml-1 ${
                     active ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
                   }`}>
                     {item.badge}
@@ -391,10 +475,10 @@ export default function DashboardNavbar({
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-200 mt-auto space-y-1">
+        <div className="p-3.5 border-t border-gray-200 mt-auto space-y-1">
           <Link
             href="/"
-            className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition"
+            className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-bold text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition"
             title="Ver la página de inicio principal de OmniTag"
           >
             <div className="flex items-center gap-2">
@@ -407,7 +491,7 @@ export default function DashboardNavbar({
           <form action={logout}>
             <button 
               type="submit" 
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               <span>Cerrar Sesión</span>
@@ -416,159 +500,34 @@ export default function DashboardNavbar({
         </div>
       </aside>
 
-      {/* 4. BARRA DE ACCIONES RÁPIDAS INFERIOR MÓVIL */}
+      {/* 4. BARRA DE ACCIONES RÁPIDAS INFERIOR MÓVIL (Adaptada por industria) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 py-1.5 flex items-center justify-around shadow-lg">
-        {accountType === 'review_plate' ? (
-          <>
+        {/* Renderizado dinámico de los 4 accesos rápidos según el giro del negocio o hardware */}
+        {allowedBottomBar.map((btn) => {
+          const Icon = getBottomIcon(btn.icon)
+          const active = isActive(btn.href)
+          return (
             <Link 
-              href="/dashboard"
+              key={btn.href}
+              href={btn.href}
               className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname === '/dashboard' ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
+                active ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
-              <Home className={`w-5 h-5 ${pathname === '/dashboard' ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">Inicio</span>
+              <Icon className={`w-5 h-5 ${active ? 'stroke-[2.5]' : ''}`} />
+              <span className="text-[10px] mt-0.5 truncate max-w-[64px]">{btn.name}</span>
             </Link>
+          )
+        })}
 
-            <Link 
-              href="/dashboard/devices"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname.startsWith('/dashboard/devices') ? 'text-amber-500 font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <Star className={`w-5 h-5 ${pathname.startsWith('/dashboard/devices') ? 'fill-amber-400 stroke-amber-500' : ''}`} />
-              <span className="text-[10px] mt-0.5">Mi Placa</span>
-            </Link>
-
-            <Link 
-              href="/dashboard/feedback"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname.startsWith('/dashboard/feedback') ? 'text-red-600 font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <MessageSquareWarning className={`w-5 h-5 ${pathname.startsWith('/dashboard/feedback') ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">Quejas</span>
-            </Link>
-
-            <Link 
-              href="/dashboard/analytics"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname.startsWith('/dashboard/analytics') ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <BarChart3 className={`w-5 h-5 ${pathname.startsWith('/dashboard/analytics') ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">Métricas</span>
-            </Link>
-
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition cursor-pointer"
-            >
-              <MenuIcon className="w-5 h-5" />
-              <span className="text-[10px] mt-0.5 font-bold">Menú</span>
-            </button>
-          </>
-        ) : accountType === 'professional' ? (
-          <>
-            <Link 
-              href="/dashboard"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname === '/dashboard' ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <Home className={`w-5 h-5 ${pathname === '/dashboard' ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">Inicio</span>
-            </Link>
-
-            <Link 
-              href="/dashboard/vcard"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname.startsWith('/dashboard/vcard') ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <UserCircle className={`w-5 h-5 ${pathname.startsWith('/dashboard/vcard') ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">vCard</span>
-            </Link>
-
-            <Link 
-              href="/dashboard/leads"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname.startsWith('/dashboard/leads') ? 'text-emerald-600 font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <Users className={`w-5 h-5 ${pathname.startsWith('/dashboard/leads') ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">Contactos</span>
-            </Link>
-
-            <Link 
-              href="/dashboard/analytics"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname.startsWith('/dashboard/analytics') ? 'text-purple-600 font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <BarChart3 className={`w-5 h-5 ${pathname.startsWith('/dashboard/analytics') ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">Métricas</span>
-            </Link>
-
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition cursor-pointer"
-            >
-              <MenuIcon className="w-5 h-5" />
-              <span className="text-[10px] mt-0.5 font-bold">Más</span>
-            </button>
-          </>
-        ) : (
-          <>
-            <Link 
-              href="/dashboard"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname === '/dashboard' ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <Home className={`w-5 h-5 ${pathname === '/dashboard' ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">Inicio</span>
-            </Link>
-
-            <Link 
-              href="/dashboard/vcard"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname.startsWith('/dashboard/vcard') ? 'text-blue-600 font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <UserCircle className={`w-5 h-5 ${pathname.startsWith('/dashboard/vcard') ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">vCard</span>
-            </Link>
-
-            <Link 
-              href="/dashboard/qr-studio"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname.startsWith('/dashboard/qr-studio') ? 'text-purple-600 font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <QrCode className={`w-5 h-5 ${pathname.startsWith('/dashboard/qr-studio') ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5">Estudio QR</span>
-            </Link>
-
-            <Link 
-              href="/dashboard/devices"
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                pathname.startsWith('/dashboard/devices') ? 'text-amber-500 font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <Star className={`w-5 h-5 ${pathname.startsWith('/dashboard/devices') ? 'fill-amber-400 stroke-amber-500' : ''}`} />
-              <span className="text-[10px] mt-0.5">Reseñas</span>
-            </Link>
-
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition cursor-pointer"
-            >
-              <MenuIcon className="w-5 h-5" />
-              <span className="text-[10px] mt-0.5 font-bold">Más</span>
-            </button>
-          </>
-        )}
+        {/* Botón 5: Menú completo / Drawer */}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition cursor-pointer"
+        >
+          <MenuIcon className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5 font-bold">Más</span>
+        </button>
       </nav>
     </>
   )
