@@ -362,6 +362,16 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
         name: 'Directorio de Prospectos',
         shortDesc: 'Pacientes potenciales que solicitaron información por WhatsApp o web.'
       },
+      '/dashboard/loyalty': {
+        name: 'Club Dental / Fidelización',
+        badge: 'Beneficios',
+        shortDesc: 'Sellos digitales por limpiezas, controles periódicos o tratamientos continuos.'
+      },
+      '/dashboard/gift-cards': {
+        name: 'Certificados & Gift Cards',
+        badge: 'Salud',
+        shortDesc: 'Tarjetas de regalo para blanqueamientos dentales, limpiezas o paquetes estéticos.'
+      },
       '/dashboard/google-business': {
         name: 'Google Maps & Consultorio',
         badge: 'SEO',
@@ -377,6 +387,8 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
       '/dashboard/patients',
       '/dashboard/appointments',
       '/dashboard/devices',
+      '/dashboard/loyalty',
+      '/dashboard/gift-cards',
       '/dashboard/feedback',
       '/dashboard/vcard',
       '/dashboard/google-business',
@@ -386,15 +398,13 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
     secondaryHrefs: [],
     hiddenHrefs: [
       '/dashboard/menus',
-      '/dashboard/loyalty',
-      '/dashboard/ruleta',
-      '/dashboard/gift-cards'
+      '/dashboard/ruleta'
     ],
     bottomBar: [
       { name: 'Inicio', href: '/dashboard', icon: 'home' },
       { name: 'Pacientes', href: '/dashboard/patients', icon: 'stethoscope' },
       { name: 'Citas', href: '/dashboard/appointments', icon: 'scissors' },
-      { name: 'Reputación', href: '/dashboard/devices', icon: 'star' }
+      { name: 'Beneficios', href: '/dashboard/loyalty', icon: 'loyalty' }
     ],
     featuredCards: [
       {
@@ -414,6 +424,24 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
         icon: 'scissors',
         badge: 'Turnos',
         badgeColor: 'bg-teal-100 text-teal-800'
+      },
+      {
+        href: '/dashboard/loyalty',
+        title: 'Fidelización de Pacientes & Sellos',
+        description: 'Incentiva controles anuales y profilaxis periódica: "En tu 4to control dental, profilaxis de cortesía".',
+        actionText: 'Configurar Sellos',
+        icon: 'sparkles',
+        badge: 'Fidelidad',
+        badgeColor: 'bg-purple-100 text-purple-800'
+      },
+      {
+        href: '/dashboard/gift-cards',
+        title: 'Certificados de Salud & Regalo',
+        description: 'Excelente para odontología y estética: regala blanqueamientos dentales o paquetes preventivos.',
+        actionText: 'Crear Certificados',
+        icon: 'gift',
+        badge: 'Ventas',
+        badgeColor: 'bg-amber-100 text-amber-800'
       },
       {
         href: '/dashboard/devices',
