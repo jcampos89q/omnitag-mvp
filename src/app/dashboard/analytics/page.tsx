@@ -12,7 +12,7 @@ export default async function AnalyticsPage() {
   const { user, isImpersonating } = await getEffectiveUser(supabase)
 
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
-  const { isPro } = await getUserPlanInfo(supabase, user?.id)
+  const { isPro, isAdmin } = await getUserPlanInfo(supabase, user?.id)
 
   // 2. Obtener todas las visitas y escaneos de todos los recursos del usuario
   let scansQuery = supabase
@@ -20,7 +20,9 @@ export default async function AnalyticsPage() {
     .select('id, device_id, vcard_id, menu_id, loyalty_program_id, source_type, os, country, scanned_at, user_agent')
     .order('scanned_at', { ascending: false })
 
-  if (isImpersonating && user?.id) {
+  const shouldFilterToUser = !isAdmin || isImpersonating
+
+  if (shouldFilterToUser && user?.id) {
     const [
       { data: userDevices },
       { data: userVcards },

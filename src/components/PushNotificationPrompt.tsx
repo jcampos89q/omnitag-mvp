@@ -32,18 +32,31 @@ export default function PushNotificationPrompt({ userId }: { userId?: string }) 
     if ('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
       setIsSupported(true)
 
-      // Verificar si ya está suscrito
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.pushManager.getSubscription().then((subscription) => {
+      // Verificar si ya está suscrito y sincronizar con la base de datos
+      navigator.serviceWorker.ready.then(async (registration) => {
+        try {
+          let subscription = await registration.pushManager.getSubscription()
+          if (!subscription && Notification.permission === 'granted') {
+            const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'BGT3Kz8txr0vXdMgVYRB6FT_zAT_nc6V3S8BU6h364ID5vkMjJKJzpWdprWFjTj834YURYtAoEbB6BaajnF3OO8'
+            const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey)
+            subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: convertedVapidKey
+            })
+          }
+
           if (subscription) {
             setIsSubscribed(true)
+            await fetch('/api/push/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subscription })
+            })
           }
-        })
-      })
-
-      if (Notification.permission === 'granted') {
-        setIsSubscribed(true)
-      }
+        } catch (syncErr) {
+          console.warn('Error sincronizando push subscription existente:', syncErr)
+        }
+      }).catch(() => {})
     }
 
     const dismissed = localStorage.getItem('omnitag_push_dismissed')

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { headers } from 'next/headers'
 import { after } from 'next/server'
 
@@ -57,53 +57,56 @@ export function detectDeviceAndOS(userAgent: string): { os: string; deviceType: 
 }
 
 /**
+ * Inserta el registro de escaneo directamente de forma robusta
+ */
+export async function recordScanDirect(options: LogScanOptions): Promise<void> {
+  try {
+    let userAgent = options.userAgent || ''
+    let country = options.country || ''
+
+    if (!userAgent || !country) {
+      try {
+        const headerList = await headers()
+        if (!userAgent) userAgent = headerList.get('user-agent') || ''
+        if (!country) country = headerList.get('x-vercel-ip-country') || 'Desconocido'
+      } catch {
+        // Headers no disponibles en este contexto
+      }
+    }
+
+    if (!country) country = 'Desconocido'
+
+    const { os, deviceType } = detectDeviceAndOS(userAgent)
+    const supabaseAdmin = getAdminClient()
+
+    const { error } = await supabaseAdmin.from('scans').insert({
+      vcard_id: options.vcardId || null,
+      menu_id: options.menuId || null,
+      loyalty_program_id: options.loyaltyProgramId || null,
+      device_id: options.deviceId || null,
+      target_user_id: options.targetUserId || null,
+      source_type: options.sourceType,
+      os,
+      country,
+      user_agent: userAgent ? `${deviceType} | ${userAgent.substring(0, 150)}` : deviceType,
+    })
+
+    if (error) {
+      console.error('Error insertando escaneo en tabla scans:', error)
+    }
+  } catch (err) {
+    console.error('Error registrando escaneo/visita:', err)
+  }
+}
+
+/**
  * Registra una visita / escaneo de forma asíncrona y no bloqueante
  * Usa `after()` de Next.js para que el cliente reciba la página o redirección en 0ms
- * y garantiza que la inserción en base de datos no sea cancelada por el servidor en la nube.
  */
 export function recordPageViewScan(options: LogScanOptions): void {
-  const executeScan = async () => {
-    try {
-      let userAgent = options.userAgent || ''
-      let country = options.country || ''
-
-      // Si no se pasaron headers directamente, intentar obtenerlos del contexto de Server Component
-      if (!userAgent || !country) {
-        try {
-          const headerList = await headers()
-          if (!userAgent) userAgent = headerList.get('user-agent') || ''
-          if (!country) country = headerList.get('x-vercel-ip-country') || 'Desconocido'
-        } catch {
-          // Ignorar si headers() no está disponible en este contexto
-        }
-      }
-
-      if (!country) country = 'Desconocido'
-
-      const { os, deviceType } = detectDeviceAndOS(userAgent)
-      const supabase = await createClient()
-
-      await supabase.from('scans').insert({
-        vcard_id: options.vcardId || null,
-        menu_id: options.menuId || null,
-        loyalty_program_id: options.loyaltyProgramId || null,
-        device_id: options.deviceId || null,
-        target_user_id: options.targetUserId || null,
-        source_type: options.sourceType,
-        os,
-        country,
-        user_agent: userAgent ? `${deviceType} | ${userAgent.substring(0, 150)}` : deviceType,
-      })
-    } catch (err) {
-      console.error('Error silencioso registrando escaneo/visita:', err)
-    }
-  }
-
-  // Programar en segundo plano con after() para que nunca demore la carga ni se cancele en Vercel
   try {
-    after(executeScan)
+    after(() => recordScanDirect(options))
   } catch {
-    // Si after() se llama fuera del scope de un request compatible, ejecutar en background seguro
-    void executeScan()
+    void recordScanDirect(options)
   }
 }

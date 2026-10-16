@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { sendPushNotificationToUser } from '@/lib/push'
@@ -294,10 +295,12 @@ export async function activatePlateAndRegister(formData: FormData) {
       })
   }
 
-  // 7. Notificación in-app en la campana
+  // 7. Notificación in-app en la campana y notificaciones Push
   try {
+    const adminClient = getAdminClient()
+
     if (isNoGooglePlace) {
-      await supabase.from('notifications').insert({
+      await adminClient.from('notifications').insert({
         user_id: targetUserId,
         title: '⏳ Placa Registrada: En Espera de Verificación de Google',
         message: `Tu placa física para "${businessName || 'tu negocio'}" quedó vinculada con 365 días de garantía. Recuerda no colocarla en tu mostrador todavía hasta que Google verifique tu local comercial.`,
@@ -311,7 +314,7 @@ export async function activatePlateAndRegister(formData: FormData) {
         url: '/dashboard/google-business'
       })
     } else {
-      await supabase.from('notifications').insert({
+      await adminClient.from('notifications').insert({
         user_id: targetUserId,
         title: '🎉 ¡Tu Placa de Reseñas NFC está Activa!',
         message: `Tu placa física para "${businessName || 'tu negocio'}" quedó configurada con 365 días de servicio PRO y Escudo Anti-Quejas.`,
@@ -324,6 +327,32 @@ export async function activatePlateAndRegister(formData: FormData) {
         body: `Tu placa para "${businessName || 'tu negocio'}" ya está vinculada con 1 año de membresía PRO.`,
         url: '/dashboard/devices'
       })
+    }
+
+    // 8. Notificar a los administradores de OmniTag sobre la activación
+    const { data: adminUsers } = await adminClient
+      .from('users')
+      .select('id')
+      .eq('is_admin', true)
+
+    if (adminUsers && adminUsers.length > 0) {
+      for (const admin of adminUsers) {
+        if (admin.id === targetUserId) continue // evitar auto-notificación redundante si el admin la activó
+
+        await adminClient.from('notifications').insert({
+          user_id: admin.id,
+          title: `🏷️ Nueva Placa Activada: ${businessName || tagId}`,
+          message: `${fullName || 'Un cliente'} vinculó la placa de reseñas "${tagId}" para "${businessName || 'Negocio'}" con 365 días de membresía PRO.`,
+          type: 'info',
+          link: '/dashboard/admin'
+        })
+
+        await sendPushNotificationToUser(admin.id, {
+          title: `🏷️ Placa Activada: ${businessName || tagId}`,
+          body: `${fullName || 'Un cliente'} activó la placa ${tagId} para "${businessName || 'Negocio'}".`,
+          url: '/dashboard/admin'
+        })
+      }
     }
   } catch (notifErr) {
     console.error('Error creando notificación de activación:', notifErr)

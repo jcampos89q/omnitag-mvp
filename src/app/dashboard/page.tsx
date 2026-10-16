@@ -102,8 +102,8 @@ export default async function DashboardPage() {
         ? supabase.from('private_feedbacks').select('*', { count: 'exact', head: true }).in('device_id', deviceIds)
         : { count: 0 },
       deviceIds.length > 0 
-        ? supabase.from('scans').select('*', { count: 'exact', head: true }).in('device_id', deviceIds)
-        : { count: 0 }
+        ? supabase.from('scans').select('*', { count: 'exact', head: true }).or(`target_user_id.eq.${user.id},device_id.in.(${deviceIds.join(',')})`)
+        : supabase.from('scans').select('*', { count: 'exact', head: true }).eq('target_user_id', user.id)
     ])
 
     return (

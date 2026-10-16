@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Star, CheckCircle, ShieldCheck, Send, MessageSquareHeart, Settings, Building2 } from 'lucide-react'
-import { submitPrivateFeedback } from './actions'
+import { submitPrivateFeedback, recordPositiveReviewClick } from './actions'
 import { ThemeConfig } from '@/lib/themes'
 
 export default function FilterClient({ 
@@ -45,7 +45,7 @@ export default function FilterClient({
   const inputTextColor = isDark ? '#F8FAFC' : '#0F172A'
   const inputBorder = isDark ? '#334155' : '#E2E8F0'
 
-  const handleRating = (value: number) => {
+  const handleRating = async (value: number) => {
     setRating(value)
     
     // Si la calificación es buena (4 o 5), va directo a Google Maps
@@ -53,6 +53,13 @@ export default function FilterClient({
       const safeUrl = redirectUrl.startsWith('http://') || redirectUrl.startsWith('https://')
         ? redirectUrl
         : `https://${redirectUrl}`
+      
+      try {
+        await recordPositiveReviewClick(deviceId, value)
+      } catch {
+        // Silencioso para no demorar la navegación
+      }
+      
       window.location.href = safeUrl
     } else {
       // Si es 1, 2 o 3, mostramos el formulario de quejas privado
