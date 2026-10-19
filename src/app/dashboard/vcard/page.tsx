@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { QrCode, CreditCard } from 'lucide-react'
@@ -18,7 +19,8 @@ export default async function VCardBuilderPage({
   searchParams: Promise<{ success?: string; error?: string }>
 }) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
   const params = await searchParams
 
   if (!user) {
@@ -26,7 +28,7 @@ export default async function VCardBuilderPage({
   }
 
   // 1. Obtener estado del plan y hardware vinculado
-  const planInfo = await getUserPlanInfo(supabase, user.id)
+  const planInfo = await getUserPlanInfo(db, user.id)
   const { isPro, hasNfcCard, nfcCardToken } = planInfo
 
   if (!planInfo.canAccessVCard) {
@@ -41,15 +43,15 @@ export default async function VCardBuilderPage({
 
   // 2. Obtener la vCard y el tipo de cuenta
   const [{ data: vcard }, { data: profile }] = await Promise.all([
-    supabase.from('vcards').select('*').eq('user_id', user.id).maybeSingle(),
-    supabase.from('users').select('account_type').eq('id', user.id).maybeSingle()
+    db.from('vcards').select('*').eq('user_id', user.id).maybeSingle(),
+    db.from('users').select('account_type').eq('id', user.id).maybeSingle()
   ])
   
   const accountType = profile?.account_type || 'professional'
 
   let vcardMessages: any[] = []
   if (vcard) {
-    const { data: vList } = await supabase
+    const { data: vList } = await db
       .from('vcard_messages')
       .select('*')
       .eq('vcard_id', vcard.id)

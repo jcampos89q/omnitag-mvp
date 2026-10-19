@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { uploadMediaFile } from '@/lib/supabase/storage'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -11,14 +12,15 @@ import { sendVCardPushMessage } from '@/lib/googleWalletRest'
 
 export async function saveVCard(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
   if (!user) {
     redirect('/login')
   }
 
   // 1. Verificar si el usuario tiene Plan PRO para permitir captura de leads
-  const { isPro } = await getUserPlanInfo(supabase, user.id)
+  const { isPro } = await getUserPlanInfo(db, user.id)
 
   let avatarUrl = (formData.get('avatar_url') as string)?.trim() || null
   let coverUrl = (formData.get('cover_url') as string)?.trim() || null
@@ -39,7 +41,7 @@ export async function saveVCard(formData: FormData) {
 
     if (!avatarUrl && avatarFile && avatarFile instanceof File && avatarFile.size > 0) {
       try {
-        const uploadedAvatar = await uploadMediaFile(supabase, avatarFile, 'avatars', user.id)
+        const uploadedAvatar = await uploadMediaFile(db, avatarFile, 'avatars', user.id)
         if (uploadedAvatar) avatarUrl = uploadedAvatar
       } catch (uploadErr: any) {
         console.error("Error al subir avatar:", uploadErr)
@@ -48,7 +50,7 @@ export async function saveVCard(formData: FormData) {
 
     if (!coverUrl && coverFile && coverFile instanceof File && coverFile.size > 0) {
       try {
-        const uploadedCover = await uploadMediaFile(supabase, coverFile, 'covers', user.id)
+        const uploadedCover = await uploadMediaFile(db, coverFile, 'covers', user.id)
         if (uploadedCover) coverUrl = uploadedCover
       } catch (uploadErr: any) {
         console.error("Error al subir portada:", uploadErr)
@@ -169,7 +171,7 @@ export async function saveVCard(formData: FormData) {
     }
 
     // Check if vcard exists for this user
-    const { data: existingVcard } = await supabase
+    const { data: existingVcard } = await db
       .from('vcards')
       .select('id, slug')
       .eq('user_id', user.id)
@@ -204,7 +206,7 @@ export async function saveVCard(formData: FormData) {
     }
 
     if (existingVcard) {
-      const { error } = await supabase
+      const { error } = await db
         .from('vcards')
         .update(payload)
         .eq('id', existingVcard.id)
@@ -214,7 +216,7 @@ export async function saveVCard(formData: FormData) {
         redirect('/dashboard/vcard?error=' + encodeURIComponent(error.message))
       }
     } else {
-      const { error } = await supabase
+      const { error } = await db
         .from('vcards')
         .insert({
           user_id: user.id,
@@ -244,8 +246,9 @@ export async function saveVCard(formData: FormData) {
 // Acción para enviar notificaciones Push de marketing a los poseedores de una vCard
 export async function sendVCardCampaignPush(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const vcardId = formData.get('vcard_id') as string
   const title = (formData.get('title') as string)?.trim()
@@ -258,7 +261,7 @@ export async function sendVCardCampaignPush(formData: FormData) {
   }
 
   // Verificar que el usuario sea el dueño de la vCard
-  const { data: vcard } = await supabase
+  const { data: vcard } = await db
     .from('vcards')
     .select('id, slug, first_name, last_name, company_name')
     .eq('id', vcardId)

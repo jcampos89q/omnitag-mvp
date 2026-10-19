@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { createMenu } from './actions'
 import { Coffee, Scissors, Stethoscope, ShoppingBag } from 'lucide-react'
 import MenuManager from './MenuManager'
@@ -11,10 +12,11 @@ import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function MenusPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
   // 1. Obtener estado del plan
-  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const planInfo = await getUserPlanInfo(db, user?.id)
   const isPro = planInfo.isPro
 
   if (!planInfo.canAccessProSuite) {
@@ -28,7 +30,7 @@ export default async function MenusPage() {
   }
 
   // 2. Buscar menú del usuario
-  const { data: menu } = await supabase
+  const { data: menu } = await db
     .from('menus')
     .select('*')
     .eq('user_id', user?.id)
@@ -37,7 +39,7 @@ export default async function MenusPage() {
   // Si tiene menú, buscar categorías con sus ítems
   let categories = []
   if (menu) {
-    const { data: cats } = await supabase
+    const { data: cats } = await db
       .from('menu_categories')
       .select('*, menu_items(*)')
       .eq('menu_id', menu.id)

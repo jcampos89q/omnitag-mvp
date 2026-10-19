@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { uploadMediaFile } from '@/lib/supabase/storage'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -8,15 +9,16 @@ import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export async function createMenu(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const name = (formData.get('name') as string)?.trim()
   const businessType = (formData.get('business_type') as string) || 'restaurant'
   const currency = (formData.get('currency') as string) || 'USD'
   const slug = `${name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-')}-${Math.random().toString(36).substring(2, 6)}`
 
-  await supabase.from('menus').insert({
+  const { error } = await db.from('menus').insert({
     user_id: user.id,
     name,
     business_type: businessType,
@@ -24,14 +26,20 @@ export async function createMenu(formData: FormData) {
     currency
   })
 
+  if (error) {
+    console.error("Error creating menu:", error)
+    throw new Error(error.message)
+  }
+
   revalidatePath('/dashboard/menus')
   revalidatePath('/', 'layout')
 }
 
 export async function updateMenu(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const menuId = formData.get('menu_id') as string
   const name = (formData.get('name') as string)?.trim()
@@ -72,11 +80,16 @@ export async function updateMenu(formData: FormData) {
   if (description !== undefined) updateData.description = description
   if (logoUrl !== undefined) updateData.logo_url = logoUrl
 
-  await supabase
+  const { error } = await db
     .from('menus')
     .update(updateData)
     .eq('id', menuId)
     .eq('user_id', user.id)
+
+  if (error) {
+    console.error("Error updating menu:", error)
+    throw new Error(error.message)
+  }
 
   revalidatePath('/dashboard/menus')
   revalidatePath('/', 'layout')
@@ -84,8 +97,9 @@ export async function updateMenu(formData: FormData) {
 
 export async function setDailySpecial(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const menuId = formData.get('menu_id') as string
   const name = (formData.get('name') as string)?.trim()
@@ -104,11 +118,16 @@ export async function setDailySpecial(formData: FormData) {
     is_active: true
   }
 
-  await supabase
+  const { error } = await db
     .from('menus')
     .update({ daily_special })
     .eq('id', menuId)
     .eq('user_id', user.id)
+
+  if (error) {
+    console.error("Error setting daily special:", error)
+    throw new Error(error.message)
+  }
 
   revalidatePath('/dashboard/menus')
   revalidatePath('/', 'layout')
@@ -116,16 +135,22 @@ export async function setDailySpecial(formData: FormData) {
 
 export async function deleteDailySpecial(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const menuId = formData.get('menu_id') as string
 
-  await supabase
+  const { error } = await db
     .from('menus')
     .update({ daily_special: { is_active: false } })
     .eq('id', menuId)
     .eq('user_id', user.id)
+
+  if (error) {
+    console.error("Error deleting daily special:", error)
+    throw new Error(error.message)
+  }
 
   revalidatePath('/dashboard/menus')
   revalidatePath('/', 'layout')
@@ -133,16 +158,22 @@ export async function deleteDailySpecial(formData: FormData) {
 
 export async function createCategory(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
   
   const menuId = formData.get('menu_id') as string
   const name = (formData.get('name') as string)?.trim()
 
-  await supabase.from('menu_categories').insert({
+  const { error } = await db.from('menu_categories').insert({
     menu_id: menuId,
     name
   })
+
+  if (error) {
+    console.error("Error creating category:", error)
+    throw new Error(error.message)
+  }
 
   revalidatePath('/dashboard/menus')
   revalidatePath('/', 'layout')
@@ -150,16 +181,27 @@ export async function createCategory(formData: FormData) {
 
 export async function deleteCategory(formData: FormData) {
   const supabase = await createClient()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
+
   const categoryId = formData.get('category_id') as string
-  await supabase.from('menu_categories').delete().eq('id', categoryId)
+  const { error } = await db.from('menu_categories').delete().eq('id', categoryId)
+
+  if (error) {
+    console.error("Error deleting category:", error)
+    throw new Error(error.message)
+  }
+
   revalidatePath('/dashboard/menus')
   revalidatePath('/', 'layout')
 }
 
 export async function createMenuItem(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
   
   const categoryId = formData.get('category_id') as string
   const name = (formData.get('name') as string)?.trim()
@@ -177,7 +219,7 @@ export async function createMenuItem(formData: FormData) {
 
   const isFeatured = formData.get('is_featured') === 'on'
 
-  await supabase.from('menu_items').insert({
+  const { error } = await db.from('menu_items').insert({
     category_id: categoryId,
     name,
     description,
@@ -190,36 +232,52 @@ export async function createMenuItem(formData: FormData) {
     is_available: true
   })
 
+  if (error) {
+    console.error("Error creating menu item:", error)
+    throw new Error(error.message)
+  }
+
   revalidatePath('/dashboard/menus')
   revalidatePath('/', 'layout')
 }
 
 export async function deleteMenuItem(formData: FormData) {
   const supabase = await createClient()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
+
   const itemId = formData.get('item_id') as string
-  await supabase.from('menu_items').delete().eq('id', itemId)
+  const { error } = await db.from('menu_items').delete().eq('id', itemId)
+
+  if (error) {
+    console.error("Error deleting menu item:", error)
+    throw new Error(error.message)
+  }
+
   revalidatePath('/dashboard/menus')
   revalidatePath('/', 'layout')
 }
 
 export async function addMenuTable(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   try {
     const menuId = formData.get('menu_id') as string
     const tableName = (formData.get('table_name') as string)?.trim()
     if (!menuId || !tableName) throw new Error("Nombre de mesa requerido")
 
-    const { data: menu } = await supabase
+    const { data: menu, error: fetchErr } = await db
       .from('menus')
       .select('id, tables')
       .eq('id', menuId)
       .eq('user_id', user.id)
       .single()
 
-    if (!menu) throw new Error("Menú no encontrado")
+    if (fetchErr || !menu) throw new Error("Menú no encontrado")
 
     const currentTables: Array<{ id: string; name: string; code: string }> = Array.isArray(menu.tables) ? menu.tables : []
 
@@ -233,10 +291,12 @@ export async function addMenuTable(formData: FormData) {
 
     const updatedTables = [...currentTables, newTable]
 
-    await supabase
+    const { error: updateErr } = await db
       .from('menus')
       .update({ tables: updatedTables })
       .eq('id', menuId)
+
+    if (updateErr) throw new Error(updateErr.message)
 
     revalidatePath('/dashboard/menus')
     revalidatePath('/dashboard/qr-studio')
@@ -250,8 +310,9 @@ export async function addMenuTable(formData: FormData) {
 
 export async function generateBatchTables(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   try {
     const menuId = formData.get('menu_id') as string
@@ -260,14 +321,14 @@ export async function generateBatchTables(formData: FormData) {
 
     if (!menuId) throw new Error("Menú requerido")
 
-    const { data: menu } = await supabase
+    const { data: menu, error: fetchErr } = await db
       .from('menus')
       .select('id, tables')
       .eq('id', menuId)
       .eq('user_id', user.id)
       .single()
 
-    if (!menu) throw new Error("Menú no encontrado")
+    if (fetchErr || !menu) throw new Error("Menú no encontrado")
 
     const currentTables: Array<{ id: string; name: string; code: string }> = Array.isArray(menu.tables) ? menu.tables : []
     const existingNames = new Set(currentTables.map(t => t.name.toLowerCase()))
@@ -286,10 +347,12 @@ export async function generateBatchTables(formData: FormData) {
 
     const updatedTables = [...currentTables, ...newBatch]
 
-    await supabase
+    const { error: updateErr } = await db
       .from('menus')
       .update({ tables: updatedTables })
       .eq('id', menuId)
+
+    if (updateErr) throw new Error(updateErr.message)
 
     revalidatePath('/dashboard/menus')
     revalidatePath('/dashboard/qr-studio')
@@ -303,8 +366,9 @@ export async function generateBatchTables(formData: FormData) {
 
 export async function deleteMenuTable(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   try {
     const menuId = formData.get('menu_id') as string
@@ -312,22 +376,24 @@ export async function deleteMenuTable(formData: FormData) {
 
     if (!menuId || !tableId) return
 
-    const { data: menu } = await supabase
+    const { data: menu, error: fetchErr } = await db
       .from('menus')
       .select('id, tables')
       .eq('id', menuId)
       .eq('user_id', user.id)
       .single()
 
-    if (!menu) return
+    if (fetchErr || !menu) return
 
     const currentTables: Array<{ id: string; name: string; code: string }> = Array.isArray(menu.tables) ? menu.tables : []
     const updatedTables = currentTables.filter(t => t.id !== tableId)
 
-    await supabase
+    const { error: updateErr } = await db
       .from('menus')
       .update({ tables: updatedTables })
       .eq('id', menuId)
+
+    if (updateErr) throw new Error(updateErr.message)
 
     revalidatePath('/dashboard/menus')
     revalidatePath('/dashboard/qr-studio')
