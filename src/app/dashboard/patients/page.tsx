@@ -1,24 +1,26 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import PatientsClient from './PatientsClient'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export default async function PatientsPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating, realAdmin } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
   if (!user) {
     redirect('/auth/login')
   }
 
   // Ensure they are in the health industry or admin
-  const { data: profile } = await supabase
+  const { data: profile } = await db
     .from('users')
     .select('industry, is_admin, currency, currency_symbol')
     .eq('id', user.id)
     .single()
     
-  if (profile?.industry !== 'health' && !profile?.is_admin) {
+  if (profile?.industry !== 'health' && !profile?.is_admin && !realAdmin) {
     redirect('/dashboard/settings')
   }
 
@@ -27,16 +29,16 @@ export default async function PatientsPage() {
     { data: consultations },
     { data: upcomingBookings }
   ] = await Promise.all([
-    supabase
+    db
       .from('patients')
       .select('*')
       .eq('clinic_id', user.id)
       .order('created_at', { ascending: false }),
-    supabase
+    db
       .from('medical_consultations')
       .select('id, consultation_fee, payment_status, payment_method, created_at')
       .eq('clinic_id', user.id),
-    supabase
+    db
       .from('bookings')
       .select('id, booking_date, booking_time, status, customer_name, patient_id')
       .gte('booking_date', new Date().toISOString().slice(0, 10))

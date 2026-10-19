@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { MessageSquareWarning, Star, Calendar, Phone, Mail, MessageCircle, CheckCircle2, Building2 } from 'lucide-react'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { getUserPlanInfo } from '@/lib/plans'
@@ -6,9 +7,10 @@ import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function FeedbackPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const planInfo = await getUserPlanInfo(db, user?.id)
   if (!planInfo.canAccessFeedback) {
     return (
       <ProFeaturePaywall 
@@ -20,7 +22,7 @@ export default async function FeedbackPage() {
   }
 
   // Buscar dispositivos del usuario
-  const { data: devices } = await supabase
+  const { data: devices } = await db
     .from('devices')
     .select('id, tag_id')
     .eq('user_id', user?.id)
@@ -29,7 +31,7 @@ export default async function FeedbackPage() {
 
   let feedbacks: any[] = []
   if (deviceIds.length > 0) {
-    const { data } = await supabase
+    const { data } = await db
       .from('private_feedbacks')
       .select('*, devices(tag_id)')
       .in('device_id', deviceIds)

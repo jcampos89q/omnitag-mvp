@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { getUserPlanInfo } from '@/lib/plans'
@@ -11,19 +12,20 @@ import { Suspense } from 'react'
 
 export default async function GoogleBusinessPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
   if (!user) {
     redirect('/login')
   }
 
   const [planInfo, { data: profile }, { data: devices }, { data: vcard }, { data: menus }, { data: googleConnection }] = await Promise.all([
-    getUserPlanInfo(supabase, user.id),
-    supabase.from('users').select('full_name, currency, currency_symbol').eq('id', user.id).maybeSingle(),
-    supabase.from('devices').select('id, device_type, redirect_url, place_id, business_name, business_address, business_phone, is_active, google_types, tag_id, review_filter_enabled').eq('user_id', user.id),
-    supabase.from('vcards').select('id, company_name, first_name, slug, phone, website, business_address, business_hours, bio, avatar_url, cover_url').eq('user_id', user.id).limit(1).maybeSingle(),
-    supabase.from('menus').select('id, name, slug').eq('user_id', user.id).limit(5),
-    supabase.from('google_business_connections').select('id, email, business_name, account_id, location_id, scope, status, created_at').eq('user_id', user.id).maybeSingle()
+    getUserPlanInfo(db, user.id),
+    db.from('users').select('full_name, currency, currency_symbol').eq('id', user.id).maybeSingle(),
+    db.from('devices').select('id, device_type, redirect_url, place_id, business_name, business_address, business_phone, is_active, google_types, tag_id, review_filter_enabled').eq('user_id', user.id),
+    db.from('vcards').select('id, company_name, first_name, slug, phone, website, business_address, business_hours, bio, avatar_url, cover_url').eq('user_id', user.id).limit(1).maybeSingle(),
+    db.from('menus').select('id, name, slug').eq('user_id', user.id).limit(5),
+    db.from('google_business_connections').select('id, email, business_name, account_id, location_id, scope, status, created_at').eq('user_id', user.id).maybeSingle()
   ])
 
   // Obtener dispositivos y sus quejas privadas capturadas por el Escudo Anti-Quejas
@@ -32,7 +34,7 @@ export default async function GoogleBusinessPage() {
 
   let privateFeedbacks: any[] = []
   if (deviceIds.length > 0) {
-    const { data: feedbacks } = await supabase
+    const { data: feedbacks } = await db
       .from('private_feedbacks')
       .select('id, device_id, rating, message, customer_name, customer_phone, customer_email, status, resolution_notes, created_at, devices(tag_id, business_name)')
       .in('device_id', deviceIds)

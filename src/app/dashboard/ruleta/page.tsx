@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { getOrCreateWheel } from './actions'
 import WheelManagerClient from './WheelManagerClient'
@@ -13,10 +14,11 @@ export const metadata = {
 
 export default async function DashboardRuletaPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) redirect('/login')
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const planInfo = await getUserPlanInfo(supabase, user.id)
+  const planInfo = await getUserPlanInfo(db, user.id)
   if (!planInfo.canAccessProSuite) {
     return (
       <ProFeaturePaywall 
@@ -31,7 +33,7 @@ export default async function DashboardRuletaPage() {
   const wheel = await getOrCreateWheel()
 
   // Obtener historial de giros y cupones recientes
-  const { data: spins } = await supabase
+  const { data: spins } = await db
     .from('prize_wheel_spins')
     .select('*, prize_wheel_items(label, icon, bg_color)')
     .eq('wheel_id', wheel.id)

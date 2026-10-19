@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { createGoogleWalletGiftCardPass } from '@/lib/googleWallet'
@@ -22,11 +23,12 @@ function generatePin(): string {
 
 export async function createGiftCard(formData: FormData) {
   const supabase = await createClient()
-  const { user: effectiveUser } = await getEffectiveUser(supabase)
+  const { user: effectiveUser, isImpersonating } = await getEffectiveUser(supabase)
   if (!effectiveUser) throw new Error('No autorizado. Debes iniciar sesión.')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   // Obtener moneda del usuario
-  const { data: userProfile } = await supabase
+  const { data: userProfile } = await db
     .from('users')
     .select('currency, currency_symbol')
     .eq('id', effectiveUser.id)
@@ -72,7 +74,7 @@ export async function createGiftCard(formData: FormData) {
   let attempts = 0
   while (attempts < 5) {
     const candidate = generateUniqueCode('GC')
-    const { data: existing } = await supabase
+    const { data: existing } = await db
       .from('gift_cards')
       .select('id')
       .eq('code', candidate)
@@ -90,7 +92,7 @@ export async function createGiftCard(formData: FormData) {
 
   const securityPin = generatePin()
 
-  const { data: newCard, error } = await supabase
+  const { data: newCard, error } = await db
     .from('gift_cards')
     .insert({
       user_id: effectiveUser.id,
@@ -268,10 +270,11 @@ export async function redeemGiftCard(payload: {
 
 export async function cancelGiftCard(cardId: string) {
   const supabase = await createClient()
-  const { user: effectiveUser } = await getEffectiveUser(supabase)
+  const { user: effectiveUser, isImpersonating } = await getEffectiveUser(supabase)
   if (!effectiveUser) throw new Error('No autorizado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const { error } = await supabase
+  const { error } = await db
     .from('gift_cards')
     .update({ status: 'cancelled', updated_at: new Date().toISOString() })
     .eq('id', cardId)

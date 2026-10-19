@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { getUserPlanInfo } from '@/lib/plans'
 import ProFeaturePaywall from '@/components/ProFeaturePaywall'
@@ -6,9 +7,10 @@ import GiftCardsManager from './GiftCardsManager'
 
 export default async function GiftCardsPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const planInfo = await getUserPlanInfo(db, user?.id)
   if (!planInfo.canAccessProSuite) {
     return (
       <ProFeaturePaywall 
@@ -20,14 +22,14 @@ export default async function GiftCardsPage() {
   }
 
   // Obtener perfil y moneda del negocio
-  const { data: profile } = await supabase
+  const { data: profile } = await db
     .from('users')
     .select('full_name, currency, currency_symbol, avatar_url')
     .eq('id', user?.id)
     .maybeSingle()
 
   // Obtener nombre de vCard como nombre comercial si existe
-  const { data: vcard } = await supabase
+  const { data: vcard } = await db
     .from('vcards')
     .select('company_name, first_name')
     .eq('user_id', user?.id)
@@ -40,11 +42,11 @@ export default async function GiftCardsPage() {
 
   // Cargar fuentes de logos existentes del usuario (vCards, Menús, Perfil)
   const [{ data: vcardsList }, { data: menusList }] = await Promise.all([
-    supabase
+    db
       .from('vcards')
       .select('first_name, company_name, theme, contact_info')
       .eq('user_id', user?.id),
-    supabase
+    db
       .from('menus')
       .select('name, logo_url')
       .eq('user_id', user?.id)
@@ -69,14 +71,14 @@ export default async function GiftCardsPage() {
   })
 
   // Cargar Gift Cards emitidas
-  const { data: cards } = await supabase
+  const { data: cards } = await db
     .from('gift_cards')
     .select('*')
     .eq('user_id', user?.id)
     .order('created_at', { ascending: false })
 
   // Cargar Redenciones recientes
-  const { data: redemptions } = await supabase
+  const { data: redemptions } = await db
     .from('gift_card_redemptions')
     .select(`
       id,

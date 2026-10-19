@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { Star, ShieldCheck, QrCode } from 'lucide-react'
 import DevicesManager from './DevicesManager'
 import { getUserPlanInfo } from '@/lib/plans'
@@ -14,13 +15,14 @@ export default async function DevicesPage({
   searchParams: Promise<{ success?: string, error?: string }>
 }) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
   const { success, error } = await searchParams
 
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
   const [planInfo, { data: profile }] = await Promise.all([
-    getUserPlanInfo(supabase, user?.id),
-    supabase.from('users').select('account_type').eq('id', user?.id).maybeSingle()
+    getUserPlanInfo(db, user?.id),
+    db.from('users').select('account_type').eq('id', user?.id).maybeSingle()
   ])
   const { isPro, hasReviewPlate } = planInfo
   const accountType = profile?.account_type || 'business'
@@ -36,7 +38,7 @@ export default async function DevicesPage({
   }
 
   // 2. Obtener placas del usuario
-  const { data: devices } = await supabase
+  const { data: devices } = await db
     .from('devices')
     .select('*')
     .eq('user_id', user?.id)
@@ -49,10 +51,10 @@ export default async function DevicesPage({
     { data: loyalty },
     { data: wheel }
   ] = await Promise.all([
-    supabase.from('vcards').select('id, slug, first_name, company_name').eq('user_id', user?.id).maybeSingle(),
-    supabase.from('menus').select('id, slug, name').eq('user_id', user?.id).maybeSingle(),
-    supabase.from('loyalty_programs').select('id, slug, name').eq('user_id', user?.id).maybeSingle(),
-    supabase.from('prize_wheels').select('id, slug, name').eq('user_id', user?.id).maybeSingle()
+    db.from('vcards').select('id, slug, first_name, company_name').eq('user_id', user?.id).maybeSingle(),
+    db.from('menus').select('id, slug, name').eq('user_id', user?.id).maybeSingle(),
+    db.from('loyalty_programs').select('id, slug, name').eq('user_id', user?.id).maybeSingle(),
+    db.from('prize_wheels').select('id, slug, name').eq('user_id', user?.id).maybeSingle()
   ])
 
   return (

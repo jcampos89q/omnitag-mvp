@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { Gift, Sparkles, ShieldCheck } from 'lucide-react'
 import { createLoyaltyProgram } from './actions'
 import LoyaltyManager from './LoyaltyManager'
@@ -8,9 +9,10 @@ import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function LoyaltyPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const planInfo = await getUserPlanInfo(db, user?.id)
   if (!planInfo.canAccessProSuite) {
     return (
       <ProFeaturePaywall 
@@ -22,7 +24,7 @@ export default async function LoyaltyPage() {
   }
 
   // Buscar programa de fidelización del usuario
-  const { data: program } = await supabase
+  const { data: program } = await db
     .from('loyalty_programs')
     .select('*')
     .eq('user_id', user?.id)
@@ -33,20 +35,20 @@ export default async function LoyaltyPage() {
   let messages: any[] = []
 
   if (program) {
-    const { data: mList } = await supabase
+    const { data: mList } = await db
       .from('loyalty_members')
       .select('*')
       .eq('program_id', program.id)
       .order('last_stamp_at', { ascending: false, nullsFirst: false })
 
-    const { data: lList } = await supabase
+    const { data: lList } = await db
       .from('loyalty_logs')
       .select('*')
       .eq('program_id', program.id)
       .order('created_at', { ascending: false })
       .limit(100)
 
-    const { data: msgList } = await supabase
+    const { data: msgList } = await db
       .from('loyalty_messages')
       .select('*')
       .eq('program_id', program.id)

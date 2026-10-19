@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { Scissors, Sparkles, Stethoscope } from 'lucide-react'
 import AppointmentsManager from './AppointmentsManager'
 import { createOrUpdateBusiness } from './actions'
@@ -11,10 +12,11 @@ import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function AppointmentsDashboardPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
   // 1. Obtener plan
-  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const planInfo = await getUserPlanInfo(db, user?.id)
   const isPro = planInfo.isPro
 
   if (!planInfo.canAccessProSuite) {
@@ -28,7 +30,7 @@ export default async function AppointmentsDashboardPage() {
   }
 
   // 2. Buscar negocio de citas del usuario
-  const { data: business } = await supabase
+  const { data: business } = await db
     .from('appointment_businesses')
     .select('*')
     .eq('user_id', user?.id)
@@ -46,10 +48,10 @@ export default async function AppointmentsDashboardPage() {
       { data: bks },
       { data: revs }
     ] = await Promise.all([
-      supabase.from('specialists').select('*').eq('business_id', business.id).order('order_index'),
-      supabase.from('appointment_services').select('*').eq('business_id', business.id),
-      supabase.from('bookings').select('*').eq('business_id', business.id).order('booking_date', { ascending: false }).limit(50),
-      supabase.from('specialist_reviews').select('*').eq('business_id', business.id).order('created_at', { ascending: false }).limit(50)
+      db.from('specialists').select('*').eq('business_id', business.id).order('order_index'),
+      db.from('appointment_services').select('*').eq('business_id', business.id),
+      db.from('bookings').select('*').eq('business_id', business.id).order('booking_date', { ascending: false }).limit(50),
+      db.from('specialist_reviews').select('*').eq('business_id', business.id).order('created_at', { ascending: false }).limit(50)
     ])
 
     specialists = specs || []

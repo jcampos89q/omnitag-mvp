@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { BarChart3, Smartphone, MonitorSmartphone, Activity, Globe, UserCircle, Coffee, Gift, QrCode, Sparkles, ArrowRight, Zap, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { getUserPlanInfo } from '@/lib/plans'
@@ -10,12 +11,13 @@ import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 export default async function AnalyticsPage() {
   const supabase = await createClient()
   const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
-  const { isPro, isAdmin } = await getUserPlanInfo(supabase, user?.id)
+  const { isPro, isAdmin } = await getUserPlanInfo(db, user?.id)
 
   // 2. Obtener todas las visitas y escaneos de todos los recursos del usuario
-  let scansQuery = supabase
+  let scansQuery = db
     .from('scans')
     .select('id, device_id, vcard_id, menu_id, loyalty_program_id, source_type, os, country, scanned_at, user_agent')
     .order('scanned_at', { ascending: false })
@@ -29,10 +31,10 @@ export default async function AnalyticsPage() {
       { data: userMenus },
       { data: userLoyalty }
     ] = await Promise.all([
-      supabase.from('devices').select('id').eq('user_id', user.id),
-      supabase.from('vcards').select('id').eq('user_id', user.id),
-      supabase.from('menus').select('id').eq('user_id', user.id),
-      supabase.from('loyalty_programs').select('id').eq('user_id', user.id),
+      db.from('devices').select('id').eq('user_id', user.id),
+      db.from('vcards').select('id').eq('user_id', user.id),
+      db.from('menus').select('id').eq('user_id', user.id),
+      db.from('loyalty_programs').select('id').eq('user_id', user.id),
     ])
 
     const dIds = (userDevices || []).map(d => d.id)

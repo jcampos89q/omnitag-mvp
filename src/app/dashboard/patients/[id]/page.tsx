@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import PatientProfileClient from './PatientProfileClient'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
@@ -10,14 +11,15 @@ export default async function PatientProfilePage({
 }) {
   const { id } = await params
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const db = isImpersonating ? getAdminClient() : supabase
 
   if (!user) {
     redirect('/auth/login')
   }
 
   // 1. Obtener expediente del paciente garantizando que pertenezca a la clínica
-  const { data: patient, error } = await supabase
+  const { data: patient, error } = await db
     .from('patients')
     .select('*')
     .eq('id', id)
@@ -35,22 +37,22 @@ export default async function PatientProfilePage({
     { data: business },
     { data: profile }
   ] = await Promise.all([
-    supabase
+    db
       .from('medical_consultations')
       .select('*, specialists(name, specialty)')
       .eq('patient_id', patient.id)
       .order('created_at', { ascending: false }),
-    supabase
+    db
       .from('bookings')
       .select('*, appointment_services(name, price), specialists(name)')
       .or(`patient_id.eq.${patient.id},customer_phone.eq.${patient.phone || '00000000'}`)
       .order('booking_date', { ascending: false }),
-    supabase
+    db
       .from('appointment_businesses')
       .select('id, name')
       .eq('user_id', user.id)
       .maybeSingle(),
-    supabase
+    db
       .from('users')
       .select('currency, currency_symbol')
       .eq('id', user.id)
@@ -62,8 +64,8 @@ export default async function PatientProfilePage({
   let specialists: any[] = []
   if (business) {
     const [{ data: srvs }, { data: spcs }] = await Promise.all([
-      supabase.from('appointment_services').select('id, name, price, duration').eq('business_id', business.id),
-      supabase.from('specialists').select('id, name, specialty').eq('business_id', business.id)
+      db.from('appointment_services').select('id, name, price, duration').eq('business_id', business.id),
+      db.from('specialists').select('id, name, specialty').eq('business_id', business.id)
     ])
     services = srvs || []
     specialists = spcs || []

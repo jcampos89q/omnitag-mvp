@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
@@ -17,11 +18,12 @@ const DEFAULT_ITEMS = [
 
 export async function getOrCreateWheel() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   // 1. Buscar si ya tiene una ruleta
-  let { data: wheel } = await supabase
+  let { data: wheel } = await db
     .from('prize_wheels')
     .select('*, prize_wheel_items(*)')
     .eq('user_id', user.id)
@@ -30,7 +32,7 @@ export async function getOrCreateWheel() {
   // 2. Si no existe, crear ruleta inicial por defecto
   if (!wheel) {
     const slug = `ruleta-${user.id.substring(0, 6)}`
-    const { data: newWheel, error: createErr } = await supabase
+    const { data: newWheel, error: createErr } = await db
       .from('prize_wheels')
       .insert({
         user_id: user.id,
@@ -57,10 +59,10 @@ export async function getOrCreateWheel() {
       ...it
     }))
 
-    await supabase.from('prize_wheel_items').insert(itemsToInsert)
+    await db.from('prize_wheel_items').insert(itemsToInsert)
 
     // Volver a consultar completa
-    const { data: completeWheel } = await supabase
+    const { data: completeWheel } = await db
       .from('prize_wheels')
       .select('*, prize_wheel_items(*)')
       .eq('id', newWheel.id)
@@ -79,8 +81,9 @@ export async function getOrCreateWheel() {
 
 export async function updateWheelSettings(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const wheelId = formData.get('wheel_id') as string
   const name = (formData.get('name') as string)?.trim() || 'Ruleta de la Fortuna'
@@ -99,7 +102,7 @@ export async function updateWheelSettings(formData: FormData) {
   const startDate = formData.get('start_date') ? new Date(formData.get('start_date') as string).toISOString() : null
   const endDate = formData.get('end_date') ? new Date(formData.get('end_date') as string).toISOString() : null
 
-  const { error } = await supabase
+  const { error } = await db
     .from('prize_wheels')
     .update({
       name,
@@ -125,12 +128,13 @@ export async function updateWheelSettings(formData: FormData) {
 
 export async function toggleWheelStatus(wheelId: string, currentStatus: boolean) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const nextStatus = !currentStatus
 
-  const { error } = await supabase
+  const { error } = await db
     .from('prize_wheels')
     .update({
       is_active: nextStatus,
@@ -148,11 +152,12 @@ export async function toggleWheelStatus(wheelId: string, currentStatus: boolean)
 
 export async function saveWheelItems(wheelId: string, items: any[]) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   // 1. Validar que la ruleta pertenezca al usuario
-  const { data: wheel } = await supabase
+  const { data: wheel } = await db
     .from('prize_wheels')
     .select('id')
     .eq('id', wheelId)
@@ -162,7 +167,7 @@ export async function saveWheelItems(wheelId: string, items: any[]) {
   if (!wheel) throw new Error('Ruleta no autorizada')
 
   // 2. Eliminar items anteriores y reinsertar lista limpia
-  await supabase.from('prize_wheel_items').delete().eq('wheel_id', wheelId)
+  await db.from('prize_wheel_items').delete().eq('wheel_id', wheelId)
 
   const itemsToInsert = items.map((it, idx) => ({
     wheel_id: wheelId,
@@ -178,7 +183,7 @@ export async function saveWheelItems(wheelId: string, items: any[]) {
     sort_order: idx
   }))
 
-  const { error } = await supabase.from('prize_wheel_items').insert(itemsToInsert)
+  const { error } = await db.from('prize_wheel_items').insert(itemsToInsert)
 
   if (error) throw new Error(error.message)
 

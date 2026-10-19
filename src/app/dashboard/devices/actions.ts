@@ -1,15 +1,17 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
 export async function createDevice(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
 
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const deviceType = (formData.get('device_type') as string) || 'tap_to_rate'
   let redirectUrl = (formData.get('redirect_url') as string)?.trim() || ''
@@ -26,7 +28,7 @@ export async function createDevice(formData: FormData) {
 
   // Si es vincular a vCard
   if (deviceType === 'vcard') {
-    const { data: vcard } = await supabase
+    const { data: vcard } = await db
       .from('vcards')
       .select('id, slug')
       .eq('user_id', user.id)
@@ -39,7 +41,7 @@ export async function createDevice(formData: FormData) {
 
   // Si es vincular a Menú
   if (deviceType === 'menu') {
-    const { data: menu } = await supabase
+    const { data: menu } = await db
       .from('menus')
       .select('id, slug')
       .eq('user_id', user.id)
@@ -51,7 +53,7 @@ export async function createDevice(formData: FormData) {
 
   // Si es vincular a Fidelización
   if (deviceType === 'loyalty') {
-    const { data: loyalty } = await supabase
+    const { data: loyalty } = await db
       .from('loyalty_programs')
       .select('id, slug')
       .eq('user_id', user.id)
@@ -88,7 +90,7 @@ export async function createDevice(formData: FormData) {
     googleTypes = []
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('devices')
     .insert({
       user_id: user.id,
@@ -118,12 +120,13 @@ export async function createDevice(formData: FormData) {
 
 export async function deleteDevice(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) return
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const deviceId = formData.get('device_id') as string
 
-  await supabase
+  await db
     .from('devices')
     .delete()
     .eq('id', deviceId)
@@ -137,9 +140,10 @@ export async function toggleReviewFilter(deviceId: string) {
   const supabase = await createClient()
   const { user, realAdmin, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating || realAdmin ? getAdminClient() : supabase
 
   // Verificar pertenencia del dispositivo
-  const { data: device, error: fetchError } = await supabase
+  const { data: device, error: fetchError } = await db
     .from('devices')
     .select('id, review_filter_enabled, user_id')
     .eq('id', deviceId)
@@ -152,7 +156,7 @@ export async function toggleReviewFilter(deviceId: string) {
   // Si no es el dueño, verificar si es admin (o está en sesión de soporte)
   if (device.user_id !== user.id) {
     const checkAdminId = realAdmin?.id || user.id
-    const { data: profile } = await supabase
+    const { data: profile } = await db
       .from('users')
       .select('is_admin')
       .eq('id', checkAdminId)
@@ -164,7 +168,7 @@ export async function toggleReviewFilter(deviceId: string) {
 
   const newStatus = !device.review_filter_enabled
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await db
     .from('devices')
     .update({ review_filter_enabled: newStatus })
     .eq('id', deviceId)
@@ -183,8 +187,9 @@ export async function toggleReviewFilter(deviceId: string) {
  */
 export async function claimPhysicalPlate(formData: FormData) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const rawTagId = (formData.get('tag_id') as string)?.trim()
   if (!rawTagId) {
@@ -194,7 +199,7 @@ export async function claimPhysicalPlate(formData: FormData) {
   const cleanTagId = decodeURIComponent(rawTagId).trim()
 
   // 1. Verificar si la placa ya pertenece a otro usuario activo con destino configurado
-  const { data: existingDevice } = await supabase
+  const { data: existingDevice } = await db
     .from('devices')
     .select('id, user_id, is_active, business_name, redirect_url')
     .or(`tag_id.eq.${cleanTagId},tag_id.eq.${encodeURIComponent(cleanTagId)},tag_id.ilike.${cleanTagId}`)
@@ -209,7 +214,7 @@ export async function claimPhysicalPlate(formData: FormData) {
   let baseDevice: any = null
 
   if (sourceDeviceId) {
-    const { data: src } = await supabase
+    const { data: src } = await db
       .from('devices')
       .select('*')
       .eq('id', sourceDeviceId)
@@ -219,7 +224,7 @@ export async function claimPhysicalPlate(formData: FormData) {
   }
 
   if (!baseDevice) {
-    const { data: latest } = await supabase
+    const { data: latest } = await db
       .from('devices')
       .select('*')
       .eq('user_id', user.id)
@@ -239,7 +244,7 @@ export async function claimPhysicalPlate(formData: FormData) {
   const reviewFilter = baseDevice?.review_filter_enabled ?? true
 
   if (existingDevice) {
-    await supabase
+    await db
       .from('devices')
       .update({
         user_id: user.id,
@@ -255,7 +260,7 @@ export async function claimPhysicalPlate(formData: FormData) {
       })
       .eq('id', existingDevice.id)
   } else {
-    await supabase
+    await db
       .from('devices')
       .insert({
         tag_id: cleanTagId,
@@ -273,7 +278,7 @@ export async function claimPhysicalPlate(formData: FormData) {
   }
 
   // Actualizar estado en nfc_cards si existe
-  await supabase
+  await db
     .from('nfc_cards')
     .update({
       status: 'active',

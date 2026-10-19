@@ -1,12 +1,15 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { revalidatePath } from 'next/cache'
 
 export async function addPatient(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autorizado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const firstName = (formData.get('first_name') as string)?.trim()
   const lastName = (formData.get('last_name') as string)?.trim() || ''
@@ -47,7 +50,7 @@ export async function addPatient(formData: FormData) {
     address,
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('patients')
     .insert(patient)
     .select('id')
@@ -61,8 +64,9 @@ export async function addPatient(formData: FormData) {
 
 export async function updatePatient(formData: FormData, patientId: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autorizado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const firstName = (formData.get('first_name') as string)?.trim()
   const lastName = (formData.get('last_name') as string)?.trim() || ''
@@ -102,7 +106,7 @@ export async function updatePatient(formData: FormData, patientId: string) {
     address,
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('patients')
     .update(updateData)
     .eq('id', patientId)
@@ -116,10 +120,11 @@ export async function updatePatient(formData: FormData, patientId: string) {
 
 export async function deletePatient(patientId: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autorizado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const { error } = await supabase
+  const { error } = await db
     .from('patients')
     .delete()
     .eq('id', patientId)
@@ -132,8 +137,9 @@ export async function deletePatient(patientId: string) {
 
 export async function addConsultation(formData: FormData, patientId: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autorizado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const reason = (formData.get('reason') as string)?.trim()
   const symptoms = (formData.get('symptoms') as string)?.trim() || null
@@ -182,7 +188,7 @@ export async function addConsultation(formData: FormData, patientId: string) {
     specialist_id: specialistId || null
   }
 
-  const { error } = await supabase
+  const { error } = await db
     .from('medical_consultations')
     .insert(consultation)
 
@@ -191,7 +197,7 @@ export async function addConsultation(formData: FormData, patientId: string) {
   // Si estaba asociada a una cita, marcarla como completada
   if (bookingId) {
     try {
-      await supabase
+      await db
         .from('bookings')
         .update({ status: 'completed' })
         .eq('id', bookingId)
@@ -211,10 +217,11 @@ export async function updateConsultationPayment(
   paymentMethod: string
 ) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autorizado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const { error } = await supabase
+  const { error } = await db
     .from('medical_consultations')
     .update({
       payment_status: paymentStatus,
@@ -232,11 +239,12 @@ export async function updateConsultationPayment(
 
 export async function schedulePatientAppointment(formData: FormData, patientId: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autorizado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   // Obtener negocio de citas del doctor/clínica
-  const { data: business } = await supabase
+  const { data: business } = await db
     .from('appointment_businesses')
     .select('id')
     .eq('user_id', user.id)
@@ -247,7 +255,7 @@ export async function schedulePatientAppointment(formData: FormData, patientId: 
   }
 
   // Obtener datos del paciente
-  const { data: patient } = await supabase
+  const { data: patient } = await db
     .from('patients')
     .select('first_name, last_name, phone, email')
     .eq('id', patientId)
@@ -268,7 +276,7 @@ export async function schedulePatientAppointment(formData: FormData, patientId: 
     throw new Error('Fecha y hora son obligatorias')
   }
 
-  const { error } = await supabase.from('bookings').insert({
+  const { error } = await db.from('bookings').insert({
     business_id: business.id,
     patient_id: patientId,
     specialist_id: specialistId || null,

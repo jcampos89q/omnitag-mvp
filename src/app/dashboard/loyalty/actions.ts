@@ -1,13 +1,16 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { revalidatePath } from 'next/cache'
 import { updateLoyaltyMemberStamps, sendLoyaltyPushMessage } from '@/lib/googleWalletRest'
 
 export async function createLoyaltyProgram(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const name = (formData.get('name') as string)?.trim()
   const businessType = (formData.get('business_type') as string) || 'restaurant'
@@ -19,7 +22,7 @@ export async function createLoyaltyProgram(formData: FormData) {
 
   const slug = `${name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '-')}-${Math.random().toString(36).substring(2, 6)}`
 
-  await supabase.from('loyalty_programs').insert({
+  const { error } = await db.from('loyalty_programs').insert({
     user_id: user.id,
     name,
     business_type: businessType,
@@ -31,14 +34,20 @@ export async function createLoyaltyProgram(formData: FormData) {
     slug
   })
 
+  if (error) {
+    console.error("Error creating loyalty program:", error)
+    throw new Error(error.message)
+  }
+
   revalidatePath('/dashboard/loyalty')
   revalidatePath('/', 'layout')
 }
 
 export async function updateLoyaltyProgram(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const programId = formData.get('program_id') as string
   const name = (formData.get('name') as string)?.trim()
@@ -91,11 +100,16 @@ export async function updateLoyaltyProgram(formData: FormData) {
   }
   if (logoUrl !== undefined) updateData.logo_url = logoUrl
 
-  await supabase
+  const { error } = await db
     .from('loyalty_programs')
     .update(updateData)
     .eq('id', programId)
     .eq('user_id', user.id)
+
+  if (error) {
+    console.error("Error updating loyalty program:", error)
+    return { success: false, error: error.message }
+  }
 
   revalidatePath('/dashboard/loyalty')
   revalidatePath('/', 'layout')
@@ -321,7 +335,8 @@ export async function claimLoyaltyReward(formData: FormData) {
     const gcCode = `LOY-${rand}`
     const pinCode = Math.floor(1000 + Math.random() * 9000).toString()
 
-    const { data: newGc } = await supabase
+    const adminDb = getAdminClient()
+    const { data: newGc } = await adminDb
       .from('gift_cards')
       .insert({
         user_id: program.user_id,
@@ -369,8 +384,9 @@ export async function claimLoyaltyReward(formData: FormData) {
 // Acción para enviar mensajes Push de Marketing a las billeteras de los clientes
 export async function sendLoyaltyCampaignPush(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const programId = formData.get('program_id') as string
   const title = (formData.get('title') as string)?.trim()
@@ -383,7 +399,7 @@ export async function sendLoyaltyCampaignPush(formData: FormData) {
   }
 
   // Verificar que el usuario sea el dueño del programa
-  const { data: program } = await supabase
+  const { data: program } = await db
     .from('loyalty_programs')
     .select('id, slug, name')
     .eq('id', programId)
@@ -404,7 +420,7 @@ export async function sendLoyaltyCampaignPush(formData: FormData) {
   })
 
   // Registrar en historial de campañas de la base de datos
-  await supabase.from('loyalty_messages').insert({
+  await db.from('loyalty_messages').insert({
     program_id: programId,
     user_id: user.id,
     title,

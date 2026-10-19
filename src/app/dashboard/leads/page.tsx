@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { Users } from 'lucide-react'
 import LeadsClient, { Lead } from './LeadsClient'
 import { getUserPlanInfo } from '@/lib/plans'
@@ -10,17 +11,19 @@ import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 
 export default async function LeadsPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
 
   if (!user) {
     return <div className="p-8 text-center text-gray-500">Inicia sesión para ver tus contactos.</div>
   }
 
+  const db = isImpersonating ? getAdminClient() : supabase
+
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
-  const planInfo = await getUserPlanInfo(supabase, user?.id)
+  const planInfo = await getUserPlanInfo(db, user?.id)
   const isPro = planInfo.isPro
 
-  if (!planInfo.canAccessLeads) {
+  if (!planInfo.canAccessLeads && !isImpersonating) {
     return (
       <ProFeaturePaywall 
         featureName="Contactos Capturados (CRM)"
@@ -36,9 +39,9 @@ export default async function LeadsPage() {
     { data: loyaltyPrograms },
     { data: appointmentBusinesses }
   ] = await Promise.all([
-    supabase.from('vcards').select('id, slug').eq('user_id', user.id),
-    supabase.from('loyalty_programs').select('id, name, slug').eq('user_id', user.id),
-    supabase.from('appointment_businesses').select('id, name, slug').eq('user_id', user.id)
+    db.from('vcards').select('id, slug').eq('user_id', user.id),
+    db.from('loyalty_programs').select('id, name, slug').eq('user_id', user.id),
+    db.from('appointment_businesses').select('id, name, slug').eq('user_id', user.id)
   ])
 
   const vcardIds = vcards?.map(v => v.id) || []
@@ -54,22 +57,22 @@ export default async function LeadsPage() {
   ] = await Promise.all([
     // A. Leads directos (vCards, agendamientos directos, menús)
     vcardIds.length > 0
-      ? supabase.from('leads').select('*').or(`user_id.eq.${user.id},vcard_id.in.(${vcardIds.join(',')})`).order('created_at', { ascending: false })
-      : supabase.from('leads').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      ? db.from('leads').select('*').or(`user_id.eq.${user.id},vcard_id.in.(${vcardIds.join(',')})`).order('created_at', { ascending: false })
+      : db.from('leads').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
 
     // B. Miembros de programas de fidelización
     loyaltyIds.length > 0
-      ? supabase.from('loyalty_members').select('*').in('program_id', loyaltyIds).order('created_at', { ascending: false })
+      ? db.from('loyalty_members').select('*').in('program_id', loyaltyIds).order('created_at', { ascending: false })
       : Promise.resolve({ data: [] }),
 
     // C. Historial de Citas (para recuperar contactos de citas pasadas, activas o canceladas)
     businessIds.length > 0
-      ? supabase.from('bookings').select('id, customer_name, customer_phone, customer_email, booking_date, booking_time, notes, created_at, appointment_services(name), specialists(name)').in('business_id', businessIds).order('created_at', { ascending: false })
+      ? db.from('bookings').select('id, customer_name, customer_phone, customer_email, booking_date, booking_time, notes, created_at, appointment_services(name), specialists(name)').in('business_id', businessIds).order('created_at', { ascending: false })
       : Promise.resolve({ data: [] }),
 
     // D. Reseñas de clientes que dejaron su WhatsApp
     businessIds.length > 0
-      ? supabase.from('specialist_reviews').select('id, customer_name, customer_phone, rating, comment, created_at, specialists(name)').in('business_id', businessIds).order('created_at', { ascending: false })
+      ? db.from('specialist_reviews').select('id, customer_name, customer_phone, rating, comment, created_at, specialists(name)').in('business_id', businessIds).order('created_at', { ascending: false })
       : Promise.resolve({ data: [] })
   ])
 

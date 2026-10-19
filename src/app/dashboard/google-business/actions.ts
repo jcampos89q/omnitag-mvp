@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 
@@ -9,10 +10,11 @@ import { getEffectiveUser } from '@/lib/auth/effectiveUser'
  */
 export async function toggleShieldFilter(deviceId: string, enabled: boolean) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const { error } = await supabase
+  const { error } = await db
     .from('devices')
     .update({ 
       review_filter_enabled: enabled,
@@ -37,13 +39,14 @@ export async function toggleShieldFilter(deviceId: string, enabled: boolean) {
  */
 export async function createShieldLink(placeId: string, businessName: string, directReviewUrl?: string) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
   const tagId = Math.random().toString(36).substring(2, 8).toUpperCase()
   const redirectUrl = directReviewUrl || `https://search.google.com/local/writereview?placeid=${placeId}`
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('devices')
     .insert({
       user_id: user.id,
@@ -73,10 +76,11 @@ export async function createShieldLink(placeId: string, businessName: string, di
  */
 export async function resolvePrivateFeedback(feedbackId: string, resolutionNotes?: string) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const { error } = await supabase
+  const { error } = await db
     .from('private_feedbacks')
     .update({
       status: 'resolved',
@@ -116,10 +120,11 @@ export async function generateLocalSeoDescription(params: {
  */
 export async function disconnectGoogleBusiness() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const { error } = await supabase
+  const { error } = await db
     .from('google_business_connections')
     .delete()
     .eq('user_id', user.id)
@@ -403,10 +408,11 @@ export async function activatePendingPlateWithGoogle(
   googleTypes: string[] = []
 ) {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autenticado')
+  const db = isImpersonating ? getAdminClient() : supabase
 
-  const { data: updatedDevice, error } = await supabase
+  const { data: updatedDevice, error } = await db
     .from('devices')
     .update({
       place_id: placeId,
@@ -429,7 +435,7 @@ export async function activatePendingPlateWithGoogle(
 
   // Notificación in-app
   try {
-    await supabase.from('notifications').insert({
+    await db.from('notifications').insert({
       user_id: user.id,
       title: '🚀 ¡Tu Placa Física ya está Activa y Lista para el Mostrador!',
       message: `Tu negocio "${businessName}" fue vinculado exitosamente con Google Maps. Tu placa física ya está lista para colocar en el mostrador.`,
