@@ -44,12 +44,12 @@ export async function submitPrivateFeedback(formData: FormData) {
   try {
     const { data: device } = await supabase
       .from('devices')
-      .select('user_id, business_name, name')
+      .select('user_id, business_name')
       .eq('id', deviceId)
       .maybeSingle()
 
     if (device?.user_id) {
-      const bizName = device.business_name || device.name || 'tu negocio'
+      const bizName = device.business_name || 'tu negocio'
       const notifPayload = {
         user_id: device.user_id,
         title: '⚠️ Queja / Opinión Privada Recibida',
@@ -86,12 +86,12 @@ export async function recordPositiveReviewClick(deviceId: string, rating: number
 
     const { data: device } = await supabase
       .from('devices')
-      .select('user_id, business_name, name')
+      .select('user_id, business_name')
       .eq('id', deviceId)
       .maybeSingle()
 
     if (device?.user_id) {
-      const bizName = device.business_name || device.name || 'tu local'
+      const bizName = device.business_name || 'tu local'
       
       // In-app notification
       await adminClient.from('notifications').insert({
