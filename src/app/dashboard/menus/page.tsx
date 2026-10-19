@@ -9,11 +9,17 @@ import MenuManager from './MenuManager'
 import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import ProFeaturePaywall from '@/components/ProFeaturePaywall'
+import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 
-export default async function MenusPage() {
+export default async function MenusPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ success?: string; error?: string }>
+}) {
   const supabase = await createClient()
   const { user, isImpersonating } = await getEffectiveUser(supabase)
   const db = isImpersonating ? getAdminClient() : supabase
+  const params = searchParams ? await searchParams : {}
 
   // 1. Obtener estado del plan
   const planInfo = await getUserPlanInfo(db, user?.id)
@@ -70,6 +76,15 @@ export default async function MenusPage() {
 
   return (
     <div className="space-y-8">
+      {params.error && (
+        <FriendlyErrorAlert error={params.error} />
+      )}
+      {params.success && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm font-bold shadow-xs animate-in fade-in slide-in-from-top-2">
+          ✅ {params.success}
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 sm:p-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
