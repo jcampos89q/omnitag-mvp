@@ -178,6 +178,34 @@ export async function setDailySpecial(formData: FormData) {
       currentItems.push(itemPayload)
     }
 
+    // Configuración de Horario / Turno para el Plato del Día (por defecto Almuerzo: 10:30 AM a 3:30 PM)
+    const scheduleType = (formData.get('schedule_type') as string) || currentSpecial.schedule_type || 'lunch'
+    let scheduleStart = (formData.get('schedule_start') as string) || currentSpecial.schedule_start || ''
+    let scheduleEnd = (formData.get('schedule_end') as string) || currentSpecial.schedule_end || ''
+    let scheduleLabel = ''
+
+    if (scheduleType === 'lunch') {
+      scheduleStart = scheduleStart || '10:30'
+      scheduleEnd = scheduleEnd || '15:30'
+      scheduleLabel = 'Almuerzos (10:30 AM - 3:30 PM)'
+    } else if (scheduleType === 'breakfast') {
+      scheduleStart = scheduleStart || '07:00'
+      scheduleEnd = scheduleEnd || '10:30'
+      scheduleLabel = 'Desayunos (7:00 AM - 10:30 AM)'
+    } else if (scheduleType === 'dinner') {
+      scheduleStart = scheduleStart || '18:00'
+      scheduleEnd = scheduleEnd || '23:00'
+      scheduleLabel = 'Cenas (6:00 PM - 11:00 PM)'
+    } else if (scheduleType === 'all_day') {
+      scheduleStart = '00:00'
+      scheduleEnd = '23:59'
+      scheduleLabel = 'Todo el día'
+    } else {
+      scheduleStart = scheduleStart || '10:30'
+      scheduleEnd = scheduleEnd || '15:30'
+      scheduleLabel = `Horario: ${scheduleStart} a ${scheduleEnd}`
+    }
+
     const daily_special = {
       name: currentItems[0]?.name || name,
       title: currentItems[0]?.name || name,
@@ -186,6 +214,10 @@ export async function setDailySpecial(formData: FormData) {
       image_url: currentItems[0]?.image_url || imageUrl,
       date: today,
       is_active: true,
+      schedule_type: scheduleType,
+      schedule_start: scheduleStart,
+      schedule_end: scheduleEnd,
+      schedule_label: scheduleLabel,
       items: currentItems
     }
 

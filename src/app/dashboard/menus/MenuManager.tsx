@@ -108,6 +108,15 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
 
   const [editingDailySpecialItem, setEditingDailySpecialItem] = useState<any | null>(null)
   const [showAddDailySpecialForm, setShowAddDailySpecialForm] = useState(false)
+  const [specialScheduleType, setSpecialScheduleType] = useState<string>(
+    dailySpecial?.schedule_type || 'lunch'
+  )
+  const [specialScheduleStart, setSpecialScheduleStart] = useState<string>(
+    dailySpecial?.schedule_start || '10:30'
+  )
+  const [specialScheduleEnd, setSpecialScheduleEnd] = useState<string>(
+    dailySpecial?.schedule_end || '15:30'
+  )
   const currencySymbol = menu.currency || 'L.'
 
   const isRestaurant = businessType === 'restaurant'
@@ -452,6 +461,12 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
                           ? `🟢 Publicado para hoy (${dailySpecialDishes.length} ${dailySpecialDishes.length === 1 ? 'plato' : 'platos'})`
                           : '⚪ No has publicado el plato de hoy'}
                       </span>
+                      {isDailySpecialActive && dailySpecialDishes.length > 0 && (
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border bg-amber-200/70 text-amber-950 border-amber-300 flex items-center gap-1 shadow-2xs">
+                          <Clock className="w-3 h-3 text-amber-800" />
+                          <span>Turno: {dailySpecial?.schedule_label || 'Almuerzos (10:30 AM - 3:30 PM)'}</span>
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-amber-900/80 mt-0.5">
                       Plato especial preparado hoy que cambia a diario y no se repite en la semana. Se muestra de primero a tus comensales.
@@ -567,6 +582,84 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
                         />
                       </div>
 
+                      {/* Configuración de Horario / Turno para el Plato del Día */}
+                      <div className="bg-amber-50/70 p-3.5 rounded-xl border border-amber-200 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-amber-950 uppercase flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Horario / Turno para el Plato del Día</span>
+                          </label>
+                          <span className="text-[11px] font-bold text-amber-800">
+                            {specialScheduleType === 'lunch' && '🍲 Se sirve en el almuerzo'}
+                            {specialScheduleType === 'breakfast' && '🍳 Se sirve en el desayuno'}
+                            {specialScheduleType === 'dinner' && '🌙 Se sirve en la cena'}
+                            {specialScheduleType === 'all_day' && '✨ Disponible todo el día'}
+                            {specialScheduleType === 'custom' && '⏱️ Horario manual'}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <select
+                              name="schedule_type"
+                              value={specialScheduleType}
+                              onChange={(e) => {
+                                const val = e.target.value
+                                setSpecialScheduleType(val)
+                                if (val === 'lunch') {
+                                  setSpecialScheduleStart('10:30')
+                                  setSpecialScheduleEnd('15:30')
+                                } else if (val === 'breakfast') {
+                                  setSpecialScheduleStart('07:00')
+                                  setSpecialScheduleEnd('10:30')
+                                } else if (val === 'dinner') {
+                                  setSpecialScheduleStart('18:00')
+                                  setSpecialScheduleEnd('23:00')
+                                } else if (val === 'all_day') {
+                                  setSpecialScheduleStart('00:00')
+                                  setSpecialScheduleEnd('23:59')
+                                }
+                              }}
+                              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold focus:border-black focus:outline-none"
+                            >
+                              <option value="lunch">🍲 Almuerzos (10:30 AM - 3:30 PM) — [Recomendado]</option>
+                              <option value="breakfast">🍳 Desayunos (7:00 AM - 10:30 AM)</option>
+                              <option value="dinner">🌙 Cenas (6:00 PM - 11:00 PM)</option>
+                              <option value="all_day">✨ Todo el día (Disponible siempre)</option>
+                              <option value="custom">⏱️ Horario Personalizado...</option>
+                            </select>
+                          </div>
+
+                          {specialScheduleType === 'custom' ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="time"
+                                name="schedule_start"
+                                value={specialScheduleStart}
+                                onChange={(e) => setSpecialScheduleStart(e.target.value)}
+                                className="w-1/2 rounded-xl border border-gray-300 px-2 py-1.5 text-xs font-semibold bg-white"
+                              />
+                              <span className="text-xs text-gray-500 font-bold">a</span>
+                              <input
+                                type="time"
+                                name="schedule_end"
+                                value={specialScheduleEnd}
+                                onChange={(e) => setSpecialScheduleEnd(e.target.value)}
+                                className="w-1/2 rounded-xl border border-gray-300 px-2 py-1.5 text-xs font-semibold bg-white"
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <input type="hidden" name="schedule_start" value={specialScheduleStart} />
+                              <input type="hidden" name="schedule_end" value={specialScheduleEnd} />
+                            </>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-amber-900/70">
+                          El cliente verá este plato de primero en el turno correspondiente y no aparecerá fuera de hora en el menú rápido del turno activo.
+                        </p>
+                      </div>
+
                       <div>
                         <ImageUploadInput
                           name="image"
@@ -639,10 +732,14 @@ export default function MenuManager({ menu, categories, isPro = false }: MenuMan
                         </div>
 
                         <div className="flex-1 min-w-0 pr-16">
-                          <div className="flex items-center gap-1 mb-1">
+                          <div className="flex flex-wrap items-center gap-1.5 mb-1">
                             <span className="text-[10px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 uppercase tracking-wider flex items-center gap-1">
                               <Sparkles className="w-2.5 h-2.5 text-amber-600 fill-current" />
                               <span>Exclusivo de Hoy</span>
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200 flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5 text-amber-700" />
+                              <span>{dailySpecial?.schedule_label || 'Almuerzos (10:30 AM - 3:30 PM)'}</span>
                             </span>
                           </div>
                           <h5 className="font-extrabold text-sm sm:text-base text-gray-900 leading-tight truncate">

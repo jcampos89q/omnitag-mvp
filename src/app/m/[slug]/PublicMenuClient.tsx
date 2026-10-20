@@ -88,7 +88,8 @@ export default function PublicMenuClient({
 
   // Estado de Navegación por Categorías, Filtros Inteligentes y Lightbox
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [showOnlyActiveSchedule, setShowOnlyActiveSchedule] = useState(false)
+  // Modo de visualización: 'active_shift' (Turno Activo primordial) o 'all' (Todo el Menú)
+  const [viewMode, setViewMode] = useState<'active_shift' | 'all'>('active_shift')
   const [previewDish, setPreviewDish] = useState<MenuItem | null>(null)
   const [currentMinutes, setCurrentMinutes] = useState<number>(() => {
     const now = new Date()
@@ -133,6 +134,40 @@ export default function PublicMenuClient({
   const todayStr = new Date().toISOString().slice(0, 10)
   const dailySpecial = menu.daily_special
   const hasValidDailySpecial = Boolean(dailySpecial?.is_active && dailySpecial?.date === todayStr)
+
+  // Configuración de Horario del Plato del Día (por defecto Almuerzos: 10:30 AM a 3:30 PM)
+  const dailySpecialSchedule = {
+    type: (dailySpecial?.schedule_type || 'lunch') as 'all_day' | 'breakfast' | 'lunch' | 'dinner' | 'custom',
+    start_time: dailySpecial?.schedule_start || '10:30',
+    end_time: dailySpecial?.schedule_end || '15:30',
+    label: dailySpecial?.schedule_label || 'Almuerzos (10:30 AM - 3:30 PM)'
+  }
+  const isDailySpecialActiveNow = isScheduleActiveNow(dailySpecialSchedule, currentMinutes)
+
+  // Categorías que pertenecen al turno activo según la hora actual
+  const activeShiftCategories = categories.filter(c => {
+    const s = resolveCategorySchedule(c.id, c.name, storedSchedules)
+    return s.type !== 'all_day' && isScheduleActiveNow(s, currentMinutes)
+  })
+
+  // Detección del nombre y horario del turno activo
+  const activeShiftName = activeShiftCategories[0]?.name || (
+    currentMinutes >= 420 && currentMinutes < 630 ? 'Desayunos' :
+    currentMinutes >= 630 && currentMinutes < 930 ? 'Almuerzos' :
+    currentMinutes >= 1080 && currentMinutes < 1380 ? 'Cenas' : 'Turno Activo'
+  )
+
+  const activeShiftSchedule = activeShiftCategories[0] 
+    ? resolveCategorySchedule(activeShiftCategories[0].id, activeShiftCategories[0].name, storedSchedules)
+    : null
+
+  const activeShiftHours = activeShiftSchedule 
+    ? `${formatTime24To12(activeShiftSchedule.start_time)} - ${formatTime24To12(activeShiftSchedule.end_time)}`
+    : (
+      currentMinutes >= 420 && currentMinutes < 630 ? '7:00 AM - 10:30 AM' :
+      currentMinutes >= 630 && currentMinutes < 930 ? '10:30 AM - 3:30 PM' :
+      currentMinutes >= 1080 && currentMinutes < 1380 ? '6:00 PM - 11:00 PM' : ''
+    )
   
   // Platos especiales únicos de hoy (pueden ser 1 o varias opciones)
   const dailySpecialItems: MenuItem[] = hasValidDailySpecial
@@ -165,6 +200,19 @@ export default function PublicMenuClient({
   const featuredItemsCount = categories.reduce((acc, c) => 
     acc + (c.menu_items || []).filter(item => item.is_featured).length, 0
   )
+
+  const activeAndAllDayCategories = categories.filter(c => {
+    const s = resolveCategorySchedule(c.id, c.name, storedSchedules)
+    return s.type === 'all_day' || isScheduleActiveNow(s, currentMinutes)
+  })
+
+  const pillCategories = (isRestaurant && viewMode === 'active_shift' && activeShiftCategories.length > 0)
+    ? activeAndAllDayCategories
+    : categories
+
+  const currentViewTotalDishes = (isRestaurant && viewMode === 'active_shift' && activeShiftCategories.length > 0)
+    ? activeAndAllDayCategories.reduce((a, c) => a + (c.menu_items?.length || 0), 0)
+    : categories.reduce((a, c) => a + (c.menu_items?.length || 0), 0)
 
   const addToCart = (item: MenuItem) => {
     if (!item.is_available) return
@@ -376,13 +424,90 @@ export default function PublicMenuClient({
           </div>
         ) : null}
 
+        {/* SELECTOR HERO DESTACADO: TURNO ACTIVO vs TODO EL MENÚ */}
+        {isRestaurant && categories.length > 0 && (
+          <div className="bg-white rounded-2xl p-3 sm:p-4 border-2 border-amber-500/25 shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-950">
+                <Clock className="w-4 h-4 text-amber-600" />
+                <span>¿Qué deseas ordenar hoy?</span>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] font-bold text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Hora: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 p-1 bg-gray-100 rounded-xl gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode('active_shift')
+                  setSelectedCategory('all')
+                }}
+                className={`py-2.5 px-3 rounded-lg text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
+                  viewMode === 'active_shift'
+                    ? 'bg-amber-600 text-white shadow-md scale-[1.01]'
+                    : 'text-gray-700 hover:text-black hover:bg-gray-200/70'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${viewMode === 'active_shift' ? 'bg-white animate-pulse' : 'bg-emerald-500'}`} />
+                <span className="truncate">
+                  {activeShiftCategories.length > 0 
+                    ? `🟢 Turno: ${activeShiftName}` 
+                    : '🟢 Turno Activo'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode('all')
+                  setSelectedCategory('all')
+                }}
+                className={`py-2.5 px-3 rounded-lg text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs ${
+                  viewMode === 'all'
+                    ? 'bg-black text-white shadow-md scale-[1.01]'
+                    : 'text-gray-700 hover:text-black hover:bg-gray-200/70'
+                }`}
+              >
+                <span>👁️ Ver Todo el Menú</span>
+              </button>
+            </div>
+
+            {/* Subtítulo explicativo contextual con botón de acción directa */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1.5 pt-0.5 px-1">
+              {viewMode === 'active_shift' ? (
+                <div className="flex items-center gap-1.5 text-gray-600 truncate">
+                  <span>🍽️ Mostrando platos de <strong>{activeShiftName}</strong> {activeShiftHours && `(${activeShiftHours})`} y bebidas.</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 text-gray-600 truncate">
+                  <span>📖 Mostrando la carta completa de todos los turnos y horarios.</span>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setViewMode(viewMode === 'active_shift' ? 'all' : 'active_shift')
+                  setSelectedCategory('all')
+                }}
+                className="text-amber-800 font-black underline hover:text-amber-950 text-[11px] cursor-pointer self-start sm:self-auto shrink-0"
+              >
+                {viewMode === 'active_shift' ? '¿Quieres ver otros horarios? Ver todo el menú' : '← Volver al turno activo ahora'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* BARRA HORIZONTAL DE FILTROS POR CATEGORÍA & HORARIO INTELIGENTE */}
         {categories.length > 0 && (
           <div className="sticky top-2 z-30 space-y-2 bg-white/95 backdrop-blur-md p-2.5 rounded-2xl shadow-md border border-black/5">
             {/* Píldoras Horizontales de Categorías Deslizables */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
-              {/* Píldora de Plato del Día Único si está activo hoy */}
-              {dailySpecialItems.length > 0 && (
+              {/* Píldora de Plato del Día Único si está activo hoy en este turno o en vista general */}
+              {dailySpecialItems.length > 0 && (viewMode === 'all' || isDailySpecialActiveNow) && (
                 <button
                   type="button"
                   onClick={() => setSelectedCategory('daily_special')}
@@ -412,15 +537,15 @@ export default function PublicMenuClient({
                     : 'bg-black/5 text-gray-700 hover:bg-black/10'
                 }`}
               >
-                <span>✨ Todo el Menú</span>
+                <span>{isRestaurant && viewMode === 'active_shift' ? `✨ ${activeShiftName}` : '✨ Todo el Menú'}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
                   selectedCategory === 'all' ? 'bg-white/20 text-white' : 'bg-black/10 text-gray-700'
                 }`}>
-                  {categories.reduce((a, c) => a + (c.menu_items?.length || 0), 0)}
+                  {currentViewTotalDishes}
                 </span>
               </button>
 
-              {categories.map((c) => {
+              {pillCategories.map((c) => {
                 const schedule = resolveCategorySchedule(c.id, c.name, storedSchedules)
                 const isSelected = selectedCategory === c.id
                 const isActive = isScheduleActiveNow(schedule, currentMinutes)
@@ -451,6 +576,20 @@ export default function PublicMenuClient({
                 )
               })}
 
+              {/* Botón rápido para alternar a ver todo el menú si está en turno activo */}
+              {isRestaurant && viewMode === 'active_shift' && activeShiftCategories.length > 0 && categories.length > activeAndAllDayCategories.length && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewMode('all')
+                    setSelectedCategory('all')
+                  }}
+                  className="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center gap-1 cursor-pointer border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 shrink-0"
+                >
+                  <span>👁️ + Ver otros turnos</span>
+                </button>
+              )}
+
               {/* Píldora de Recomendados del Chef si hay */}
               {featuredItemsCount > 0 && (
                 <button
@@ -474,36 +613,31 @@ export default function PublicMenuClient({
               )}
             </div>
 
-            {/* Selector de Turno Inteligente (Solo si hay horarios configurados en el restaurante) */}
+            {/* Barra de Turno Activo sincronizada con el Switcher */}
             {isRestaurant && (
               <div className="flex items-center justify-between pt-1 border-t border-black/5 text-[11px]">
                 <div className="flex items-center gap-1.5 text-gray-600 font-medium truncate">
                   <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   <span className="truncate">
-                    {(() => {
-                      const activeShiftCat = categories.find(c => {
-                        const s = resolveCategorySchedule(c.id, c.name, storedSchedules)
-                        return s.type !== 'all_day' && isScheduleActiveNow(s, currentMinutes)
-                      })
-                      if (activeShiftCat) {
-                        const s = resolveCategorySchedule(activeShiftCat.id, activeShiftCat.name, storedSchedules)
-                        return `Turno activo: ${activeShiftCat.name} (${formatTime24To12(s.start_time)} - ${formatTime24To12(s.end_time)})`
-                      }
-                      return 'Horario activo regular • Platos disponibles'
-                    })()}
+                    {viewMode === 'active_shift'
+                      ? `Turno actual: ${activeShiftName} ${activeShiftHours ? `(${activeShiftHours})` : ''}`
+                      : 'Viendo todo el menú • Todos los horarios disponibles'}
                   </span>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => setShowOnlyActiveSchedule(!showOnlyActiveSchedule)}
+                  onClick={() => {
+                    setViewMode(viewMode === 'active_shift' ? 'all' : 'active_shift')
+                    setSelectedCategory('all')
+                  }}
                   className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider transition cursor-pointer shrink-0 border ${
-                    showOnlyActiveSchedule
+                    viewMode === 'active_shift'
                       ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+                      : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
                   }`}
                 >
-                  {showOnlyActiveSchedule ? '🟢 Solo turno activo' : '👁️ Ver todo'}
+                  {viewMode === 'active_shift' ? '🟢 Turno activo' : '👁️ Todo el menú'}
                 </button>
               </div>
             )}
@@ -511,7 +645,9 @@ export default function PublicMenuClient({
         )}
 
         {/* SECCIÓN PROPIA Y DEDICADA: 🌟 PLATO DEL DÍA (EXCLUSIVO DE HOY) */}
-        {dailySpecialItems.length > 0 && (selectedCategory === 'all' || selectedCategory === 'daily_special') && (
+        {dailySpecialItems.length > 0 && 
+          (selectedCategory === 'all' || selectedCategory === 'daily_special') &&
+          (viewMode === 'all' || isDailySpecialActiveNow || selectedCategory === 'daily_special') && (
           <section className="animate-in fade-in slide-in-from-top-3 duration-300 space-y-3">
             <div className="flex items-center justify-between border-b border-black/10 pb-2">
               <div className="flex items-center gap-2.5">
@@ -527,13 +663,22 @@ export default function PublicMenuClient({
                   </p>
                 </div>
               </div>
-              <span 
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-xs"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <Sparkles className="w-3 h-3 fill-current" />
-                Solo por hoy
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span 
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider shadow-xs ${
+                    isDailySpecialActiveNow 
+                      ? 'bg-emerald-600 text-white' 
+                      : 'bg-amber-100 text-amber-950 border border-amber-300'
+                  }`}
+                >
+                  <Clock className="w-3 h-3" />
+                  <span>
+                    {isDailySpecialActiveNow 
+                      ? `🟢 Sirviendo ahora (${dailySpecialSchedule.label})` 
+                      : `⏰ ${dailySpecialSchedule.label}`}
+                  </span>
+                </span>
+              </div>
             </div>
 
             <div className={`grid gap-4 ${dailySpecialItems.length > 1 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
@@ -548,8 +693,18 @@ export default function PublicMenuClient({
                   }}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="inline-flex items-center gap-1 bg-amber-400/20 text-amber-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-1.5 border border-amber-400/40">
-                      ⭐ Especial del Día
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                      <div className="inline-flex items-center gap-1 bg-amber-400/20 text-amber-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-amber-400/40">
+                        ⭐ Especial del Día
+                      </div>
+                      <div className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        isDailySpecialActiveNow 
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                          : 'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}>
+                        <Clock className="w-2.5 h-2.5 text-amber-600" />
+                        <span>{dailySpecialSchedule.label}</span>
+                      </div>
                     </div>
 
                     <div className="flex justify-between items-start gap-2">
@@ -627,9 +782,14 @@ export default function PublicMenuClient({
               if (selectedCategory !== 'all' && category.id !== selectedCategory) {
                 return false
               }
-              if (showOnlyActiveSchedule) {
+              if (isRestaurant && viewMode === 'active_shift') {
                 const schedule = resolveCategorySchedule(category.id, category.name, storedSchedules)
-                return isScheduleActiveNow(schedule, currentMinutes)
+                const isActive = isScheduleActiveNow(schedule, currentMinutes)
+                // Si hay categorías que son del turno activo, mostrar solo las activas o las de todo el día (bebidas, entradas)
+                if (activeShiftCategories.length > 0) {
+                  return isActive || schedule.type === 'all_day'
+                }
+                return true
               }
               return true
             })
@@ -790,6 +950,32 @@ export default function PublicMenuClient({
                 </section>
               )
             })
+        )}
+
+        {/* BANNER INFORMATIVO AL FINAL DE LA LISTA EN MODO TURNO ACTIVO */}
+        {isRestaurant && viewMode === 'active_shift' && activeShiftCategories.length > 0 && categories.length > activeAndAllDayCategories.length && (
+          <div className="mt-8 p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-2xs">
+            <div>
+              <p className="font-extrabold text-sm text-amber-950 flex items-center justify-center sm:justify-start gap-1.5">
+                <Clock className="w-4 h-4 text-amber-700" />
+                <span>¿Deseas consultar platillos de otros horarios o turnos?</span>
+              </p>
+              <p className="text-xs text-amber-900/75 mt-0.5">
+                Ahora estás viendo los platos del turno de <strong>{activeShiftName}</strong> {activeShiftHours && `(${activeShiftHours})`} y bebidas.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode('all')
+                setSelectedCategory('all')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              className="bg-amber-900 text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-amber-950 transition cursor-pointer shrink-0 shadow-xs whitespace-nowrap"
+            >
+              👁️ Ver Todo el Menú Completo
+            </button>
+          </div>
         )}
       </main>
 
