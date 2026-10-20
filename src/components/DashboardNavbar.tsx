@@ -28,7 +28,8 @@ import {
   MapPin,
   ShoppingBag,
   Stethoscope,
-  ChevronDown
+  ChevronDown,
+  UtensilsCrossed
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 import NotificationBell from './NotificationBell'
@@ -54,6 +55,7 @@ const baseNavItems: NavItem[] = [
   { name: 'Reseñas Google & NFC', href: '/dashboard/devices', icon: Star, section: 'creaciones' },
   { name: 'Google Maps & SEO Local', href: '/dashboard/google-business', icon: MapPin, badge: 'IA', section: 'creaciones' },
   { name: 'Menú & Catálogo', href: '/dashboard/menus', icon: Coffee, section: 'creaciones' },
+  { name: 'Comandas & Ventas', href: '/dashboard/comandas', icon: UtensilsCrossed, badge: 'En Vivo', section: 'creaciones' },
   { name: 'Agendas & Citas', href: '/dashboard/appointments', icon: Scissors, badge: 'Nuevo', section: 'creaciones' },
   { name: 'Tarjetas de Regalo', href: '/dashboard/gift-cards', icon: Gift, badge: 'Nuevo', section: 'creaciones' },
   { name: 'Fidelización & Sellos', href: '/dashboard/loyalty', icon: Sparkles, section: 'creaciones' },

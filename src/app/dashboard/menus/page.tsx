@@ -123,13 +123,21 @@ export default async function MenusPage({
                 </p>
               </div>
             </div>
-            <Link
-              href="/dashboard/ruleta"
-              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-xs whitespace-nowrap shrink-0 flex items-center gap-1.5"
-            >
-              <span>Configurar Premios & Ruleta</span>
-              <span>&rarr;</span>
-            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/dashboard/comandas"
+                className="bg-black hover:bg-gray-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-xs whitespace-nowrap flex items-center gap-1.5"
+              >
+                <span>👨‍🍳 Tablero Comandas</span>
+              </Link>
+              <Link
+                href="/dashboard/ruleta"
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-xs whitespace-nowrap flex items-center gap-1.5"
+              >
+                <span>Configurar Premios</span>
+                <span>&rarr;</span>
+              </Link>
+            </div>
           </div>
         )}
 

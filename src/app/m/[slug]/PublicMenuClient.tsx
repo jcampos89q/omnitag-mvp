@@ -21,7 +21,8 @@ import {
   User,
   FileText,
   ChevronRight,
-  Gift
+  Gift,
+  X
 } from 'lucide-react'
 import { ThemeConfig } from '@/lib/themes'
 import RestaurantGamificationModal from './RestaurantGamificationModal'
@@ -77,6 +78,7 @@ export default function PublicMenuClient({
   // Estado del juego de Ruleta / Raspa y Gana y Cupón de Mesa
   const [isGamificationOpen, setIsGamificationOpen] = useState(false)
   const [activeCoupon, setActiveCoupon] = useState<{ label: string; code: string } | null>(null)
+  const [placedOrder, setPlacedOrder] = useState<{ dailyOrderNumber: number; total: number; table: string; timestamp: string } | null>(null)
 
   const hasActiveWheel = wheel?.is_active && Array.isArray(wheel.prize_wheel_items) && wheel.prize_wheel_items.length > 0
 
@@ -195,6 +197,39 @@ export default function PublicMenuClient({
     text += `===============================%0A`
     text += `¿Podrían confirmarme la recepción y tiempo estimado? ¡Muchas gracias!`
 
+    // Registrar comanda en la base de datos en paralelo
+    try {
+      fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          menu_id: menu.id,
+          table_number: tableNumber || 'Mesa',
+          order_type: orderType,
+          customer_name: customerName,
+          items: cart,
+          subtotal: totalPrice,
+          total_amount: totalPrice,
+          applied_coupon_code: activeCoupon?.code,
+          applied_coupon_label: activeCoupon?.label,
+          notes: orderNotes
+        })
+      }).then(res => res.json()).then(data => {
+        if (data.dailyOrderNumber) {
+          setPlacedOrder({
+            dailyOrderNumber: data.dailyOrderNumber,
+            total: totalPrice,
+            table: tableNumber || 'Mesa',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          })
+          setIsCartOpen(false)
+          setCart([])
+        }
+      }).catch(err => console.error('Silent order save error:', err))
+    } catch {
+      // Ignorar fallos de red silenciosos
+    }
+
     const url = `https://wa.me/${cleanPhone}?text=${text}`
     window.open(url, '_blank')
   }
@@ -202,6 +237,32 @@ export default function PublicMenuClient({
   return (
     <div className="pb-28">
       <main className="max-w-3xl mx-auto px-4 mt-4 space-y-6">
+
+        {/* TICKET DE COMANDA ENVIADA CON ÉXITO */}
+        {placedOrder && (
+          <div className="bg-emerald-500/10 border-2 border-emerald-500/40 p-4 rounded-2xl flex items-center justify-between gap-3 text-xs animate-in zoom-in-95">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                #{placedOrder.dailyOrderNumber}
+              </span>
+              <div>
+                <p className="font-extrabold text-sm text-emerald-950 flex items-center gap-1.5">
+                  <span>¡Comanda Recibida en Cocina!</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" />
+                </p>
+                <p className="text-[11px] text-emerald-800 opacity-90 mt-0.5">
+                  {placedOrder.table} • En preparación ({placedOrder.timestamp})
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setPlacedOrder(null)}
+              className="p-1 rounded-lg hover:bg-emerald-500/20 text-emerald-800 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* BANNER INTERACTIVO: RULETA / TARJETA RASPABLE DE PREMIOS */}
         {hasActiveWheel && (
