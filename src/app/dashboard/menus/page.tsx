@@ -106,6 +106,32 @@ export default async function MenusPage({
           )}
         </div>
 
+        {menu && (
+          <div className="mb-6 p-4 rounded-2xl bg-linear-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl shrink-0 shadow-xs">
+                🎡
+              </div>
+              <div>
+                <h4 className="font-extrabold text-sm text-gray-900 flex items-center gap-1.5">
+                  <span>Ruleta & Raspa y Gana en tu Menú Digital</span>
+                  <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full uppercase">Activo</span>
+                </h4>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Tus comensales pueden raspar una tarjeta o girar la ruleta en mesa para ganar premios, registrar su WhatsApp y dejarte reseñas en Google Maps al pagar.
+                </p>
+              </div>
+            </div>
+            <a
+              href="/dashboard/ruleta"
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-xs whitespace-nowrap shrink-0 flex items-center gap-1.5"
+            >
+              <span>Configurar Premios & Ruleta</span>
+              <span>&rarr;</span>
+            </a>
+          </div>
+        )}
+
         {!menu ? (
           <div className="bg-gray-50 p-6 sm:p-10 rounded-2xl border border-gray-200 text-center max-w-xl mx-auto">
             <div className="w-14 h-14 bg-black text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">

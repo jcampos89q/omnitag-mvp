@@ -97,12 +97,30 @@ export default async function PublicMenuPage({
     sourceType: 'menu'
   })
 
-  // 3. Buscar categorías e ítems
-  const { data: categories } = await supabase
-    .from('menu_categories')
-    .select('*, menu_items(*)')
-    .eq('menu_id', menu.id)
-    .order('created_at', { ascending: true })
+  // 3. Buscar categorías, ruleta activa de premios y dispositivo de reseñas en paralelo
+  const [
+    { data: categories },
+    { data: wheelData },
+    { data: reviewDevice }
+  ] = await Promise.all([
+    supabase
+      .from('menu_categories')
+      .select('*, menu_items(*)')
+      .eq('menu_id', menu.id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('prize_wheels')
+      .select('*, prize_wheel_items(*)')
+      .eq('user_id', menu.user_id)
+      .eq('is_active', true)
+      .maybeSingle(),
+    supabase
+      .from('devices')
+      .select('id, place_id, redirect_url, business_name, review_filter_enabled')
+      .eq('user_id', menu.user_id)
+      .limit(1)
+      .maybeSingle()
+  ])
 
   const theme = resolveTheme(menu.theme)
   const fontUrl = getGoogleFontUrl(theme.font_family)
@@ -175,6 +193,8 @@ export default async function PublicMenuPage({
             categories={categories || []} 
             theme={theme} 
             initialTable={initialTable}
+            wheel={wheelData}
+            reviewDevice={reviewDevice}
           />
         </div>
 

@@ -19,9 +19,12 @@ import {
   MapPin,
   UtensilsCrossed,
   User,
-  FileText
+  FileText,
+  ChevronRight,
+  Gift
 } from 'lucide-react'
 import { ThemeConfig } from '@/lib/themes'
+import RestaurantGamificationModal from './RestaurantGamificationModal'
 
 type MenuItem = {
   id: string
@@ -51,12 +54,16 @@ export default function PublicMenuClient({
   menu, 
   categories,
   theme,
-  initialTable = ''
+  initialTable = '',
+  wheel,
+  reviewDevice
 }: { 
   menu: any, 
   categories: Category[],
   theme?: ThemeConfig,
-  initialTable?: string
+  initialTable?: string,
+  wheel?: any,
+  reviewDevice?: any
 }) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
@@ -66,6 +73,12 @@ export default function PublicMenuClient({
   )
   const [customerName, setCustomerName] = useState<string>('')
   const [orderNotes, setOrderNotes] = useState<string>('')
+
+  // Estado del juego de Ruleta / Raspa y Gana y Cupón de Mesa
+  const [isGamificationOpen, setIsGamificationOpen] = useState(false)
+  const [activeCoupon, setActiveCoupon] = useState<{ label: string; code: string } | null>(null)
+
+  const hasActiveWheel = wheel?.is_active && Array.isArray(wheel.prize_wheel_items) && wheel.prize_wheel_items.length > 0
 
   const businessType = menu.business_type || 'restaurant'
   const isRestaurant = businessType === 'restaurant'
@@ -170,6 +183,12 @@ export default function PublicMenuClient({
       text += `%0A📝 *Notas / Instrucciones:* ${orderNotes.trim()}%0A`
     }
 
+    if (activeCoupon) {
+      text += `%0A🎁 *CUPÓN DE PREMIO CANJEADO:*%0A`
+      text += `• Beneficio: ${activeCoupon.label}%0A`
+      text += `• Código Único: ${activeCoupon.code}%0A`
+    }
+
     text += `%0A-------------------------------%0A`
     text += `💰 *TOTAL A PAGAR: ${currencySymbol}${totalPrice.toFixed(2)}*%0A`
     text += `⏰ *Hora:* ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}%0A`
@@ -183,6 +202,40 @@ export default function PublicMenuClient({
   return (
     <div className="pb-28">
       <main className="max-w-3xl mx-auto px-4 mt-4 space-y-6">
+
+        {/* BANNER INTERACTIVO: RULETA / TARJETA RASPABLE DE PREMIOS */}
+        {hasActiveWheel && (
+          <button
+            type="button"
+            onClick={() => setIsGamificationOpen(true)}
+            className="w-full relative overflow-hidden p-3.5 sm:p-4 rounded-2xl bg-linear-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all duration-200 cursor-pointer text-left border border-amber-300/40 group select-none"
+          >
+            <div className="flex items-center justify-between gap-3 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-xl shrink-0 group-hover:rotate-12 transition-transform shadow-xs">
+                  🎁
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-sm sm:text-base leading-tight">
+                      {activeCoupon ? '¡Tienes un Cupón Activo en tu Mesa!' : '¡Raspa o Gira y Gana tu Beneficio de Hoy!'}
+                    </span>
+                    <Sparkles className="w-4 h-4 text-amber-200 fill-current animate-pulse" />
+                  </div>
+                  <p className="text-[11px] text-amber-100 opacity-95 mt-0.5">
+                    {activeCoupon 
+                      ? `Beneficio: ${activeCoupon.label} (${activeCoupon.code}) • Toca para ver cupón y reseña` 
+                      : 'Postres de cortesía, descuentos y bebidas para tu orden • Toca para jugar'}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-white/20 text-white font-black text-xs px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1 group-hover:bg-white group-hover:text-amber-700 transition">
+                <span>{activeCoupon ? 'Ver' : 'Jugar'}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </button>
+        )}
         
         {/* BANNER DE MESA (Si se escaneó desde una mesa con QR) */}
         {tableNumber ? (
@@ -548,6 +601,21 @@ export default function PublicMenuClient({
 
             {/* Pie de Página / Enviar a Cocina y WhatsApp */}
             <div className="p-5 border-t border-black/5 bg-black/5 space-y-3">
+              {activeCoupon && (
+                <div className="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🎁</span>
+                    <div>
+                      <span className="font-extrabold text-amber-950 block leading-tight">{activeCoupon.label}</span>
+                      <span className="text-[10px] text-amber-800 font-mono font-bold">Cupón: {activeCoupon.code}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] bg-amber-600 text-white font-extrabold px-2 py-0.5 rounded-md">
+                    Aplicado
+                  </span>
+                </div>
+              )}
+
               <div className="flex justify-between items-center">
                 <span className="font-medium opacity-70 text-xs sm:text-sm">Total a Pagar:</span>
                 <span className="font-extrabold text-xl sm:text-2xl" style={{ color: primaryColor }}>{currencySymbol} {totalPrice.toFixed(2)}</span>
@@ -562,6 +630,20 @@ export default function PublicMenuClient({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal de Gamificación (Ruleta / Raspa y Gana + Reseñas en Google) */}
+      {hasActiveWheel && (
+        <RestaurantGamificationModal
+          isOpen={isGamificationOpen}
+          onClose={() => setIsGamificationOpen(false)}
+          menu={menu}
+          wheel={wheel}
+          items={wheel.prize_wheel_items || []}
+          reviewDevice={reviewDevice}
+          initialTable={tableNumber}
+          onApplyCouponToCart={(coupon) => setActiveCoupon(coupon)}
+        />
       )}
     </div>
   )
