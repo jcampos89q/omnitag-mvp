@@ -183,7 +183,7 @@ export default function PublicMenuClient({
       text += `%0A📝 *Notas / Instrucciones:* ${orderNotes.trim()}%0A`
     }
 
-    if (activeCoupon) {
+    if (activeCoupon?.label) {
       text += `%0A🎁 *CUPÓN DE PREMIO CANJEADO:*%0A`
       text += `• Beneficio: ${activeCoupon.label}%0A`
       text += `• Código Único: ${activeCoupon.code}%0A`
@@ -218,19 +218,19 @@ export default function PublicMenuClient({
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="font-extrabold text-sm sm:text-base leading-tight">
-                      {activeCoupon ? '¡Tienes un Cupón Activo en tu Mesa!' : '¡Raspa o Gira y Gana tu Beneficio de Hoy!'}
+                      {activeCoupon?.label ? '¡Tienes un Cupón Activo en tu Mesa!' : '¡Raspa o Gira y Gana tu Beneficio de Hoy!'}
                     </span>
                     <Sparkles className="w-4 h-4 text-amber-200 fill-current animate-pulse" />
                   </div>
                   <p className="text-[11px] text-amber-100 opacity-95 mt-0.5">
-                    {activeCoupon 
+                    {activeCoupon?.label 
                       ? `Beneficio: ${activeCoupon.label} (${activeCoupon.code}) • Toca para ver cupón y reseña` 
                       : 'Postres de cortesía, descuentos y bebidas para tu orden • Toca para jugar'}
                   </p>
                 </div>
               </div>
               <div className="bg-white/20 text-white font-black text-xs px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1 group-hover:bg-white group-hover:text-amber-700 transition">
-                <span>{activeCoupon ? 'Ver' : 'Jugar'}</span>
+                <span>{activeCoupon?.label ? 'Ver' : 'Jugar'}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -601,7 +601,7 @@ export default function PublicMenuClient({
 
             {/* Pie de Página / Enviar a Cocina y WhatsApp */}
             <div className="p-5 border-t border-black/5 bg-black/5 space-y-3">
-              {activeCoupon && (
+              {activeCoupon?.label && (
                 <div className="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span className="text-base">🎁</span>

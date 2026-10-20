@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { createMenu } from './actions'
 import { Coffee, Scissors, Stethoscope, ShoppingBag } from 'lucide-react'
+import Link from 'next/link'
 import MenuManager from './MenuManager'
 import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
@@ -122,13 +123,13 @@ export default async function MenusPage({
                 </p>
               </div>
             </div>
-            <a
+            <Link
               href="/dashboard/ruleta"
               className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-xs whitespace-nowrap shrink-0 flex items-center gap-1.5"
             >
               <span>Configurar Premios & Ruleta</span>
               <span>&rarr;</span>
-            </a>
+            </Link>
           </div>
         )}
 

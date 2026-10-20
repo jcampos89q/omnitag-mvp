@@ -19,7 +19,7 @@ export default async function DashboardRuletaPage() {
   const db = isImpersonating ? getAdminClient() : supabase
 
   const planInfo = await getUserPlanInfo(db, user.id)
-  if (!planInfo.canAccessProSuite) {
+  if (!planInfo.canAccessProSuite && !isImpersonating) {
     return (
       <ProFeaturePaywall 
         featureName="Ruleta de Premios & Gamificación"

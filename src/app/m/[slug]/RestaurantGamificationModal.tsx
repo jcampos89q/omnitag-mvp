@@ -93,6 +93,13 @@ export default function RestaurantGamificationModal({
       const saved = localStorage.getItem(storageKey)
       if (saved) {
         const parsed = JSON.parse(saved)
+        const prizeLabel = parsed?.wonPrize?.prize?.label
+        if (!prizeLabel) {
+          // Si el objeto guardado estaba corrupto, limpiarlo
+          localStorage.removeItem(storageKey)
+          return
+        }
+
         const ageHours = (Date.now() - (parsed.timestamp || 0)) / (1000 * 3600)
         if (ageHours < (wheel?.cooldown_hours || 24)) {
           setWonPrize(parsed.wonPrize)
@@ -100,8 +107,8 @@ export default function RestaurantGamificationModal({
           setIsRevealed(true)
           if (parsed.wonPrize && onApplyCouponToCart) {
             onApplyCouponToCart({
-              label: parsed.wonPrize.prize.label,
-              code: parsed.wonPrize.couponCode
+              label: prizeLabel,
+              code: parsed.wonPrize.couponCode || 'OMNI-VIP'
             })
           }
         } else {
@@ -412,13 +419,14 @@ export default function RestaurantGamificationModal({
   }, [isOpen, leadSubmitted, gameMode, currentRotation, items])
 
   // Celebración de premio
-  const triggerWinCelebration = () => {
+  const triggerWinCelebration = (customPrize?: any) => {
     playSound('win')
     launchConfetti()
-    if (wonPrize && onApplyCouponToCart) {
+    const activeP = customPrize || wonPrize
+    if (activeP && onApplyCouponToCart) {
       onApplyCouponToCart({
-        label: wonPrize.prize.label,
-        code: wonPrize.couponCode
+        label: activeP.prize?.label || 'Beneficio Especial',
+        code: activeP.couponCode || 'OMNI-VIP'
       })
     }
   }
@@ -451,10 +459,20 @@ export default function RestaurantGamificationModal({
         throw new Error(data.error || 'No se pudo generar el premio')
       }
 
+      // /api/wheel/spin devuelve data.prize
+      const resolvedPrize: PrizeItem = data.prize || data.item || {
+        id: 'default',
+        label: 'Descuento Especial',
+        icon: '🎁',
+        bg_color: '#B45309',
+        text_color: '#FFFFFF',
+        reward_type: 'discount'
+      }
+
       const generatedPrize = {
-        prize: data.item,
-        couponCode: data.couponCode,
-        expiresAt: data.expiresAt
+        prize: resolvedPrize,
+        couponCode: data.couponCode || 'OMNI-VIP',
+        expiresAt: data.expiresAt || new Date(Date.now() + 2 * 3600 * 1000).toISOString()
       }
 
       setWonPrize(generatedPrize)
@@ -470,7 +488,7 @@ export default function RestaurantGamificationModal({
       if (gameMode === 'wheel') {
         // Animación de la Ruleta
         const winningIndex = data.winningIndex ?? 0
-        const arcSize = (2 * Math.PI) / items.length
+        const arcSize = (2 * Math.PI) / (items.length || 1)
         const targetAngle = (3 * Math.PI / 2) - (winningIndex * arcSize + arcSize / 2)
         const fullRotations = (5 + Math.floor(Math.random() * 3)) * (2 * Math.PI)
         const finalAngle = fullRotations + targetAngle
@@ -494,7 +512,7 @@ export default function RestaurantGamificationModal({
           } else {
             setIsSpinning(false)
             setIsRevealed(true)
-            triggerWinCelebration()
+            triggerWinCelebration(generatedPrize)
           }
         }
         requestAnimationFrame(animateWheel)
@@ -690,9 +708,9 @@ export default function RestaurantGamificationModal({
               <div className="relative w-64 h-44 mx-auto rounded-2xl overflow-hidden shadow-2xl border-4 border-amber-400 select-none touch-none bg-slate-900 flex items-center justify-center">
                 {/* Lo que está oculto debajo de la lámina */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-white text-center bg-linear-to-br from-amber-600 via-orange-600 to-amber-700">
-                  <span className="text-4xl mb-1 animate-bounce">{wonPrize.prize.icon || '🎁'}</span>
+                  <span className="text-4xl mb-1 animate-bounce">{wonPrize?.prize?.icon || '🎁'}</span>
                   <p className="font-black text-sm uppercase tracking-wide leading-tight">
-                    {wonPrize.prize.label}
+                    {wonPrize?.prize?.label || 'Premio Sorpresa'}
                   </p>
                   <span className="text-[10px] text-amber-200 mt-1 font-bold">
                     ¡Código generado!
@@ -771,13 +789,13 @@ export default function RestaurantGamificationModal({
               
               {/* Tarjeta de Cupón Ganado */}
               <div className="bg-linear-to-br from-amber-50 to-orange-50 border-2 border-amber-400 p-4 rounded-2xl text-center space-y-2 relative overflow-hidden">
-                <span className="text-4xl inline-block">{wonPrize.prize.icon || '🎉'}</span>
+                <span className="text-4xl inline-block">{wonPrize?.prize?.icon || '🎉'}</span>
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-200/60 px-2.5 py-0.5 rounded-full">
                     Premio Obtenido
                   </span>
                   <h4 className="font-black text-lg text-gray-900 mt-1">
-                    {wonPrize.prize.label}
+                    {wonPrize?.prize?.label || 'Premio Sorpresa'}
                   </h4>
                 </div>
 
