@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   Image as ImageIcon, 
   Flame, 
@@ -22,10 +22,14 @@ import {
   FileText,
   ChevronRight,
   Gift,
-  X
+  X,
+  Maximize2,
+  Filter
 } from 'lucide-react'
 import { ThemeConfig } from '@/lib/themes'
 import RestaurantGamificationModal from './RestaurantGamificationModal'
+import DishLightboxModal from './DishLightboxModal'
+import { resolveCategorySchedule, isScheduleActiveNow, formatTime24To12 } from '@/lib/menuSchedule'
 
 type MenuItem = {
   id: string
@@ -81,6 +85,27 @@ export default function PublicMenuClient({
   const [placedOrder, setPlacedOrder] = useState<{ dailyOrderNumber: number; total: number; table: string; timestamp: string } | null>(null)
 
   const hasActiveWheel = wheel?.is_active && Array.isArray(wheel.prize_wheel_items) && wheel.prize_wheel_items.length > 0
+
+  // Estado de Navegación por Categorías, Filtros Inteligentes y Lightbox
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [showOnlyActiveSchedule, setShowOnlyActiveSchedule] = useState(false)
+  const [previewDish, setPreviewDish] = useState<MenuItem | null>(null)
+  const [currentMinutes, setCurrentMinutes] = useState<number>(() => {
+    const now = new Date()
+    return now.getHours() * 60 + now.getMinutes()
+  })
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date()
+      setCurrentMinutes(now.getHours() * 60 + now.getMinutes())
+    }
+    updateTime()
+    const timer = setInterval(updateTime, 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const storedSchedules = menu.catalog_settings?.category_schedules || {}
 
   const businessType = menu.business_type || 'restaurant'
   const isRestaurant = businessType === 'restaurant'
@@ -392,128 +417,291 @@ export default function PublicMenuClient({
           </section>
         )}
 
+        {/* BARRA HORIZONTAL DE FILTROS POR CATEGORÍA & HORARIO INTELIGENTE */}
+        {categories.length > 0 && (
+          <div className="sticky top-2 z-30 space-y-2 bg-white/95 backdrop-blur-md p-2.5 rounded-2xl shadow-md border border-black/5">
+            {/* Píldoras Horizontales de Categorías Deslizables */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('all')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                  selectedCategory === 'all'
+                    ? 'bg-black text-white shadow-xs'
+                    : 'bg-black/5 text-gray-700 hover:bg-black/10'
+                }`}
+              >
+                <span>✨ Todo el Menú</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  selectedCategory === 'all' ? 'bg-white/20 text-white' : 'bg-black/10 text-gray-700'
+                }`}>
+                  {categories.reduce((a, c) => a + (c.menu_items?.length || 0), 0)}
+                </span>
+              </button>
+
+              {categories.map((c) => {
+                const schedule = resolveCategorySchedule(c.id, c.name, storedSchedules)
+                const isSelected = selectedCategory === c.id
+                const isActive = isScheduleActiveNow(schedule, currentMinutes)
+
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(c.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer border ${
+                      isSelected
+                        ? 'text-white shadow-xs border-transparent'
+                        : 'bg-black/5 text-gray-700 border-black/5 hover:bg-black/10'
+                    }`}
+                    style={isSelected ? { backgroundColor: primaryColor } : undefined}
+                  >
+                    <span>
+                      {schedule.type === 'breakfast' ? '🍳' : schedule.type === 'lunch' ? '🍲' : schedule.type === 'dinner' ? '🌙' : '🍽️'}
+                    </span>
+                    <span>{c.name}</span>
+                    <span className="opacity-70 text-[10px]">
+                      ({c.menu_items?.length || 0})
+                    </span>
+                    {!isScheduleActiveNow(schedule, currentMinutes) && schedule.type !== 'all_day' && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Fuera de turno actual" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Selector de Turno Inteligente (Solo si hay horarios configurados en el restaurante) */}
+            {isRestaurant && (
+              <div className="flex items-center justify-between pt-1 border-t border-black/5 text-[11px]">
+                <div className="flex items-center gap-1.5 text-gray-600 font-medium truncate">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span className="truncate">
+                    {(() => {
+                      const activeShiftCat = categories.find(c => {
+                        const s = resolveCategorySchedule(c.id, c.name, storedSchedules)
+                        return s.type !== 'all_day' && isScheduleActiveNow(s, currentMinutes)
+                      })
+                      if (activeShiftCat) {
+                        const s = resolveCategorySchedule(activeShiftCat.id, activeShiftCat.name, storedSchedules)
+                        return `Turno activo: ${activeShiftCat.name} (${formatTime24To12(s.start_time)} - ${formatTime24To12(s.end_time)})`
+                      }
+                      return 'Horario activo regular • Platos disponibles'
+                    })()}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowOnlyActiveSchedule(!showOnlyActiveSchedule)}
+                  className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider transition cursor-pointer shrink-0 border ${
+                    showOnlyActiveSchedule
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+                  }`}
+                >
+                  {showOnlyActiveSchedule ? '🟢 Solo turno activo' : '👁️ Ver todo'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* CATÁLOGO DE CATEGORÍAS E ÍTEMS */}
         {categories.length === 0 ? (
           <div className="text-center py-12 opacity-60">
             <p className="text-sm font-semibold">El catálogo está en preparación...</p>
           </div>
         ) : (
-          categories.map((category) => {
-            if (!category.menu_items || category.menu_items.length === 0) return null
+          categories
+            .filter((category) => {
+              if (selectedCategory !== 'all' && category.id !== selectedCategory) {
+                return false
+              }
+              if (showOnlyActiveSchedule) {
+                const schedule = resolveCategorySchedule(category.id, category.name, storedSchedules)
+                return isScheduleActiveNow(schedule, currentMinutes)
+              }
+              return true
+            })
+            .map((category) => {
+              if (!category.menu_items || category.menu_items.length === 0) return null
 
-            return (
-              <section key={category.id} className="space-y-4">
-                <div className="flex items-center gap-2 border-b border-black/5 pb-2">
-                  <h2 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: textColor }}>
-                    {category.name}
-                  </h2>
-                  <span className="text-xs opacity-50 font-bold">({category.menu_items.length})</span>
-                </div>
+              const schedule = resolveCategorySchedule(category.id, category.name, storedSchedules)
+              const isActive = isScheduleActiveNow(schedule, currentMinutes)
+              const isAllDay = schedule.type === 'all_day'
 
-                <div className="grid grid-cols-1 gap-3.5">
-                  {category.menu_items.map((item) => {
-                    const inCart = cart.find(c => c.item.id === item.id)
-                    const quantity = inCart?.quantity || 0
+              return (
+                <section key={category.id} className="space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-black/5 pb-2">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: textColor }}>
+                        {category.name}
+                      </h2>
+                      <span className="text-xs opacity-50 font-bold">({category.menu_items.length})</span>
+                    </div>
 
-                    return (
-                      <article 
-                        key={item.id}
-                        className={`p-4 sm:p-5 border transition-all flex gap-4 items-center justify-between shadow-xs hover:shadow-md ${cardRadiusClass}`}
-                        style={{ 
-                          backgroundColor: cardBg,
-                          borderColor: item.is_featured ? `${primaryColor}40` : 'rgba(0,0,0,0.06)',
-                          color: textColor
-                        }}
-                      >
-                        <div className="flex-1 min-w-0">
-                          {item.is_featured && (
-                            <div className="inline-flex items-center gap-1 bg-yellow-400/20 text-yellow-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-2 border border-yellow-400/40">
-                              ⭐ {isSalon ? 'Servicio Estrella' : isDental ? 'Tratamiento Recomendado' : 'Recomendación del Chef'}
-                            </div>
-                          )}
-                          <div className="flex justify-between items-start gap-2">
-                            <h3 className="font-bold text-base sm:text-lg leading-tight mb-0.5" style={{ color: textColor }}>
-                              {item.name}
-                            </h3>
-                            <span className="font-extrabold text-base shrink-0" style={{ color: primaryColor }}>
-                              {item.price_type === 'starting_at' ? 'Desde ' : item.price_type === 'consultation' ? 'Valoración ' : ''}{currencySymbol} {item.price}
-                            </span>
-                          </div>
+                    {/* Insignia de Horario */}
+                    {!isAllDay && (
+                      <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full self-start sm:self-auto border ${
+                        isActive
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-amber-100 text-amber-900 border-amber-300'
+                      }`}>
+                        <Clock className="w-3 h-3" />
+                        {isActive
+                          ? `🟢 Sirviendo ahora (${formatTime24To12(schedule.start_time)} - ${formatTime24To12(schedule.end_time)})`
+                          : `⏰ Horario: ${formatTime24To12(schedule.start_time)} a ${formatTime24To12(schedule.end_time)}`}
+                      </span>
+                    )}
+                  </div>
 
-                          {/* Duración (para Salones y Clínicas) */}
-                          {item.duration_minutes && (
-                            <p className="text-xs font-semibold flex items-center gap-1 mt-0.5 opacity-80" style={{ color: primaryColor }}>
-                              <Clock className="w-3.5 h-3.5" /> {item.duration_minutes}
-                            </p>
-                          )}
-                          
-                          {item.description && (
-                            <p className="text-xs sm:text-sm opacity-70 mt-1 line-clamp-3 leading-relaxed">
-                              {item.description}
-                            </p>
-                          )}
+                  <div className="grid grid-cols-1 gap-3.5">
+                    {category.menu_items.map((item) => {
+                      const inCart = cart.find(c => c.item.id === item.id)
+                      const quantity = inCart?.quantity || 0
 
-                          {/* Alérgenos (para Restaurantes) */}
-                          {isRestaurant && item.allergens?.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 mt-2.5">
-                              {item.allergens.includes('vegan') && <span className="flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded uppercase"><Leaf className="w-3 h-3"/> Vegano</span>}
-                              {item.allergens.includes('spicy') && <span className="flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded uppercase"><Flame className="w-3 h-3"/> Picante</span>}
-                              {item.allergens.includes('gluten_free') && <span className="flex items-center gap-1 text-[10px] font-bold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded uppercase"><WheatOff className="w-3 h-3"/> Sin Gluten</span>}
-                            </div>
-                          )}
-
-                          {/* Botón de Acción Adaptativo por Industria */}
-                          <div className="mt-3.5">
-                            {!item.is_available ? (
-                              <span className="inline-block text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-1 rounded">
-                                No disponible
+                      return (
+                        <article 
+                          key={item.id}
+                          className={`p-4 sm:p-5 border transition-all flex gap-4 items-center justify-between shadow-xs hover:shadow-md ${cardRadiusClass}`}
+                          style={{ 
+                            backgroundColor: cardBg,
+                            borderColor: item.is_featured ? `${primaryColor}40` : 'rgba(0,0,0,0.06)',
+                            color: textColor
+                          }}
+                        >
+                          <div className="flex-1 min-w-0">
+                            {item.is_featured && (
+                              <div className="inline-flex items-center gap-1 bg-yellow-400/20 text-yellow-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-2 border border-yellow-400/40">
+                                ⭐ {isSalon ? 'Servicio Estrella' : isDental ? 'Tratamiento Recomendado' : 'Recomendación del Chef'}
+                              </div>
+                            )}
+                            <div className="flex justify-between items-start gap-2">
+                              <h3 className="font-bold text-base sm:text-lg leading-tight mb-0.5" style={{ color: textColor }}>
+                                {item.name}
+                              </h3>
+                              <span className="font-extrabold text-base shrink-0" style={{ color: primaryColor }}>
+                                {item.price_type === 'starting_at' ? 'Desde ' : item.price_type === 'consultation' ? 'Valoración ' : ''}{currencySymbol} {item.price}
                               </span>
-                            ) : isSalon || isDental ? (
-                              <button
-                                onClick={() => handleSingleServiceBooking(item)}
-                                style={{ backgroundColor: primaryColor }}
-                                className={`text-xs sm:text-sm font-bold text-white px-4 py-2 hover:opacity-90 transition cursor-pointer shadow-xs inline-flex items-center gap-1.5 ${btnRadiusClass}`}
-                              >
-                                <Calendar className="w-3.5 h-3.5" />
-                                {isSalon ? 'Reservar Turno' : 'Agendar Consulta'}
-                              </button>
-                            ) : menu.whatsapp_number ? (
-                              quantity === 0 ? (
-                                <button 
-                                  onClick={() => addToCart(item)}
-                                  style={{ backgroundColor: primaryColor }}
-                                  className={`text-xs sm:text-sm font-bold text-white px-4 py-2 hover:opacity-90 transition cursor-pointer shadow-xs ${btnRadiusClass}`}
-                                >
-                                  + Agregar al Pedido
-                                </button>
-                              ) : (
-                                <div className={`inline-flex items-center bg-black/5 p-1 ${btnRadiusClass}`}>
-                                  <button onClick={() => removeFromCart(item.id)} className="p-1 text-gray-600 hover:text-black rounded-lg transition cursor-pointer"><Minus className="w-4 h-4"/></button>
-                                  <span className="px-3 font-bold text-xs sm:text-sm min-w-[2rem] text-center">{quantity}</span>
-                                  <button onClick={() => addToCart(item)} className="p-1 text-gray-600 hover:text-black rounded-lg transition cursor-pointer"><Plus className="w-4 h-4"/></button>
-                                </div>
-                              )
-                            ) : null}
-                          </div>
-                        </div>
+                            </div>
 
-                        {/* Imagen del Ítem / Servicio */}
-                        <div className={`w-24 h-24 sm:w-28 sm:h-28 bg-black/5 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 ${cardRadiusClass}`}>
-                          {item.image_url ? (
-                            <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
-                          ) : (
-                            <ImageIcon className="w-8 h-8 text-gray-400 opacity-50" />
-                          )}
-                        </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              </section>
-            )
-          })
+                            {/* Duración (para Salones y Clínicas) */}
+                            {item.duration_minutes && (
+                              <p className="text-xs font-semibold flex items-center gap-1 mt-0.5 opacity-80" style={{ color: primaryColor }}>
+                                <Clock className="w-3.5 h-3.5" /> {item.duration_minutes}
+                              </p>
+                            )}
+                            
+                            {item.description && (
+                              <p className="text-xs sm:text-sm opacity-70 mt-1 line-clamp-3 leading-relaxed">
+                                {item.description}
+                              </p>
+                            )}
+
+                            {/* Alérgenos (para Restaurantes) */}
+                            {isRestaurant && item.allergens?.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                                {item.allergens.includes('vegan') && <span className="flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded uppercase"><Leaf className="w-3 h-3"/> Vegano</span>}
+                                {item.allergens.includes('spicy') && <span className="flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded uppercase"><Flame className="w-3 h-3"/> Picante</span>}
+                                {item.allergens.includes('gluten_free') && <span className="flex items-center gap-1 text-[10px] font-bold text-orange-700 bg-orange-100 px-1.5 py-0.5 rounded uppercase"><WheatOff className="w-3 h-3"/> Sin Gluten</span>}
+                              </div>
+                            )}
+
+                            {/* Botón de Acción Adaptativo por Industria */}
+                            <div className="mt-3.5">
+                              {!item.is_available ? (
+                                <span className="inline-block text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-1 rounded">
+                                  No disponible
+                                </span>
+                              ) : isSalon || isDental ? (
+                                <button
+                                  onClick={() => handleSingleServiceBooking(item)}
+                                  style={{ backgroundColor: primaryColor }}
+                                  className={`text-xs sm:text-sm font-bold text-white px-4 py-2 hover:opacity-90 transition cursor-pointer shadow-xs inline-flex items-center gap-1.5 ${btnRadiusClass}`}
+                                >
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  {isSalon ? 'Reservar Turno' : 'Agendar Consulta'}
+                                </button>
+                              ) : menu.whatsapp_number ? (
+                                quantity === 0 ? (
+                                  <button 
+                                    onClick={() => addToCart(item)}
+                                    style={{ backgroundColor: primaryColor }}
+                                    className={`text-xs sm:text-sm font-bold text-white px-4 py-2 hover:opacity-90 transition cursor-pointer shadow-xs ${btnRadiusClass}`}
+                                  >
+                                    + Agregar al Pedido
+                                  </button>
+                                ) : (
+                                  <div className={`inline-flex items-center bg-black/5 p-1 ${btnRadiusClass}`}>
+                                    <button onClick={() => removeFromCart(item.id)} className="p-1 text-gray-600 hover:text-black rounded-lg transition cursor-pointer"><Minus className="w-4 h-4"/></button>
+                                    <span className="px-3 font-bold text-xs sm:text-sm min-w-[2rem] text-center">{quantity}</span>
+                                    <button onClick={() => addToCart(item)} className="p-1 text-gray-600 hover:text-black rounded-lg transition cursor-pointer"><Plus className="w-4 h-4"/></button>
+                                  </div>
+                                )
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {/* Imagen del Ítem / Servicio con Lightbox Modal al hacer clic */}
+                          <div 
+                            onClick={() => item.image_url ? setPreviewDish(item) : null}
+                            className={`w-24 h-24 sm:w-28 sm:h-28 bg-black/5 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 ${cardRadiusClass} ${
+                              item.image_url ? 'cursor-pointer hover:opacity-95 relative group/img' : ''
+                            }`}
+                            title={item.image_url ? 'Toca para ver foto en grande' : undefined}
+                          >
+                            {item.image_url ? (
+                              <>
+                                <img 
+                                  src={item.image_url} 
+                                  alt={item.name} 
+                                  className="w-full h-full object-cover transition-transform duration-200 group-hover/img:scale-105" 
+                                  loading="lazy" 
+                                />
+                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                  <span className="p-1.5 rounded-full bg-black/60 text-[10px] font-bold flex items-center gap-1 shadow-xs">
+                                    <Maximize2 className="w-3 h-3" />
+                                    <span>Ver</span>
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
+                              <ImageIcon className="w-8 h-8 text-gray-400 opacity-50" />
+                            )}
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+                </section>
+              )
+            })
         )}
       </main>
+
+      {/* Modal Lightbox de Foto Ampliada */}
+      <DishLightboxModal
+        isOpen={Boolean(previewDish)}
+        item={previewDish}
+        onClose={() => setPreviewDish(null)}
+        currencySymbol={currencySymbol}
+        primaryColor={primaryColor}
+        btnRadiusClass={btnRadiusClass}
+        cardRadiusClass={cardRadiusClass}
+        textColor={textColor}
+        cardBg={cardBg}
+        quantity={previewDish ? (cart.find(c => c.item.id === previewDish.id)?.quantity || 0) : 0}
+        onAddToCart={() => previewDish && addToCart(previewDish)}
+        onRemoveFromCart={() => previewDish && removeFromCart(previewDish.id)}
+        isRestaurant={isRestaurant}
+        hasWhatsApp={Boolean(menu.whatsapp_number)}
+        onSingleBooking={
+          isSalon || isDental 
+            ? () => previewDish && handleSingleServiceBooking(previewDish) 
+            : undefined
+        }
+      />
 
       {/* Botón Flotante del Carrito (Restaurantes con varios ítems) */}
       {isRestaurant && menu.whatsapp_number && totalItems > 0 && (

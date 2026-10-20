@@ -198,18 +198,52 @@ export async function createCategory(formData: FormData) {
   try {
     const menuId = formData.get('menu_id') as string
     const name = (formData.get('name') as string)?.trim()
+    const scheduleType = (formData.get('schedule_type') as string) || 'all_day'
+    const scheduleStart = (formData.get('schedule_start') as string) || ''
+    const scheduleEnd = (formData.get('schedule_end') as string) || ''
+
     if (!name) {
       redirect('/dashboard/menus?error=' + encodeURIComponent('Por favor ingresa un nombre para la categoría.'))
     }
 
-    const { error } = await db.from('menu_categories').insert({
+    const { data: newCat, error } = await db.from('menu_categories').insert({
       menu_id: menuId,
       name
-    })
+    }).select('id').single()
 
     if (error) {
       console.error("Error creating category:", error)
       redirect('/dashboard/menus?error=' + encodeURIComponent(error.message))
+    }
+
+    // Si viene configuración de horario y tenemos el ID del menú
+    if (menuId && newCat?.id && scheduleType !== 'all_day') {
+      const { data: menuData } = await db
+        .from('menus')
+        .select('catalog_settings')
+        .eq('id', menuId)
+        .eq('user_id', user.id)
+        .single()
+
+      const currentSettings = menuData?.catalog_settings || {}
+      const schedules = currentSettings.category_schedules || {}
+      
+      schedules[newCat.id] = {
+        type: scheduleType,
+        start_time: scheduleStart,
+        end_time: scheduleEnd,
+        updated_at: new Date().toISOString()
+      }
+
+      await db
+        .from('menus')
+        .update({
+          catalog_settings: {
+            ...currentSettings,
+            category_schedules: schedules
+          }
+        })
+        .eq('id', menuId)
     }
 
     revalidatePath('/dashboard/menus')
@@ -219,6 +253,75 @@ export async function createCategory(formData: FormData) {
     if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
     console.error("Error creating category:", err)
     redirect('/dashboard/menus?error=' + encodeURIComponent(err.message || 'Error al agregar categoría'))
+  }
+}
+
+export async function updateCategory(formData: FormData) {
+  const supabase = await createClient()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
+
+  try {
+    const categoryId = formData.get('category_id') as string
+    const menuId = formData.get('menu_id') as string
+    const name = (formData.get('name') as string)?.trim()
+    const scheduleType = (formData.get('schedule_type') as string) || 'all_day'
+    const scheduleStart = (formData.get('schedule_start') as string) || ''
+    const scheduleEnd = (formData.get('schedule_end') as string) || ''
+
+    if (!categoryId || !name) {
+      redirect('/dashboard/menus?error=' + encodeURIComponent('El nombre de la categoría es obligatorio.'))
+    }
+
+    // Actualizar nombre en menu_categories
+    const { error: catErr } = await db
+      .from('menu_categories')
+      .update({ name })
+      .eq('id', categoryId)
+
+    if (catErr) {
+      console.error("Error updating category:", catErr)
+      redirect('/dashboard/menus?error=' + encodeURIComponent(catErr.message))
+    }
+
+    // Si viene menuId, actualizar schedule en catalog_settings
+    if (menuId) {
+      const { data: menuData } = await db
+        .from('menus')
+        .select('catalog_settings')
+        .eq('id', menuId)
+        .eq('user_id', user.id)
+        .single()
+
+      const currentSettings = menuData?.catalog_settings || {}
+      const schedules = currentSettings.category_schedules || {}
+      
+      schedules[categoryId] = {
+        type: scheduleType,
+        start_time: scheduleStart,
+        end_time: scheduleEnd,
+        updated_at: new Date().toISOString()
+      }
+
+      await db
+        .from('menus')
+        .update({
+          catalog_settings: {
+            ...currentSettings,
+            category_schedules: schedules
+          }
+        })
+        .eq('id', menuId)
+    }
+
+    revalidatePath('/dashboard/menus')
+    revalidatePath('/', 'layout')
+    redirect('/dashboard/menus?success=' + encodeURIComponent(`Categoría "${name}" actualizada correctamente.`))
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    console.error("Error updating category:", err)
+    redirect('/dashboard/menus?error=' + encodeURIComponent(err.message || 'Error al actualizar categoría'))
   }
 }
 
@@ -324,6 +427,128 @@ export async function deleteMenuItem(formData: FormData) {
     if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
     console.error("Error deleting item:", err)
     redirect('/dashboard/menus?error=' + encodeURIComponent(err.message || 'Error al eliminar ítem'))
+  }
+}
+
+export async function updateMenuItem(formData: FormData) {
+  const supabase = await createClient()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
+
+  try {
+    const itemId = formData.get('item_id') as string
+    const categoryId = formData.get('category_id') as string
+    const name = (formData.get('name') as string)?.trim()
+    const description = (formData.get('description') as string)?.trim() || ''
+    const price = parseFloat(formData.get('price') as string) || 0
+    const priceType = (formData.get('price_type') as string) || 'fixed'
+    const durationMinutes = (formData.get('duration_minutes') as string)?.trim() || null
+    const imageUrl = (formData.get('image_url') as string)?.trim()
+    const isFeatured = formData.get('is_featured') === 'on' || formData.get('is_featured') === 'true'
+    const isAvailable = formData.get('is_available') !== 'false'
+
+    if (!itemId || !name) {
+      redirect('/dashboard/menus?error=' + encodeURIComponent('El nombre del platillo/servicio es obligatorio.'))
+    }
+
+    const allergens: string[] = []
+    if (formData.get('allergen_vegan')) allergens.push('vegan')
+    if (formData.get('allergen_spicy')) allergens.push('spicy')
+    if (formData.get('allergen_gluten_free')) allergens.push('gluten_free')
+
+    const updatePayload: any = {
+      name,
+      description,
+      price,
+      price_type: priceType,
+      duration_minutes: durationMinutes,
+      allergens,
+      is_featured: isFeatured,
+      is_available: isAvailable
+    }
+
+    if (categoryId) {
+      updatePayload.category_id = categoryId
+    }
+
+    if (imageUrl !== undefined && imageUrl !== '') {
+      updatePayload.image_url = imageUrl
+    } else if (formData.get('remove_image') === 'true') {
+      updatePayload.image_url = null
+    }
+
+    const { error } = await db
+      .from('menu_items')
+      .update(updatePayload)
+      .eq('id', itemId)
+
+    if (error) {
+      console.error("Error updating menu item:", error)
+      redirect('/dashboard/menus?error=' + encodeURIComponent(error.message))
+    }
+
+    revalidatePath('/dashboard/menus')
+    revalidatePath('/', 'layout')
+    redirect('/dashboard/menus?success=' + encodeURIComponent(`Platillo "${name}" actualizado con éxito.`))
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    console.error("Error updating item:", err)
+    redirect('/dashboard/menus?error=' + encodeURIComponent(err.message || 'Error al actualizar platillo'))
+  }
+}
+
+export async function saveAllCategorySchedules(formData: FormData) {
+  const supabase = await createClient()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
+
+  try {
+    const menuId = formData.get('menu_id') as string
+    const schedulesJson = formData.get('schedules_json') as string
+
+    if (!menuId || !schedulesJson) {
+      redirect('/dashboard/menus?error=' + encodeURIComponent('Datos de configuración incompletos'))
+    }
+
+    let parsedSchedules = {}
+    try {
+      parsedSchedules = JSON.parse(schedulesJson)
+    } catch {
+      redirect('/dashboard/menus?error=' + encodeURIComponent('Formato de horarios inválido'))
+    }
+
+    const { data: menuData } = await db
+      .from('menus')
+      .select('catalog_settings')
+      .eq('id', menuId)
+      .eq('user_id', user.id)
+      .single()
+
+    const currentSettings = menuData?.catalog_settings || {}
+
+    const { error } = await db
+      .from('menus')
+      .update({
+        catalog_settings: {
+          ...currentSettings,
+          category_schedules: parsedSchedules
+        }
+      })
+      .eq('id', menuId)
+
+    if (error) {
+      redirect('/dashboard/menus?error=' + encodeURIComponent(error.message))
+    }
+
+    revalidatePath('/dashboard/menus')
+    revalidatePath('/', 'layout')
+    redirect('/dashboard/menus?success=' + encodeURIComponent('Horarios inteligentes guardados correctamente.'))
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    console.error("Error saving schedules:", err)
+    redirect('/dashboard/menus?error=' + encodeURIComponent(err.message || 'Error al guardar horarios'))
   }
 }
 

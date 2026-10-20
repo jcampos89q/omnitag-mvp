@@ -55,25 +55,25 @@ export default async function MenusPage({
   }
 
   const userIndustry = user?.industry || 'general'
-  const isRetail = userIndustry === 'retail'
-  const isRestaurant = userIndustry === 'restaurant'
-  const isBeauty = userIndustry === 'beauty'
+  const isRestaurant = menu?.business_type === 'restaurant' || userIndustry === 'restaurant'
+  const isBeauty = menu?.business_type === 'salon' || userIndustry === 'beauty'
+  const isRetail = menu?.business_type === 'services' || userIndustry === 'retail'
 
-  const pageTitle = isRetail 
-    ? 'Catálogo de Productos & WhatsApp' 
-    : isRestaurant 
+  const pageTitle = isRestaurant 
     ? 'Menú Digital Gastronómico & Comandas' 
     : isBeauty 
     ? 'Catálogo de Servicios & Estética' 
+    : isRetail 
+    ? 'Catálogo de Productos & WhatsApp' 
     : 'Catálogo Interactivo y Menú Digital'
 
-  const pageSubtitle = isRetail
-    ? 'Exhibe tus productos con fotos, precios y variantes para recibir compras directas a WhatsApp.'
-    : isRestaurant
-    ? 'Publica tus platillos, bebidas, precios del día y recibe pedidos organizados por número de mesa.'
+  const pageSubtitle = isRestaurant
+    ? 'Administra tus platillos, desayunos, almuerzos, precios del día y pedidos organizados por WhatsApp o mesa.'
     : isBeauty
     ? 'Muestra tus tratamientos capilares, cortes y cambios de look con precios actualizados.'
-    : 'Diseñado para Restaurantes, Tiendas, Salones de Belleza y Comercio.'
+    : isRetail
+    ? 'Exhibe tus productos con fotos, precios y variantes para recibir compras directas a WhatsApp.'
+    : 'Configura tu menú digital, platillos y presentación para tus comensales y clientes.'
 
   return (
     <div className="space-y-8">
@@ -157,24 +157,47 @@ export default async function MenusPage({
                 <input 
                   type="text" 
                   name="name" 
-                  placeholder="Ej. Barbería Deluxe / Clínica Dental San Lucas / Bistro Café" 
+                  placeholder={
+                    isRestaurant 
+                      ? "Ej. Restaurante Delicias Salomé / Café Bistro" 
+                      : isBeauty 
+                      ? "Ej. Salón Deluxe / Barbería El Rey" 
+                      : isRetail 
+                      ? "Ej. Boutique Linda / Tienda Express" 
+                      : "Ej. Mi Negocio / Restaurante Delicias Salomé"
+                  } 
                   required 
                   className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm shadow-xs focus:border-black focus:outline-none" 
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Tipo de Negocio *</label>
-                <select
-                  name="business_type"
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm shadow-xs focus:border-black focus:outline-none font-medium"
-                >
-                  <option value="restaurant">🍽️ Restaurante / Cafetería / Bar (Platos, alérgenos y pedidos)</option>
-                  <option value="salon">💈 Salón de Belleza / Barbería / Spa (Cortes y reserva de turnos)</option>
-                  <option value="dental">🦷 Clínica Dental / Médica (Tratamientos y citas de valoración)</option>
-                  <option value="services">🛍️ Tienda / Boutique / Servicios Profesionales</option>
-                </select>
-              </div>
+              {/* Si la industria ya está preseleccionada en el negocio, no molestamos con opciones redundantes */}
+              {userIndustry && userIndustry !== 'general' ? (
+                <div>
+                  <input type="hidden" name="business_type" value={isBeauty ? 'salon' : isRestaurant ? 'restaurant' : 'services'} />
+                  <div className="p-3 bg-gray-100 rounded-xl flex items-center justify-between text-xs text-gray-700">
+                    <span className="font-semibold">
+                      Tipo de negocio detectado:
+                    </span>
+                    <span className="font-extrabold text-black">
+                      {isRestaurant ? '🍽️ Restaurante / Cafetería' : isBeauty ? '💈 Salón de Belleza / Estética' : '🛍️ Comercio / Tienda'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Tipo de Negocio *</label>
+                  <select
+                    name="business_type"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm shadow-xs focus:border-black focus:outline-none font-medium"
+                  >
+                    <option value="restaurant">🍽️ Restaurante / Cafetería / Bar (Platos, alérgenos y pedidos)</option>
+                    <option value="salon">💈 Salón de Belleza / Barbería / Spa (Cortes y reserva de turnos)</option>
+                    <option value="dental">🦷 Clínica Dental / Médica (Tratamientos y citas de valoración)</option>
+                    <option value="services">🛍️ Tienda / Boutique / Servicios Profesionales</option>
+                  </select>
+                </div>
+              )}
 
               <button 
                 type="submit" 
