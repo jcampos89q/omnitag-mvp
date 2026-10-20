@@ -161,46 +161,54 @@ export default function AddMenuItemModal({
             />
           </div>
 
-          {/* Tags y Alérgenos */}
-          <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-3 text-xs text-gray-700">
-            <label className="flex items-center gap-1.5 cursor-pointer bg-yellow-50 px-2.5 py-1.5 rounded-xl border border-yellow-200 text-yellow-800 font-bold">
+          {/* Destacado / Plato del Día */}
+          <div className="bg-amber-50/80 p-3.5 rounded-xl border border-amber-200">
+            <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 name="is_featured"
-                className="rounded border-yellow-300 text-yellow-600 focus:ring-yellow-500"
+                className="w-4 h-4 mt-0.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
               />
-              ⭐ Destacar Platillo
+              <div>
+                <span className="font-extrabold text-xs text-amber-950 flex items-center gap-1.5">
+                  ⭐ Plato del Día / Platillo Destacado
+                </span>
+                <p className="text-[11px] text-amber-800/80 mt-0.5 leading-snug">
+                  Muestra este platillo con insignia dorada y prioridad visible en tu menú digital.
+                </p>
+              </div>
             </label>
-
-            {isRestaurant && (
-              <>
-                <label className="flex items-center gap-1.5 cursor-pointer bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200">
-                  <input
-                    type="checkbox"
-                    name="allergen_vegan"
-                    className="rounded border-gray-300 text-black focus:ring-black"
-                  />
-                  <Leaf className="w-3.5 h-3.5 text-green-600" /> Vegano
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200">
-                  <input
-                    type="checkbox"
-                    name="allergen_spicy"
-                    className="rounded border-gray-300 text-black focus:ring-black"
-                  />
-                  <Flame className="w-3.5 h-3.5 text-red-500" /> Picante
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200">
-                  <input
-                    type="checkbox"
-                    name="allergen_gluten_free"
-                    className="rounded border-gray-300 text-black focus:ring-black"
-                  />
-                  <WheatOff className="w-3.5 h-3.5 text-orange-500" /> Sin Gluten
-                </label>
-              </>
-            )}
           </div>
+
+          {/* Tags y Alérgenos */}
+          {isRestaurant && (
+            <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center gap-3 text-xs text-gray-700">
+              <label className="flex items-center gap-1.5 cursor-pointer bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200">
+                <input
+                  type="checkbox"
+                  name="allergen_vegan"
+                  className="rounded border-gray-300 text-black focus:ring-black"
+                />
+                <Leaf className="w-3.5 h-3.5 text-green-600" /> Vegano
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200">
+                <input
+                  type="checkbox"
+                  name="allergen_spicy"
+                  className="rounded border-gray-300 text-black focus:ring-black"
+                />
+                <Flame className="w-3.5 h-3.5 text-red-500" /> Picante
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer bg-gray-50 px-2.5 py-1.5 rounded-xl border border-gray-200">
+                <input
+                  type="checkbox"
+                  name="allergen_gluten_free"
+                  className="rounded border-gray-300 text-black focus:ring-black"
+                />
+                <WheatOff className="w-3.5 h-3.5 text-orange-500" /> Sin Gluten
+              </label>
+            </div>
+          )}
 
           {/* Footer de Acciones */}
           <div className="pt-4 border-t border-gray-100 flex items-center justify-end gap-2.5">

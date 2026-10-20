@@ -122,20 +122,71 @@ export async function setDailySpecial(formData: FormData) {
 
   try {
     const menuId = formData.get('menu_id') as string
+    const dishId = (formData.get('dish_id') as string)?.trim()
     const name = (formData.get('name') as string)?.trim()
-    const description = (formData.get('description') as string)?.trim()
+    const description = (formData.get('description') as string)?.trim() || ''
     const price = parseFloat(formData.get('price') as string) || 0
     const imageUrl = (formData.get('image_url') as string)?.trim() || null
 
+    if (!name) {
+      redirect('/dashboard/menus?error=' + encodeURIComponent('El nombre del plato del día es obligatorio.'))
+    }
+
     const today = new Date().toISOString().slice(0, 10)
 
-    const daily_special = {
+    // Obtener configuración actual del menú
+    const { data: menuData } = await db
+      .from('menus')
+      .select('daily_special')
+      .eq('id', menuId)
+      .eq('user_id', user.id)
+      .single()
+
+    const currentSpecial = menuData?.daily_special || {}
+    const isToday = currentSpecial?.date === today && currentSpecial?.is_active
+
+    // Lista de platos del día existentes
+    let currentItems: Array<{ id: string; name: string; price: number; description?: string; image_url?: string }> = []
+    if (isToday && Array.isArray(currentSpecial.items)) {
+      currentItems = [...currentSpecial.items]
+    } else if (isToday && currentSpecial.name) {
+      currentItems = [{
+        id: currentSpecial.id || crypto.randomUUID(),
+        name: currentSpecial.name,
+        price: currentSpecial.price || 0,
+        description: currentSpecial.description || '',
+        image_url: currentSpecial.image_url || ''
+      }]
+    }
+
+    const itemPayload = {
+      id: dishId || crypto.randomUUID(),
       name,
       description,
       price,
-      image_url: imageUrl,
+      image_url: imageUrl
+    }
+
+    if (dishId) {
+      const idx = currentItems.findIndex(it => it.id === dishId)
+      if (idx >= 0) {
+        currentItems[idx] = itemPayload
+      } else {
+        currentItems.push(itemPayload)
+      }
+    } else {
+      currentItems.push(itemPayload)
+    }
+
+    const daily_special = {
+      name: currentItems[0]?.name || name,
+      title: currentItems[0]?.name || name,
+      description: currentItems[0]?.description || description,
+      price: currentItems[0]?.price || price,
+      image_url: currentItems[0]?.image_url || imageUrl,
       date: today,
-      is_active: true
+      is_active: true,
+      items: currentItems
     }
 
     const { error } = await db
@@ -151,11 +202,72 @@ export async function setDailySpecial(formData: FormData) {
 
     revalidatePath('/dashboard/menus')
     revalidatePath('/', 'layout')
-    redirect('/dashboard/menus?success=' + encodeURIComponent('Especial del día publicado con éxito.'))
+    redirect('/dashboard/menus?success=' + encodeURIComponent(`¡Plato del día "${name}" publicado con éxito!`))
   } catch (err: any) {
     if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
     console.error("Error setting daily special:", err)
     redirect('/dashboard/menus?error=' + encodeURIComponent(err.message || 'Error al publicar especial del día'))
+  }
+}
+
+export async function removeDailySpecialItem(formData: FormData) {
+  const supabase = await createClient()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
+
+  try {
+    const menuId = formData.get('menu_id') as string
+    const dishId = formData.get('dish_id') as string
+
+    const today = new Date().toISOString().slice(0, 10)
+
+    const { data: menuData } = await db
+      .from('menus')
+      .select('daily_special')
+      .eq('id', menuId)
+      .eq('user_id', user.id)
+      .single()
+
+    const currentSpecial = menuData?.daily_special || {}
+    let items: any[] = Array.isArray(currentSpecial.items) ? currentSpecial.items : []
+
+    if (items.length === 0 && currentSpecial.name) {
+      items = [{
+        id: currentSpecial.id || 'single',
+        name: currentSpecial.name,
+        price: currentSpecial.price,
+        description: currentSpecial.description,
+        image_url: currentSpecial.image_url
+      }]
+    }
+
+    const remainingItems = items.filter(it => it.id !== dishId && it.name !== dishId)
+
+    const updatedSpecial = {
+      ...currentSpecial,
+      is_active: remainingItems.length > 0,
+      name: remainingItems[0]?.name || '',
+      title: remainingItems[0]?.name || '',
+      price: remainingItems[0]?.price || 0,
+      description: remainingItems[0]?.description || '',
+      image_url: remainingItems[0]?.image_url || null,
+      items: remainingItems
+    }
+
+    await db
+      .from('menus')
+      .update({ daily_special: updatedSpecial })
+      .eq('id', menuId)
+      .eq('user_id', user.id)
+
+    revalidatePath('/dashboard/menus')
+    revalidatePath('/', 'layout')
+    redirect('/dashboard/menus?success=' + encodeURIComponent('Plato del día eliminado.'))
+  } catch (err: any) {
+    if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
+    console.error("Error removing daily special item:", err)
+    redirect('/dashboard/menus?error=' + encodeURIComponent(err.message || 'Error al eliminar plato'))
   }
 }
 
@@ -170,7 +282,7 @@ export async function deleteDailySpecial(formData: FormData) {
 
     const { error } = await db
       .from('menus')
-      .update({ daily_special: { is_active: false } })
+      .update({ daily_special: { is_active: false, items: [] } })
       .eq('id', menuId)
       .eq('user_id', user.id)
 
@@ -181,7 +293,7 @@ export async function deleteDailySpecial(formData: FormData) {
 
     revalidatePath('/dashboard/menus')
     revalidatePath('/', 'layout')
-    redirect('/dashboard/menus?success=' + encodeURIComponent('Especial del día desactivado.'))
+    redirect('/dashboard/menus?success=' + encodeURIComponent('Plato del día desactivado para hoy.'))
   } catch (err: any) {
     if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
     console.error("Error deleting daily special:", err)
@@ -495,6 +607,32 @@ export async function updateMenuItem(formData: FormData) {
     if (err?.digest?.startsWith('NEXT_REDIRECT')) throw err
     console.error("Error updating item:", err)
     redirect('/dashboard/menus?error=' + encodeURIComponent(err.message || 'Error al actualizar platillo'))
+  }
+}
+
+export async function toggleMenuItemFeatured(itemId: string, isFeatured: boolean) {
+  const supabase = await createClient()
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  if (!user) throw new Error("No autenticado")
+  const db = isImpersonating ? getAdminClient() : supabase
+
+  try {
+    const { error } = await db
+      .from('menu_items')
+      .update({ is_featured: isFeatured })
+      .eq('id', itemId)
+
+    if (error) {
+      console.error("Error toggling item featured:", error)
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard/menus')
+    revalidatePath('/', 'layout')
+    return { success: true }
+  } catch (err: any) {
+    console.error("Error toggling item featured:", err)
+    return { success: false, error: err.message || 'Error al actualizar destacado' }
   }
 }
 

@@ -132,7 +132,39 @@ export default function PublicMenuClient({
   // Verificar Plato del Día (Auto-expira si la fecha no es hoy)
   const todayStr = new Date().toISOString().slice(0, 10)
   const dailySpecial = menu.daily_special
-  const hasValidDailySpecial = dailySpecial?.is_active && dailySpecial?.date === todayStr
+  const hasValidDailySpecial = Boolean(dailySpecial?.is_active && dailySpecial?.date === todayStr)
+  
+  // Platos especiales únicos de hoy (pueden ser 1 o varias opciones)
+  const dailySpecialItems: MenuItem[] = hasValidDailySpecial
+    ? (Array.isArray(dailySpecial.items) && dailySpecial.items.length > 0
+        ? dailySpecial.items.map((it: any) => ({
+            id: it.id || 'daily_special',
+            name: it.name || it.title || 'Plato del Día',
+            description: it.description || '',
+            price: Number(it.price) || 0,
+            image_url: it.image_url || '',
+            is_available: true,
+            is_featured: true,
+            allergens: []
+          }))
+        : (dailySpecial.name || dailySpecial.title)
+        ? [{
+            id: 'daily_special_1',
+            name: dailySpecial.name || dailySpecial.title,
+            description: dailySpecial.description || '',
+            price: Number(dailySpecial.price) || 0,
+            image_url: dailySpecial.image_url || '',
+            is_available: true,
+            is_featured: true,
+            allergens: []
+          }]
+        : []
+      )
+    : []
+
+  const featuredItemsCount = categories.reduce((acc, c) => 
+    acc + (c.menu_items || []).filter(item => item.is_featured).length, 0
+  )
 
   const addToCart = (item: MenuItem) => {
     if (!item.is_available) return
@@ -344,84 +376,33 @@ export default function PublicMenuClient({
           </div>
         ) : null}
 
-        {/* BANNER DESTACADO: PLATO / ESPECIAL DEL DÍA */}
-        {hasValidDailySpecial && (
-          <section className="animate-in fade-in slide-in-from-top-4 duration-300">
-            <div 
-              className={`p-5 sm:p-6 shadow-xl border-2 overflow-hidden relative ${cardRadiusClass}`}
-              style={{ 
-                backgroundColor: cardBg,
-                borderColor: primaryColor,
-                color: textColor 
-              }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <span 
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-xs font-extrabold uppercase tracking-wider shadow-xs"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  <Sparkles className="w-3.5 h-3.5 fill-current" />
-                  {isSalon ? 'Especial de Hoy' : isDental ? 'Promoción del Día' : 'Plato del Día'}
-                </span>
-                <span className="text-xs opacity-60 font-medium">Solo por hoy</span>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-5 items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-xl sm:text-2xl font-black tracking-tight mb-1" style={{ color: textColor }}>
-                    {dailySpecial.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm opacity-75 mb-4 leading-relaxed">
-                    {dailySpecial.description}
-                  </p>
-                  
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-black" style={{ color: primaryColor }}>
-                      {currencySymbol} {dailySpecial.price}
-                    </span>
-                    {menu.whatsapp_number && (
-                      <button
-                        onClick={() => addToCart({
-                          id: 'daily_special',
-                          name: `⭐ ${dailySpecial.title} (Especial del Día)`,
-                          description: dailySpecial.description,
-                          price: Number(dailySpecial.price) || 0,
-                          image_url: dailySpecial.image_url || '',
-                          is_available: true,
-                          is_featured: true,
-                          allergens: []
-                        })}
-                        style={{ backgroundColor: primaryColor }}
-                        className={`text-white text-xs sm:text-sm font-bold px-4 py-2.5 hover:opacity-90 transition cursor-pointer shadow-md flex items-center gap-1.5 ${btnRadiusClass}`}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Pedir Especial
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {dailySpecial.image_url && (
-                  <div className={`w-full sm:w-36 h-36 bg-black/5 rounded-xl overflow-hidden shrink-0 shadow-xs border border-black/5 ${cardRadiusClass}`}>
-                    <img 
-                      src={dailySpecial.image_url} 
-                      alt={dailySpecial.title} 
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* BARRA HORIZONTAL DE FILTROS POR CATEGORÍA & HORARIO INTELIGENTE */}
         {categories.length > 0 && (
           <div className="sticky top-2 z-30 space-y-2 bg-white/95 backdrop-blur-md p-2.5 rounded-2xl shadow-md border border-black/5">
             {/* Píldoras Horizontales de Categorías Deslizables */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-0.5">
+              {/* Píldora de Plato del Día Único si está activo hoy */}
+              {dailySpecialItems.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory('daily_special')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer border ${
+                    selectedCategory === 'daily_special'
+                      ? 'bg-amber-500 text-white border-amber-600 shadow-xs font-black'
+                      : 'bg-amber-100 text-amber-950 border-amber-300 hover:bg-amber-200'
+                  }`}
+                  style={selectedCategory === 'daily_special' ? { backgroundColor: primaryColor } : undefined}
+                >
+                  <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400" />
+                  <span>Plato del Día ⭐</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    selectedCategory === 'daily_special' ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-900'
+                  }`}>
+                    {dailySpecialItems.length}
+                  </span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => setSelectedCategory('all')}
@@ -469,6 +450,28 @@ export default function PublicMenuClient({
                   </button>
                 )
               })}
+
+              {/* Píldora de Recomendados del Chef si hay */}
+              {featuredItemsCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory('featured')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer border ${
+                    selectedCategory === 'featured'
+                      ? 'text-white shadow-xs border-transparent'
+                      : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                  }`}
+                  style={selectedCategory === 'featured' ? { backgroundColor: primaryColor } : undefined}
+                >
+                  <Sparkles className="w-3.5 h-3.5 fill-current text-amber-400" />
+                  <span>Recomendados</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    selectedCategory === 'featured' ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-900'
+                  }`}>
+                    {featuredItemsCount}
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* Selector de Turno Inteligente (Solo si hay horarios configurados en el restaurante) */}
@@ -507,6 +510,106 @@ export default function PublicMenuClient({
           </div>
         )}
 
+        {/* SECCIÓN PROPIA Y DEDICADA: 🌟 PLATO DEL DÍA (EXCLUSIVO DE HOY) */}
+        {dailySpecialItems.length > 0 && (selectedCategory === 'all' || selectedCategory === 'daily_special') && (
+          <section className="animate-in fade-in slide-in-from-top-3 duration-300 space-y-3">
+            <div className="flex items-center justify-between border-b border-black/10 pb-2">
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center text-sm font-black shadow-xs">
+                  🌟
+                </span>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-black tracking-tight" style={{ color: textColor }}>
+                    Plato del Día
+                  </h2>
+                  <p className="text-[11px] opacity-75">
+                    Preparación fresca y única de hoy • No se repite en la semana
+                  </p>
+                </div>
+              </div>
+              <span 
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-white text-[11px] font-black uppercase tracking-wider shadow-xs"
+                style={{ backgroundColor: primaryColor }}
+              >
+                <Sparkles className="w-3 h-3 fill-current" />
+                Solo por hoy
+              </span>
+            </div>
+
+            <div className={`grid gap-4 ${dailySpecialItems.length > 1 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+              {dailySpecialItems.map((dish) => (
+                <article 
+                  key={dish.id}
+                  className={`p-4 sm:p-5 border-2 transition-all flex gap-4 items-center justify-between shadow-md hover:shadow-lg ${cardRadiusClass}`}
+                  style={{ 
+                    backgroundColor: cardBg,
+                    borderColor: `${primaryColor}60`,
+                    color: textColor
+                  }}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="inline-flex items-center gap-1 bg-amber-400/20 text-amber-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider mb-1.5 border border-amber-400/40">
+                      ⭐ Especial del Día
+                    </div>
+
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="font-black text-base sm:text-lg leading-tight mb-0.5" style={{ color: textColor }}>
+                        {dish.name}
+                      </h3>
+                      <span className="font-black text-lg shrink-0" style={{ color: primaryColor }}>
+                        {currencySymbol} {dish.price}
+                      </span>
+                    </div>
+
+                    {dish.description && (
+                      <p className="text-xs sm:text-sm opacity-80 mt-1 line-clamp-3 leading-relaxed">
+                        {dish.description}
+                      </p>
+                    )}
+
+                    <div className="mt-3.5">
+                      {menu.whatsapp_number ? (
+                        <button
+                          onClick={() => addToCart({
+                            id: dish.id,
+                            name: `⭐ ${dish.name} (Plato del Día)`,
+                            description: dish.description,
+                            price: Number(dish.price) || 0,
+                            image_url: dish.image_url || '',
+                            is_available: true,
+                            is_featured: true,
+                            allergens: []
+                          })}
+                          style={{ backgroundColor: primaryColor }}
+                          className={`text-xs sm:text-sm font-bold text-white px-4 py-2 hover:opacity-90 transition cursor-pointer shadow-sm flex items-center gap-1.5 ${btnRadiusClass}`}
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Pedir Plato del Día</span>
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {dish.image_url && (
+                    <div 
+                      onClick={() => setPreviewDish(dish)}
+                      className={`w-24 h-24 sm:w-28 sm:h-28 bg-black/5 flex items-center justify-center shrink-0 overflow-hidden border border-black/5 cursor-pointer hover:opacity-95 ${cardRadiusClass}`}
+                    >
+                      <img 
+                        src={dish.image_url} 
+                        alt={dish.name} 
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* CATÁLOGO DE CATEGORÍAS E ÍTEMS */}
         {categories.length === 0 ? (
           <div className="text-center py-12 opacity-60">
@@ -515,6 +618,12 @@ export default function PublicMenuClient({
         ) : (
           categories
             .filter((category) => {
+              if (selectedCategory === 'daily_special') {
+                return false
+              }
+              if (selectedCategory === 'featured') {
+                return (category.menu_items || []).some(item => item.is_featured)
+              }
               if (selectedCategory !== 'all' && category.id !== selectedCategory) {
                 return false
               }
@@ -525,7 +634,11 @@ export default function PublicMenuClient({
               return true
             })
             .map((category) => {
-              if (!category.menu_items || category.menu_items.length === 0) return null
+              const displayItems = selectedCategory === 'featured'
+                ? (category.menu_items || []).filter(item => item.is_featured)
+                : (category.menu_items || [])
+
+              if (!displayItems || displayItems.length === 0) return null
 
               const schedule = resolveCategorySchedule(category.id, category.name, storedSchedules)
               const isActive = isScheduleActiveNow(schedule, currentMinutes)
@@ -536,13 +649,13 @@ export default function PublicMenuClient({
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 border-b border-black/5 pb-2">
                     <div className="flex items-center gap-2">
                       <h2 className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ color: textColor }}>
-                        {category.name}
+                        {selectedCategory === 'featured' ? `⭐ Platos del Día (${category.name})` : category.name}
                       </h2>
-                      <span className="text-xs opacity-50 font-bold">({category.menu_items.length})</span>
+                      <span className="text-xs opacity-50 font-bold">({displayItems.length})</span>
                     </div>
 
                     {/* Insignia de Horario */}
-                    {!isAllDay && (
+                    {!isAllDay && selectedCategory !== 'featured' && (
                       <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full self-start sm:self-auto border ${
                         isActive
                           ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
@@ -557,7 +670,7 @@ export default function PublicMenuClient({
                   </div>
 
                   <div className="grid grid-cols-1 gap-3.5">
-                    {category.menu_items.map((item) => {
+                    {displayItems.map((item) => {
                       const inCart = cart.find(c => c.item.id === item.id)
                       const quantity = inCart?.quantity || 0
 
