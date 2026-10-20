@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { 
   Sparkles, 
   Gift, 
@@ -12,13 +12,11 @@ import {
   X, 
   Disc, 
   Layers, 
-  ChevronRight, 
   AlertCircle,
   Send,
   CheckCircle2,
   Lock
 } from 'lucide-react'
-import { submitPrivateFeedback } from '@/app/r/[tag_id]/filter/actions'
 
 interface PrizeItem {
   id: string
@@ -77,17 +75,17 @@ export default function RestaurantGamificationModal({
   // Scratch Card Canvas Refs
   const scratchCanvasRef = useRef<HTMLCanvasElement>(null)
   const [scratchPercent, setScratchPercent] = useState(0)
-  const [isScratching, setIsScratching] = useState(false)
+  const isScratchingRef = useRef(false)
   const [isRevealed, setIsRevealed] = useState(false)
 
   // Wheel Canvas Refs
   const wheelCanvasRef = useRef<HTMLCanvasElement>(null)
   const [currentRotation, setCurrentRotation] = useState(0)
 
-  // Web Audio Context para sonidos
+  // Web Audio Context
   const audioCtxRef = useRef<AudioContext | null>(null)
 
-  // Inicializar o recuperar premio guardado en localStorage
+  // 1. Recuperar premio guardado de la sesión de hoy si existe
   useEffect(() => {
     if (!menu?.id) return
     try {
@@ -99,6 +97,7 @@ export default function RestaurantGamificationModal({
         if (ageHours < (wheel?.cooldown_hours || 24)) {
           setWonPrize(parsed.wonPrize)
           setLeadSubmitted(true)
+          setIsRevealed(true)
           if (parsed.wonPrize && onApplyCouponToCart) {
             onApplyCouponToCart({
               label: parsed.wonPrize.prize.label,
@@ -114,7 +113,7 @@ export default function RestaurantGamificationModal({
     }
   }, [menu?.id, wheel?.cooldown_hours])
 
-  // Temporizador regresivo de expiración del cupón
+  // 2. Temporizador regresivo de expiración del cupón
   useEffect(() => {
     if (!wonPrize?.expiresAt) return
     const updateCountdown = () => {
@@ -132,41 +131,42 @@ export default function RestaurantGamificationModal({
     return () => clearInterval(timer)
   }, [wonPrize?.expiresAt])
 
-  // Inicializar Audio
+  // Sonidos con Web Audio API
   const playSound = (type: 'tick' | 'win' | 'scratch') => {
     try {
+      if (typeof window === 'undefined') return
       if (!audioCtxRef.current) {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
         if (AudioCtx) audioCtxRef.current = new AudioCtx()
       }
       const ctx = audioCtxRef.current
-      if (!ctx || ctx.state === 'suspended') {
-        ctx?.resume()
-      }
       if (!ctx) return
+      if (ctx.state === 'suspended') {
+        ctx.resume()
+      }
 
       if (type === 'scratch') {
         const osc = ctx.createOscillator()
         const gain = ctx.createGain()
         osc.type = 'triangle'
-        osc.frequency.setValueAtTime(300 + Math.random() * 200, ctx.currentTime)
-        gain.gain.setValueAtTime(0.04, ctx.currentTime)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05)
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.start()
-        osc.stop(ctx.currentTime + 0.05)
-      } else if (type === 'tick') {
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(800, ctx.currentTime)
-        gain.gain.setValueAtTime(0.1, ctx.currentTime)
+        osc.frequency.setValueAtTime(320 + Math.random() * 160, ctx.currentTime)
+        gain.gain.setValueAtTime(0.03, ctx.currentTime)
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04)
         osc.connect(gain)
         gain.connect(ctx.destination)
         osc.start()
         osc.stop(ctx.currentTime + 0.04)
+      } else if (type === 'tick') {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(750, ctx.currentTime)
+        gain.gain.setValueAtTime(0.08, ctx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.03)
       } else if (type === 'win') {
         const notes = [523.25, 659.25, 783.99, 1046.50]
         notes.forEach((freq, idx) => {
@@ -174,16 +174,16 @@ export default function RestaurantGamificationModal({
           const gain = ctx.createGain()
           osc.type = 'triangle'
           osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12)
-          gain.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.12)
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.4)
+          gain.gain.setValueAtTime(0.18, ctx.currentTime + idx * 0.12)
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.35)
           osc.connect(gain)
           gain.connect(ctx.destination)
           osc.start(ctx.currentTime + idx * 0.12)
-          osc.stop(ctx.currentTime + idx * 0.12 + 0.4)
+          osc.stop(ctx.currentTime + idx * 0.12 + 0.35)
         })
       }
     } catch {
-      // Audio autoplay restrictions
+      // Ignorar restricciones de audio del navegador
     }
   }
 
@@ -239,8 +239,8 @@ export default function RestaurantGamificationModal({
     requestAnimationFrame(render)
   }
 
-  // Inicializar Canvas de Tarjeta Raspable
-  const initScratchCanvas = () => {
+  // Pintar lámina de oro/brillo sobre la tarjeta raspable
+  const paintScratchFoil = useCallback(() => {
     const canvas = scratchCanvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -249,44 +249,95 @@ export default function RestaurantGamificationModal({
     const width = canvas.width
     const height = canvas.height
 
-    // Fondo metalizado dorado/plateado
+    // Restablecer modo de dibujo normal
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.clearRect(0, 0, width, height)
+
+    // Gradiente metálico dorado y brillante
     const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, '#D97706')
-    gradient.addColorStop(0.3, '#F59E0B')
-    gradient.addColorStop(0.5, '#FDE68A')
-    gradient.addColorStop(0.7, '#F59E0B')
-    gradient.addColorStop(1, '#B45309')
+    gradient.addColorStop(0, '#B45309')
+    gradient.addColorStop(0.2, '#D97706')
+    gradient.addColorStop(0.45, '#FDE68A')
+    gradient.addColorStop(0.55, '#F59E0B')
+    gradient.addColorStop(0.8, '#D97706')
+    gradient.addColorStop(1, '#92400E')
 
     ctx.fillStyle = gradient
     ctx.fillRect(0, 0, width, height)
 
-    // Patrón decorativo con chispas
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)'
-    for (let i = 0; i < 35; i++) {
-      const rx = (Math.sin(i * 99) * 0.5 + 0.5) * width
-      const ry = (Math.cos(i * 77) * 0.5 + 0.5) * height
+    // Destellos dorados decorativos
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
+    for (let i = 0; i < 30; i++) {
+      const rx = (Math.sin(i * 123) * 0.5 + 0.5) * width
+      const ry = (Math.cos(i * 87) * 0.5 + 0.5) * height
       ctx.beginPath()
       ctx.arc(rx, ry, (i % 3) + 2, 0, Math.PI * 2)
       ctx.fill()
     }
 
-    // Texto guía sobre la lámina
+    // Texto de instrucción sobre la lámina
     ctx.fillStyle = '#78350F'
     ctx.font = 'bold 15px sans-serif'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText('✨ RASPA AQUÍ CON TU DEDO ✨', width / 2, height / 2 - 12)
+    ctx.fillText('✨ RASPA CON TU DEDO ✨', width / 2, height / 2 - 12)
 
     ctx.fillStyle = '#92400E'
-    ctx.font = '600 12px sans-serif'
-    ctx.fillText('Descubre tu sorpresa en mesa', width / 2, height / 2 + 14)
-  }
+    ctx.font = 'bold 12px sans-serif'
+    ctx.fillText('¡Descubre tu premio sorpresa!', width / 2, height / 2 + 14)
+  }, [])
 
+  // Inicializar la lámina cuando el canvas se monte en el DOM
   useEffect(() => {
-    if (isOpen && leadSubmitted && !wonPrize && gameMode === 'scratch') {
-      setTimeout(initScratchCanvas, 100)
+    if (wonPrize && !isRevealed && gameMode === 'scratch') {
+      const timer = setTimeout(() => {
+        paintScratchFoil()
+      }, 60)
+      return () => clearTimeout(timer)
     }
-  }, [isOpen, leadSubmitted, wonPrize, gameMode])
+  }, [wonPrize, isRevealed, gameMode, paintScratchFoil])
+
+  // Lógica de raspado táctil o con cursor
+  const handleScratchAction = (clientX: number, clientY: number) => {
+    const canvas = scratchCanvasRef.current
+    if (!canvas || isRevealed) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const rect = canvas.getBoundingClientRect()
+    const x = ((clientX - rect.left) / rect.width) * canvas.width
+    const y = ((clientY - rect.top) / rect.height) * canvas.height
+
+    // Borrador circular sobre la lámina
+    ctx.globalCompositeOperation = 'destination-out'
+    ctx.beginPath()
+    ctx.arc(x, y, 26, 0, Math.PI * 2)
+    ctx.fill()
+
+    playSound('scratch')
+
+    // Muestreo de transparencia
+    try {
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const pixels = imgData.data
+      let transparentCount = 0
+      const totalSampled = pixels.length / 32
+
+      for (let i = 3; i < pixels.length; i += 32) {
+        if (pixels[i] === 0) transparentCount++
+      }
+      const percent = Math.min(100, Math.round((transparentCount / totalSampled) * 100))
+      setScratchPercent(percent)
+
+      if (percent >= 35 && !isRevealed) {
+        setIsRevealed(true)
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        triggerWinCelebration()
+      }
+    } catch {
+      // Ignorar fallos de muestreo
+    }
+  }
 
   // Dibujar Ruleta en Canvas
   const drawWheel = (rotation: number) => {
@@ -331,7 +382,7 @@ export default function RestaurantGamificationModal({
       ctx.restore()
     })
 
-    // Clavijas
+    // Clavijas perimetrales
     for (let i = 0; i < items.length * 2; i++) {
       const pAngle = (i * Math.PI) / items.length
       const px = Math.cos(pAngle) * (radius - 5)
@@ -355,61 +406,12 @@ export default function RestaurantGamificationModal({
   }
 
   useEffect(() => {
-    if (isOpen && leadSubmitted && !wonPrize && gameMode === 'wheel') {
+    if (isOpen && leadSubmitted && gameMode === 'wheel') {
       drawWheel(currentRotation)
     }
-  }, [isOpen, leadSubmitted, wonPrize, gameMode, currentRotation, items])
+  }, [isOpen, leadSubmitted, gameMode, currentRotation, items])
 
-  // Lógica de raspado táctil / mouse
-  const handleScratchMove = (clientX: number, clientY: number) => {
-    const canvas = scratchCanvasRef.current
-    if (!canvas || isRevealed) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const rect = canvas.getBoundingClientRect()
-    const x = ((clientX - rect.left) / rect.width) * canvas.width
-    const y = ((clientY - rect.top) / rect.height) * canvas.height
-
-    ctx.globalCompositeOperation = 'destination-out'
-    ctx.beginPath()
-    ctx.arc(x, y, 22, 0, Math.PI * 2)
-    ctx.fill()
-
-    playSound('scratch')
-
-    // Calcular porcentaje raspado periódicamente
-    if (Math.random() > 0.6) {
-      calculateScratchPercent(ctx, canvas.width, canvas.height)
-    }
-  }
-
-  const calculateScratchPercent = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
-    try {
-      const imgData = ctx.getImageData(0, 0, w, h)
-      const pixels = imgData.data
-      let transparentCount = 0
-      const totalPixels = pixels.length / 4
-
-      // Muestrear cada 16 pixeles para máxima fluidez
-      for (let i = 3; i < pixels.length; i += 64) {
-        if (pixels[i] === 0) transparentCount++
-      }
-      const percent = Math.round((transparentCount / (totalPixels / 16)) * 100)
-      setScratchPercent(percent)
-
-      if (percent >= 38 && !isRevealed) {
-        setIsRevealed(true)
-        // Limpiar el canvas completo con animación
-        ctx.clearRect(0, 0, w, h)
-        triggerWinCelebration()
-      }
-    } catch {
-      // Ignorar fallos de muestreo
-    }
-  }
-
-  // Procesar victoria
+  // Celebración de premio
   const triggerWinCelebration = () => {
     playSound('win')
     launchConfetti()
@@ -421,7 +423,7 @@ export default function RestaurantGamificationModal({
     }
   }
 
-  // Ejecutar el Giro de la Ruleta o Registrar la Tarjeta Raspable
+  // Generar premio en el servidor
   const handleStartGame = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     if (!customerName.trim() || !customerPhone.trim()) {
@@ -458,7 +460,7 @@ export default function RestaurantGamificationModal({
       setWonPrize(generatedPrize)
       setLeadSubmitted(true)
 
-      // Guardar en localStorage para persistencia
+      // Guardar en localStorage
       const storageKey = `omnitag_restaurant_reward_${menu.id}`
       localStorage.setItem(storageKey, JSON.stringify({
         timestamp: Date.now(),
@@ -480,8 +482,6 @@ export default function RestaurantGamificationModal({
           if (!startTime) startTime = timestamp
           const elapsed = timestamp - startTime
           const progress = Math.min(elapsed / duration, 1)
-
-          // Curva de desaceleración cúbica
           const easeOut = 1 - Math.pow(1 - progress, 3)
           const currentA = easeOut * finalAngle
 
@@ -493,6 +493,7 @@ export default function RestaurantGamificationModal({
             requestAnimationFrame(animateWheel)
           } else {
             setIsSpinning(false)
+            setIsRevealed(true)
             triggerWinCelebration()
           }
         }
@@ -500,6 +501,7 @@ export default function RestaurantGamificationModal({
       } else {
         // Modo Tarjeta Raspable: listo para raspar
         setIsSpinning(false)
+        setIsRevealed(false)
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Ocurrió un error. Intenta de nuevo.')
@@ -507,22 +509,27 @@ export default function RestaurantGamificationModal({
     }
   }
 
-  // Manejar el envío de Feedback Privado (1-3 Estrellas)
+  // Enviar Feedback Privado (1 a 3 Estrellas)
   const handleSubmitPrivateFeedback = async () => {
-    if (!reviewDevice?.id) return
+    if (!reviewDevice?.id) {
+      setFeedbackSent(true)
+      return
+    }
     setIsSendingFeedback(true)
     try {
-      const formData = new FormData()
-      formData.append('device_id', reviewDevice.id)
-      formData.append('rating', String(selectedRating || 2))
-      formData.append('message', privateFeedbackText || 'Comentario de mesa sobre el servicio/comida.')
-      formData.append('customer_name', customerName || 'Comensal en Mesa')
-      formData.append('customer_phone', customerPhone || '')
-
-      await submitPrivateFeedback(formData)
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device_id: reviewDevice.id,
+          rating: selectedRating || 2,
+          message: privateFeedbackText || 'Comentario privado desde menú digital.',
+          customer_name: customerName || 'Comensal en Mesa',
+          customer_phone: customerPhone || ''
+        })
+      })
       setFeedbackSent(true)
-    } catch (err) {
-      console.error('Error enviando feedback:', err)
+    } catch {
       setFeedbackSent(true)
     } finally {
       setIsSendingFeedback(false)
@@ -544,7 +551,7 @@ export default function RestaurantGamificationModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-black/10 flex flex-col max-h-[92vh]">
         
         {/* Cabecera con Botón de Cierre */}
@@ -555,7 +562,7 @@ export default function RestaurantGamificationModal({
             </span>
             <div>
               <h3 className="font-extrabold text-sm sm:text-base leading-tight">
-                {wonPrize ? '¡Tienes un Premio en Mesa!' : '¡Prueba tu Suerte Hoy!'}
+                {wonPrize && isRevealed ? '¡Tienes un Premio en Mesa!' : '¡Prueba tu Suerte Hoy!'}
               </h3>
               <p className="text-[11px] text-amber-100 opacity-90">
                 {menu?.name || 'Beneficio exclusivo para tu visita'}
@@ -667,7 +674,7 @@ export default function RestaurantGamificationModal({
             </div>
           )}
 
-          {/* VISTA 2: EL JUEGO (Raspando o Girando) */}
+          {/* VISTA 2: EL JUEGO (Lámina Raspable Touch) */}
           {leadSubmitted && !isRevealed && wonPrize && gameMode === 'scratch' && (
             <div className="text-center space-y-4">
               <div>
@@ -679,8 +686,8 @@ export default function RestaurantGamificationModal({
                 </p>
               </div>
 
-              {/* Contenedor del Raspable */}
-              <div className="relative w-64 h-44 mx-auto rounded-2xl overflow-hidden shadow-xl border-4 border-amber-400 select-none touch-none bg-slate-900 flex items-center justify-center">
+              {/* Contenedor del Raspable con Touch-None para evitar scroll accidental */}
+              <div className="relative w-64 h-44 mx-auto rounded-2xl overflow-hidden shadow-2xl border-4 border-amber-400 select-none touch-none bg-slate-900 flex items-center justify-center">
                 {/* Lo que está oculto debajo de la lámina */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-white text-center bg-linear-to-br from-amber-600 via-orange-600 to-amber-700">
                   <span className="text-4xl mb-1 animate-bounce">{wonPrize.prize.icon || '🎁'}</span>
@@ -697,18 +704,33 @@ export default function RestaurantGamificationModal({
                   ref={scratchCanvasRef}
                   width={256}
                   height={176}
-                  className="absolute inset-0 cursor-pointer z-10 w-full h-full"
-                  onMouseDown={() => setIsScratching(true)}
-                  onMouseUp={() => setIsScratching(false)}
-                  onMouseLeave={() => setIsScratching(false)}
-                  onMouseMove={(e) => {
-                    if (isScratching) handleScratchMove(e.clientX, e.clientY)
+                  className="absolute inset-0 cursor-pointer z-10 w-full h-full touch-none"
+                  onMouseDown={(e) => {
+                    isScratchingRef.current = true
+                    handleScratchAction(e.clientX, e.clientY)
                   }}
-                  onTouchStart={() => setIsScratching(true)}
-                  onTouchEnd={() => setIsScratching(false)}
+                  onMouseUp={() => {
+                    isScratchingRef.current = false
+                  }}
+                  onMouseLeave={() => {
+                    isScratchingRef.current = false
+                  }}
+                  onMouseMove={(e) => {
+                    if (isScratchingRef.current) handleScratchAction(e.clientX, e.clientY)
+                  }}
+                  onTouchStart={(e) => {
+                    isScratchingRef.current = true
+                    if (e.touches && e.touches[0]) {
+                      handleScratchAction(e.touches[0].clientX, e.touches[0].clientY)
+                    }
+                  }}
+                  onTouchEnd={() => {
+                    isScratchingRef.current = false
+                  }}
                   onTouchMove={(e) => {
-                    if (e.touches[0]) {
-                      handleScratchMove(e.touches[0].clientX, e.touches[0].clientY)
+                    if (e.cancelable) e.preventDefault()
+                    if (e.touches && e.touches[0]) {
+                      handleScratchAction(e.touches[0].clientX, e.touches[0].clientY)
                     }
                   }}
                 />
@@ -718,7 +740,7 @@ export default function RestaurantGamificationModal({
                 <div className="w-48 mx-auto bg-gray-100 h-2 rounded-full overflow-hidden">
                   <div 
                     className="bg-amber-500 h-full transition-all duration-150"
-                    style={{ width: `${Math.min(scratchPercent * 2.5, 100)}%` }}
+                    style={{ width: `${Math.min(scratchPercent * 2.8, 100)}%` }}
                   />
                 </div>
               )}
@@ -738,14 +760,13 @@ export default function RestaurantGamificationModal({
                   height={256}
                   className="w-full h-full rounded-full shadow-lg"
                 />
-                {/* Puntero */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[18px] border-t-amber-500" />
               </div>
             </div>
           )}
 
           {/* VISTA 3: PREMIO GANADO + HOOK DE RESEÑAS EN GOOGLE */}
-          {wonPrize && (isRevealed || gameMode === 'wheel') && !isSpinning && (
+          {wonPrize && isRevealed && !isSpinning && (
             <div className="space-y-4 animate-in zoom-in-95 duration-200">
               
               {/* Tarjeta de Cupón Ganado */}
