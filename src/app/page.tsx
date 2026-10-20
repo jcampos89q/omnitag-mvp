@@ -30,6 +30,7 @@ import {
   MapPin,
   TrendingUp,
   Truck,
+  Disc,
   HeartHandshake
 } from 'lucide-react'
 import LandingNavbar from '@/components/LandingNavbar'
@@ -38,10 +39,10 @@ import LandingFaq from '@/components/LandingFaq'
 
 export default function LandingPage() {
   const industries = [
-    { name: 'Restaurantes & Bares', emoji: '🍽️', desc: 'Menú digital con turnos activos, platos del día y pedidos por mesa a WhatsApp.' },
-    { name: 'Barberías & Salones', emoji: '💈', desc: 'Reservas online 24/7 con selección de especialista y portal móvil para colaboradores.' },
-    { name: 'Spas & Estética', emoji: '💆‍♀️', desc: 'Catálogo de servicios, control de tiempos extra y opiniones privadas.' },
-    { name: 'Clínicas & Médicos', emoji: '🩺', desc: 'Agendas ordenadas, perfil profesional y reseñas de pacientes verificadas en Google.' },
+    { name: 'Restaurantes & Bares', emoji: '🍽️', desc: 'Menús con turno activo, Ruleta o Raspa y Gana en mesa, y comandas a WhatsApp.' },
+    { name: 'Barberías & Salones', emoji: '💈', desc: 'Reservas online 24/7 con selección de especialista, Gift Cards y club de sellos.' },
+    { name: 'Spas & Estética', emoji: '💆‍♀️', desc: 'Tarjetas de regalo prepago, agendamiento de turnos y opiniones privadas.' },
+    { name: 'Clínicas & Médicos', emoji: '🩺', desc: 'Citas ordenadas, perfil profesional y reseñas de pacientes verificadas en Google.' },
     { name: 'Profesionales & Negocios', emoji: '💼', desc: 'vCards NFC, intercambio de contactos y captura de prospectos permanente.' }
   ]
 
@@ -50,10 +51,10 @@ export default function LandingPage() {
       {/* 0. CINTILLO SUPERIOR DE OFERTA */}
       <div className="bg-gradient-to-r from-purple-800 via-indigo-700 to-emerald-700 text-white py-2 px-4 text-center text-xs font-bold flex items-center justify-center gap-2 shadow-xs">
         <span className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0">
-          PROMO DE LANZAMIENTO
+          PROMO DE BIENVENIDA
         </span>
         <span className="truncate sm:overflow-visible sm:whitespace-normal">
-          🎁 <b>10 Días de Prueba Gratis PRO</b> (Sin tarjeta) • <b>50% de Descuento (L. 275 / $10)</b> si activas tu plan en tus primeros 3 días.
+          🎁 <b>10 Días de Prueba Gratis PRO</b> (Sin tarjeta) • <b>50% OFF (L. 275 / $10)</b> en tu primer mes con todas las herramientas ilimitadas.
         </span>
         <Link 
           href="/register" 
@@ -72,7 +73,7 @@ export default function LandingPage() {
         <section className="relative overflow-hidden pt-10 sm:pt-16 pb-16 sm:pb-20 px-4 sm:px-6 border-b border-gray-100 bg-gradient-to-b from-white via-gray-50/50 to-white">
           {/* Fondo decorativo con gradientes suaves */}
           <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none">
-            <div className="w-[600px] h-[600px] bg-gradient-to-tr from-purple-100/40 via-blue-50/50 to-amber-50/40 rounded-full blur-3xl opacity-80" />
+            <div className="w-[600px] h-[600px] bg-gradient-to-tr from-amber-100/40 via-purple-100/40 to-emerald-50/40 rounded-full blur-3xl opacity-80" />
           </div>
 
           <div className="max-w-4xl mx-auto text-center space-y-6">
@@ -83,13 +84,13 @@ export default function LandingPage() {
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-gray-950 leading-[1.08]">
               Tu negocio en el mundo físico, <br />
-              <span className="bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-600 via-amber-600 to-emerald-600 bg-clip-text text-transparent">
                 conectado al mundo digital.
               </span>
             </h1>
 
             <p className="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium">
-              Todo lo que necesitas para vender más y fidelizar clientes: <b>Menús con turnos activos y comandas por mesa a WhatsApp</b>, <b>Agendas de citas 24/7 con especialistas</b>, <b>Escudo de reseñas de Google Maps</b> y <b>Tarjetas de sellos digitales</b> sin descargar aplicaciones.
+              Todo en un solo lugar: <b>Menús con turnos y comandas por mesa a WhatsApp</b>, <b>Ruleta de Premios & Tarjetas Raspables</b> para cautivar comensales, <b>Gift Cards prepagadas</b>, <b>Citas 24/7 con especialistas</b> y <b>Reseñas 5★ en Google Maps</b> sin instalar apps.
             </p>
 
             {/* Botones de Acción */}
@@ -128,7 +129,7 @@ export default function LandingPage() {
               </span>
               <span className="flex items-center gap-1.5 text-purple-700 font-bold bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
                 <Tag className="w-3.5 h-3.5 text-purple-600" />
-                50% OFF (L. 275) los primeros 3 días
+                50% OFF (L. 275) en tu primer mes
               </span>
             </div>
 
@@ -167,18 +168,19 @@ export default function LandingPage() {
         <section className="py-16 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto space-y-16">
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <span className="text-xs font-black uppercase tracking-wider text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
-              Ecosistema Integral
+              Ecosistema Completo de Venta y Fidelización
             </span>
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-gray-950">
-              Todas las herramientas para vender, atender y fidelizar
+              Herramientas que enamoran a tus clientes y multiplican tu consumo
             </h2>
             <p className="text-sm sm:text-base text-gray-600 font-medium">
-              Cada módulo funciona de manera autónoma o sincronizada en tiempo real para que tus clientes vivan una experiencia moderna y sin fricción.
+              Todo integrado en una sola plataforma: cartas digitales con turnos, juegos en mesa para subir el ticket, tarjetas de regalo prepagadas y reservas 24/7.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {/* CARD 1: RESTAURANTES & MENÚS INTELIGENTES */}
+            
+            {/* CARD 1: RESTAURANTES & MENÚS CON TURNOS */}
             <div id="restaurantes" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-amber-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -202,11 +204,11 @@ export default function LandingPage() {
                 <div className="pt-2 space-y-2 border-t border-gray-100">
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Turnos Activos Automáticos:</b> Muestra el menú del momento y oculta platos fuera de hora.</span>
+                    <span><b>Turnos Activos Automáticos:</b> Muestra desayunos, almuerzos o cenas según la hora del día.</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Plato del Día Único:</b> Sección especial que cambia a diario y no se repite en la semana.</span>
+                    <span><b>Plato del Día Exclusivo:</b> Sección para la preparación única de hoy que cambia a diario.</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -214,7 +216,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Ruleta & Raspa y Gana en Mesa:</b> Gamificación con premios y cortesías para cautivar comensales.</span>
+                    <span><b>Edición en Vivo:</b> Cambia precios y disponibilidad al instante sin reimprimir papel.</span>
                   </div>
                 </div>
               </div>
@@ -230,7 +232,112 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* CARD 2: CITAS & AGENDAS */}
+            {/* CARD 2: RULETA DE PREMIOS & RASPA Y GANA EN MESA */}
+            <div id="gamificacion" className="bg-gradient-to-b from-amber-50/50 via-white to-white rounded-3xl p-6 sm:p-7 border-2 border-amber-400 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-xl shadow-xs">
+                    🎰
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-600 fill-current" />
+                    <span>Gamificación en Mesa</span>
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-amber-950 transition">
+                    Ruleta de Premios & Tarjetas Raspables
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
+                    Convierte la visita en una experiencia emocionante. Los comensales giran la ruleta o raspan una tarjeta digital interactiva en su mesa para ganar cortesías que se aplican directo a su comanda.
+                  </p>
+                </div>
+
+                <div className="pt-2 space-y-2 border-t border-amber-100">
+                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><b>Ruleta Virtual y Raspa y Gana:</b> El cliente juega en su propio móvil sin descargar apps.</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><b>Premios a tu Medida:</b> Postres gratis, 10% de descuento o bebidas para subir el ticket.</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><b>Cupones con Temporizador:</b> Válidos durante la estadía (45 min) para consumo inmediato.</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><b>Captura de Leads:</b> Obtén el nombre y WhatsApp de cada comensal para tu base de datos.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-gray-100">
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-900 hover:text-amber-700 transition"
+                >
+                  <span>Activar ruleta y raspables en mis mesas</span>
+                  <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
+                </Link>
+              </div>
+            </div>
+
+            {/* CARD 3: GIFT CARDS DIGITALES PREPAGADAS */}
+            <div id="giftcards" className="bg-gradient-to-b from-purple-50/50 via-white to-white rounded-3xl p-6 sm:p-7 border-2 border-purple-300 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-xl shadow-xs">
+                    🎁
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-100 text-purple-900 border border-purple-200">
+                    Venta por Adelantado
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-purple-950 transition">
+                    Gift Cards Digitales (Tarjetas de Regalo)
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
+                    Permite a tus clientes comprar saldo de consumo para obsequiar a familiares o amigos en cumpleaños y fechas especiales. Cobras por adelantado y recibes nuevos clientes garantizados.
+                  </p>
+                </div>
+
+                <div className="pt-2 space-y-2 border-t border-purple-100">
+                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><b>Flujo de Caja Inmediato:</b> Vendes consumo antes de que el cliente visite el local.</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><b>Dedicatoria Personalizada:</b> Diseños festivos con nombres ("De: Juan, Para: María").</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><b>Canje Seguro Antifraude:</b> Validación rápida en caja por código QR o PIN de 4 dígitos.</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span><b>Atracción de Clientes Nuevos:</b> Quien recibe el regalo visita tu negocio por primera vez.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-gray-100">
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-900 hover:text-purple-700 transition"
+                >
+                  <span>Emitir gift cards para mi negocio</span>
+                  <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
+                </Link>
+              </div>
+            </div>
+
+            {/* CARD 4: CITAS & AGENDAS */}
             <div id="citas" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-purple-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -282,7 +389,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* CARD 3: RESEÑAS GOOGLE & ESCUDO */}
+            {/* CARD 5: RESEÑAS GOOGLE & ESCUDO */}
             <div id="reputacion" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-yellow-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -334,12 +441,12 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* CARD 4: FIDELIZACIÓN & SELLOS DIGITALES */}
+            {/* CARD 6: FIDELIZACIÓN & SELLOS DIGITALES */}
             <div id="fidelizacion" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-emerald-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-xl shadow-xs">
-                    🎁
+                    🏆
                   </div>
                   <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                     Fidelización
@@ -386,7 +493,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* CARD 5: VCARDS & CRM */}
+            {/* CARD 7: VCARDS & CRM */}
             <div id="vcards" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-blue-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -438,7 +545,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* CARD 6: ESTUDIO QR DINÁMICO & WI-FI */}
+            {/* CARD 8: ESTUDIO QR DINÁMICO & WI-FI */}
             <div id="estudio-qr" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-pink-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -566,7 +673,7 @@ export default function LandingPage() {
               </div>
               <h3 className="font-extrabold text-base text-gray-900">Crea tu Cuenta en 1 Minuto</h3>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Sin tarjeta de crédito. Activa tu negocio y selecciona qué módulos deseas utilizar (Menús, Citas, Reseñas o Sellos).
+                Sin tarjeta de crédito. Activa tu negocio y selecciona qué módulos deseas utilizar (Menús, Ruleta, Gift Cards, Citas o Reseñas).
               </p>
             </div>
 
@@ -576,7 +683,7 @@ export default function LandingPage() {
               </div>
               <h3 className="font-extrabold text-base text-gray-900">Personaliza con tu Marca</h3>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Ingresa tus platillos, servicios o información de contacto con tus fotos, horarios de turno y logo oficial.
+                Configura tus turnos de menú, premios de ruleta, gift cards, horarios de citas y logotipo oficial en tu panel intuitivo.
               </p>
             </div>
 
@@ -586,7 +693,7 @@ export default function LandingPage() {
               </div>
               <h3 className="font-extrabold text-base text-gray-900">Conecta Clientes por QR o NFC</h3>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Descarga tus códigos QR para mostradores o adquiere tus placas físicas para recibir pedidos y citas directo a WhatsApp.
+                Coloca los códigos QR en tus mesas o mostradores y recibe pedidos, ventas de gift cards y reservas directo a WhatsApp.
               </p>
             </div>
           </div>
@@ -597,13 +704,13 @@ export default function LandingPage() {
           <div className="max-w-6xl mx-auto space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-3">
               <span className="text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
-                Precios Transparentes • Cero Letras Pequeñas
+                Precios Claros • Cero Letras Pequeñas
               </span>
               <h2 className="text-3xl sm:text-4xl font-black text-gray-900">
                 Elige la opción ideal para impulsar tu negocio
               </h2>
               <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                Comienza sin costo hoy mismo. Puedes pagar con facilidad vía transferencia o depósito en bancos de Honduras.
+                Comienza sin costo hoy mismo. Pagos fáciles por transferencia o depósito en bancos de Honduras sin contratos forzosos.
               </p>
             </div>
 
@@ -635,7 +742,15 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Menús QR con turnos y comandas por mesa</span>
+                      <span>Menús QR con turnos activos y comandas</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Ruleta de Premios & Raspa y Gana en mesa</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Módulo de Gift Cards digitales</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -644,10 +759,6 @@ export default function LandingPage() {
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                       <span>Escudo de reseñas de Google Maps</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Estudio QR dinámico descargable</span>
                     </div>
                   </div>
                 </div>
@@ -673,7 +784,7 @@ export default function LandingPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-black uppercase tracking-wider text-purple-700">Membresía Completa</span>
                     <span className="text-[10px] font-black bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">
-                      Lanzamiento
+                      Todo Incluido
                     </span>
                   </div>
 
@@ -688,30 +799,34 @@ export default function LandingPage() {
                       <span className="text-xs text-gray-400 line-through">L. 550 HNL</span>
                     </div>
                     <p className="text-[11px] text-emerald-700 font-bold mt-1">
-                      50% OFF si confirmas en tus primeros 3 días
+                      50% OFF en tu primer mes • Regular: L. 550 / mes
                     </p>
                   </div>
 
                   <div className="pt-4 space-y-2.5 border-t border-gray-100 text-xs text-gray-700">
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Todo lo de la prueba</b> de forma continua</span>
+                      <span><b>Menús con turnos activos</b> (Desayuno, Almuerzo, Cena)</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Turnos inteligentes</b> para menús (Desayuno, Almuerzo, Cena)</span>
+                      <span><b>Ruleta & Tarjetas Raspables</b> en mesas ilimitadas</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Plato del Día destacado</b> ilimitado</span>
+                      <span><b>Gift Cards Digitales</b> con canje seguro</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Portal móvil para colaboradores</b> con PIN</span>
+                      <span><b>Plato del Día destacado</b> con horario propio</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>CRM centralizado</b> con exportación a Excel</span>
+                      <span><b>Agendas de Citas</b> y portal móvil para colaboradores</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span><b>CRM permanente</b> y exportación de clientes a Excel</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -725,7 +840,7 @@ export default function LandingPage() {
                     href="/register"
                     className="w-full bg-black hover:bg-gray-800 text-white font-black py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md"
                   >
-                    <span>Activar con 50% de Descuento</span>
+                    <span>Activar Plan con 50% de Descuento</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -750,7 +865,7 @@ export default function LandingPage() {
                     <span className="text-4xl font-black text-gray-900">L. 1,200</span>
                     <span className="text-xs text-gray-500 ml-1">pago único</span>
                     <p className="text-[11px] text-purple-700 font-bold mt-1">
-                      🎁 Incluye 1 Año Completo PRO Gratis
+                      🎁 Incluye 1 Año Completo PRO de cortesía
                     </p>
                   </div>
 
@@ -769,7 +884,7 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Configuración y asesoría por WhatsApp</span>
+                      <span>Configuración y asesoría directa por WhatsApp</span>
                     </div>
                   </div>
                 </div>
@@ -819,7 +934,7 @@ export default function LandingPage() {
                 Empieza a digitalizar tu negocio hoy mismo
               </h2>
               <p className="text-xs sm:text-base text-gray-300 max-w-lg mx-auto font-medium leading-relaxed">
-                Crea tu cuenta gratis en 60 segundos y prueba el menú con turnos activos, agendas para citas y escudo de reseñas. Recuerda que tienes <b>50% de descuento (L. 275)</b> si confirmas en tus primeros 3 días.
+                Crea tu cuenta gratis en 60 segundos y prueba el menú con turnos activos, la ruleta y raspables en mesa, gift cards, agendas para citas y escudo de reseñas. Tienes <b>50% de descuento (L. 275)</b> en tu primer mes.
               </p>
             </div>
 

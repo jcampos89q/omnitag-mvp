@@ -14,39 +14,44 @@ export default function LandingFaq() {
 
   const faqs: FaqItem[] = [
     {
-      q: '¿Mis clientes necesitan descargar alguna aplicación para usar el menú o reservar?',
-      a: 'No, absolutamente ninguna. Todo funciona de forma instantánea en el navegador web de cualquier teléfono móvil (iPhone o Android) con solo escanear el código QR o acercar el smartphone a una placa o tarjeta física NFC. Sin fricción, sin registros tediosos y sin ocupar espacio en el teléfono.',
+      q: '¿Cómo funciona la Ruleta de Premios y las Tarjetas Raspables en las mesas?',
+      a: 'Tus comensales escanean el código QR en su mesa (#Mesa QR) y pueden girar la ruleta virtual o raspar la tarjeta dorada interactiva directamente en su smartphone sin descargar ninguna app. Pueden ganar premios configurados por ti (postres de cortesía, 10% de descuento o bebidas gratis) con un temporizador de mesa de 45 minutos. El premio se añade automáticamente a su comanda de WhatsApp y tú capturas su nombre y teléfono para tu CRM.',
+      badge: 'Gamificación'
+    },
+    {
+      q: '¿Cómo funcionan las Gift Cards o Tarjetas de Regalo digitales?',
+      a: 'Permiten a tus clientes comprar o regalar saldo de consumo en tu restaurante, salón o comercio para obsequiar en cumpleaños, aniversarios o fechas especiales. Tu negocio cobra el dinero por adelantado (mejorando tu flujo de caja) y genera un cupón digital con dedicatoria ("De: Juan, Para: María") que el homenajeado canjea en caja de forma segura mediante un código QR o PIN antifraude.',
+      badge: 'Gift Cards'
+    },
+    {
+      q: '¿Mis clientes necesitan descargar alguna aplicación para ordenar o reservar?',
+      a: 'No, absolutamente ninguna. Todo funciona de forma instantánea en el navegador web de cualquier teléfono móvil (iPhone o Android) con solo escanear el código QR o acercar el smartphone a una placa o tarjeta física NFC. Cero fricción y sin ocupar espacio en la memoria de su teléfono.',
       badge: 'Cero Fricción'
     },
     {
-      q: '¿Cómo funciona el Menú Digital inteligente para restaurantes?',
-      a: 'El menú detecta automáticamente la hora y prioriza el turno activo del restaurante (por ejemplo: Desayunos en la mañana, Almuerzos al mediodía o Cenas en la noche). Además, cuenta con una sección dedicada para el "Plato del Día" que cambia a diario y no se repite, y permite a los comensales pedir directamente a la cocina por número de mesa (#Mesa QR) o cambiar para ver toda la carta con un solo clic.',
+      q: '¿Cómo funciona el Menú Digital con turnos activos y platos del día?',
+      a: 'El menú detecta automáticamente la hora y muestra de entrada el turno activo correspondiente (por ejemplo: Desayunos en la mañana, Almuerzos al mediodía o Cenas por la noche). Además, cuenta con una sección dedicada para el "Plato del Día" exclusivo que cambia a diario y no se repite, permitiendo a los clientes cambiar a ver toda la carta con un solo clic.',
       badge: 'Restaurantes'
     },
     {
-      q: '¿Cómo recibo las comandas de los platos o las reservas de citas?',
-      a: 'Llegan estructuradas y detalladas al instante a tu número de WhatsApp (con número de mesa o especialista, notas especiales, hora y total a pagar), y al mismo tiempo quedan guardadas en tu panel de control y comandera en tiempo real para tu equipo.',
+      q: '¿Cómo recibo los pedidos y comandas de los comensales?',
+      a: 'Llegan estructuradas y detalladas al instante a tu número de WhatsApp (con número de mesa, platos elegidos, notas de cocina, cupones canjeados y total a pagar), y al mismo tiempo quedan registradas en tu comandera y panel de control en tiempo real.',
       badge: 'WhatsApp + Cloud'
     },
     {
-      q: '¿Cómo protege a mi negocio el Escudo de Reseñas de Google?',
-      a: 'Cuando un cliente escanea el QR o acerca su teléfono a la placa NFC Tap-to-Rate: si califica con 4 o 5 estrellas, se le redirige directamente a Google Maps para publicar su reseña y subir tu posición local. Si califica con 1 a 3 estrellas, se abre un buzón confidencial para que gerencia resuelva la queja en privado antes de que dañe la reputación pública del negocio.',
+      q: '¿Cómo protege a mi negocio el Escudo de Reseñas de Google Maps?',
+      a: 'Cuando un cliente escanea el QR o acerca su teléfono a la placa NFC Tap-to-Rate: si califica con 4 o 5 estrellas, se le redirige directo a Google Maps para publicar su reseña y subir tu posición local. Si califica con 1 a 3 estrellas, se abre un buzón confidencial para que gerencia resuelva la queja en privado antes de que dañe la reputación pública del negocio.',
       badge: 'Google Reviews'
     },
     {
       q: '¿Qué incluye la prueba de 10 días y necesito tarjeta de crédito?',
-      a: 'Tienes 10 días completos con todas las herramientas PRO desbloqueadas (Menús digitales con comandas, agendas de citas, escudo de reseñas Google, club de sellos, vCards y generador QR dinámico). No solicitamos ninguna tarjeta de crédito para registrarte.',
+      a: 'Tienes 10 días completos con todas las herramientas PRO desbloqueadas: Menús con turnos y comandas por mesa, Ruleta & Raspables interactivos, Gift Cards, agendas de citas, escudo de reseñas Google, club de sellos, vCards y generador QR dinámico. No solicitamos ninguna tarjeta de crédito para registrarte.',
       badge: '100% Gratis'
     },
     {
-      q: '¿Cómo funciona la promoción del 50% de descuento?',
-      a: 'Si durante tus primeros 3 días de prueba decides activar tu membresía mediante depósito o transferencia bancaria, tu primer mes te queda a solo L. 275 HNL ($10 USD). La mensualidad regular es de L. 550 HNL. No hay contratos forzosos ni cargos ocultos.',
-      badge: 'Promoción'
-    },
-    {
-      q: '¿Tienen tarjetas o placas físicas NFC disponibles?',
-      a: 'Sí. En nuestra Tienda Oficial contamos con Tarjetas de Presentación Inteligentes (Matte Black) y Placas de Mostrador en vinil sobre PVC de alta durabilidad para reseñas y mesas. Lo mejor es que cada dispositivo físico ya incluye 1 Año Completo de membresía PRO y envíos a toda Honduras.',
-      badge: 'Hardware NFC'
+      q: '¿Cómo funciona el precio y la promoción del 50% de descuento?',
+      a: 'Si durante tus 10 días de prueba decides activar tu membresía, tu primer mes te queda con un 50% de descuento a solo L. 275 HNL ($10 USD). La tarifa regular mensual es de L. 550 HNL ($20 USD) sin contratos forzosos. Y si adquieres una Placa o Tarjeta física NFC por L. 1,200, ¡incluye 1 año completo PRO de cortesía!',
+      badge: 'Precios Claros'
     }
   ]
 

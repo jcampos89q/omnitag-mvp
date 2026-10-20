@@ -311,7 +311,7 @@ export default function DashboardNavbar({
                   </span>
                 ) : planInfo?.isTrial ? (
                   <span className="inline-block mt-1 text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
-                    ⚡ Mes Gratis Full ({planInfo.trialDaysLeft}d)
+                    ⚡ Prueba PRO ({planInfo.trialDaysLeft}d)
                   </span>
                 ) : planInfo?.isMonthlyPro ? (
                   <span className="inline-block mt-1 text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
@@ -432,7 +432,7 @@ export default function DashboardNavbar({
                 </span>
               ) : planInfo?.isTrial ? (
                 <span className="text-[10px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded">
-                  MES GRATIS ({planInfo.trialDaysLeft}d)
+                  PRUEBA PRO ({planInfo.trialDaysLeft}d)
                 </span>
               ) : planInfo?.isMonthlyPro ? (
                 <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded">

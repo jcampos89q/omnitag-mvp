@@ -85,14 +85,19 @@ export default function BillingClient({
   const daysLeft = planInfo?.daysLeft || 0
   const discountDaysLeft = planInfo?.discountDaysLeft || 0
 
-  // Precios según tipo de cuenta y descuento del 50%
+  // Opción de pago seleccionable libremente por el usuario
   const isHardwareAccount = accountType === 'professional' || accountType === 'review_plate'
-  const priceHnl = isHardwareAccount 
-    ? 'L. 1,200 HNL' 
-    : isDiscountEligible 
-    ? 'L. 275 HNL' 
-    : 'L. 550 HNL'
-  const priceUsd = priceHnl // Fallback if still referenced
+  const [paymentOption, setPaymentOption] = useState<'monthly' | 'hardware' | 'combo'>(
+    isHardwareAccount ? 'hardware' : 'monthly'
+  )
+
+  const priceMonthly = isDiscountEligible ? 'L. 275 HNL' : 'L. 550 HNL'
+  const priceHnl = paymentOption === 'combo'
+    ? 'L. 2,200 HNL'
+    : paymentOption === 'hardware'
+    ? 'L. 1,200 HNL'
+    : priceMonthly
+  const priceUsd = priceHnl
 
   const pendingTransfer = transfers.find(t => t.status === 'pending')
 
@@ -119,8 +124,8 @@ export default function BillingClient({
     const formData = new FormData()
     formData.append('reference_number', referenceNumber)
     formData.append('receipt_url', receiptUrl)
-    formData.append('amount', currency === 'HNL' ? priceHnl : priceUsd)
-    formData.append('notes', notes)
+    formData.append('amount', priceHnl)
+    formData.append('notes', notes ? `${notes} (Plan: ${paymentOption})` : `Plan: ${paymentOption}`)
 
     const res = await submitBankTransfer(formData)
     setSubmitting(false)
@@ -664,12 +669,96 @@ export default function BillingClient({
               Pago por Transferencia Bancaria (BAC Credomatic Honduras)
             </h3>
             <p className="text-xs text-gray-500 mt-1">
-              {accountType === 'professional' 
-                ? 'Realiza el pago de L. 1,200 para solicitar tu Tarjeta Física Inteligente NFC y adjunta el comprobante aquí abajo. Incluye 1 año de Plan PRO completo.'
-                : accountType === 'review_plate'
-                ? 'Realiza el pago de L. 1,200 para solicitar tu Placa NFC de Reseñas de Google (vinil sobre PVC resistente) y adjunta el comprobante aquí abajo. Incluye 1 año de Plan PRO completo.'
-                : 'Realiza tu transferencia o depósito bancario y adjunta el comprobante aquí abajo para activar tu Plan PRO de inmediato.'}
+              Selecciona qué plan o producto deseas activar, realiza la transferencia por el monto exacto y adjunta tu comprobante aquí abajo para verificación inmediata.
             </p>
+          </div>
+
+          {/* Selector Interactivo de lo que desea pagar el usuario */}
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase tracking-wider text-gray-700 block">
+              1. Selecciona el Plan o Producto que estás pagando:
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentOption('monthly')}
+                className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                  paymentOption === 'monthly'
+                    ? 'border-purple-600 bg-purple-50/70 shadow-sm ring-2 ring-purple-600/20'
+                    : 'border-gray-200 bg-white hover:bg-gray-50'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-gray-900">Suscripción PRO Mensual</span>
+                    {isDiscountEligible && (
+                      <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full">
+                        50% OFF
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 leading-snug">
+                    Menús con turnos, ruleta/raspables, gift cards, citas, reseñas y CRM.
+                  </p>
+                </div>
+                <div className="mt-3 pt-2 border-t border-black/5 flex items-baseline gap-1">
+                  <span className="text-lg font-black text-purple-700">{priceMonthly}</span>
+                  <span className="text-[10px] text-gray-500 font-semibold">{isDiscountEligible ? '/ 1er mes' : '/ mes'}</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentOption('hardware')}
+                className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                  paymentOption === 'hardware'
+                    ? 'border-blue-600 bg-blue-50/70 shadow-sm ring-2 ring-blue-600/20'
+                    : 'border-gray-200 bg-white hover:bg-gray-50'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-gray-900">Placa o Tarjeta NFC</span>
+                    <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
+                      1 AÑO PRO
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 leading-snug">
+                    Dispositivo físico inteligente para mostrador o mesa + 1 año completo PRO.
+                  </p>
+                </div>
+                <div className="mt-3 pt-2 border-t border-black/5 flex items-baseline gap-1">
+                  <span className="text-lg font-black text-blue-700">L. 1,200 HNL</span>
+                  <span className="text-[10px] text-gray-500 font-semibold">/ pago único</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentOption('combo')}
+                className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                  paymentOption === 'combo'
+                    ? 'border-amber-600 bg-amber-50/70 shadow-sm ring-2 ring-amber-600/20'
+                    : 'border-gray-200 bg-white hover:bg-gray-50'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-gray-900">Combo Dúo VIP</span>
+                    <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
+                      COMBO
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 leading-snug">
+                    Tarjeta NFC + Placa de Reseñas en PVC + 1 año completo PRO incluido.
+                  </p>
+                </div>
+                <div className="mt-3 pt-2 border-t border-black/5 flex items-baseline gap-1">
+                  <span className="text-lg font-black text-amber-800">L. 2,200 HNL</span>
+                  <span className="text-[10px] text-gray-500 font-semibold">/ pago único</span>
+                </div>
+              </button>
+            </div>
           </div>
 
           {/* Tarjeta de Datos Bancarios con Botones de Copiar */}
@@ -678,7 +767,7 @@ export default function BillingClient({
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 bg-red-600 rounded-full animate-pulse" />
                 <h4 className="font-extrabold text-gray-900 text-sm sm:text-base">
-                  Datos de Cuenta Bancaria Oficial
+                  2. Datos de Cuenta Bancaria Oficial
                 </h4>
               </div>
               <span className="text-xs font-bold text-red-700 bg-red-100 px-2.5 py-0.5 rounded-full">
@@ -727,33 +816,18 @@ export default function BillingClient({
                 </button>
               </div>
 
-              {/* Monto a Transferir */}
+              {/* Monto a Transferir Dinámico */}
               <div className="bg-white p-3.5 rounded-xl border border-gray-200 flex items-center justify-between shadow-2xs">
                 <div>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Monto a Depositar / Transferir:</span>
-                  {isHardwareAccount ? (
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-emerald-700 text-sm sm:text-base">
-                        L. 1,200.00 HNL
-                      </span>
-                      <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded">
-                        DISPOSITIVO FÍSICO + 1 AÑO PRO
-                      </span>
-                    </div>
-                  ) : isDiscountEligible ? (
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-emerald-700 text-sm sm:text-base">
-                        L. 275.00 HNL
-                      </span>
-                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded">
-                        50% APLICADO
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="font-extrabold text-emerald-700 text-sm sm:text-base">
-                      L. 550.00 HNL / mes
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Monto Exacto a Depositar:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-emerald-700 text-base sm:text-lg">
+                      {priceHnl}
                     </span>
-                  )}
+                    <span className="bg-purple-100 text-purple-800 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                      {paymentOption === 'monthly' ? (isDiscountEligible ? '50% APLICADO' : 'MENSUALIDAD') : paymentOption === 'hardware' ? 'HARDWARE + 1 AÑO' : 'COMBO DÚO'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

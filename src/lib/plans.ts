@@ -190,10 +190,20 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     ? Math.max(1, Math.ceil((latestHardwareExpires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : 0
 
-  // 4. Cálculo del Mes de Cortesía en la Suite PRO (30 días otorgados EXCLUSIVAMENTE al comprar/activar hardware)
+  // 4. Cálculo de Prueba PRO (10 días para registro web o 30 días para hardware)
   let trialEndDate: Date | null = profile?.trial_expires_at ? new Date(profile.trial_expires_at) : null
 
-  // El mes de cortesía SOLO se activa para quienes tienen hardware físico activo
+  // Si no tiene hardware pero subscription_expires_at está en el futuro y la cuenta es nueva, es su prueba de 10 días
+  if (!trialEndDate && profile?.subscription_expires_at && !isHardwareActive) {
+    const subDate = new Date(profile.subscription_expires_at)
+    const createdAt = profile.created_at ? new Date(profile.created_at).getTime() : 0
+    const ageInDays = (now.getTime() - createdAt) / (1000 * 60 * 60 * 24)
+    if (ageInDays <= 20) {
+      trialEndDate = subDate
+    }
+  }
+
+  // El mes de cortesía para quienes tienen hardware físico activo
   if (!trialEndDate && isHardwareActive) {
     let startEpoch: number = 0
     for (const card of activeCards) {
@@ -218,8 +228,8 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     }
   }
 
-  // La prueba/mes de cortesía PRO solo existe si tiene hardware activo o fecha explícita
-  const isTrial = Boolean(isHardwareActive && trialEndDate && now <= trialEndDate)
+  // La prueba PRO existe si está dentro de la fecha de prueba
+  const isTrial = Boolean(trialEndDate && now <= trialEndDate)
   const trialDaysLeft = isTrial && trialEndDate
     ? Math.max(1, Math.ceil((trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : 0
@@ -233,7 +243,7 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     subExpiresDate = new Date(profile.subscription_expires_at)
     if (subExpiresDate > now) {
       const isPastTrial = !trialEndDate || subExpiresDate.getTime() > trialEndDate.getTime()
-      if (isPastTrial || !isTrial) {
+      if (isPastTrial && !isTrial) {
         isMonthlyPro = true
         subDaysLeft = Math.max(1, Math.ceil((subExpiresDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
       }
@@ -295,8 +305,8 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     canAccessGoogleBusiness,
     canAccessAnalytics,
     canAccessProSuite,
-    isDiscountEligible: isTrial && trialDaysLeft > 25,
-    discountDaysLeft: isTrial && trialDaysLeft > 25 ? trialDaysLeft - 25 : 0,
+    isDiscountEligible: isTrial && trialDaysLeft > 0,
+    discountDaysLeft: isTrial ? trialDaysLeft : 0,
     nfcCardToken: primaryNfcCard?.card_token || null,
     accountType: profile?.account_type || (hasReviewPlate ? 'review_plate' : 'professional')
   }
