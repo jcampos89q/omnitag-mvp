@@ -31,12 +31,13 @@ import {
   ArchiveRestore,
   ShieldBan,
   Unlock,
-  UserMinus
+  UserMinus,
+  CreditCard
 } from 'lucide-react'
 import QRCodeStyling, { DotType, CornerSquareType } from 'qr-code-styling'
 import { createNfcBatch, deleteNfcBatch, toggleNfcCardStatus, toggleNfcBatchActive, archiveNfcBatch, unlinkNfcCardUser } from './nfcActions'
 import NfcCardWriterModal from '@/components/NfcCardWriterModal'
-import { generateReviewPlatesSheetPdf } from '@/lib/nfcPdfGenerator'
+import { generateReviewPlatesSheetPdf, generateReviewCardsSheetPdf } from '@/lib/nfcPdfGenerator'
 
 interface NfcCard {
   id: string
@@ -129,6 +130,7 @@ export default function AdminReviewPlateBatches({
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
   const [copiedAll, setCopiedAll] = useState(false)
   const [isPdfGenerating, setIsPdfGenerating] = useState(false)
+  const [pdfGeneratingType, setPdfGeneratingType] = useState<'card_cr80' | 'stand' | null>(null)
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 })
 
   // Estados para modal de escritura NFC
@@ -137,8 +139,9 @@ export default function AdminReviewPlateBatches({
   const [nfcWriterTitle, setNfcWriterTitle] = useState('')
 
   // Estados del creador de lote
-  const [batchName, setBatchName] = useState('Lote 10 Placas Reseñas Google')
-  const [cardCount, setCardCount] = useState<number>(10)
+  const [printFormat, setPrintFormat] = useState<'card_cr80' | 'stand'>('card_cr80')
+  const [batchName, setBatchName] = useState('Lote 16 Tarjetas Reseñas Google CR80')
+  const [cardCount, setCardCount] = useState<number>(16)
   const [tokenPrefix, setTokenPrefix] = useState('REV')
   const [dotsColor, setDotsColor] = useState('#1a73e8')
   const [cornersColor, setCornersColor] = useState('#1557b0')
@@ -230,6 +233,7 @@ export default function AdminReviewPlateBatches({
       cornersColor,
       dotsStyle,
       cornersStyle,
+      printFormat,
     }))
 
     try {
@@ -411,18 +415,37 @@ export default function AdminReviewPlateBatches({
     URL.revokeObjectURL(url)
   }
 
+  const handleDownloadCardsPdf = async () => {
+    if (!selectedBatch) return
+    try {
+      setIsPdfGenerating(true)
+      setPdfGeneratingType('card_cr80')
+      setPdfProgress({ current: 0, total: selectedBatch.nfc_cards.length })
+      await generateReviewCardsSheetPdf(selectedBatch, baseUrl, (current, total) => {
+        setPdfProgress({ current, total })
+      })
+    } catch (err: any) {
+      alert('Error al generar PDF de Tarjetas CR80: ' + err.message)
+    } finally {
+      setIsPdfGenerating(false)
+      setPdfGeneratingType(null)
+    }
+  }
+
   const handleDownloadSheetPdf = async () => {
     if (!selectedBatch) return
     try {
       setIsPdfGenerating(true)
+      setPdfGeneratingType('stand')
       setPdfProgress({ current: 0, total: selectedBatch.nfc_cards.length })
       await generateReviewPlatesSheetPdf(selectedBatch, baseUrl, (current, total) => {
         setPdfProgress({ current, total })
       })
     } catch (err: any) {
-      alert('Error al generar PDF: ' + err.message)
+      alert('Error al generar PDF de Stands: ' + err.message)
     } finally {
       setIsPdfGenerating(false)
+      setPdfGeneratingType(null)
     }
   }
 
@@ -677,11 +700,31 @@ export default function AdminReviewPlateBatches({
                 </button>
 
                 <button
+                  onClick={handleDownloadCardsPdf}
+                  disabled={isPdfGenerating}
+                  className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-900 text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-indigo-200 cursor-pointer disabled:opacity-50 shadow-2xs"
+                  title="Descargar plantilla A4 con 8 Tarjetas CR80 (85.6 x 54 mm) por hoja y logo G de Google"
+                >
+                  {isPdfGenerating && pdfGeneratingType === 'card_cr80' ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+                      <span>Generando Tarjetas ({pdfProgress.current}/{pdfProgress.total})...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Descargar Tarjetas CR80 (PDF)</span>
+                    </>
+                  )}
+                </button>
+
+                <button
                   onClick={handleDownloadSheetPdf}
                   disabled={isPdfGenerating}
                   className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-blue-200 cursor-pointer disabled:opacity-50"
+                  title="Descargar plantilla A4 con 2 Stands de Mostrador (120 x 126 mm) por hoja y logo G de Google"
                 >
-                  {isPdfGenerating ? (
+                  {isPdfGenerating && pdfGeneratingType === 'stand' ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
                       <span>Generando Stand ({pdfProgress.current}/{pdfProgress.total})...</span>
@@ -689,7 +732,7 @@ export default function AdminReviewPlateBatches({
                   ) : (
                     <>
                       <Printer className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Descargar Plantilla Stand (PDF)</span>
+                      <span>Descargar Stand Mostrador (PDF)</span>
                     </>
                   )}
                 </button>
@@ -932,6 +975,62 @@ export default function AdminReviewPlateBatches({
             </div>
 
             <form onSubmit={handleCreateBatch} className="space-y-6">
+              {/* Selector de Formato Físico de Impresión */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-700 block">Formato Físico Principal de Impresión (ambos incluyen la &quot;G&quot; de Google)</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrintFormat('card_cr80')
+                      if (batchName.includes('Placas') || batchName.includes('Stands')) {
+                        setBatchName(`Lote ${cardCount} Tarjetas Reseñas Google CR80`)
+                      }
+                    }}
+                    className={`p-3.5 rounded-2xl border text-left transition flex items-start gap-3 cursor-pointer ${
+                      printFormat === 'card_cr80'
+                        ? 'bg-indigo-50/70 border-indigo-600 ring-2 ring-indigo-600/20'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      printFormat === 'card_cr80' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-500 border border-gray-200'
+                    }`}>
+                      <CreditCard className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-extrabold text-gray-900">Tarjetas CR80 (85.6 × 54 mm)</div>
+                      <div className="text-[11px] text-gray-500 mt-0.5">8 tarjetas por hoja A4 • Mismo tamaño que las vCards con logo G de Google</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPrintFormat('stand')
+                      if (batchName.includes('Tarjetas')) {
+                        setBatchName(`Lote ${cardCount} Stands Reseñas Google`)
+                      }
+                    }}
+                    className={`p-3.5 rounded-2xl border text-left transition flex items-start gap-3 cursor-pointer ${
+                      printFormat === 'stand'
+                        ? 'bg-blue-50/70 border-blue-600 ring-2 ring-blue-600/20'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      printFormat === 'stand' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border border-gray-200'
+                    }`}>
+                      <Printer className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-extrabold text-gray-900">Stands Mostrador (120 × 126 mm)</div>
+                      <div className="text-[11px] text-gray-500 mt-0.5">2 displays grandes por hoja A4 • Para mostrador o mesa en PVC</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-700">Nombre del Lote</label>
@@ -940,13 +1039,13 @@ export default function AdminReviewPlateBatches({
                     required
                     value={batchName}
                     onChange={(e) => setBatchName(e.target.value)}
-                    placeholder="Ej. Lote 25 Stands de Mesa Google"
+                    placeholder="Ej. Lote 16 Tarjetas Reseñas Google CR80"
                     className="w-full px-3.5 py-2.5 text-xs bg-gray-50 rounded-xl border border-gray-200 focus:border-black focus:outline-none"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Cantidad de Placas</label>
+                  <label className="text-xs font-bold text-gray-700">Cantidad de Unidades (múltiplos de 8 recomendados para CR80)</label>
                   <input
                     type="number"
                     min="1"
@@ -988,15 +1087,27 @@ export default function AdminReviewPlateBatches({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Palette className="w-4 h-4 text-slate-700" />
-                    <span className="text-xs font-extrabold text-slate-900">Estilo del Código QR para Placas</span>
+                    <span className="text-xs font-extrabold text-slate-900">Estilo del Código QR + Insignia &quot;G&quot; de Google</span>
                   </div>
                   <span className="text-[10px] text-slate-500 font-medium">Previsualización en tiempo real</span>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-6">
-                  {/* Contenedor del QR Preview */}
+                  {/* Contenedor del QR Preview con la G de Google al centro */}
                   <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col items-center shrink-0">
-                    <div ref={previewDivRef} className="w-[180px] h-[180px] flex items-center justify-center" />
+                    <div className="relative w-[180px] h-[180px] flex items-center justify-center">
+                      <div ref={previewDivRef} className="w-[180px] h-[180px] flex items-center justify-center" />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-9 h-9 bg-white rounded-xl shadow-xs border border-gray-100 flex items-center justify-center p-1.5">
+                          <svg viewBox="0 0 256 262" className="w-full h-full">
+                            <path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"/>
+                            <path fill="#34A853" d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"/>
+                            <path fill="#FBBC05" d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782"/>
+                            <path fill="#EA4335" d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"/>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                     <div className="mt-2 text-[10px] font-mono text-slate-500 text-center font-bold">
                       omnitag.site/r/{tokenPrefix}-PREVIEW
                     </div>

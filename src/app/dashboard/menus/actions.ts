@@ -164,7 +164,7 @@ export async function setDailySpecial(formData: FormData) {
       name,
       description,
       price,
-      image_url: imageUrl
+      image_url: imageUrl || undefined
     }
 
     if (dishId) {

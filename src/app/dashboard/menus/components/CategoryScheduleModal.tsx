@@ -148,7 +148,7 @@ export default function CategoryScheduleModal({
             </div>
 
             {/* Inputs de Horario Personalizado */}
-            {(scheduleType === 'custom' || scheduleType === 'breakfast' || scheduleType === 'lunch' || scheduleType === 'dinner') && scheduleType !== 'all_day' && (
+            {(scheduleType === 'custom' || scheduleType === 'breakfast' || scheduleType === 'lunch' || scheduleType === 'dinner') && (
               <div className="bg-amber-50/70 border border-amber-200 p-3.5 rounded-xl space-y-2">
                 <p className="text-xs font-bold text-amber-900 flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5 text-amber-600" />
