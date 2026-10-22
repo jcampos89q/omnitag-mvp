@@ -211,9 +211,15 @@ export default function AdminNfcBatches({
     }))
 
     try {
-      await createNfcBatch(formData)
+      const res = await createNfcBatch(formData)
       setIsCreateModalOpen(false)
-      window.location.reload()
+      if (res?.batch) {
+        setViewMode('active')
+        setBatches(prev => [res.batch as NfcBatch, ...prev])
+        setSelectedBatchId(res.batch.id)
+      } else {
+        window.location.href = '/dashboard/admin?tab=nfc-batches'
+      }
     } catch (err: any) {
       alert('Error al crear lote: ' + err.message)
     } finally {

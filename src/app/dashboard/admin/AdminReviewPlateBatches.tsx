@@ -166,7 +166,7 @@ export default function AdminReviewPlateBatches({
     if (initialBatches.length > 0 && !selectedBatchId) {
       setSelectedBatchId(initialBatches[0].id)
     }
-  }, [initialBatches, selectedBatchId])
+  }, [initialBatches])
 
   const selectedBatch = batches.find(b => b.id === selectedBatchId) || batches[0]
 
@@ -237,9 +237,15 @@ export default function AdminReviewPlateBatches({
     }))
 
     try {
-      await createNfcBatch(formData)
+      const res = await createNfcBatch(formData)
       setIsCreateModalOpen(false)
-      window.location.reload()
+      if (res?.batch) {
+        setViewMode('active')
+        setBatches(prev => [res.batch as NfcBatch, ...prev])
+        setSelectedBatchId(res.batch.id)
+      } else {
+        window.location.href = '/dashboard/admin?tab=review-batches'
+      }
     } catch (err: any) {
       alert('Error al crear lote de placas: ' + err.message)
     } finally {

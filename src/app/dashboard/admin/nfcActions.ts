@@ -83,9 +83,10 @@ export async function createNfcBatch(formData: FormData) {
     }
   }
 
-  const { error: cardsError } = await supabase
+  const { data: insertedCards, error: cardsError } = await supabase
     .from('nfc_cards')
     .insert(cardsToInsert)
+    .select()
 
   if (cardsError) {
     // Si falla la inserción masiva, eliminar el lote huérfano
@@ -108,7 +109,15 @@ export async function createNfcBatch(formData: FormData) {
   }
 
   revalidatePath('/dashboard/admin')
-  return { success: true, batchId: batch.id, count }
+  return {
+    success: true,
+    batchId: batch.id,
+    count,
+    batch: {
+      ...batch,
+      nfc_cards: insertedCards || []
+    }
+  }
 }
 
 /**

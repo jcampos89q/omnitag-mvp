@@ -120,6 +120,16 @@ export default function AdminCreationsHub({
       setActiveTab(tabParam as any)
     }
   }, [tabParam])
+
+  const selectTab = (tab: typeof activeTab) => {
+    setActiveTab(tab)
+    setSearchTerm('')
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('tab', tab)
+      window.history.replaceState({}, '', url.toString())
+    }
+  }
   const [searchTerm, setSearchTerm] = useState('')
 
   const vcardBatches = (batches || []).filter(b => (b.batch_type || 'vcard') === 'vcard')
@@ -164,7 +174,7 @@ export default function AdminCreationsHub({
       {/* Pestañas de Navegación del Superadministrador */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-gray-200 text-xs sm:text-sm">
         <button
-          onClick={() => { setActiveTab('users'); setSearchTerm('') }}
+          onClick={() => selectTab('users')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition whitespace-nowrap cursor-pointer ${
             activeTab === 'users'
               ? 'bg-black text-white shadow-xs'
@@ -176,7 +186,7 @@ export default function AdminCreationsHub({
         </button>
 
         <button
-          onClick={() => { setActiveTab('transfers'); setSearchTerm('') }}
+          onClick={() => selectTab('transfers')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition whitespace-nowrap cursor-pointer ${
             activeTab === 'transfers'
               ? 'bg-red-600 text-white shadow-xs'
@@ -195,7 +205,7 @@ export default function AdminCreationsHub({
         </button>
 
         <button
-          onClick={() => { setActiveTab('nfc-batches'); setSearchTerm('') }}
+          onClick={() => selectTab('nfc-batches')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition whitespace-nowrap cursor-pointer ${
             activeTab === 'nfc-batches'
               ? 'bg-amber-500 text-black shadow-xs'
@@ -207,7 +217,7 @@ export default function AdminCreationsHub({
         </button>
 
         <button
-          onClick={() => { setActiveTab('review-batches'); setSearchTerm('') }}
+          onClick={() => selectTab('review-batches')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-extrabold transition whitespace-nowrap cursor-pointer ${
             activeTab === 'review-batches'
               ? 'bg-blue-600 text-white shadow-xs'
