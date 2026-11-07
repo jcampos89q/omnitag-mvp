@@ -196,12 +196,18 @@ export async function activatePlateAndRegister(formData: FormData) {
   // Si no era ya una cuenta de negocio mensual completa, asignarle rol de placa de reseñas
   const { data: currentProfile } = await supabase
     .from('users')
-    .select('account_type, hardware_type, hardware_expires_at, trial_expires_at, full_name, personal_phone')
+    .select('account_type, hardware_type, hardware_expires_at, trial_expires_at, full_name, personal_phone, industry')
     .eq('id', targetUserId)
     .maybeSingle()
 
   const finalAccountType = currentProfile?.account_type === 'business' ? 'business' : 'review_plate'
   const combinedHw = (currentProfile?.hardware_type && currentProfile.hardware_type !== 'review_plate') ? 'both' : 'review_plate'
+
+  // Si el usuario aún no tenía un giro definitivo válido, marcar 'general' para que el DashboardLayout
+  // abra el paso obligatorio de configuración de Giro Oficial al entrar
+  const existingInd = currentProfile?.industry
+  const validLockedIndustries = ['restaurant', 'beauty', 'health', 'retail', 'professional']
+  const finalIndustry = (existingInd && validLockedIndustries.includes(existingInd)) ? existingInd : 'general'
 
   // Preservar la fecha de hardware más lejana si ya tenía vigencia extendida
   let finalHwExpiry = hwExpiresAt
@@ -218,6 +224,7 @@ export async function activatePlateAndRegister(formData: FormData) {
       full_name: fullName || currentProfile?.full_name || undefined,
       personal_phone: personalPhone || currentProfile?.personal_phone || undefined,
       account_type: finalAccountType,
+      industry: finalIndustry,
       hardware_expires_at: finalHwExpiry,
       hardware_type: combinedHw,
       trial_expires_at: currentProfile?.trial_expires_at || trialExpiresAt,

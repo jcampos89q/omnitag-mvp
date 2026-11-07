@@ -36,6 +36,7 @@ interface BankTransfer {
 interface BillingClientProps {
   currentPlan: string
   userEmail: string
+  userId?: string
   transfers: BankTransfer[]
   planInfo?: UserPlanInfo
   accountType?: string
@@ -44,6 +45,7 @@ interface BillingClientProps {
 export default function BillingClient({
   currentPlan,
   userEmail,
+  userId = '',
   transfers = [],
   planInfo,
   accountType
@@ -100,6 +102,9 @@ export default function BillingClient({
   const priceUsd = priceHnl
 
   const pendingTransfer = transfers.find(t => t.status === 'pending')
+
+  const baseHotmartUrl = process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL || 'https://pay.hotmart.com/'
+  const hotmartCheckoutUrl = `${baseHotmartUrl}${baseHotmartUrl.includes('?') ? '&' : '?'}email=${encodeURIComponent(userEmail)}${userId ? `&sck=${encodeURIComponent(userId)}` : ''}`
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text)
@@ -511,13 +516,22 @@ export default function BillingClient({
                 </li>
               </ul>
             </div>
-            <div className="pt-4 border-t border-gray-100">
+            <div className="pt-4 border-t border-gray-100 space-y-2">
+              <a
+                href={hotmartCheckoutUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
+              >
+                <CreditCard className="w-4 h-4" />
+                <span>Activar Suite con Tarjeta (Hotmart)</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
               <a
                 href="#metodos-pago"
-                className="w-full bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
+                className="w-full bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-2.5 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
               >
-                <span>Sumar Suite Empresarial (L. 550/mes)</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>O pagar por Transferencia BAC (L. 550/mes)</span>
               </a>
             </div>
           </div>
@@ -641,19 +655,30 @@ export default function BillingClient({
             </ul>
           </div>
 
-          <div className="pt-4 border-t border-gray-100">
+          <div className="pt-4 border-t border-gray-100 space-y-2">
             {isPro ? (
               <span className="block text-center text-xs font-bold text-purple-700 bg-purple-50 py-2.5 rounded-xl">
                 ✓ Plan PRO Activo en tu cuenta
               </span>
             ) : (
-              <a
-                href="#metodos-pago"
-                className="w-full bg-black text-white font-extrabold py-3 px-4 rounded-xl hover:bg-gray-800 transition text-xs shadow-md flex items-center justify-center gap-1.5"
-              >
-                <span>Ver Datos para Transferir por BAC</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </a>
+              <>
+                <a
+                  href={hotmartCheckoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  <span>Suscribirme con Tarjeta vía Hotmart</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+                <a
+                  href="#metodos-pago"
+                  className="w-full bg-gray-100 text-gray-800 font-bold py-2.5 px-4 rounded-xl hover:bg-gray-200 transition text-xs flex items-center justify-center gap-1.5"
+                >
+                  <span>O pagar por Transferencia Bancaria BAC</span>
+                </a>
+              </>
             )}
           </div>
         </div>

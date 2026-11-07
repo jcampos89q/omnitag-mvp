@@ -3,21 +3,28 @@ export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import { Scissors, Sparkles, Stethoscope } from 'lucide-react'
 import AppointmentsManager from './AppointmentsManager'
 import { createOrUpdateBusiness } from './actions'
 import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import ProFeaturePaywall from '@/components/ProFeaturePaywall'
+import { isRouteAllowedForIndustry } from '@/lib/industries'
 
 export default async function AppointmentsDashboardPage() {
   const supabase = await createClient()
-  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const { user, isImpersonating, realAdmin } = await getEffectiveUser(supabase)
   const db = isImpersonating ? getAdminClient() : supabase
 
   // 1. Obtener plan
   const planInfo = await getUserPlanInfo(db, user?.id)
   const isPro = planInfo.isPro
+  const isAdmin = Boolean(planInfo.isAdmin || realAdmin)
+
+  if (!isRouteAllowedForIndustry(user?.industry, '/dashboard/appointments', isAdmin)) {
+    redirect('/dashboard')
+  }
 
   if (!planInfo.canAccessProSuite) {
     return (

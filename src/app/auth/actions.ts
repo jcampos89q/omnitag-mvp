@@ -45,9 +45,11 @@ export async function signup(formData: FormData) {
   const password = formData.get('password') as string
   const fullName = (formData.get('full_name') as string)?.trim()
   const accountType = (formData.get('account_type') as string)?.trim() || 'professional'
-  const industry = (formData.get('industry') as string)?.trim() || 'general'
+  const rawIndustry = (formData.get('industry') as string)?.trim() || 'professional'
+  const industry = rawIndustry === 'general' ? 'professional' : rawIndustry
   const professionTitle = (formData.get('profession_title') as string)?.trim() || ''
   const cardToken = (formData.get('card_token') as string)?.trim() || ''
+  const partnerId = (formData.get('partner_id') as string)?.trim() || ''
   const privacyAccepted = formData.get('privacy_accepted')
 
   if (!privacyAccepted) {
@@ -72,7 +74,10 @@ export async function signup(formData: FormData) {
         full_name: fullName,
         account_type: accountType,
         industry: industry,
+        industry_locked: true,
+        industry_changed_at: new Date().toISOString(),
         profession_title: professionTitle,
+        ...(partnerId ? { parent_reseller_id: partnerId } : {}),
       },
     },
   })

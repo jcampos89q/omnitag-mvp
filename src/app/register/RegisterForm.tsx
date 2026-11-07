@@ -36,18 +36,20 @@ const professionalIndustries = [
 
 const businessIndustries = [
   { id: 'restaurant', name: 'Restaurante, Cafetería o Bar', icon: Utensils },
-  { id: 'beauty', name: 'Salón de Belleza o Barbería', icon: Scissors },
-  { id: 'health', name: 'Clínica o Centro de Salud', icon: Stethoscope },
-  { id: 'retail', name: 'Tienda, Comercio o Retail', icon: ShoppingBag },
-  { id: 'general', name: 'Empresa de Servicios Generales', icon: Building2 },
+  { id: 'beauty', name: 'Salón de Belleza, Barbería o Spa', icon: Scissors },
+  { id: 'health', name: 'Clínica, Consultorio o Centro de Salud', icon: Stethoscope },
+  { id: 'retail', name: 'Tienda, Boutique o Comercio Retail', icon: ShoppingBag },
+  { id: 'professional', name: 'Despacho o Servicios Profesionales B2B', icon: Briefcase },
 ]
 
 export default function RegisterForm({ 
   token,
+  partnerId,
   error,
   message
 }: { 
   token?: string
+  partnerId?: string
   error?: string
   message?: string
 }) {
@@ -119,6 +121,7 @@ export default function RegisterForm({
       <form action={signup} className="space-y-4">
         {/* Token oculto si existe */}
         {token && <input type="hidden" name="card_token" value={token} />}
+        {partnerId && <input type="hidden" name="partner_id" value={partnerId} />}
 
         {step === 1 && (
           <div className="space-y-4 animate-in fade-in">

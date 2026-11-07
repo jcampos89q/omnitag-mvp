@@ -53,16 +53,21 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
     name: 'Restaurantes, Bares & Cafeterías',
     shortName: 'Gastronomía',
     category: 'business',
-    description: 'Menús con fotos y pedidos por WhatsApp, placas de reseñas en mesa y fidelización de comensales.',
+    description: 'Menús con fotos y pedidos por WhatsApp, comandas en cocina, placas de reseñas en mesa y fidelización de comensales.',
     badgeText: 'Gastronomía & Bares',
     badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
     accentColor: '#d97706',
-    tagline: 'Tu menú en cada mesa, pedidos por WhatsApp y comensales que siempre regresan.',
+    tagline: 'Tu menú en cada mesa, comandas en vivo y comensales que siempre regresan.',
     routeLabels: {
       '/dashboard/menus': {
-        name: 'Menú & Comandas WhatsApp',
-        badge: 'Mesas',
-        shortDesc: 'Carta digital con fotos, alérgenos y pedidos directos a tu WhatsApp.'
+        name: 'Menú Digital QR',
+        badge: 'Carta',
+        shortDesc: 'Carta digital con fotos, horarios de comidas y pedidos directos a mesa o WhatsApp.'
+      },
+      '/dashboard/comandas': {
+        name: 'Comandas & Cocina',
+        badge: 'En Vivo',
+        shortDesc: 'Tablero de pedidos en tiempo real, registro de ventas y tickets térmicos.'
       },
       '/dashboard/devices': {
         name: 'Reseñas en Mesas & NFC',
@@ -99,13 +104,14 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
         shortDesc: 'Atiende inconformidades de comida o servicio antes de que lleguen a Google.'
       },
       '/dashboard/leads': {
-        name: 'Base de Clientes (CRM)',
+        name: 'Base de Comensales (CRM)',
         shortDesc: 'Lista de comensales para enviar promociones de fin de semana.'
       }
     },
     priorityHrefs: [
       '/dashboard',
       '/dashboard/menus',
+      '/dashboard/comandas',
       '/dashboard/devices',
       '/dashboard/google-business',
       '/dashboard/loyalty',
@@ -257,6 +263,7 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
     ],
     hiddenHrefs: [
       '/dashboard/menus',
+      '/dashboard/comandas',
       '/dashboard/patients'
     ],
     bottomBar: [
@@ -398,6 +405,7 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
     secondaryHrefs: [],
     hiddenHrefs: [
       '/dashboard/menus',
+      '/dashboard/comandas',
       '/dashboard/ruleta'
     ],
     bottomBar: [
@@ -547,6 +555,7 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
       '/dashboard/feedback'
     ],
     hiddenHrefs: [
+      '/dashboard/comandas',
       '/dashboard/appointments',
       '/dashboard/patients'
     ],
@@ -668,6 +677,7 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
     ],
     hiddenHrefs: [
       '/dashboard/menus',
+      '/dashboard/comandas',
       '/dashboard/loyalty',
       '/dashboard/ruleta',
       '/dashboard/gift-cards',
@@ -845,17 +855,70 @@ export const INDUSTRIES: Record<IndustryId, IndustryConfig> = {
   }
 }
 
+export type SelectableIndustryId = 
+  | 'restaurant' 
+  | 'beauty' 
+  | 'health' 
+  | 'retail' 
+  | 'professional'
+
+export const SELECTABLE_INDUSTRY_IDS: SelectableIndustryId[] = [
+  'restaurant',
+  'beauty',
+  'health',
+  'retail',
+  'professional'
+]
+
 /**
- * Normaliza cualquier valor previo de industry de la base de datos hacia los 6 giros estandarizados
+ * Normaliza cualquier valor previo de industry de la base de datos hacia los 5 giros oficiales
  */
 export function normalizeIndustry(raw?: string | null): IndustryId {
-  if (!raw) return 'general'
+  if (!raw) return 'professional'
   const val = raw.toLowerCase().trim()
 
-  if (val === 'restaurant' || val === 'bar' || val === 'cafe' || val === 'food') return 'restaurant'
-  if (val === 'beauty' || val === 'salon' || val === 'spa' || val === 'barbershop') return 'beauty'
-  if (val === 'health' || val === 'clinic' || val === 'dental' || val === 'medical') return 'health'
-  if (val === 'retail' || val === 'store' || val === 'shop' || val === 'commerce') return 'retail'
+  if (
+    val === 'restaurant' || 
+    val === 'bar' || 
+    val === 'cafe' || 
+    val === 'food' || 
+    val === 'bakery' || 
+    val === 'meal_takeaway' || 
+    val === 'meal_delivery'
+  ) return 'restaurant'
+
+  if (
+    val === 'beauty' || 
+    val === 'salon' || 
+    val === 'spa' || 
+    val === 'barbershop' || 
+    val === 'hair_care' || 
+    val === 'beauty_salon'
+  ) return 'beauty'
+
+  if (
+    val === 'health' || 
+    val === 'clinic' || 
+    val === 'dental' || 
+    val === 'medical' || 
+    val === 'doctor' || 
+    val === 'dentist' || 
+    val === 'hospital' || 
+    val === 'physiotherapist' || 
+    val === 'veterinary_care'
+  ) return 'health'
+
+  if (
+    val === 'retail' || 
+    val === 'store' || 
+    val === 'shop' || 
+    val === 'commerce' || 
+    val === 'comercio' || 
+    val === 'clothing_store' || 
+    val === 'supermarket' || 
+    val === 'shopping_mall'
+  ) return 'retail'
+
   if (
     val === 'professional' || 
     val === 'legal' || 
@@ -865,12 +928,43 @@ export function normalizeIndustry(raw?: string | null): IndustryId {
     val === 'sales' || 
     val === 'tech' || 
     val === 'architecture' || 
-    val === 'consulting'
+    val === 'consulting' ||
+    val === 'other'
   ) {
     return 'professional'
   }
 
-  return 'general'
+  return 'professional'
+}
+
+/**
+ * Verifica si un usuario tiene ya un giro de negocio válido y definitivo asignado
+ */
+export function hasLockedValidIndustry(raw?: string | null): boolean {
+  if (!raw) return false
+  const v = raw.toLowerCase().trim()
+  if (v === 'general' || v === 'business' || v === 'establishment' || v === '') {
+    return false
+  }
+  return SELECTABLE_INDUSTRY_IDS.includes(normalizeIndustry(v) as SelectableIndustryId)
+}
+
+/**
+ * Verifica si una ruta del dashboard está permitida para el giro dado
+ */
+export function isRouteAllowedForIndustry(rawIndustry: string | null | undefined, routeHref: string, isAdmin = false): boolean {
+  if (isAdmin) return true
+  const config = getIndustryConfig(rawIndustry)
+  if (config.hiddenHrefs && config.hiddenHrefs.includes(routeHref)) {
+    return false
+  }
+  if (routeHref === '/dashboard/patients' && config.id !== 'health') {
+    return false
+  }
+  if (routeHref === '/dashboard/comandas' && config.id !== 'restaurant') {
+    return false
+  }
+  return true
 }
 
 /**
@@ -878,5 +972,8 @@ export function normalizeIndustry(raw?: string | null): IndustryId {
  */
 export function getIndustryConfig(rawIndustry?: string | null): IndustryConfig {
   const normalized = normalizeIndustry(rawIndustry)
-  return INDUSTRIES[normalized] || INDUSTRIES.general
+  return INDUSTRIES[normalized] || INDUSTRIES.professional
 }
+
+export const INDUSTRY_COOLDOWN_DAYS = 30
+

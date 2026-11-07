@@ -29,13 +29,15 @@ import {
   ShoppingBag,
   Stethoscope,
   ChevronDown,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Building2
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 import NotificationBell from './NotificationBell'
 import { UserPlanInfo } from '@/lib/plans'
 import IndustrySwitcher from './IndustrySwitcher'
 import { getIndustryConfig, normalizeIndustry, IndustryId } from '@/lib/industries'
+import type { WhiteLabelBrandConfig } from '@/lib/whitelabel'
 
 interface NavItem {
   name: string
@@ -70,21 +72,31 @@ export default function DashboardNavbar({
   userEmail,
   userId,
   isAdmin = false,
+  isReseller = false,
   userIndustry = 'general',
   accountType = 'professional',
-  planInfo
+  planInfo,
+  whiteLabelBrand,
+  isWhiteLabeledClient = false,
 }: { 
   userEmail?: string 
   userId?: string
   isAdmin?: boolean
+  isReseller?: boolean
   userIndustry?: string
   accountType?: string
   planInfo?: UserPlanInfo
+  whiteLabelBrand?: WhiteLabelBrandConfig
+  isWhiteLabeledClient?: boolean
 }) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const normalizedIndustry = normalizeIndustry(userIndustry)
   const industryConfig = getIndustryConfig(userIndustry)
+
+  const brandName = (!isAdmin && whiteLabelBrand?.brand_name) ? whiteLabelBrand.brand_name : 'OmniTag'
+  const brandLogo = (!isAdmin && whiteLabelBrand?.logo_url) ? whiteLabelBrand.logo_url : '/logo-light.png'
+  const externalWebUrl = isWhiteLabeledClient ? (whiteLabelBrand?.website_url || '') : '/'
 
   // Filtrado de navegación según el plan real y compra de hardware
   let filteredBaseItems: NavItem[] = []
@@ -179,6 +191,16 @@ export default function DashboardNavbar({
 
   const navItems = [
     ...filteredBaseItems,
+    ...((isReseller || isAdmin) ? [
+      { 
+        name: isAdmin ? '🏢 Distribuidores (Marca Blanca)' : '🏢 Mi Agencia (Marca Blanca)', 
+        href: '/dashboard/reseller', 
+        icon: Building2, 
+        badge: 'Partner',
+        adminOnly: true, 
+        section: 'admin' 
+      }
+    ] : []),
     ...(isAdmin ? [
       { name: '🏷️ Lotes Tarjetas NFC', href: '/dashboard/admin?tab=nfc-batches', icon: CreditCard, adminOnly: true, section: 'admin' },
       { name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true, section: 'admin' }
@@ -233,20 +255,32 @@ export default function DashboardNavbar({
       {/* 1. TOP BAR MÓVIL (Visible solo en < md) */}
       <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 px-3.5 py-2.5 flex items-center justify-between shadow-xs">
         <Link href="/dashboard" className="flex items-center gap-2 shrink-0 min-w-0">
-          <Image
-            src="/logo-light.png"
-            alt="OmniTag"
-            width={28}
-            height={28}
-            className="w-7 h-7 shrink-0 object-contain"
-            priority
-          />
-          <span className="text-lg font-black tracking-tight text-gray-900 truncate">OmniTag</span>
-          {isAdmin && (
+          {brandLogo.startsWith('/') ? (
+            <Image
+              src={brandLogo}
+              alt={brandName}
+              width={28}
+              height={28}
+              className="w-7 h-7 shrink-0 object-contain"
+              priority
+            />
+          ) : (
+            <img
+              src={brandLogo}
+              alt={brandName}
+              className="w-7 h-7 shrink-0 object-contain rounded"
+            />
+          )}
+          <span className="text-lg font-black tracking-tight text-gray-900 truncate">{brandName}</span>
+          {isAdmin ? (
             <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded-sm shrink-0">
               ADMIN
             </span>
-          )}
+          ) : isReseller ? (
+            <span className="text-[9px] bg-indigo-100 text-indigo-800 font-extrabold px-1.5 py-0.5 rounded-sm shrink-0">
+              PARTNER
+            </span>
+          ) : null}
         </Link>
 
         <div className="flex items-center gap-1.5 shrink-0">
@@ -279,14 +313,22 @@ export default function DashboardNavbar({
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl p-5 z-10 animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
               <div className="flex items-center gap-2">
-                <Image
-                  src="/logo-light.png"
-                  alt="OmniTag"
-                  width={28}
-                  height={28}
-                  className="w-7 h-7 object-contain"
-                />
-                <span className="text-lg font-bold tracking-tight text-gray-900">Menú Principal</span>
+                {brandLogo.startsWith('/') ? (
+                  <Image
+                    src={brandLogo}
+                    alt={brandName}
+                    width={28}
+                    height={28}
+                    className="w-7 h-7 object-contain"
+                  />
+                ) : (
+                  <img
+                    src={brandLogo}
+                    alt={brandName}
+                    className="w-7 h-7 object-contain rounded"
+                  />
+                )}
+                <span className="text-lg font-bold tracking-tight text-gray-900 truncate">{brandName}</span>
               </div>
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -391,25 +433,35 @@ export default function DashboardNavbar({
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 shrink-0 min-h-screen sticky top-0 h-screen">
         <div className="px-4 py-3.5 pb-3 flex items-center justify-between border-b border-gray-100">
           <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
-            <Image
-              src="/logo-light.png"
-              alt="OmniTag"
-              width={32}
-              height={32}
-              className="w-8 h-8 shrink-0 object-contain"
-              priority
-            />
-            <span className="text-xl font-black tracking-tight text-gray-900 truncate">OmniTag</span>
+            {brandLogo.startsWith('/') ? (
+              <Image
+                src={brandLogo}
+                alt={brandName}
+                width={32}
+                height={32}
+                className="w-8 h-8 shrink-0 object-contain"
+                priority
+              />
+            ) : (
+              <img
+                src={brandLogo}
+                alt={brandName}
+                className="w-8 h-8 shrink-0 object-contain rounded"
+              />
+            )}
+            <span className="text-xl font-black tracking-tight text-gray-900 truncate">{brandName}</span>
           </Link>
 
           <div className="flex items-center gap-1 shrink-0">
-            <Link
-              href="/"
-              className="p-1.5 text-gray-500 hover:text-black rounded-lg hover:bg-gray-100 transition cursor-pointer"
-              title="Ver Página Principal (Web)"
-            >
-              <Globe className="w-4 h-4" />
-            </Link>
+            {externalWebUrl && (
+              <Link
+                href={externalWebUrl}
+                className="p-1.5 text-gray-500 hover:text-black rounded-lg hover:bg-gray-100 transition cursor-pointer"
+                title="Ver Página Principal (Web)"
+              >
+                <Globe className="w-4 h-4" />
+              </Link>
+            )}
             <NotificationBell userId={userId} position="sidebar" />
           </div>
         </div>
@@ -482,17 +534,19 @@ export default function DashboardNavbar({
         </nav>
 
         <div className="p-3.5 border-t border-gray-200 mt-auto space-y-1">
-          <Link
-            href="/"
-            className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-bold text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition"
-            title="Ver la página de inicio principal de OmniTag"
-          >
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-purple-600" />
-              <span>Página Principal (Web)</span>
-            </div>
-            <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
-          </Link>
+          {externalWebUrl && (
+            <Link
+              href={externalWebUrl}
+              className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-bold text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition"
+              title={`Ver la página de inicio de ${brandName}`}
+            >
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-purple-600" />
+                <span>Página Principal (Web)</span>
+              </div>
+              <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+            </Link>
+          )}
 
           <form action={logout}>
             <button 

@@ -6,6 +6,7 @@ import WheelManagerClient from './WheelManagerClient'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { getUserPlanInfo } from '@/lib/plans'
 import ProFeaturePaywall from '@/components/ProFeaturePaywall'
+import { isRouteAllowedForIndustry } from '@/lib/industries'
 
 export const metadata = {
   title: 'Ruleta de Premios & Gamificación | Dashboard OmniTag',
@@ -14,11 +15,16 @@ export const metadata = {
 
 export default async function DashboardRuletaPage() {
   const supabase = await createClient()
-  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const { user, isImpersonating, realAdmin } = await getEffectiveUser(supabase)
   if (!user) redirect('/login')
   const db = isImpersonating ? getAdminClient() : supabase
 
   const planInfo = await getUserPlanInfo(db, user.id)
+  const isAdmin = Boolean(planInfo.isAdmin || realAdmin)
+
+  if (!isRouteAllowedForIndustry(user.industry, '/dashboard/ruleta', isAdmin)) {
+    redirect('/dashboard')
+  }
   if (!planInfo.canAccessProSuite && !isImpersonating) {
     return (
       <ProFeaturePaywall 

@@ -3,6 +3,7 @@ export const revalidate = 0
 
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import { createMenu } from './actions'
 import { Coffee, Scissors, Stethoscope, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
@@ -11,6 +12,7 @@ import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
+import { isRouteAllowedForIndustry } from '@/lib/industries'
 
 export default async function MenusPage({
   searchParams,
@@ -18,13 +20,18 @@ export default async function MenusPage({
   searchParams?: Promise<{ success?: string; error?: string }>
 }) {
   const supabase = await createClient()
-  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const { user, isImpersonating, realAdmin } = await getEffectiveUser(supabase)
   const db = isImpersonating ? getAdminClient() : supabase
   const params = searchParams ? await searchParams : {}
 
   // 1. Obtener estado del plan
   const planInfo = await getUserPlanInfo(db, user?.id)
   const isPro = planInfo.isPro
+  const isAdmin = Boolean(planInfo.isAdmin || realAdmin)
+
+  if (!isRouteAllowedForIndustry(user?.industry, '/dashboard/menus', isAdmin)) {
+    redirect('/dashboard')
+  }
 
   if (!planInfo.canAccessProSuite) {
     return (

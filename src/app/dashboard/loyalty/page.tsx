@@ -1,18 +1,25 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import { Gift, Sparkles, ShieldCheck } from 'lucide-react'
 import { createLoyaltyProgram } from './actions'
 import LoyaltyManager from './LoyaltyManager'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { getUserPlanInfo } from '@/lib/plans'
 import ProFeaturePaywall from '@/components/ProFeaturePaywall'
+import { isRouteAllowedForIndustry } from '@/lib/industries'
 
 export default async function LoyaltyPage() {
   const supabase = await createClient()
-  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const { user, isImpersonating, realAdmin } = await getEffectiveUser(supabase)
   const db = isImpersonating ? getAdminClient() : supabase
 
   const planInfo = await getUserPlanInfo(db, user?.id)
+  const isAdmin = Boolean(planInfo.isAdmin || realAdmin)
+
+  if (!isRouteAllowedForIndustry(user?.industry, '/dashboard/loyalty', isAdmin)) {
+    redirect('/dashboard')
+  }
   if (!planInfo.canAccessProSuite) {
     return (
       <ProFeaturePaywall 

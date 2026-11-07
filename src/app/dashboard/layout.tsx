@@ -8,6 +8,9 @@ import { headers } from 'next/headers'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { getUserPlanInfo } from '@/lib/plans'
 import AccountLockedPaywall from '@/components/AccountLockedPaywall'
+import IndustryOnboardingGate from '@/components/IndustryOnboardingGate'
+import { hasLockedValidIndustry, normalizeIndustry, SelectableIndustryId } from '@/lib/industries'
+import { resolveUserWhiteLabel } from '@/lib/whitelabel'
 
 export default async function DashboardLayout({
   children,
@@ -27,8 +30,11 @@ export default async function DashboardLayout({
 
   const realIsAdmin = Boolean(realProfile?.is_admin)
 
-  // Obtener estado del plan del usuario efectivo
-  const planInfo = await getUserPlanInfo(supabase, effectiveUser?.id)
+  // Obtener estado del plan del usuario efectivo y su configuración de Marca Blanca / Distribuidor
+  const [planInfo, whiteLabelInfo] = await Promise.all([
+    getUserPlanInfo(supabase, effectiveUser?.id),
+    resolveUserWhiteLabel(effectiveUser?.id, realIsAdmin && !isImpersonating)
+  ])
 
   // Detectar si está en la página de facturación para permitirle pagar
   const headersList = await headers()
@@ -40,6 +46,14 @@ export default async function DashboardLayout({
   // 2. NO es Administrador
   // 3. NO es una sesión de soporte técnico donde el Admin está inspeccionando
   const isAccountLocked = Boolean(planInfo.isExpired) && !realIsAdmin && !isImpersonating
+
+  // Si la cuenta no tiene aún un giro válido configurado (ej. vino con 'general', 'establishment' o vacío),
+  // exigir la configuración obligatoria del giro antes de mostrar el panel
+  const needsIndustryOnboarding = Boolean(
+    effectiveUser && 
+    !realIsAdmin && 
+    !hasLockedValidIndustry(effectiveUser.industry)
+  )
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
@@ -57,9 +71,12 @@ export default async function DashboardLayout({
           userEmail={effectiveUser?.email || undefined} 
           userId={effectiveUser?.id || undefined} 
           isAdmin={realIsAdmin && !isImpersonating} 
-          userIndustry={effectiveUser?.industry || 'general'} 
+          isReseller={whiteLabelInfo.isReseller}
+          userIndustry={effectiveUser?.industry || 'professional'} 
           accountType={effectiveUser?.account_type || 'professional'}
           planInfo={planInfo}
+          whiteLabelBrand={whiteLabelInfo.activeBrand}
+          isWhiteLabeledClient={whiteLabelInfo.isWhiteLabeledClient}
         />
 
         {/* Contenido Principal */}
@@ -71,8 +88,14 @@ export default async function DashboardLayout({
             {/* Banner de Activación de Notificaciones Push Flotantes */}
             <PushNotificationPrompt userId={effectiveUser?.id} />
 
-            {/* Si la cuenta está vencida y no está en Facturación, mostrar pantalla de bloqueo */}
-            {isAccountLocked && !isBillingRoute ? (
+            {/* 1. Si no ha configurado su giro de negocio oficial, mostrar Onboarding Obligatorio */}
+            {needsIndustryOnboarding ? (
+              <IndustryOnboardingGate 
+                userEmail={effectiveUser?.email || ''} 
+                suggestedIndustry={normalizeIndustry(effectiveUser?.industry) as SelectableIndustryId}
+              />
+            ) : isAccountLocked && !isBillingRoute ? (
+              /* 2. Si la cuenta está vencida y no está en Facturación, mostrar pantalla de bloqueo */
               <AccountLockedPaywall 
                 userEmail={effectiveUser?.email || ''} 
                 expiresAt={planInfo.expiresAt} 

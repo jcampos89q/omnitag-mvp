@@ -1,16 +1,23 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { redirect } from 'next/navigation'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { getUserPlanInfo } from '@/lib/plans'
 import ProFeaturePaywall from '@/components/ProFeaturePaywall'
 import GiftCardsManager from './GiftCardsManager'
+import { isRouteAllowedForIndustry } from '@/lib/industries'
 
 export default async function GiftCardsPage() {
   const supabase = await createClient()
-  const { user, isImpersonating } = await getEffectiveUser(supabase)
+  const { user, isImpersonating, realAdmin } = await getEffectiveUser(supabase)
   const db = isImpersonating ? getAdminClient() : supabase
 
   const planInfo = await getUserPlanInfo(db, user?.id)
+  const isAdmin = Boolean(planInfo.isAdmin || realAdmin)
+
+  if (!isRouteAllowedForIndustry(user?.industry, '/dashboard/gift-cards', isAdmin)) {
+    redirect('/dashboard')
+  }
   if (!planInfo.canAccessProSuite) {
     return (
       <ProFeaturePaywall 
