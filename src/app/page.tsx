@@ -51,16 +51,16 @@ export default function LandingPage() {
       {/* 0. CINTILLO SUPERIOR DE OFERTA */}
       <div className="bg-gradient-to-r from-purple-800 via-indigo-700 to-emerald-700 text-white py-2 px-4 text-center text-xs font-bold flex items-center justify-center gap-2 shadow-xs">
         <span className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0">
-          PROMO DE BIENVENIDA
+          SAAS & HARDWARE NFC
         </span>
         <span className="truncate sm:overflow-visible sm:whitespace-normal">
-          🎁 <b>10 Días de Prueba Gratis PRO</b> (Sin tarjeta) • <b>50% OFF (L. 275 / $10)</b> en tu primer mes con todas las herramientas ilimitadas.
+          🚀 <b>50% OFF (L. 275 / $10)</b> en tu primer mes PRO • O adquiere tu <b>Licencia de Agencia Marca Blanca</b> para revender el sistema.
         </span>
         <Link 
-          href="/register" 
+          href="/agencias" 
           className="hidden sm:inline-flex items-center gap-1 underline font-black text-yellow-300 hover:text-white transition ml-1 shrink-0"
         >
-          <span>Activar cuenta gratis</span>
+          <span>Ver Licencia Marca Blanca</span>
           <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
@@ -79,7 +79,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black tracking-wide shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600 fill-current animate-pulse" />
-              <span>PLATAFORMA TODO-EN-UNO PARA NEGOCIOS FÍSICOS • 10 DÍAS GRATIS</span>
+              <span>PLATAFORMA TODO-EN-UNO PARA NEGOCIOS FÍSICOS Y AGENCIAS</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-gray-950 leading-[1.08]">
@@ -95,37 +95,38 @@ export default function LandingPage() {
 
             {/* Botones de Acción */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-xl mx-auto">
-              <Link 
-                href="/register" 
+              <a 
+                href="#precios" 
                 className="w-full sm:w-auto bg-black text-white px-8 py-4 rounded-2xl font-black text-sm sm:text-base hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl cursor-pointer"
               >
-                <span>Comenzar 10 Días Gratis PRO</span>
+                <span>Ver Planes y Suscripciones</span>
                 <ArrowRight className="w-4 h-4" />
+              </a>
+              <Link 
+                href="/agencias" 
+                className="w-full sm:w-auto bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 px-6 py-4 rounded-2xl font-black text-sm sm:text-base transition flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-purple-700" />
+                <span>SaaS Marca Blanca</span>
               </Link>
               <Link 
                 href="/tienda" 
-                className="w-full sm:w-auto bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 px-6 py-4 rounded-2xl font-black text-sm sm:text-base transition flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 px-5 py-4 rounded-2xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2"
               >
                 <CreditCard className="w-4 h-4 text-emerald-700" />
-                <span>Tienda NFC & Placas</span>
+                <span>Tienda NFC</span>
               </Link>
-              <a 
-                href="#precios" 
-                className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-800 px-5 py-4 rounded-2xl font-bold text-sm sm:text-base transition text-center"
-              >
-                Ver Precios
-              </a>
             </div>
 
             {/* Badges de Garantía y Beneficios */}
             <div className="pt-1 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 text-xs font-semibold text-gray-600">
               <span className="flex items-center gap-1.5 text-emerald-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                <b>10 días</b> de prueba con todo desbloqueado
+                <b>Activación inmediata</b> tras tu compra en Hotmart
               </span>
               <span className="flex items-center gap-1.5 text-gray-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                Sin tarjeta de crédito requerida
+                Herramientas especializadas según tu giro
               </span>
               <span className="flex items-center gap-1.5 text-purple-700 font-bold bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
                 <Tag className="w-3.5 h-3.5 text-purple-600" />
@@ -222,13 +223,13 @@ export default function LandingPage() {
               </div>
 
               <div className="pt-6 mt-6 border-t border-gray-100">
-                <Link
-                  href="/register"
+                <a
+                  href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-900 hover:text-amber-700 transition"
                 >
                   <span>Crear menú para mi restaurante</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -275,13 +276,13 @@ export default function LandingPage() {
               </div>
 
               <div className="pt-6 mt-6 border-t border-gray-100">
-                <Link
-                  href="/register"
+                <a
+                  href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-900 hover:text-amber-700 transition"
                 >
                   <span>Activar ruleta y raspables en mis mesas</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -327,13 +328,13 @@ export default function LandingPage() {
               </div>
 
               <div className="pt-6 mt-6 border-t border-gray-100">
-                <Link
-                  href="/register"
+                <a
+                  href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-900 hover:text-purple-700 transition"
                 >
                   <span>Emitir gift cards para mi negocio</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -379,13 +380,13 @@ export default function LandingPage() {
               </div>
 
               <div className="pt-6 mt-6 border-t border-gray-100">
-                <Link
-                  href="/register"
+                <a
+                  href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-900 hover:text-purple-700 transition"
                 >
                   <span>Activar agenda para mi salón</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -431,13 +432,13 @@ export default function LandingPage() {
               </div>
 
               <div className="pt-6 mt-6 border-t border-gray-100">
-                <Link
-                  href="/register"
+                <a
+                  href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-yellow-950 hover:text-yellow-700 transition"
                 >
                   <span>Blindar mi reputación en Google</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -483,13 +484,13 @@ export default function LandingPage() {
               </div>
 
               <div className="pt-6 mt-6 border-t border-gray-100">
-                <Link
-                  href="/register"
+                <a
+                  href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-900 hover:text-emerald-700 transition"
                 >
                   <span>Crear mi club de sellos digital</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -535,13 +536,13 @@ export default function LandingPage() {
               </div>
 
               <div className="pt-6 mt-6 border-t border-gray-100">
-                <Link
-                  href="/register"
+                <a
+                  href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-blue-900 hover:text-blue-700 transition"
                 >
                   <span>Diseñar mi vCard profesional</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -587,13 +588,13 @@ export default function LandingPage() {
               </div>
 
               <div className="pt-6 mt-6 border-t border-gray-100">
-                <Link
-                  href="/register"
+                <a
+                  href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-pink-900 hover:text-pink-700 transition"
                 >
                   <span>Generar QRs exclusivos</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </Link>
+                </a>
               </div>
             </div>
           </div>
@@ -715,60 +716,56 @@ export default function LandingPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-              {/* PLAN 1: PRUEBA PRO GRATIS */}
+              {/* PLAN 1: LICENCIA SAAS MARCA BLANCA / AGENCIA */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs flex flex-col justify-between">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-wider text-gray-500">Prueba Inicial</span>
-                    <span className="text-[10px] font-black bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                      Sin Tarjeta
+                    <span className="text-xs font-black uppercase tracking-wider text-purple-700">Para Agencias</span>
+                    <span className="text-[10px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                      Marca Blanca
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-2xl font-black text-gray-900">10 Días Gratis PRO</h3>
-                    <p className="text-xs text-gray-500 mt-1">Prueba todas las funcionalidades sin pagar un solo centavo.</p>
+                    <h3 className="text-2xl font-black text-gray-900">Licencia Distribuidor</h3>
+                    <p className="text-xs text-gray-500 mt-1">Revende nuestra plataforma bajo tu propio logo, marca y precios.</p>
                   </div>
 
                   <div className="pt-2">
-                    <span className="text-4xl font-black text-gray-900">L. 0</span>
-                    <span className="text-xs text-gray-500 ml-1">por 10 días</span>
+                    <span className="text-4xl font-black text-gray-900">$99</span>
+                    <span className="text-xs text-gray-500 ml-1">USD / mes</span>
                   </div>
 
                   <div className="pt-4 space-y-2.5 border-t border-gray-100 text-xs text-gray-700">
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Acceso total a todos los módulos PRO</span>
+                      <span><b>Hasta 25 sub-cuentas</b> de clientes activas</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Menús QR con turnos activos y comandas</span>
+                      <span><b>Tu propio Logo y Nombre</b> en todo el panel</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Ruleta de Premios & Raspa y Gana en mesa</span>
+                      <span><b>Conecta tu pasarela</b> y cobra el 100% directo</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Módulo de Gift Cards digitales</span>
+                      <span><b>Los 5 giros verticales</b> listos para vender</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Agendas con especialistas para salones</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Escudo de reseñas de Google Maps</span>
+                      <span><b>Sin rastro de OmniTag</b> para tus sub-clientes</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-8">
                   <Link
-                    href="/register"
+                    href="/agencias"
                     className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-black py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition"
                   >
-                    <span>Comenzar Prueba Gratis</span>
+                    <span>Ver Licencia Marca Blanca</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -836,13 +833,13 @@ export default function LandingPage() {
                 </div>
 
                 <div className="pt-8">
-                  <Link
-                    href="/register"
+                  <a
+                    href="https://pay.hotmart.com/F108380682J?checkoutMode=2"
                     className="w-full bg-black hover:bg-gray-800 text-white font-black py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md"
                   >
-                    <span>Activar Plan con 50% de Descuento</span>
+                    <span>Adquirir Membresía Ahora</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+                  </a>
                 </div>
               </div>
 
@@ -928,28 +925,28 @@ export default function LandingPage() {
 
             <div className="relative space-y-3">
               <span className="text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30 shadow-xs">
-                10 DÍAS GRATIS PRO • SIN TARJETA
+                SUSCRIPCIONES Y MARCA BLANCA
               </span>
               <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
                 Empieza a digitalizar tu negocio hoy mismo
               </h2>
               <p className="text-xs sm:text-base text-gray-300 max-w-lg mx-auto font-medium leading-relaxed">
-                Crea tu cuenta gratis en 60 segundos y prueba el menú con turnos activos, la ruleta y raspables en mesa, gift cards, agendas para citas y escudo de reseñas. Tienes <b>50% de descuento (L. 275)</b> en tu primer mes.
+                Adquiere tu membresía o tu Licencia de Agencia Marca Blanca y activa en segundos el menú con turnos activos, la ruleta en mesa, gift cards, agendas de citas y escudo de reseñas.
               </p>
             </div>
 
             <div className="relative pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link 
-                href="/register" 
+                href="/agencias" 
                 className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-black px-8 py-4 rounded-2xl text-sm sm:text-base transition shadow-xl cursor-pointer"
               >
-                Comenzar 10 Días de Prueba Gratis
+                Ver Licencia Marca Blanca
               </Link>
               <Link 
-                href="/login" 
-                className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-bold px-6 py-4 rounded-2xl text-sm sm:text-base transition"
+                href="/activar-compra" 
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-4 rounded-2xl text-sm sm:text-base transition"
               >
-                Ya tengo una cuenta
+                Activar mi Compra Hotmart
               </Link>
             </div>
           </div>

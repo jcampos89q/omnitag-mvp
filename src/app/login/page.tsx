@@ -108,12 +108,24 @@ export default async function LoginPage({
           </div>
         </form>
 
-        <p className="text-center text-sm text-gray-600">
-          ¿No tienes una cuenta?{' '}
-          <Link href="/register" className="font-bold text-black hover:underline">
-            Regístrate aquí
-          </Link>
-        </p>
+        <div className="text-center text-xs sm:text-sm text-gray-600 space-y-1.5">
+          <p>
+            ¿Ya realizaste tu pago en Hotmart?{' '}
+            <Link href="/activar-compra" className="font-extrabold text-purple-700 hover:underline">
+              Activa tu acceso aquí
+            </Link>
+          </p>
+          <p className="text-xs text-gray-500">
+            ¿Aún no tienes licencia?{' '}
+            <Link href="/agencias" className="font-bold text-black hover:underline">
+              Ver Licencias Marca Blanca
+            </Link>{' '}
+            o{' '}
+            <Link href="/tienda" className="font-bold text-emerald-700 hover:underline">
+              Activar Tarjeta NFC
+            </Link>
+          </p>
+        </div>
 
         <div className="pt-4 border-t border-gray-100 text-center">
           <Link 

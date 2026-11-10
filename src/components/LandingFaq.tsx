@@ -44,14 +44,14 @@ export default function LandingFaq() {
       badge: 'Google Reviews'
     },
     {
-      q: '¿Qué incluye la prueba de 10 días y necesito tarjeta de crédito?',
-      a: 'Tienes 10 días completos con todas las herramientas PRO desbloqueadas: Menús con turnos y comandas por mesa, Ruleta & Raspables interactivos, Gift Cards, agendas de citas, escudo de reseñas Google, club de sellos, vCards y generador QR dinámico. No solicitamos ninguna tarjeta de crédito para registrarte.',
-      badge: '100% Gratis'
+      q: '¿Cómo activo mi cuenta tras comprar mi suscripción o licencia en Hotmart?',
+      a: 'En el mismo instante en que completas tu pago en Hotmart, nuestro sistema crea y activa tu licencia automáticamente. Solo entras a la página de activación (/activar-compra), ingresas el correo con el que pagaste en Hotmart, eliges tu contraseña y entras directo a tu panel PRO o a tu Consola de Agencia Marca Blanca.',
+      badge: 'Activación Inmediata'
     },
     {
-      q: '¿Cómo funciona el precio y la promoción del 50% de descuento?',
-      a: 'Si durante tus 10 días de prueba decides activar tu membresía, tu primer mes te queda con un 50% de descuento a solo L. 275 HNL ($10 USD). La tarifa regular mensual es de L. 550 HNL ($20 USD) sin contratos forzosos. Y si adquieres una Placa o Tarjeta física NFC por L. 1,200, ¡incluye 1 año completo PRO de cortesía!',
-      badge: 'Precios Claros'
+      q: '¿Cómo funciona la Licencia de Agencia SaaS Marca Blanca?',
+      a: 'Con nuestra Licencia de Distribuidor Marca Blanca puedes subir tu propio Logo, poner el Nombre de tu Agencia y conectar tu propia pasarela de pagos. Tus sub-clientes verán únicamente tu marca en todo el sistema y tú conservarás el 100% de lo que les cobres mensual o anualmente.',
+      badge: 'Marca Blanca'
     }
   ]
 

@@ -78,10 +78,10 @@ export default function LandingNavbar() {
             Iniciar Sesión
           </Link>
           <Link 
-            href="/register" 
+            href="/activar-compra" 
             className="bg-black text-white text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-extrabold hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5"
           >
-            <span>10 Días Gratis</span>
+            <span>Activar Compra</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
 

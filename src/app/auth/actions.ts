@@ -66,6 +66,25 @@ export async function signup(formData: FormData) {
     redirect(errorUrl + encodeURIComponent('Por favor completa todos los campos requeridos.'))
   }
 
+  // Bloquear registro gratuito sin token NFC físico ni invitación de Agencia Partner
+  if (!cardToken && !partnerId) {
+    redirect('/register?error=' + encodeURIComponent('El registro directo requiere una compra activa en Hotmart o un código de tarjeta NFC física.'))
+  }
+
+  // Si envió un token NFC, verificar antes de crear la cuenta que el token exista y no haya sido reclamado
+  if (cardToken) {
+    const { data: validCard } = await supabase
+      .from('nfc_cards')
+      .select('id')
+      .eq('card_token', cardToken)
+      .eq('status', 'unclaimed')
+      .maybeSingle()
+
+    if (!validCard) {
+      redirect('/register?error=' + encodeURIComponent('El código de tarjeta NFC ingresado no es válido o ya fue utilizado anteriormente.'))
+    }
+  }
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -140,20 +159,21 @@ export async function signup(formData: FormData) {
     } catch (nfcErr) {
       console.error('Error vinculando tarjeta NFC en registro:', nfcErr)
     }
-  } else if (data?.user && !cardToken) {
+  } else if (data?.user && partnerId) {
     try {
-      const trialExpiresAt = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString()
+      // Sub-cliente registrado por enlace de Agencia Partner: inicia con 14 días gestionados por su Agencia
+      const partnerTrialExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
       await supabase
         .from('users')
         .update({
-          subscription_expires_at: trialExpiresAt,
+          subscription_expires_at: partnerTrialExpiresAt,
           account_type: accountType,
           industry: industry,
           profession_title: professionTitle
         })
         .eq('id', data.user.id)
-    } catch (trialErr) {
-      console.error('Error configurando prueba de 10 días en registro:', trialErr)
+    } catch (partnerErr) {
+      console.error('Error configurando sub-cliente de partner en registro:', partnerErr)
     }
   }
 

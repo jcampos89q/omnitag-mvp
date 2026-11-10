@@ -190,18 +190,8 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     ? Math.max(1, Math.ceil((latestHardwareExpires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
     : 0
 
-  // 4. Cálculo de Prueba PRO (10 días para registro web o 30 días para hardware)
+  // 4. Cálculo de Cortesía PRO (exclusivo para quienes activan hardware físico o tienen fecha explícita en trial_expires_at)
   let trialEndDate: Date | null = profile?.trial_expires_at ? new Date(profile.trial_expires_at) : null
-
-  // Si no tiene hardware pero subscription_expires_at está en el futuro y la cuenta es nueva, es su prueba de 10 días
-  if (!trialEndDate && profile?.subscription_expires_at && !isHardwareActive) {
-    const subDate = new Date(profile.subscription_expires_at)
-    const createdAt = profile.created_at ? new Date(profile.created_at).getTime() : 0
-    const ageInDays = (now.getTime() - createdAt) / (1000 * 60 * 60 * 24)
-    if (ageInDays <= 20) {
-      trialEndDate = subDate
-    }
-  }
 
   // El mes de cortesía para quienes tienen hardware físico activo
   if (!trialEndDate && isHardwareActive) {
