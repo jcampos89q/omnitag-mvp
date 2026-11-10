@@ -66,7 +66,7 @@ export default async function AgenciasWhiteLabelPage({
     defaultCountryCheckout
   )
 
-  const affiliateSignupUrl = process.env.NEXT_PUBLIC_HOTMART_AFFILIATE_URL || defaultAgencyCheckout
+  const affiliateSignupUrl = process.env.NEXT_PUBLIC_HOTMART_AFFILIATE_URL || 'https://affiliate.hotmart.com/affiliate-recruiting/view/2575S108380703'
 
   const industries = [
     { name: 'Restaurantes & Bares', emoji: '🍽️', desc: 'Menús con turno activo, Ruleta o Raspa y Gana en mesa, y comandas a WhatsApp.' },
@@ -581,36 +581,73 @@ export default async function AgenciasWhiteLabelPage({
           </div>
         </section>
 
-        {/* 5. PROGRAMA DE AFILIADOS HOTMART (CTA BANNER ESTILO OMNITAG) */}
+        {/* 5. PROGRAMA DE AFILIADOS HOTMART (FLUJO Y RECLUTAMIENTO OFICIAL) */}
         <section id="afiliados" className="py-16 sm:py-20 px-4 sm:px-6">
-          <div className="max-w-5xl mx-auto bg-gradient-to-br from-gray-950 via-slate-900 to-black text-white p-8 sm:p-14 rounded-3xl shadow-2xl text-center space-y-6 relative overflow-hidden">
+          <div className="max-w-5xl mx-auto bg-gradient-to-br from-gray-950 via-slate-900 to-black text-white p-8 sm:p-14 rounded-3xl shadow-2xl space-y-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-52 h-52 bg-purple-600/30 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-52 h-52 bg-emerald-600/20 rounded-full blur-3xl" />
 
-            <div className="relative space-y-3">
+            <div className="relative text-center space-y-3">
               <span className="text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30 shadow-xs">
                 PROGRAMA OFICIAL DE AFILIADOS EN HOTMART
               </span>
               <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-                ¿Prefieres ganar comisiones recomendando la plataforma?
+                ¿Prefieres ganar comisiones recomendando el SaaS?
               </h2>
               <p className="text-xs sm:text-base text-gray-300 max-w-2xl mx-auto font-medium leading-relaxed">
-                También puedes afiliarte a nuestro producto en <b>Hotmart</b>, compartir tu enlace de afiliado y recibir comisiones recurrentes automáticas directo en tu cuenta de Hotmart por cada Agencia o Negocio que se suscriba.
+                Si eres creador de contenido, trafficker o vendedor digital y quieres ganar comisiones recurrentes sin administrar clientes, únete gratis a nuestro Programa de Afiliados en Hotmart:
               </p>
+            </div>
+
+            {/* Los 3 pasos del Afiliado */}
+            <div className="relative grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-2">
+                <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                  Paso 1 • 1 Clic
+                </span>
+                <h3 className="text-base font-extrabold text-white">Afíliate Gratis en Hotmart</h3>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Haz clic en el botón de abajo para abrir la invitación oficial de Hotmart y activar tu afiliación con un clic.
+                </p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-2">
+                <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300">
+                  Paso 2 • Tus HotLinks
+                </span>
+                <h3 className="text-base font-extrabold text-white">Copia tus Links de Divulgación</h3>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Hotmart te entregará automáticamente tus enlaces únicos con tu código de rastreo para los 3 planes ($49, $99 y $199).
+                </p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-2">
+                <span className="inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                  Paso 3 • Pago Automático
+                </span>
+                <h3 className="text-base font-extrabold text-white">Cobra Comisiones en Dólares</h3>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Por cada agencia que se suscriba con tu link, Hotmart separa y deposita tu comisión automáticamente en tu saldo de Hotmart.
+                </p>
+              </div>
             </div>
 
             <div className="relative pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
-                href={agencyHotmartUrl}
-                className="hotmart-fb hotmart__button-checkout w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-black px-8 py-4 rounded-2xl text-sm sm:text-base transition shadow-xl cursor-pointer"
+                href={affiliateSignupUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-8 py-4 rounded-2xl text-sm sm:text-base transition shadow-xl flex items-center justify-center gap-2 cursor-pointer"
               >
-                Comprar Mi Licencia Marca Blanca
+                <TrendingUp className="w-5 h-5" />
+                <span>Unirme como Afiliado en Hotmart (Gratis)</span>
+                <ArrowRight className="w-4 h-4" />
               </a>
               <Link
                 href="/activar-compra"
-                className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-bold px-6 py-4 rounded-2xl text-sm sm:text-base transition"
+                className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-bold px-6 py-4 rounded-2xl text-sm sm:text-base transition text-center"
               >
-                Ya compré en Hotmart • Activar Cuenta
+                Ya compré mi Licencia • Activar Cuenta
               </Link>
             </div>
           </div>
