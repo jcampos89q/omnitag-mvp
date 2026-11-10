@@ -58,6 +58,10 @@ export default function LandingNavbar() {
             <CreditCard className="w-3.5 h-3.5" />
             <span>Tienda NFC</span>
           </Link>
+          <Link href="/agencias" className="text-purple-700 hover:text-purple-950 transition flex items-center gap-1 font-extrabold bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+            <span>Marca Blanca</span>
+          </Link>
           <a href="#precios" className="text-gray-900 hover:text-purple-900 transition flex items-center gap-1 font-extrabold">
             <Tag className="w-3.5 h-3.5 text-purple-600" />
             <span>Precios</span>
