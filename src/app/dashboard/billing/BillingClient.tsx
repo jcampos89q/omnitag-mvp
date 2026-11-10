@@ -103,7 +103,7 @@ export default function BillingClient({
 
   const pendingTransfer = transfers.find(t => t.status === 'pending')
 
-  const baseHotmartUrl = process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL || 'https://pay.hotmart.com/'
+  const baseHotmartUrl = process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL || 'https://pay.hotmart.com/F108380682J?checkoutMode=2'
   const hotmartCheckoutUrl = `${baseHotmartUrl}${baseHotmartUrl.includes('?') ? '&' : '?'}email=${encodeURIComponent(userEmail)}${userId ? `&sck=${encodeURIComponent(userId)}` : ''}`
 
   const copyToClipboard = (text: string, field: string) => {

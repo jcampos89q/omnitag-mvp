@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import Script from 'next/script'
 import {
   Building2,
   Check,
@@ -39,30 +40,32 @@ export default async function AgenciasWhiteLabelPage({
     return `${baseUrl}${sep}ref=${encodeURIComponent(affiliateParam)}&src=${encodeURIComponent(affiliateParam)}`
   }
 
+  const defaultHotmartCheckout = 'https://pay.hotmart.com/F108380682J?checkoutMode=2'
+
   const starterHotmartUrl = appendAffiliateParams(
     process.env.NEXT_PUBLIC_HOTMART_RESELLER_STARTER_URL ||
     process.env.NEXT_PUBLIC_HOTMART_RESELLER_URL ||
-    process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL ||
-    '/register'
+    defaultHotmartCheckout
   )
 
   const agencyHotmartUrl = appendAffiliateParams(
     process.env.NEXT_PUBLIC_HOTMART_RESELLER_URL ||
-    process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL ||
-    '/register'
+    defaultHotmartCheckout
   )
 
   const enterpriseHotmartUrl = appendAffiliateParams(
     process.env.NEXT_PUBLIC_HOTMART_RESELLER_PRO_URL ||
     process.env.NEXT_PUBLIC_HOTMART_RESELLER_URL ||
-    process.env.NEXT_PUBLIC_HOTMART_CHECKOUT_URL ||
-    '/register'
+    defaultHotmartCheckout
   )
 
-  const affiliateSignupUrl = process.env.NEXT_PUBLIC_HOTMART_AFFILIATE_URL || '#afiliados'
+  const affiliateSignupUrl = process.env.NEXT_PUBLIC_HOTMART_AFFILIATE_URL || defaultHotmartCheckout
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      {/* Widget Oficial de Checkout de Hotmart */}
+      <link rel="stylesheet" type="text/css" href="https://static.hotmart.com/css/hotmart-fb.min.css" />
+      <Script src="https://static.hotmart.com/checkout/widget.min.js" strategy="afterInteractive" />
       {/* Barra Superior */}
       <header className="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
@@ -277,7 +280,7 @@ export default async function AgenciasWhiteLabelPage({
 
               <a
                 href={starterHotmartUrl}
-                className="w-full py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm text-center transition"
+                className="hotmart-fb hotmart__button-checkout w-full py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm text-center transition block"
               >
                 Comenzar con Starter (10 Cuentas)
               </a>
@@ -309,12 +312,21 @@ export default async function AgenciasWhiteLabelPage({
                 </ul>
               </div>
 
-              <a
-                href={agencyHotmartUrl}
-                className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm text-center transition shadow-lg"
-              >
-                Activar Licencia Agency (25 Cuentas)
-              </a>
+              <div className="space-y-2.5">
+                <a
+                  href={agencyHotmartUrl}
+                  className="hotmart-fb hotmart__button-checkout w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm text-center transition shadow-lg flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Comprar Ahora en Hotmart</span>
+                </a>
+                <a
+                  href={agencyHotmartUrl}
+                  className="hotmart-fb hotmart__button-checkout flex justify-center pt-1"
+                >
+                  <img src="https://static.hotmart.com/img/btn-buy-green.png" alt="Comprar en Hotmart" className="h-10 object-contain" />
+                </a>
+              </div>
             </div>
 
             {/* PLAN COUNTRY PARTNER 100 */}
@@ -341,7 +353,7 @@ export default async function AgenciasWhiteLabelPage({
 
               <a
                 href={enterpriseHotmartUrl}
-                className="w-full py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm text-center transition"
+                className="hotmart-fb hotmart__button-checkout w-full py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm text-center transition block"
               >
                 Activar Country Partner (100 Cuentas)
               </a>

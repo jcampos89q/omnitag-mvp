@@ -70,7 +70,7 @@ export default function RegisterForm({
 
   return (
     <div>
-      {/* Banner si viene de una tarjeta NFC física */}
+      {/* Banner según origen: Tarjeta NFC física vs Prueba Gratis SaaS */}
       {token ? (
         <div className="mb-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-md text-xs font-bold flex items-center gap-3 animate-in fade-in">
           <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -82,16 +82,19 @@ export default function RegisterForm({
           </div>
         </div>
       ) : (
-        <div className="mb-6 bg-gradient-to-r from-gray-900 via-purple-950 to-black text-white p-4 rounded-2xl shadow-md text-xs font-medium flex items-center gap-3 animate-in fade-in border border-purple-500/30">
-          <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 font-black text-xs shadow-sm">
-            <CreditCard className="w-5 h-5" />
+        <div className="mb-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 rounded-2xl shadow-md text-xs font-medium flex items-center gap-3 animate-in fade-in border border-indigo-500/30">
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 font-black text-xs shadow-sm">
+            <Sparkles className="w-5 h-5" />
           </div>
           <div className="leading-snug">
-            <div className="font-extrabold text-amber-300 text-xs sm:text-sm flex items-center gap-1.5">
-              <span>Activación de Tarjeta NFC o Placa de Reseñas</span>
+            <div className="font-extrabold text-indigo-200 text-xs sm:text-sm flex items-center gap-1.5">
+              <span>Prueba Gratis de 10 Días • Sin Tarjeta</span>
             </div>
             <div className="text-[11px] text-gray-300 mt-0.5">
-              Tu compra incluye <b>1 año completo de servicio activo</b> sin mensualidades forzosas + <b>1 mes de cortesía</b> en toda la Suite PRO.
+              Elige el giro de tu negocio para probar las herramientas. ¿Ya compraste en Hotmart?{' '}
+              <Link href="/activar-compra" className="text-emerald-300 font-bold underline">
+                Activa tu compra aquí
+              </Link>.
             </div>
           </div>
         </div>

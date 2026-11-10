@@ -29,7 +29,9 @@ export default async function ResellerPage() {
 
   // Si el usuario NO es Distribuidor ni Super Admin, mostrar página de venta de la Licencia Partner Marca Blanca
   if (!wlInfo.isReseller && !isAdmin) {
-    const hotmartResellerUrl = process.env.NEXT_PUBLIC_HOTMART_RESELLER_URL || process.env.NEXT_PUBLIC_HOTMART_YEARLY_URL || '/dashboard/billing'
+    const baseResellerUrl = process.env.NEXT_PUBLIC_HOTMART_RESELLER_URL || 'https://pay.hotmart.com/F108380682J?checkoutMode=2'
+    const sep = baseResellerUrl.includes('?') ? '&' : '?'
+    const hotmartResellerUrl = `${baseResellerUrl}${sep}email=${encodeURIComponent(effectiveUser.email || '')}&sck=${encodeURIComponent(effectiveUser.id)}`
 
     return (
       <div className="max-w-3xl mx-auto py-8">
