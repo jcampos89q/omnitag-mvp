@@ -29,9 +29,12 @@ export default async function ResellerPage() {
 
   // Si el usuario NO es Distribuidor ni Super Admin, mostrar página de venta de la Licencia Partner Marca Blanca
   if (!wlInfo.isReseller && !isAdmin) {
-    const baseResellerUrl = process.env.NEXT_PUBLIC_HOTMART_RESELLER_URL || 'https://pay.hotmart.com/F108380682J?checkoutMode=2'
-    const sep = baseResellerUrl.includes('?') ? '&' : '?'
-    const hotmartResellerUrl = `${baseResellerUrl}${sep}email=${encodeURIComponent(effectiveUser.email || '')}&sck=${encodeURIComponent(effectiveUser.id)}`
+    const buildOfferUrl = (offCode: string) => {
+      return `https://pay.hotmart.com/F108380682J?checkoutMode=2&off=${offCode}&email=${encodeURIComponent(effectiveUser.email || '')}&sck=${encodeURIComponent(effectiveUser.id)}`
+    }
+    const starterResellerUrl = buildOfferUrl('7p2sbzur')
+    const hotmartResellerUrl = buildOfferUrl('ozwefg5c')
+    const countryResellerUrl = buildOfferUrl('50u8dbyw')
 
     return (
       <div className="max-w-3xl mx-auto py-8">
@@ -64,15 +67,34 @@ export default async function ResellerPage() {
             ))}
           </div>
 
-          <div className="pt-4 flex flex-col sm:flex-row items-center gap-4">
-            <Link
-              href={hotmartResellerUrl}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-sm transition shadow-lg"
+          <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <a
+              href={starterResellerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex flex-col items-center justify-center p-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white transition"
             >
-              <Sparkles className="w-4 h-4" />
-              Activar Licencia de Distribuidor Marca Blanca
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+              <span className="text-[10px] uppercase font-bold text-indigo-200">Starter Partner</span>
+              <span className="text-lg font-black mt-0.5">$49/mes • 10 Cuentas</span>
+            </a>
+            <a
+              href={hotmartResellerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex flex-col items-center justify-center p-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 border border-indigo-400 text-white transition shadow-lg"
+            >
+              <span className="text-[10px] uppercase font-extrabold text-amber-300">⭐ Más Popular • Agency</span>
+              <span className="text-lg font-black mt-0.5">$99/mes • 25 Cuentas</span>
+            </a>
+            <a
+              href={countryResellerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex flex-col items-center justify-center p-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white transition"
+            >
+              <span className="text-[10px] uppercase font-bold text-emerald-300">Country Partner</span>
+              <span className="text-lg font-black mt-0.5">$199/mes • 100 Cuentas</span>
+            </a>
           </div>
         </div>
       </div>

@@ -47,26 +47,26 @@ export default async function AgenciasWhiteLabelPage({
     return `${baseUrl}${sep}ref=${encodeURIComponent(affiliateParam)}&src=${encodeURIComponent(affiliateParam)}`
   }
 
-  const defaultHotmartCheckout = 'https://pay.hotmart.com/F108380682J?checkoutMode=2'
+  const defaultStarterCheckout = 'https://pay.hotmart.com/F108380682J?checkoutMode=2&off=7p2sbzur'
+  const defaultAgencyCheckout = 'https://pay.hotmart.com/F108380682J?checkoutMode=2&off=ozwefg5c'
+  const defaultCountryCheckout = 'https://pay.hotmart.com/F108380682J?checkoutMode=2&off=50u8dbyw'
 
   const starterHotmartUrl = appendAffiliateParams(
     process.env.NEXT_PUBLIC_HOTMART_RESELLER_STARTER_URL ||
-    process.env.NEXT_PUBLIC_HOTMART_RESELLER_URL ||
-    defaultHotmartCheckout
+    defaultStarterCheckout
   )
 
   const agencyHotmartUrl = appendAffiliateParams(
     process.env.NEXT_PUBLIC_HOTMART_RESELLER_URL ||
-    defaultHotmartCheckout
+    defaultAgencyCheckout
   )
 
   const enterpriseHotmartUrl = appendAffiliateParams(
     process.env.NEXT_PUBLIC_HOTMART_RESELLER_PRO_URL ||
-    process.env.NEXT_PUBLIC_HOTMART_RESELLER_URL ||
-    defaultHotmartCheckout
+    defaultCountryCheckout
   )
 
-  const affiliateSignupUrl = process.env.NEXT_PUBLIC_HOTMART_AFFILIATE_URL || defaultHotmartCheckout
+  const affiliateSignupUrl = process.env.NEXT_PUBLIC_HOTMART_AFFILIATE_URL || defaultAgencyCheckout
 
   const industries = [
     { name: 'Restaurantes & Bares', emoji: '🍽️', desc: 'Menús con turno activo, Ruleta o Raspa y Gana en mesa, y comandas a WhatsApp.' },

@@ -101,6 +101,12 @@ export async function POST(request: NextRequest) {
 
       const isAnnual = combinedName.includes('anual') || combinedName.includes('year')
       const isResellerPlan =
+        offerCode === '7p2sbzur' ||
+        offerCode === 'ozwefg5c' ||
+        offerCode === '50u8dbyw' ||
+        combinedName.includes('7p2sbzur') ||
+        combinedName.includes('ozwefg5c') ||
+        combinedName.includes('50u8dbyw') ||
         combinedName.includes('reseller_25') ||
         combinedName.includes('reseller_10') ||
         combinedName.includes('reseller_50') ||
@@ -119,13 +125,16 @@ export async function POST(request: NextRequest) {
       if (isResellerPlan) {
         const { data: targetAuth } = await admin.auth.admin.getUserById(targetUser.id)
         const existingMeta = targetAuth?.user?.user_metadata || {}
-        const quota = combinedName.includes('100')
-          ? 100
-          : combinedName.includes('50')
-          ? 50
-          : (combinedName.includes('10') || combinedName.includes('starter'))
-          ? 10
-          : Number(existingMeta.reseller_quota || 25)
+        const quota =
+          offerCode === '50u8dbyw' || combinedName.includes('50u8dbyw') || combinedName.includes('100')
+            ? 100
+            : offerCode === 'ozwefg5c' || combinedName.includes('ozwefg5c') || combinedName.includes('25')
+            ? 25
+            : offerCode === '7p2sbzur' || combinedName.includes('7p2sbzur') || combinedName.includes('10') || combinedName.includes('starter')
+            ? 10
+            : combinedName.includes('50')
+            ? 50
+            : Number(existingMeta.reseller_quota || 25)
 
         await admin.auth.admin.updateUserById(targetUser.id, {
           user_metadata: {
