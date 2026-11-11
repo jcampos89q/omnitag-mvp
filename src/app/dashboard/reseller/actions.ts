@@ -3,8 +3,29 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
+import { ADMIN_AGENCY_MODE_COOKIE, IMPERSONATE_COOKIE_NAME } from '@/lib/auth/effectiveUser'
 import { normalizeIndustry, SELECTABLE_INDUSTRY_IDS, SelectableIndustryId } from '@/lib/industries'
 import type { WhiteLabelBrandConfig } from '@/lib/whitelabel'
+
+export async function switchAdminAgencyModeAction(enableAgencyMode: boolean) {
+  const cookieStore = await cookies()
+  if (enableAgencyMode) {
+    cookieStore.set(ADMIN_AGENCY_MODE_COOKIE, 'true', {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24,
+    })
+  } else {
+    cookieStore.delete(ADMIN_AGENCY_MODE_COOKIE)
+    cookieStore.delete(IMPERSONATE_COOKIE_NAME)
+  }
+  revalidatePath('/dashboard', 'layout')
+  revalidatePath('/dashboard/reseller')
+  return { success: true }
+}
 
 export async function saveWhiteLabelBrandAction(formData: FormData) {
   const supabase = await createClient()

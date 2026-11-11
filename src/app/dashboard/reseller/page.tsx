@@ -3,9 +3,10 @@ export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { Building2, Check, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react'
-import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import { getEffectiveUser, ADMIN_AGENCY_MODE_COOKIE } from '@/lib/auth/effectiveUser'
 import { resolveUserWhiteLabel } from '@/lib/whitelabel'
 import ResellerDashboardClient, { SubClientItem, DistributorSummaryItem } from './ResellerDashboardClient'
 
@@ -15,7 +16,13 @@ export default async function ResellerPage({
   searchParams: Promise<{ view?: string }>
 }) {
   const params = await searchParams
-  const requestedView = params?.view === 'master' ? 'master' : 'agency'
+  const cookieStore = await cookies()
+  const isAdminInAgencyMode = cookieStore.get(ADMIN_AGENCY_MODE_COOKIE)?.value === 'true'
+  const requestedView = params?.view === 'master'
+    ? 'master'
+    : params?.view === 'agency' || isAdminInAgencyMode
+    ? 'agency'
+    : 'master'
 
   const supabase = await createClient()
   const { user: effectiveUser, realAdmin, isImpersonating } = await getEffectiveUser(supabase)

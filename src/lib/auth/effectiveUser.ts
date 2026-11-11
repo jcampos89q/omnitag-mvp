@@ -20,6 +20,7 @@ export interface EffectiveUserResult {
 }
 
 export const IMPERSONATE_COOKIE_NAME = 'omnitag_impersonate_user_id'
+export const ADMIN_AGENCY_MODE_COOKIE = 'omnitag_admin_agency_mode'
 
 /**
  * Obtiene el usuario activo para el panel:

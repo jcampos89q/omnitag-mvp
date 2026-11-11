@@ -72,6 +72,7 @@ export default function DashboardNavbar({
   userEmail,
   userId,
   isAdmin = false,
+  isRealSuperAdmin = false,
   isReseller = false,
   userIndustry = 'general',
   accountType = 'professional',
@@ -82,6 +83,7 @@ export default function DashboardNavbar({
   userEmail?: string 
   userId?: string
   isAdmin?: boolean
+  isRealSuperAdmin?: boolean
   isReseller?: boolean
   userIndustry?: string
   accountType?: string
@@ -189,24 +191,36 @@ export default function DashboardNavbar({
   // Añadir Configuración al final
   filteredBaseItems.push({ name: 'Configuración', href: '/dashboard/settings', icon: UserCircle, section: 'cuenta' })
 
-  const navItems = [
-    ...filteredBaseItems,
-    ...((isReseller || isAdmin) ? [
-      { 
-        name: '🏢 Mi Agencia (Marca Blanca)', 
-        href: '/dashboard/reseller', 
-        icon: Building2, 
-        badge: 'Partner',
-        adminOnly: true, 
-        section: 'admin' 
-      }
-    ] : []),
-    ...(isAdmin ? [
-      { name: '👑 Admin Suscriptores Agencias', href: '/dashboard/reseller?view=master', icon: ShieldCheck, badge: 'Master', adminOnly: true, section: 'admin' },
-      { name: '🏷️ Lotes Tarjetas NFC', href: '/dashboard/admin?tab=nfc-batches', icon: CreditCard, adminOnly: true, section: 'admin' },
-      { name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true, section: 'admin' }
-    ] : [])
-  ]
+  const navItems: NavItem[] = isAdmin
+    ? [
+        { name: '👑 Admin Suscriptores Agencias', href: '/dashboard/reseller?view=master', icon: ShieldCheck, badge: 'Master', adminOnly: true, section: 'admin' },
+        { name: '📊 Panel Global & Usuarios', href: '/dashboard/admin', icon: BarChart3, adminOnly: true, section: 'admin' },
+        { name: '🏷️ Lotes Tarjetas NFC', href: '/dashboard/admin?tab=nfc-batches', icon: CreditCard, adminOnly: true, section: 'admin' },
+        { name: '⚙️ Configuración Master', href: '/dashboard/settings', icon: UserCircle, section: 'cuenta' },
+      ]
+    : [
+        ...filteredBaseItems,
+        ...(isReseller ? [
+          { 
+            name: '🏢 Mi Agencia (Marca Blanca)', 
+            href: '/dashboard/reseller', 
+            icon: Building2, 
+            badge: 'Partner',
+            adminOnly: true, 
+            section: 'admin' 
+          }
+        ] : []),
+        ...(isRealSuperAdmin ? [
+          { 
+            name: '👑 Volver a Panel Master', 
+            href: '/dashboard/reseller?view=master', 
+            icon: ShieldCheck, 
+            badge: 'Admin',
+            adminOnly: true, 
+            section: 'admin' 
+          }
+        ] : [])
+      ]
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard'
@@ -285,8 +299,8 @@ export default function DashboardNavbar({
         </Link>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Selector de Industria compacto en Topbar móvil */}
-          <IndustrySwitcher currentIndustry={userIndustry} variant="compact" />
+          {/* Selector de Industria compacto en Topbar móvil (Solo clientes/agencias) */}
+          {!isAdmin && <IndustrySwitcher currentIndustry={userIndustry} variant="compact" />}
 
           <NotificationBell userId={userId} position="topbar" />
 
@@ -339,10 +353,12 @@ export default function DashboardNavbar({
               </button>
             </div>
 
-            {/* Selector de Industria en el Drawer */}
-            <div className="mb-3">
-              <IndustrySwitcher currentIndustry={userIndustry} variant="banner" className="py-2.5 px-3" />
-            </div>
+            {/* Selector de Industria en el Drawer (Solo clientes/agencias) */}
+            {!isAdmin && (
+              <div className="mb-3">
+                <IndustrySwitcher currentIndustry={userIndustry} variant="banner" className="py-2.5 px-3" />
+              </div>
+            )}
 
             {userEmail && (
               <div className="px-3 py-2 bg-gray-50 rounded-xl mb-3 border border-gray-100">
@@ -372,11 +388,18 @@ export default function DashboardNavbar({
               {navItems.map((item) => {
                 const Icon = item.icon
                 const active = isActive(item.href)
+                const isExitAgencyMode = item.href === '/dashboard/reseller?view=master' && !isAdmin && isRealSuperAdmin
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={async () => {
+                      setIsMobileMenuOpen(false)
+                      if (isExitAgencyMode) {
+                        const { switchAdminAgencyModeAction } = await import('@/app/dashboard/reseller/actions')
+                        await switchAdminAgencyModeAction(false)
+                      }
+                    }}
                     className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
                       active
                         ? 'bg-black text-white font-bold shadow-xs'
@@ -467,13 +490,15 @@ export default function DashboardNavbar({
           </div>
         </div>
 
-        {/* Banner de Giro de Negocio / Switcher en Sidebar */}
-        <div className="px-3.5 py-2.5 border-b border-gray-100 bg-gray-50/50">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Modo de Negocio</span>
+        {/* Banner de Giro de Negocio / Switcher en Sidebar (Solo clientes/agencias) */}
+        {!isAdmin && (
+          <div className="px-3.5 py-2.5 border-b border-gray-100 bg-gray-50/50">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Modo de Negocio</span>
+            </div>
+            <IndustrySwitcher currentIndustry={userIndustry} variant="compact" className="w-full justify-between" />
           </div>
-          <IndustrySwitcher currentIndustry={userIndustry} variant="compact" className="w-full justify-between" />
-        </div>
+        )}
 
         {userEmail && (
           <div className="px-4 py-2 border-b border-gray-100 bg-white">
@@ -505,10 +530,17 @@ export default function DashboardNavbar({
           {navItems.map((item) => {
             const Icon = item.icon
             const active = isActive(item.href)
+            const isExitAgencyMode = item.href === '/dashboard/reseller?view=master' && !isAdmin && isRealSuperAdmin
             return (
               <Link 
                 key={item.href}
                 href={item.href} 
+                onClick={async () => {
+                  if (isExitAgencyMode) {
+                    const { switchAdminAgencyModeAction } = await import('@/app/dashboard/reseller/actions')
+                    await switchAdminAgencyModeAction(false)
+                  }
+                }}
                 className={`flex items-center justify-between px-3 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all ${
                   active 
                     ? 'bg-black text-white shadow-xs font-bold' 

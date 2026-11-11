@@ -31,7 +31,8 @@ import {
   createResellerSubClientAction,
   manageSubClientPlanAction,
   adminConfigureDistributorAction,
-  adminQuickManageAgencyAction
+  adminQuickManageAgencyAction,
+  switchAdminAgencyModeAction
 } from './actions'
 import { startImpersonation } from '@/app/dashboard/admin/impersonateActions'
 import { showToast } from '@/components/GlobalToast'
@@ -202,9 +203,22 @@ export default function ResellerDashboardClient({
     }
   }
 
+  const handleSwitchRoleMode = async (enableAgencyMode: boolean) => {
+    setLoadingAgencyId('role_switch')
+    try {
+      await switchAdminAgencyModeAction(enableAgencyMode)
+      router.push(enableAgencyMode ? '/dashboard/reseller?view=agency' : '/dashboard/reseller?view=master')
+      router.refresh()
+    } catch (err: any) {
+      showToast(err.message || 'No se pudo cambiar el modo de vista', 'error')
+    } finally {
+      setLoadingAgencyId(null)
+    }
+  }
+
   const handleEnterAgencyConsole = async (dist: DistributorSummaryItem) => {
     if (dist.id === resellerId) {
-      router.push('/dashboard/reseller')
+      await handleSwitchRoleMode(true)
       return
     }
     setLoadingAgencyId(dist.id)
@@ -226,13 +240,17 @@ export default function ResellerDashboardClient({
           <div className="flex items-center gap-2 px-2">
             <Crown className="w-4 h-4 text-purple-600 shrink-0" />
             <span className="text-xs font-extrabold text-gray-800">
-              Selector de Vista (Super Admin):
+              {isMasterMode
+                ? 'Estás en: Panel Administrador Master (Menú limpio de Super Admin)'
+                : 'Estás en: Modo Agencia Suscriptora (Viendo como tu Agencia)'}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard/reseller?view=master"
-              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+            <button
+              type="button"
+              disabled={loadingAgencyId === 'role_switch'}
+              onClick={() => handleSwitchRoleMode(false)}
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                 isMasterMode
                   ? 'bg-purple-700 text-white shadow-xs'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -240,18 +258,20 @@ export default function ResellerDashboardClient({
             >
               <Crown className="w-3.5 h-3.5" />
               <span>Panel Admin de Suscriptores ({allDistributors.length})</span>
-            </Link>
-            <Link
-              href="/dashboard/reseller"
-              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+            </button>
+            <button
+              type="button"
+              disabled={loadingAgencyId === 'role_switch'}
+              onClick={() => handleSwitchRoleMode(true)}
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                 !isMasterMode
                   ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               <Building2 className="w-3.5 h-3.5" />
-              <span>Mi Propia Cuenta de Agencia ({subClients.length}/{quota})</span>
-            </Link>
+              <span>Entrar como Mi Agencia Suscriptora ({subClients.length}/{quota})</span>
+            </button>
           </div>
         </div>
       )}

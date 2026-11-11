@@ -31,7 +31,8 @@ import {
 } from 'lucide-react'
 import { getUserPlanInfo } from '@/lib/plans'
 import BusinessUpgradesShowcase from '@/components/BusinessUpgradesShowcase'
-import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import { cookies } from 'next/headers'
+import { getEffectiveUser, ADMIN_AGENCY_MODE_COOKIE } from '@/lib/auth/effectiveUser'
 import IndustrySwitcher from '@/components/IndustrySwitcher'
 import { getIndustryConfig, normalizeIndustry } from '@/lib/industries'
 
@@ -54,16 +55,17 @@ const cardIcons: Record<string, any> = {
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { user } = await getEffectiveUser(supabase)
+  const { user, isImpersonating } = await getEffectiveUser(supabase)
 
   if (!user) {
     redirect('/login')
   }
 
   // 1. Obtener plan, perfil y giro del negocio
-  const [planInfo, { data: profile }] = await Promise.all([
+  const [planInfo, { data: profile }, cookieStore] = await Promise.all([
     getUserPlanInfo(supabase, user.id),
-    supabase.from('users').select('full_name, account_type, industry').eq('id', user.id).maybeSingle()
+    supabase.from('users').select('full_name, account_type, industry').eq('id', user.id).maybeSingle(),
+    cookies()
   ])
 
   const {
@@ -80,6 +82,13 @@ export default async function DashboardPage() {
     hardwareDaysLeft,
     hardwareExpiresAt
   } = planInfo
+
+  // Si es el Super Administrador y NO está dentro de su modo Agencia Suscriptora ni en modo soporte de un cliente,
+  // llevarlo directamente a su Panel Master de Suscriptores de Agencias sin mostrar módulos de negocio
+  const isAdminInAgencyMode = cookieStore.get(ADMIN_AGENCY_MODE_COOKIE)?.value === 'true'
+  if (isAdmin && !isImpersonating && !isAdminInAgencyMode) {
+    redirect('/dashboard/reseller?view=master')
+  }
 
   const userIndustry = user.industry || profile?.industry || 'general'
   const industryConfig = getIndustryConfig(userIndustry)

@@ -4,8 +4,8 @@ import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 import PwaInstallPrompt from '@/components/PwaInstallPrompt'
 import GlobalToast from '@/components/GlobalToast'
 import ImpersonationBanner from '@/components/ImpersonationBanner'
-import { headers } from 'next/headers'
-import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import { headers, cookies } from 'next/headers'
+import { getEffectiveUser, ADMIN_AGENCY_MODE_COOKIE } from '@/lib/auth/effectiveUser'
 import { getUserPlanInfo } from '@/lib/plans'
 import AccountLockedPaywall from '@/components/AccountLockedPaywall'
 import IndustryOnboardingGate from '@/components/IndustryOnboardingGate'
@@ -29,6 +29,9 @@ export default async function DashboardLayout({
     .maybeSingle()
 
   const realIsAdmin = Boolean(realProfile?.is_admin)
+  const cookieStore = await cookies()
+  const isAdminInAgencyMode = Boolean(realIsAdmin && cookieStore.get(ADMIN_AGENCY_MODE_COOKIE)?.value === 'true')
+  const showMasterAdminSidebar = Boolean(realIsAdmin && !isImpersonating && !isAdminInAgencyMode)
 
   // Obtener estado del plan del usuario efectivo y su configuración de Marca Blanca / Distribuidor
   const [planInfo, whiteLabelInfo] = await Promise.all([
@@ -70,13 +73,14 @@ export default async function DashboardLayout({
         <DashboardNavbar 
           userEmail={effectiveUser?.email || undefined} 
           userId={effectiveUser?.id || undefined} 
-          isAdmin={realIsAdmin && !isImpersonating} 
+          isAdmin={showMasterAdminSidebar} 
+          isRealSuperAdmin={realIsAdmin}
           isReseller={whiteLabelInfo.isReseller}
           userIndustry={effectiveUser?.industry || 'professional'} 
           accountType={effectiveUser?.account_type || 'professional'}
           planInfo={planInfo}
-          whiteLabelBrand={whiteLabelInfo.activeBrand}
-          isWhiteLabeledClient={whiteLabelInfo.isWhiteLabeledClient}
+          whiteLabelBrand={showMasterAdminSidebar ? undefined : whiteLabelInfo.ownBrandConfig}
+          isWhiteLabeledClient={!showMasterAdminSidebar && whiteLabelInfo.isWhiteLabeledClient}
         />
 
         {/* Contenido Principal */}
