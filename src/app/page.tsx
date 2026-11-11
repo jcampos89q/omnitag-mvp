@@ -889,7 +889,7 @@ export default function LandingPage() {
                 <div className="pt-8">
                   <Link
                     href="/tienda"
-                    className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs"
+                    className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs"
                   >
                     <CreditCard className="w-3.5 h-3.5" />
                     <span>Ver Catálogo en la Tienda</span>
@@ -938,13 +938,13 @@ export default function LandingPage() {
             <div className="relative pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link 
                 href="/agencias" 
-                className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-black px-8 py-4 rounded-2xl text-sm sm:text-base transition shadow-xl cursor-pointer"
+                className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-bold px-6 py-3 rounded-xl text-xs sm:text-sm transition shadow-lg cursor-pointer"
               >
                 Ver Licencia Marca Blanca
               </Link>
               <Link 
                 href="/activar-compra" 
-                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-4 rounded-2xl text-sm sm:text-base transition"
+                className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl text-xs sm:text-sm transition"
               >
                 Activar mi Compra Hotmart
               </Link>
