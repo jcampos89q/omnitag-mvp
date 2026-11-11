@@ -664,20 +664,21 @@ export default function BillingClient({
           </div>
 
           <div className="pt-4 border-t border-gray-100 space-y-2">
-            {isPro ? (
-              <span className="block text-center text-xs font-bold text-purple-700 bg-purple-50 py-2.5 rounded-xl">
+            {isPro && (
+              <span className="block text-center text-xs font-bold text-purple-700 bg-purple-50 py-2.5 rounded-xl mb-2">
                 ✓ Plan PRO Activo en tu cuenta
               </span>
-            ) : (
+            )}
+            <PaddleCheckoutButton
+              priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID}
+              userEmail={userEmail}
+              userId={userId}
+              className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              {isPro ? 'Probar Pasarela Paddle ($20/mes)' : 'Suscribirme con Tarjeta (Paddle - $20/mes)'}
+            </PaddleCheckoutButton>
+            {!isPro && (
               <>
-                <PaddleCheckoutButton
-                  priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID}
-                  userEmail={userEmail}
-                  userId={userId}
-                  className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  Suscribirme con Tarjeta (Paddle - $20/mes)
-                </PaddleCheckoutButton>
                 <a
                   href={hotmartCheckoutUrl}
                   target="_blank"
