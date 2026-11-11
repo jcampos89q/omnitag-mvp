@@ -293,28 +293,100 @@ export default function ResellerDashboardClient({
         </div>
       )}
 
-      {/* Barra de Navegación Rápida cuando estás dentro de Mi Agencia */}
+      {/* CUADRÍCULA VISUAL DE NAVEGACIÓN PARA EL PARTNER (CUANDO ESTÁS EN TU CONSOLA DE AGENCIA) */}
       {!isMasterMode && (
-        <div className="flex flex-wrap items-center justify-between gap-2 bg-white p-3 rounded-2xl border border-gray-200 shadow-2xs">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 text-xs font-bold transition"
-            >
-              <span>← Menú de Herramientas de Negocio</span>
-            </Link>
-          </div>
+        <div className="space-y-3">
           {isAdmin && (
+            <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-2xl px-4 py-2.5">
+              <span className="text-xs font-bold text-purple-900">
+                🏢 Estás viendo tu Consola de Partner / Agencia Suscriptora (tal como la ve quien te compra una licencia)
+              </span>
+              <button
+                type="button"
+                disabled={loadingAgencyId === 'role_switch'}
+                onClick={() => handleSwitchRoleMode(false)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold transition cursor-pointer shrink-0"
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>Volver a Panel Admin Master</span>
+              </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <button
               type="button"
-              disabled={loadingAgencyId === 'role_switch'}
-              onClick={() => handleSwitchRoleMode(false)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-bold transition cursor-pointer"
+              onClick={() => setActiveTab('clients')}
+              className={`p-4 rounded-2xl border text-left space-y-2 transition cursor-pointer ${
+                activeTab === 'clients' && !showCreateForm
+                  ? 'border-2 border-indigo-600 bg-gradient-to-b from-indigo-50/90 to-white shadow-xs'
+                  : 'border-gray-200 hover:border-indigo-300 bg-white hover:shadow-xs'
+              }`}
             >
-              <Crown className="w-3.5 h-3.5 text-purple-600" />
-              <span>Volver a Panel Admin de Suscriptores</span>
+              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-black text-xs sm:text-sm text-gray-950">Cartera de Clientes</p>
+                <p className="text-[11px] text-gray-500">{subClients.length} de {quota} cupos activos</p>
+              </div>
             </button>
-          )}
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('clients')
+                setShowCreateForm(true)
+              }}
+              className={`p-4 rounded-2xl border text-left space-y-2 transition cursor-pointer ${
+                activeTab === 'clients' && showCreateForm
+                  ? 'border-2 border-emerald-600 bg-gradient-to-b from-emerald-50/90 to-white shadow-xs'
+                  : 'border-gray-200 hover:border-emerald-300 bg-white hover:shadow-xs'
+              }`}
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                <Plus className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-black text-xs sm:text-sm text-gray-950">Nuevo Sub-Cliente</p>
+                <p className="text-[11px] text-gray-500">Crear negocio y asignar giro</p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('brand')}
+              className={`p-4 rounded-2xl border text-left space-y-2 transition cursor-pointer ${
+                activeTab === 'brand'
+                  ? 'border-2 border-purple-600 bg-gradient-to-b from-purple-50/90 to-white shadow-xs'
+                  : 'border-gray-200 hover:border-purple-300 bg-white hover:shadow-xs'
+              }`}
+            >
+              <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
+                <Palette className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-black text-xs sm:text-sm text-gray-950">Mi Marca & Precios</p>
+                <p className="text-[11px] text-gray-500">Logo, pasarela y cuánto cobras</p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyInviteLink}
+              className="p-4 rounded-2xl border border-gray-200 hover:border-amber-400 bg-gradient-to-b from-amber-50/50 to-white text-left space-y-2 transition cursor-pointer hover:shadow-xs"
+            >
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                {copiedLink ? <Check className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
+              </div>
+              <div>
+                <p className="font-black text-xs sm:text-sm text-gray-950">
+                  {copiedLink ? '¡Link Copiado!' : 'Link de Registro'}
+                </p>
+                <p className="text-[11px] text-gray-500">Copiar invitación con tu marca</p>
+              </div>
+            </button>
+          </div>
         </div>
       )}
 
@@ -885,6 +957,24 @@ export default function ResellerDashboardClient({
                               >
                                 <Ban className="w-3.5 h-3.5 inline mr-1" />
                                 Pausar
+                              </button>
+                              <button
+                                type="button"
+                                disabled={loadingClientId === client.id}
+                                onClick={async () => {
+                                  setLoadingClientId(client.id)
+                                  try {
+                                    await startImpersonation(client.id)
+                                  } catch (err: any) {
+                                    showToast(err.message || 'No se pudo abrir el panel del cliente', 'error')
+                                    setLoadingClientId(null)
+                                  }
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs transition inline-flex items-center gap-1 cursor-pointer"
+                                title="Entrar al panel de negocio de este cliente para configurar su menú, citas o QR"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>Abrir Negocio</span>
                               </button>
                             </div>
                           </td>

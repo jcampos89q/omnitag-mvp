@@ -17,7 +17,7 @@ export async function startImpersonation(targetUserId: string) {
     throw new Error('No autenticado')
   }
 
-  // Verificar que el usuario sea Superadministrador
+  // Verificar que el usuario sea Superadministrador o el Partner dueño de ese sub-cliente
   const { data: profile } = await supabase
     .from('users')
     .select('is_admin')
@@ -25,7 +25,13 @@ export async function startImpersonation(targetUserId: string) {
     .single()
 
   if (!profile?.is_admin) {
-    throw new Error('No autorizado: Solo administradores pueden iniciar modo soporte.')
+    const { getAdminClient } = await import('@/lib/supabase/admin')
+    const adminClient = getAdminClient()
+    const { data: targetAuth } = await adminClient.auth.admin.getUserById(targetUserId)
+    const parentResellerId = targetAuth?.user?.user_metadata?.parent_reseller_id
+    if (parentResellerId !== user.id) {
+      throw new Error('No autorizado: Solo puedes entrar en modo soporte a tus propios sub-clientes.')
+    }
   }
 
   // Guardar cookie de impersonación por 24 horas
@@ -51,6 +57,7 @@ export async function stopImpersonation() {
   cookieStore.delete(IMPERSONATE_COOKIE_NAME)
 
   revalidatePath('/dashboard')
+  revalidatePath('/dashboard/reseller')
   revalidatePath('/dashboard/admin')
-  redirect('/dashboard/admin')
+  redirect('/dashboard/reseller')
 }

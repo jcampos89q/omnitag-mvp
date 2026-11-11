@@ -44,13 +44,24 @@ export async function getEffectiveUser(supabase: SupabaseClient): Promise<Effect
 
   const isAdmin = Boolean(profile?.is_admin)
 
-  // 2. Si es admin, revisar si tiene la cookie de soporte activa
-  if (isAdmin) {
-    const cookieStore = await cookies()
-    const targetUserId = cookieStore.get(IMPERSONATE_COOKIE_NAME)?.value
+  // 2. Revisar si tiene la cookie de soporte activa (para Super Admin o para un Partner atendiendo a su sub-cliente)
+  const cookieStore = await cookies()
+  const targetUserId = cookieStore.get(IMPERSONATE_COOKIE_NAME)?.value
 
-    if (targetUserId && targetUserId !== authUser.id) {
-      // Obtener datos del cliente a quien se le brinda soporte
+  if (targetUserId && targetUserId !== authUser.id) {
+    let canImpersonate = isAdmin
+    if (!canImpersonate) {
+      try {
+        const { getAdminClient } = await import('@/lib/supabase/admin')
+        const adminClient = getAdminClient()
+        const { data: targetAuth } = await adminClient.auth.admin.getUserById(targetUserId)
+        canImpersonate = targetAuth?.user?.user_metadata?.parent_reseller_id === authUser.id
+      } catch {
+        canImpersonate = false
+      }
+    }
+
+    if (canImpersonate) {
       const { data: targetUser } = await supabase
         .from('users')
         .select('id, email, full_name, account_type, industry, avatar_url')

@@ -85,11 +85,14 @@ export default async function DashboardPage() {
     hardwareExpiresAt
   } = planInfo
 
-  // Si es el Super Administrador y NO está dentro de su modo Agencia Suscriptora ni en modo soporte de un cliente,
-  // llevarlo directamente a su Panel Master de Suscriptores de Agencias sin mostrar módulos de negocio
+  // Si es el Super Administrador y NO está en modo soporte de un cliente final,
+  // o si es un Partner/Agencia Marca Blanca, su pantalla principal es su Consola de Partner
   const isAdminInAgencyMode = cookieStore.get(ADMIN_AGENCY_MODE_COOKIE)?.value === 'true'
-  if (isAdmin && !isImpersonating && !isAdminInAgencyMode) {
-    redirect('/dashboard/reseller?view=master')
+  if (isAdmin && !isImpersonating) {
+    redirect(isAdminInAgencyMode ? '/dashboard/reseller?view=agency' : '/dashboard/reseller?view=master')
+  }
+  if (wlInfo.isReseller && !isImpersonating) {
+    redirect('/dashboard/reseller?view=agency')
   }
 
   const userIndustry = user.industry || profile?.industry || 'general'

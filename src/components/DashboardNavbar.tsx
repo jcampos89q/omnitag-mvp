@@ -369,21 +369,59 @@ export default function DashboardNavbar({
           description: 'Preferencias de tu cuenta administradora'
         }
       ]
-    : [
-        ...filteredBaseItems,
-        ...(isReseller ? [
+    : isReseller
+    ? [
+        {
+          name: 'Clientes de Mi Agencia',
+          href: '/dashboard/reseller?view=agency&tab=clients',
+          icon: Users,
+          badge: 'Partner',
+          colorClass: 'from-indigo-50 to-white border-indigo-200',
+          iconBgClass: 'bg-indigo-600 text-white',
+          description: 'Da de alta negocios clientes, asigna su giro y controla su mes'
+        },
+        {
+          name: 'Mi Marca Blanca & Precios',
+          href: '/dashboard/reseller?view=agency&tab=brand',
+          icon: Sparkles,
+          badge: 'Marca Blanca',
+          colorClass: 'from-purple-50 to-white border-purple-200',
+          iconBgClass: 'bg-purple-600 text-white',
+          description: 'Configura tu propio Logo, Nombre, Precios y Links de Cobro'
+        },
+        {
+          name: 'Mi Suscripción Partner',
+          href: '/dashboard/billing',
+          icon: CreditCard,
+          badge: 'Licencia',
+          colorClass: 'from-emerald-50 to-white border-emerald-200',
+          iconBgClass: 'bg-emerald-600 text-white',
+          description: 'Estado de tu licencia de Agencia y ampliación de cupos'
+        },
+        {
+          name: 'Configuración de Cuenta',
+          href: '/dashboard/settings',
+          icon: UserCircle,
+          colorClass: 'from-gray-50 to-white border-gray-200',
+          iconBgClass: 'bg-gray-800 text-white',
+          description: 'Datos de acceso y seguridad de tu cuenta Partner'
+        },
+        ...(isRealSuperAdmin ? [
           { 
-            name: 'Mi Agencia (Marca Blanca)', 
-            href: '/dashboard/reseller', 
-            icon: Building2, 
-            badge: 'Partner',
+            name: 'Volver a Panel Master', 
+            href: '/dashboard/reseller?view=master', 
+            icon: Crown, 
+            badge: 'Admin',
             adminOnly: true, 
             section: 'admin',
-            colorClass: 'from-purple-50 to-white border-purple-200',
-            iconBgClass: 'bg-purple-600 text-white',
-            description: 'Tus sub-clientes, tu logo y tu pasarela de cobro'
+            colorClass: 'from-amber-50 to-white border-amber-200',
+            iconBgClass: 'bg-amber-500 text-white',
+            description: 'Regresar al control global de suscriptores de agencias'
           }
-        ] : []),
+        ] : [])
+      ]
+    : [
+        ...filteredBaseItems,
         ...(isRealSuperAdmin ? [
           { 
             name: 'Volver a Panel Master', 
@@ -405,12 +443,16 @@ export default function DashboardNavbar({
     return pathname.startsWith(cleanHref)
   }
 
-  const isMainGridHome = isAdmin
+  const isMainGridHome = (isAdmin || isReseller)
     ? pathname === '/dashboard/reseller'
     : pathname === '/dashboard'
 
   const activeItem = navItems.find(item => isActive(item.href) && item.href !== '/dashboard')
-  const homeUrl = isAdmin ? '/dashboard/reseller?view=master' : '/dashboard'
+  const homeUrl = isAdmin
+    ? '/dashboard/reseller?view=master'
+    : isReseller
+    ? '/dashboard/reseller?view=agency'
+    : '/dashboard'
 
   const handleNavItemClick = async (item: NavItem) => {
     setIsGridLauncherOpen(false)

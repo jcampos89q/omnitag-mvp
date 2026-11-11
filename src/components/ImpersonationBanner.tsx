@@ -62,7 +62,7 @@ export default function ImpersonationBanner({ impersonatedUser }: ImpersonationB
           ) : (
             <ArrowLeft className="w-3.5 h-3.5" />
           )}
-          <span>Salir y Volver a Panel Admin</span>
+          <span>Salir del Negocio y Volver a Mi Consola</span>
         </button>
       </div>
     </div>
