@@ -22,6 +22,7 @@ import ImageUploadInput from '@/components/ImageUploadInput'
 import { submitBankTransfer } from './actions'
 import { claimNfcCardByToken } from '@/app/dashboard/admin/nfcActions'
 import { UserPlanInfo } from '@/lib/plans'
+import PaddleCheckoutButton from '@/components/PaddleCheckoutButton'
 
 interface BankTransfer {
   id: string
@@ -517,15 +518,22 @@ export default function BillingClient({
               </ul>
             </div>
             <div className="pt-4 border-t border-gray-100 space-y-2">
+              <PaddleCheckoutButton
+                priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID}
+                userEmail={userEmail}
+                userId={userId}
+                className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                Suscribirme con Tarjeta (Paddle - $20/mes)
+              </PaddleCheckoutButton>
               <a
                 href={hotmartCheckoutUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-xl transition text-[11px] flex items-center justify-center gap-1.5"
               >
-                <CreditCard className="w-4 h-4" />
-                <span>Activar Suite con Tarjeta (Hotmart)</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <CreditCard className="w-3.5 h-3.5 text-gray-500" />
+                <span>Alternativa: Pagar en Hotmart</span>
               </a>
               <a
                 href="#metodos-pago"
@@ -662,15 +670,22 @@ export default function BillingClient({
               </span>
             ) : (
               <>
+                <PaddleCheckoutButton
+                  priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID}
+                  userEmail={userEmail}
+                  userId={userId}
+                  className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  Suscribirme con Tarjeta (Paddle - $20/mes)
+                </PaddleCheckoutButton>
                 <a
                   href={hotmartCheckoutUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
+                  className="w-full bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold py-2 px-4 rounded-xl transition text-[11px] flex items-center justify-center gap-1.5"
                 >
-                  <CreditCard className="w-4 h-4" />
-                  <span>Suscribirme con Tarjeta vía Hotmart</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <CreditCard className="w-3.5 h-3.5 text-gray-400" />
+                  <span>Alternativa: Pagar en Hotmart</span>
                 </a>
                 <a
                   href="#metodos-pago"
