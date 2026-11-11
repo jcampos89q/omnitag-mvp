@@ -234,45 +234,87 @@ export default function ResellerDashboardClient({
 
   return (
     <div className="space-y-6">
-      {/* Selector Rápido de Rol (Solo visible para ti como Super Admin) */}
-      {isAdmin && (
-        <div className="bg-white rounded-2xl p-3 border border-gray-200 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2 px-2">
-            <Crown className="w-4 h-4 text-purple-600 shrink-0" />
-            <span className="text-xs font-extrabold text-gray-800">
-              {isMasterMode
-                ? 'Estás en: Panel Administrador Master (Menú limpio de Super Admin)'
-                : 'Estás en: Modo Agencia Suscriptora (Viendo como tu Agencia)'}
-            </span>
-          </div>
+      {/* CUADRÍCULA VISUAL DE ACCESO RÁPIDO MASTER (CUANDO ESTÁS EN PANEL ADMIN) */}
+      {isMasterMode && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <button
+            type="button"
+            onClick={() => handleSwitchRoleMode(false)}
+            className="p-4 rounded-2xl border-2 border-purple-600 bg-gradient-to-b from-purple-50/90 to-white text-left space-y-2 shadow-2xs cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
+              <Crown className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-black text-xs sm:text-sm text-gray-950">Suscriptores Agencias</p>
+              <p className="text-[11px] text-gray-500">{allDistributors.length} agencias activas</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSwitchRoleMode(true)}
+            className="p-4 rounded-2xl border border-gray-200 hover:border-indigo-400 bg-gradient-to-b from-indigo-50/60 to-white text-left space-y-2 transition hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-black text-xs sm:text-sm text-gray-950">Mi Propia Agencia</p>
+              <p className="text-[11px] text-gray-500">Usados: {subClients.length} / {quota} cupos</p>
+            </div>
+          </button>
+
+          <Link
+            href="/dashboard/admin"
+            className="p-4 rounded-2xl border border-gray-200 hover:border-blue-400 bg-gradient-to-b from-blue-50/60 to-white text-left space-y-2 transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-black text-xs sm:text-sm text-gray-950">Usuarios & Pagos</p>
+              <p className="text-[11px] text-gray-500">Base de datos global</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/dashboard/admin?tab=nfc-batches"
+            className="p-4 rounded-2xl border border-gray-200 hover:border-emerald-400 bg-gradient-to-b from-emerald-50/60 to-white text-left space-y-2 transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-black text-xs sm:text-sm text-gray-950">Lotes Tarjetas NFC</p>
+              <p className="text-[11px] text-gray-500">Generar e imprimir lotes</p>
+            </div>
+          </Link>
+        </div>
+      )}
+
+      {/* Barra de Navegación Rápida cuando estás dentro de Mi Agencia */}
+      {!isMasterMode && (
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-white p-3 rounded-2xl border border-gray-200 shadow-2xs">
           <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 text-xs font-bold transition"
+            >
+              <span>← Menú de Herramientas de Negocio</span>
+            </Link>
+          </div>
+          {isAdmin && (
             <button
               type="button"
               disabled={loadingAgencyId === 'role_switch'}
               onClick={() => handleSwitchRoleMode(false)}
-              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                isMasterMode
-                  ? 'bg-purple-700 text-white shadow-xs'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-bold transition cursor-pointer"
             >
-              <Crown className="w-3.5 h-3.5" />
-              <span>Panel Admin de Suscriptores ({allDistributors.length})</span>
+              <Crown className="w-3.5 h-3.5 text-purple-600" />
+              <span>Volver a Panel Admin de Suscriptores</span>
             </button>
-            <button
-              type="button"
-              disabled={loadingAgencyId === 'role_switch'}
-              onClick={() => handleSwitchRoleMode(true)}
-              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                !isMasterMode
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Entrar como Mi Agencia Suscriptora ({subClients.length}/{quota})</span>
-            </button>
-          </div>
+          )}
         </div>
       )}
 

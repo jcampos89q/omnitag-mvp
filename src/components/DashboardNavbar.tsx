@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { 
   Home, 
@@ -14,8 +14,6 @@ import {
   Coffee,
   Users,
   CreditCard,
-  Menu as MenuIcon,
-  X,
   Gift,
   QrCode,
   ShieldCheck,
@@ -28,15 +26,18 @@ import {
   MapPin,
   ShoppingBag,
   Stethoscope,
-  ChevronDown,
   UtensilsCrossed,
-  Building2
+  Building2,
+  LayoutGrid,
+  ArrowLeft,
+  X,
+  Crown,
+  ChevronRight
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 import NotificationBell from './NotificationBell'
 import { UserPlanInfo } from '@/lib/plans'
-import IndustrySwitcher from './IndustrySwitcher'
-import { getIndustryConfig, normalizeIndustry, IndustryId } from '@/lib/industries'
+import { getIndustryConfig, normalizeIndustry } from '@/lib/industries'
 import type { WhiteLabelBrandConfig } from '@/lib/whitelabel'
 
 interface NavItem {
@@ -48,24 +49,154 @@ interface NavItem {
   adminOnly?: boolean
   section?: string
   priority?: boolean
+  colorClass?: string
+  iconBgClass?: string
+  description?: string
 }
 
 const baseNavItems: NavItem[] = [
-  { name: 'Inicio', href: '/dashboard', icon: Home, section: 'principal' },
-  { name: 'Mi vCard', href: '/dashboard/vcard', icon: UserCircle, section: 'creaciones' },
-  { name: 'Estudio QR (Imprimibles)', href: '/dashboard/qr-studio', icon: QrCode, badge: 'HD', section: 'creaciones' },
-  { name: 'Reseñas Google & NFC', href: '/dashboard/devices', icon: Star, section: 'creaciones' },
-  { name: 'Google Maps & SEO Local', href: '/dashboard/google-business', icon: MapPin, badge: 'IA', section: 'creaciones' },
-  { name: 'Menú & Catálogo', href: '/dashboard/menus', icon: Coffee, section: 'creaciones' },
-  { name: 'Comandas & Ventas', href: '/dashboard/comandas', icon: UtensilsCrossed, badge: 'En Vivo', section: 'creaciones' },
-  { name: 'Agendas & Citas', href: '/dashboard/appointments', icon: Scissors, badge: 'Nuevo', section: 'creaciones' },
-  { name: 'Tarjetas de Regalo', href: '/dashboard/gift-cards', icon: Gift, badge: 'Nuevo', section: 'creaciones' },
-  { name: 'Fidelización & Sellos', href: '/dashboard/loyalty', icon: Sparkles, section: 'creaciones' },
-  { name: 'Ruleta de Premios', href: '/dashboard/ruleta', icon: Disc, badge: 'VIP', section: 'creaciones' },
-  { name: 'Contactos (CRM)', href: '/dashboard/leads', icon: Users, section: 'gestion' },
-  { name: 'Quejas Privadas', href: '/dashboard/feedback', icon: MessageSquareWarning, section: 'gestion' },
-  { name: 'Estadísticas', href: '/dashboard/analytics', icon: BarChart3, section: 'gestion' },
-  { name: 'Suscripción', href: '/dashboard/billing', icon: CreditCard, accent: true, section: 'cuenta' },
+  {
+    name: 'Menú Principal',
+    href: '/dashboard',
+    icon: LayoutGrid,
+    section: 'principal',
+    colorClass: 'from-slate-50 to-white border-slate-200',
+    iconBgClass: 'bg-slate-900 text-white',
+    description: 'Cuadrícula visual de todas tus herramientas'
+  },
+  {
+    name: 'Mi vCard Digital',
+    href: '/dashboard/vcard',
+    icon: UserCircle,
+    section: 'creaciones',
+    colorClass: 'from-violet-50/80 to-white border-violet-200',
+    iconBgClass: 'bg-violet-600 text-white',
+    description: 'Tarjeta de contacto digital y redes'
+  },
+  {
+    name: 'Estudio QR (Imprimibles)',
+    href: '/dashboard/qr-studio',
+    icon: QrCode,
+    badge: 'HD',
+    section: 'creaciones',
+    colorClass: 'from-indigo-50/80 to-white border-indigo-200',
+    iconBgClass: 'bg-indigo-600 text-white',
+    description: 'Diseña e imprime QRs para mesas o mostrador'
+  },
+  {
+    name: 'Reseñas Google & NFC',
+    href: '/dashboard/devices',
+    icon: Star,
+    section: 'creaciones',
+    colorClass: 'from-amber-50/80 to-white border-amber-200',
+    iconBgClass: 'bg-amber-500 text-white',
+    description: 'Escudo 5★ y placas inteligentes NFC'
+  },
+  {
+    name: 'Google Maps & SEO',
+    href: '/dashboard/google-business',
+    icon: MapPin,
+    badge: 'IA',
+    section: 'creaciones',
+    colorClass: 'from-sky-50/80 to-white border-sky-200',
+    iconBgClass: 'bg-sky-600 text-white',
+    description: 'Posicionamiento local de tu negocio'
+  },
+  {
+    name: 'Menú & Catálogo',
+    href: '/dashboard/menus',
+    icon: Coffee,
+    section: 'creaciones',
+    colorClass: 'from-orange-50/80 to-white border-orange-200',
+    iconBgClass: 'bg-orange-500 text-white',
+    description: 'Productos, platos, precios y turnos'
+  },
+  {
+    name: 'Comandas & Ventas',
+    href: '/dashboard/comandas',
+    icon: UtensilsCrossed,
+    badge: 'En Vivo',
+    section: 'creaciones',
+    colorClass: 'from-emerald-50/80 to-white border-emerald-200',
+    iconBgClass: 'bg-emerald-600 text-white',
+    description: 'Pedidos recibidos en tiempo real'
+  },
+  {
+    name: 'Agendas & Citas',
+    href: '/dashboard/appointments',
+    icon: Scissors,
+    badge: '24/7',
+    section: 'creaciones',
+    colorClass: 'from-pink-50/80 to-white border-pink-200',
+    iconBgClass: 'bg-pink-600 text-white',
+    description: 'Reservas por especialista y horarios'
+  },
+  {
+    name: 'Tarjetas de Regalo',
+    href: '/dashboard/gift-cards',
+    icon: Gift,
+    badge: 'VIP',
+    section: 'creaciones',
+    colorClass: 'from-purple-50/80 to-white border-purple-200',
+    iconBgClass: 'bg-purple-600 text-white',
+    description: 'Gift Cards con saldo y código QR'
+  },
+  {
+    name: 'Fidelización & Sellos',
+    href: '/dashboard/loyalty',
+    icon: Sparkles,
+    section: 'creaciones',
+    colorClass: 'from-fuchsia-50/80 to-white border-fuchsia-200',
+    iconBgClass: 'bg-fuchsia-600 text-white',
+    description: 'Tarjetas de sellos para clientes frecuentes'
+  },
+  {
+    name: 'Ruleta de Premios',
+    href: '/dashboard/ruleta',
+    icon: Disc,
+    badge: 'Juegos',
+    section: 'creaciones',
+    colorClass: 'from-amber-50/80 to-white border-amber-200',
+    iconBgClass: 'bg-amber-600 text-white',
+    description: 'Ruleta y Raspa y Gana interactivo'
+  },
+  {
+    name: 'Contactos (CRM)',
+    href: '/dashboard/leads',
+    icon: Users,
+    section: 'gestion',
+    colorClass: 'from-teal-50/80 to-white border-teal-200',
+    iconBgClass: 'bg-teal-600 text-white',
+    description: 'Base de datos de clientes capturados'
+  },
+  {
+    name: 'Quejas Privadas',
+    href: '/dashboard/feedback',
+    icon: MessageSquareWarning,
+    section: 'gestion',
+    colorClass: 'from-rose-50/80 to-white border-rose-200',
+    iconBgClass: 'bg-rose-600 text-white',
+    description: 'Buzón retenido por el escudo 1-3★'
+  },
+  {
+    name: 'Estadísticas',
+    href: '/dashboard/analytics',
+    icon: BarChart3,
+    section: 'gestion',
+    colorClass: 'from-blue-50/80 to-white border-blue-200',
+    iconBgClass: 'bg-blue-600 text-white',
+    description: 'Métricas de escaneos y visitas'
+  },
+  {
+    name: 'Suscripción',
+    href: '/dashboard/billing',
+    icon: CreditCard,
+    accent: true,
+    section: 'cuenta',
+    colorClass: 'from-emerald-50/80 to-white border-emerald-200',
+    iconBgClass: 'bg-emerald-600 text-white',
+    description: 'Estado de tu plan y métodos de pago'
+  },
 ]
 
 export default function DashboardNavbar({ 
@@ -92,7 +223,9 @@ export default function DashboardNavbar({
   isWhiteLabeledClient?: boolean
 }) {
   const pathname = usePathname()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const router = useRouter()
+  const [isGridLauncherOpen, setIsGridLauncherOpen] = useState(false)
+
   const normalizedIndustry = normalizeIndustry(userIndustry)
   const industryConfig = getIndustryConfig(userIndustry)
 
@@ -100,25 +233,18 @@ export default function DashboardNavbar({
   const brandLogo = (!isAdmin && whiteLabelBrand?.logo_url) ? whiteLabelBrand.logo_url : '/logo-light.png'
   const externalWebUrl = isWhiteLabeledClient ? (whiteLabelBrand?.website_url || '') : '/'
 
-  // Filtrado de navegación según el plan real y compra de hardware
+  // Filtrado de módulos disponibles según el rol y plan
   let filteredBaseItems: NavItem[] = []
 
   const canAccessProSuite = Boolean(isAdmin || planInfo?.canAccessProSuite)
   const hasNfc = Boolean(planInfo?.hasNfcCard || accountType === 'professional')
   const hasPlate = Boolean(planInfo?.hasReviewPlate || accountType === 'review_plate')
 
-  if (isAdmin) {
-    // 1. EL SUPERADMINISTRADOR TIENE ACCESO TOTAL A TODAS LAS HERRAMIENTAS
-    filteredBaseItems = [...baseNavItems]
-    filteredBaseItems.splice(5, 0, { name: 'Pacientes', href: '/dashboard/patients', icon: Stethoscope, badge: 'Salud', section: 'gestion' })
-  } else if (canAccessProSuite) {
-    // 2. PLAN PRO ACTIVO O PRUEBA GRATUITA:
+  if (canAccessProSuite) {
     filteredBaseItems = baseNavItems.filter(item => {
-      // Excluir rutas irrelevantes definidas para esta industria
       if (industryConfig.hiddenHrefs && industryConfig.hiddenHrefs.includes(item.href)) {
         return false
       }
-      // Pacientes solo para salud o administradores
       if (normalizedIndustry !== 'health' && item.href === '/dashboard/patients') return false
       return true
     })
@@ -129,37 +255,34 @@ export default function DashboardNavbar({
         href: '/dashboard/patients', 
         icon: Stethoscope, 
         badge: 'Médico', 
-        section: 'creaciones' 
+        section: 'creaciones',
+        colorClass: 'from-cyan-50/80 to-white border-cyan-200',
+        iconBgClass: 'bg-cyan-600 text-white',
+        description: 'Expediente Clínico Electrónico e historial'
       })
     }
   } else {
-    // 3. SIN SUSCRIPCIÓN MENSUAL (FUERA DEL MES GRATIS): SOLO HARDWARE FÍSICO ACTIVO
     const allowedHrefs: string[] = ['/dashboard']
-
     if (hasNfc) {
       allowedHrefs.push('/dashboard/vcard', '/dashboard/leads', '/dashboard/analytics')
     }
-
     if (hasPlate) {
       if (!allowedHrefs.includes('/dashboard/devices')) allowedHrefs.push('/dashboard/devices')
       if (!allowedHrefs.includes('/dashboard/feedback')) allowedHrefs.push('/dashboard/feedback')
       if (!allowedHrefs.includes('/dashboard/analytics')) allowedHrefs.push('/dashboard/analytics')
     }
-
     if (!hasNfc && !hasPlate) {
       allowedHrefs.push('/dashboard/analytics')
     }
-
     allowedHrefs.push('/dashboard/billing')
     filteredBaseItems = baseNavItems.filter(item => allowedHrefs.includes(item.href))
   }
 
-  // 4. Adaptar nombres, iconos y badges según la industria del usuario
+  // Adaptar nombres e iconos contextuales según el giro
   filteredBaseItems = filteredBaseItems.map(item => {
     const override = industryConfig.routeLabels[item.href]
     let currentIcon = item.icon
 
-    // Iconos contextuales
     if (item.href === '/dashboard/menus' && normalizedIndustry === 'retail') {
       currentIcon = ShoppingBag
     } else if (item.href === '/dashboard/appointments' && normalizedIndustry === 'health') {
@@ -175,453 +298,335 @@ export default function DashboardNavbar({
     }
   })
 
-  // 5. Ordenar según la prioridad de la industria
-  if (canAccessProSuite || isAdmin) {
+  if (canAccessProSuite) {
     filteredBaseItems.sort((a, b) => {
+      if (a.href === '/dashboard') return -1
+      if (b.href === '/dashboard') return 1
       const indexA = industryConfig.priorityHrefs.indexOf(a.href)
       const indexB = industryConfig.priorityHrefs.indexOf(b.href)
-      
       const posA = indexA === -1 ? 999 : indexA
       const posB = indexB === -1 ? 999 : indexB
-
       return posA - posB
     })
   }
 
-  // Añadir Configuración al final
-  filteredBaseItems.push({ name: 'Configuración', href: '/dashboard/settings', icon: UserCircle, section: 'cuenta' })
+  filteredBaseItems.push({
+    name: 'Configuración',
+    href: '/dashboard/settings',
+    icon: UserCircle,
+    section: 'cuenta',
+    colorClass: 'from-gray-50 to-white border-gray-200',
+    iconBgClass: 'bg-gray-800 text-white',
+    description: 'Ajustes de cuenta y contraseña'
+  })
 
   const navItems: NavItem[] = isAdmin
     ? [
-        { name: '👑 Admin Suscriptores Agencias', href: '/dashboard/reseller?view=master', icon: ShieldCheck, badge: 'Master', adminOnly: true, section: 'admin' },
-        { name: '📊 Panel Global & Usuarios', href: '/dashboard/admin', icon: BarChart3, adminOnly: true, section: 'admin' },
-        { name: '🏷️ Lotes Tarjetas NFC', href: '/dashboard/admin?tab=nfc-batches', icon: CreditCard, adminOnly: true, section: 'admin' },
-        { name: '⚙️ Configuración Master', href: '/dashboard/settings', icon: UserCircle, section: 'cuenta' },
+        {
+          name: 'Suscriptores de Agencias',
+          href: '/dashboard/reseller?view=master',
+          icon: Crown,
+          badge: 'Master',
+          adminOnly: true,
+          colorClass: 'from-purple-50 to-white border-purple-200',
+          iconBgClass: 'bg-purple-600 text-white',
+          description: 'Administra cupos, planes y vencimientos de Agencias'
+        },
+        {
+          name: 'Mi Propia Agencia',
+          href: '/dashboard/reseller?view=agency',
+          icon: Building2,
+          badge: 'Tu Agencia',
+          adminOnly: true,
+          colorClass: 'from-indigo-50 to-white border-indigo-200',
+          iconBgClass: 'bg-indigo-600 text-white',
+          description: 'Entra a tu cuenta de Agencia como un suscriptor más'
+        },
+        {
+          name: 'Panel Global & Usuarios',
+          href: '/dashboard/admin',
+          icon: BarChart3,
+          adminOnly: true,
+          colorClass: 'from-blue-50 to-white border-blue-200',
+          iconBgClass: 'bg-blue-600 text-white',
+          description: 'Métricas globales, usuarios y transferencias'
+        },
+        {
+          name: 'Lotes Tarjetas NFC',
+          href: '/dashboard/admin?tab=nfc-batches',
+          icon: CreditCard,
+          adminOnly: true,
+          colorClass: 'from-emerald-50 to-white border-emerald-200',
+          iconBgClass: 'bg-emerald-600 text-white',
+          description: 'Generación y control de tarjetas físicas NFC'
+        },
+        {
+          name: 'Configuración Master',
+          href: '/dashboard/settings',
+          icon: UserCircle,
+          colorClass: 'from-gray-50 to-white border-gray-200',
+          iconBgClass: 'bg-gray-800 text-white',
+          description: 'Preferencias de tu cuenta administradora'
+        }
       ]
     : [
         ...filteredBaseItems,
         ...(isReseller ? [
           { 
-            name: '🏢 Mi Agencia (Marca Blanca)', 
+            name: 'Mi Agencia (Marca Blanca)', 
             href: '/dashboard/reseller', 
             icon: Building2, 
             badge: 'Partner',
             adminOnly: true, 
-            section: 'admin' 
+            section: 'admin',
+            colorClass: 'from-purple-50 to-white border-purple-200',
+            iconBgClass: 'bg-purple-600 text-white',
+            description: 'Tus sub-clientes, tu logo y tu pasarela de cobro'
           }
         ] : []),
         ...(isRealSuperAdmin ? [
           { 
-            name: '👑 Volver a Panel Master', 
+            name: 'Volver a Panel Master', 
             href: '/dashboard/reseller?view=master', 
-            icon: ShieldCheck, 
+            icon: Crown, 
             badge: 'Admin',
             adminOnly: true, 
-            section: 'admin' 
+            section: 'admin',
+            colorClass: 'from-amber-50 to-white border-amber-200',
+            iconBgClass: 'bg-amber-500 text-white',
+            description: 'Regresar al control global de suscriptores de agencias'
           }
         ] : [])
       ]
 
   const isActive = (href: string) => {
-    if (href === '/dashboard') return pathname === '/dashboard'
-    return pathname.startsWith(href)
+    const cleanHref = href.split('?')[0]
+    if (cleanHref === '/dashboard') return pathname === '/dashboard'
+    return pathname.startsWith(cleanHref)
   }
 
-  // Obtener icono dinámico para la barra inferior
-  const getBottomIcon = (iconKey: string) => {
-    switch (iconKey) {
-      case 'home': return Home
-      case 'menu': return normalizedIndustry === 'retail' ? ShoppingBag : Coffee
-      case 'star': return Star
-      case 'scissors': return Scissors
-      case 'stethoscope': return Stethoscope
-      case 'vcard': return UserCircle
-      case 'leads': return Users
-      case 'gift': return Gift
-      case 'loyalty': return Sparkles
-      case 'ruleta': return Disc
-      case 'analytics': return BarChart3
-      case 'shop': return ShoppingBag
-      default: return Home
+  const isMainGridHome = isAdmin
+    ? pathname === '/dashboard/reseller'
+    : pathname === '/dashboard'
+
+  const activeItem = navItems.find(item => isActive(item.href) && item.href !== '/dashboard')
+  const homeUrl = isAdmin ? '/dashboard/reseller?view=master' : '/dashboard'
+
+  const handleNavItemClick = async (item: NavItem) => {
+    setIsGridLauncherOpen(false)
+    if (isRealSuperAdmin && item.href === '/dashboard/reseller?view=master' && !isAdmin) {
+      const { switchAdminAgencyModeAction } = await import('@/app/dashboard/reseller/actions')
+      await switchAdminAgencyModeAction(false)
+    } else if (isRealSuperAdmin && item.href === '/dashboard/reseller?view=agency' && isAdmin) {
+      const { switchAdminAgencyModeAction } = await import('@/app/dashboard/reseller/actions')
+      await switchAdminAgencyModeAction(true)
     }
   }
 
-  // Obtener los accesos directos para la barra móvil según si tiene Pro Suite o solo Hardware
-  const allowedBottomBar = !canAccessProSuite
-    ? (hasPlate
-        ? [
-            { name: 'Inicio', href: '/dashboard', icon: 'home' },
-            { name: 'Mi Placa', href: '/dashboard/devices', icon: 'star' },
-            { name: 'Quejas', href: '/dashboard/feedback', icon: 'alert' },
-            { name: 'Métricas', href: '/dashboard/analytics', icon: 'analytics' }
-          ]
-        : hasNfc
-        ? [
-            { name: 'Inicio', href: '/dashboard', icon: 'home' },
-            { name: 'vCard', href: '/dashboard/vcard', icon: 'vcard' },
-            { name: 'Contactos', href: '/dashboard/leads', icon: 'leads' },
-            { name: 'Métricas', href: '/dashboard/analytics', icon: 'analytics' }
-          ]
-        : industryConfig.bottomBar)
-    : industryConfig.bottomBar
-
   return (
     <>
-      {/* 1. TOP BAR MÓVIL (Visible solo en < md) */}
-      <header className="md:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 px-3.5 py-2.5 flex items-center justify-between shadow-xs">
-        <Link href="/dashboard" className="flex items-center gap-2 shrink-0 min-w-0">
-          {brandLogo.startsWith('/') ? (
-            <Image
-              src={brandLogo}
-              alt={brandName}
-              width={28}
-              height={28}
-              className="w-7 h-7 shrink-0 object-contain"
-              priority
-            />
-          ) : (
-            <img
-              src={brandLogo}
-              alt={brandName}
-              className="w-7 h-7 shrink-0 object-contain rounded"
-            />
-          )}
-          <span className="text-lg font-black tracking-tight text-gray-900 truncate">{brandName}</span>
-          {isAdmin ? (
-            <span className="text-[9px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded-sm shrink-0">
-              ADMIN
-            </span>
-          ) : isReseller ? (
-            <span className="text-[9px] bg-indigo-100 text-indigo-800 font-extrabold px-1.5 py-0.5 rounded-sm shrink-0">
-              PARTNER
-            </span>
-          ) : null}
-        </Link>
+      {/* 1. BARRA SUPERIOR LIMPIA SIN PANEL LATERAL (ESTILO APP VISUAL) */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-2xs">
+        <div className="max-w-6xl mx-auto px-3.5 sm:px-6 h-15 sm:h-16 flex items-center justify-between gap-3">
+          {/* Izquierda: Logo + Botón Volver al Menú si está dentro de una herramienta */}
+          <div className="flex items-center gap-2.5 sm:gap-4 min-w-0">
+            <Link href={homeUrl} className="flex items-center gap-2 shrink-0 group">
+              {brandLogo.startsWith('/') ? (
+                <Image
+                  src={brandLogo}
+                  alt={brandName}
+                  width={32}
+                  height={32}
+                  className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 object-contain transition group-hover:scale-105"
+                  priority
+                />
+              ) : (
+                <img
+                  src={brandLogo}
+                  alt={brandName}
+                  className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 object-contain rounded"
+                />
+              )}
+              <span className="text-base sm:text-xl font-black tracking-tight text-gray-950 truncate max-w-[130px] sm:max-w-none">
+                {brandName}
+              </span>
+            </Link>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Selector de Industria compacto en Topbar móvil (Solo clientes/agencias) */}
-          {!isAdmin && <IndustrySwitcher currentIndustry={userIndustry} variant="compact" />}
+            {!isMainGridHome && (
+              <>
+                <span className="text-gray-300 hidden sm:inline">/</span>
+                <Link
+                  href={homeUrl}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-xs transition shrink-0"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Volver al Menú</span>
+                </Link>
+              </>
+            )}
 
-          <NotificationBell userId={userId} position="topbar" />
+            {activeItem && !isMainGridHome && (
+              <span className="hidden md:inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200 truncate">
+                {activeItem.name}
+              </span>
+            )}
+          </div>
 
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-1.5 px-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 transition-colors flex items-center gap-1 font-bold text-xs cursor-pointer ml-0.5"
-            aria-label="Abrir menú"
-          >
-            <span className="hidden xs:inline">Menú</span>
-            {isMobileMenuOpen ? <X className="w-4 h-4" /> : <MenuIcon className="w-4 h-4" />}
-          </button>
+          {/* Derecha: Botón Cuadrícula de Herramientas + Notificaciones + Salir */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsGridLauncherOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span>Menú de Herramientas</span>
+            </button>
+
+            <NotificationBell userId={userId} position="topbar" />
+
+            {externalWebUrl && (
+              <Link
+                href={externalWebUrl}
+                className="hidden sm:inline-flex p-2 text-gray-500 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition"
+                title="Ir a la página web pública"
+              >
+                <Globe className="w-4 h-4" />
+              </Link>
+            )}
+
+            <form action={logout} className="hidden sm:block">
+              <button
+                type="submit"
+                className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                title="Cerrar Sesión"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </form>
+          </div>
         </div>
       </header>
 
-      {/* 2. DRAWER MÓVIL (Slide-over menú completo) */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity" 
-            onClick={() => setIsMobileMenuOpen(false)} 
+      {/* 2. MODAL VISUAL EN CUADRÍCULA DE APLICACIONES (APP LAUNCHER ESTILO CANVA / IPAD) */}
+      {isGridLauncherOpen && (
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          {/* Fondo desenfocado */}
+          <div
+            className="fixed inset-0 bg-gray-950/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsGridLauncherOpen(false)}
           />
 
-          {/* Drawer Panel */}
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl p-5 z-10 animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-              <div className="flex items-center gap-2">
-                {brandLogo.startsWith('/') ? (
-                  <Image
-                    src={brandLogo}
-                    alt={brandName}
-                    width={28}
-                    height={28}
-                    className="w-7 h-7 object-contain"
-                  />
-                ) : (
-                  <img
-                    src={brandLogo}
-                    alt={brandName}
-                    className="w-7 h-7 object-contain rounded"
-                  />
-                )}
-                <span className="text-lg font-bold tracking-tight text-gray-900 truncate">{brandName}</span>
+          {/* Contenedor de la Cuadrícula */}
+          <div className="relative z-10 w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden my-auto animate-in zoom-in-95 duration-150">
+            {/* Cabecera del Launcher */}
+            <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/70">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
+                  <LayoutGrid className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-gray-950">
+                    {isAdmin ? 'Menú Master de Administración' : `Menú de Herramientas • ${brandName}`}
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    Selecciona cualquier herramienta para abrirla limpia en pantalla completa
+                  </p>
+                </div>
               </div>
-              <button 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-black rounded-lg hover:bg-gray-100 cursor-pointer"
+
+              <button
+                type="button"
+                onClick={() => setIsGridLauncherOpen(false)}
+                className="p-2 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Selector de Industria en el Drawer (Solo clientes/agencias) */}
-            {!isAdmin && (
-              <div className="mb-3">
-                <IndustrySwitcher currentIndustry={userIndustry} variant="banner" className="py-2.5 px-3" />
-              </div>
-            )}
+            {/* Cuadrícula Responsiva de Iconos y Nombres */}
+            <div className="p-5 sm:p-8 max-h-[75vh] overflow-y-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                {navItems.map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.href)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => handleNavItemClick(item)}
+                      className={`group relative rounded-2xl p-4 border bg-gradient-to-b transition-all duration-200 flex flex-col justify-between text-left hover:-translate-y-0.5 hover:shadow-md ${
+                        active
+                          ? 'ring-2 ring-purple-600 border-purple-600 from-purple-50/90 to-white shadow-sm'
+                          : item.colorClass || 'from-gray-50/60 to-white border-gray-200/90 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-xs transition-transform group-hover:scale-105 ${
+                            item.iconBgClass || 'bg-gray-900 text-white'
+                          }`}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          {item.badge && (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-white/90 border border-gray-200 text-gray-800">
+                              {item.badge}
+                            </span>
+                          )}
+                        </div>
 
-            {userEmail && (
-              <div className="px-3 py-2 bg-gray-50 rounded-xl mb-3 border border-gray-100">
-                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Conectado como:</p>
-                <p className="text-xs font-bold text-gray-800 truncate">{userEmail}</p>
-                {isAdmin ? (
-                  <span className="inline-block mt-1 text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
-                    👑 Super Administrador
-                  </span>
-                ) : planInfo?.isTrial ? (
-                  <span className="inline-block mt-1 text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
-                    ⚡ Prueba PRO ({planInfo.trialDaysLeft}d)
-                  </span>
-                ) : planInfo?.isMonthlyPro ? (
-                  <span className="inline-block mt-1 text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
-                    💎 Plan PRO Activo
-                  </span>
-                ) : planInfo?.isHardwareActive ? (
-                  <span className="inline-block mt-1 text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                    🏷️ {planInfo.hasReviewPlate ? 'Placa NFC (1 Año)' : 'Tarjeta NFC (1 Año)'}
-                  </span>
-                ) : null}
-              </div>
-            )}
+                        <div>
+                          <h3 className="font-black text-xs sm:text-sm text-gray-950 leading-snug group-hover:text-purple-700 transition">
+                            {item.name}
+                          </h3>
+                          {item.description && (
+                            <p className="text-[11px] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
 
-            <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const active = isActive(item.href)
-                const isExitAgencyMode = item.href === '/dashboard/reseller?view=master' && !isAdmin && isRealSuperAdmin
-                return (
+                      <div className="pt-3 mt-2 flex items-center justify-between text-[11px] font-bold text-gray-500 group-hover:text-purple-700">
+                        <span>{active ? 'Abierto ahora' : 'Abrir'}</span>
+                        <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Pie del Launcher con cuenta y botón de Cerrar Sesión */}
+            <div className="px-5 sm:px-8 py-3.5 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-xs text-gray-600 font-medium truncate">
+                Sesión iniciada como: <strong className="text-gray-900">{userEmail}</strong>
+              </div>
+              <div className="flex items-center gap-3">
+                {externalWebUrl && (
                   <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={async () => {
-                      setIsMobileMenuOpen(false)
-                      if (isExitAgencyMode) {
-                        const { switchAdminAgencyModeAction } = await import('@/app/dashboard/reseller/actions')
-                        await switchAdminAgencyModeAction(false)
-                      }
-                    }}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all ${
-                      active
-                        ? 'bg-black text-white font-bold shadow-xs'
-                        : item.adminOnly
-                        ? 'text-purple-700 bg-purple-50 hover:bg-purple-100 font-bold'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                    href={externalWebUrl}
+                    onClick={() => setIsGridLauncherOpen(false)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-gray-950 px-3 py-1.5 rounded-xl hover:bg-gray-200/60 transition"
                   >
-                    <div className="flex items-center gap-3">
-                      <Icon className={`w-5 h-5 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : 'text-gray-500'}`} />
-                      <span>{item.name}</span>
-                    </div>
-
-                    {item.badge && (
-                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md ${
-                        active ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
-                      }`}>
-                        {item.badge}
-                      </span>
-                    )}
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>Ver Web</span>
                   </Link>
-                )
-              })}
-            </nav>
-
-            <div className="pt-3 border-t border-gray-100 mt-auto space-y-1">
-              <Link
-                href="/"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-gray-700 hover:text-black hover:bg-gray-100 rounded-xl transition"
-                title="Ir a la página principal de la web"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Globe className="w-4 h-4 text-purple-600" />
-                  <span>Página Principal (Web)</span>
-                </div>
-                <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
-              </Link>
-
-              <form action={logout}>
-                <button 
-                  type="submit" 
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Cerrar Sesión</span>
-                </button>
-              </form>
+                )}
+                <form action={logout}>
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-xl transition cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Cerrar Sesión</span>
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* 3. SIDEBAR DE ESCRITORIO (Visible solo en >= md) */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 shrink-0 min-h-screen sticky top-0 h-screen">
-        <div className="px-4 py-3.5 pb-3 flex items-center justify-between border-b border-gray-100">
-          <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
-            {brandLogo.startsWith('/') ? (
-              <Image
-                src={brandLogo}
-                alt={brandName}
-                width={32}
-                height={32}
-                className="w-8 h-8 shrink-0 object-contain"
-                priority
-              />
-            ) : (
-              <img
-                src={brandLogo}
-                alt={brandName}
-                className="w-8 h-8 shrink-0 object-contain rounded"
-              />
-            )}
-            <span className="text-xl font-black tracking-tight text-gray-900 truncate">{brandName}</span>
-          </Link>
-
-          <div className="flex items-center gap-1 shrink-0">
-            {externalWebUrl && (
-              <Link
-                href={externalWebUrl}
-                className="p-1.5 text-gray-500 hover:text-black rounded-lg hover:bg-gray-100 transition cursor-pointer"
-                title="Ver Página Principal (Web)"
-              >
-                <Globe className="w-4 h-4" />
-              </Link>
-            )}
-            <NotificationBell userId={userId} position="sidebar" />
-          </div>
-        </div>
-
-        {/* Banner de Giro de Negocio / Switcher en Sidebar (Solo clientes/agencias) */}
-        {!isAdmin && (
-          <div className="px-3.5 py-2.5 border-b border-gray-100 bg-gray-50/50">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Modo de Negocio</span>
-            </div>
-            <IndustrySwitcher currentIndustry={userIndustry} variant="compact" className="w-full justify-between" />
-          </div>
-        )}
-
-        {userEmail && (
-          <div className="px-4 py-2 border-b border-gray-100 bg-white">
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Cuenta</p>
-              {isAdmin ? (
-                <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded">
-                  ADMIN
-                </span>
-              ) : planInfo?.isTrial ? (
-                <span className="text-[10px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded">
-                  PRUEBA PRO ({planInfo.trialDaysLeft}d)
-                </span>
-              ) : planInfo?.isMonthlyPro ? (
-                <span className="text-[10px] bg-purple-100 text-purple-800 font-extrabold px-1.5 py-0.5 rounded">
-                  PRO ACTIVO
-                </span>
-              ) : planInfo?.isHardwareActive ? (
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded">
-                  1 AÑO ACTIVO
-                </span>
-              ) : null}
-            </div>
-            <p className="text-xs font-semibold text-gray-800 truncate mt-0.5">{userEmail}</p>
-          </div>
-        )}
-        
-        <nav className="flex-1 px-3.5 py-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.href)
-            const isExitAgencyMode = item.href === '/dashboard/reseller?view=master' && !isAdmin && isRealSuperAdmin
-            return (
-              <Link 
-                key={item.href}
-                href={item.href} 
-                onClick={async () => {
-                  if (isExitAgencyMode) {
-                    const { switchAdminAgencyModeAction } = await import('@/app/dashboard/reseller/actions')
-                    await switchAdminAgencyModeAction(false)
-                  }
-                }}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all ${
-                  active 
-                    ? 'bg-black text-white shadow-xs font-bold' 
-                    : item.adminOnly
-                    ? 'text-purple-700 bg-purple-50/70 hover:bg-purple-100 font-bold'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 truncate">
-                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-white' : item.adminOnly ? 'text-purple-600' : item.accent ? 'text-yellow-600' : 'text-gray-500'}`} />
-                  <span className="truncate">{item.name}</span>
-                </div>
-
-                {item.badge && (
-                  <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 ml-1 ${
-                    active ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            )
-          })}
-        </nav>
-
-        <div className="p-3.5 border-t border-gray-200 mt-auto space-y-1">
-          {externalWebUrl && (
-            <Link
-              href={externalWebUrl}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-bold text-gray-600 hover:text-black hover:bg-gray-100 rounded-xl transition"
-              title={`Ver la página de inicio de ${brandName}`}
-            >
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-purple-600" />
-                <span>Página Principal (Web)</span>
-              </div>
-              <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
-            </Link>
-          )}
-
-          <form action={logout}>
-            <button 
-              type="submit" 
-              className="w-full flex items-center gap-2.5 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Cerrar Sesión</span>
-            </button>
-          </form>
-        </div>
-      </aside>
-
-      {/* 4. BARRA DE ACCIONES RÁPIDAS INFERIOR MÓVIL (Adaptada por industria) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 px-2 py-1.5 flex items-center justify-around shadow-lg">
-        {/* Renderizado dinámico de los 4 accesos rápidos según el giro del negocio o hardware */}
-        {allowedBottomBar.map((btn) => {
-          const Icon = getBottomIcon(btn.icon)
-          const active = isActive(btn.href)
-          return (
-            <Link 
-              key={btn.href}
-              href={btn.href}
-              className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition ${
-                active ? 'text-black font-bold' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              <Icon className={`w-5 h-5 ${active ? 'stroke-[2.5]' : ''}`} />
-              <span className="text-[10px] mt-0.5 truncate max-w-[64px]">{btn.name}</span>
-            </Link>
-          )
-        })}
-
-        {/* Botón 5: Menú completo / Drawer */}
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="flex flex-col items-center justify-center p-1.5 rounded-xl text-gray-500 hover:text-gray-900 transition cursor-pointer"
-        >
-          <MenuIcon className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5 font-bold">Más</span>
-        </button>
-      </nav>
     </>
   )
 }

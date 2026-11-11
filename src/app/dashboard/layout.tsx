@@ -65,11 +65,11 @@ export default async function DashboardLayout({
         <ImpersonationBanner impersonatedUser={effectiveUser} />
       )}
 
-      <div className="flex-1 flex flex-col md:flex-row">
+      <div className="flex-1 flex flex-col">
         {/* Notificaciones Flotantes Globales de Éxito / Error */}
         <GlobalToast />
 
-        {/* Navegación Responsive (TopBar + Drawer + Desktop Sidebar + Mobile Bottom Quick Bar) */}
+        {/* Barra Superior Limpia + Lanzador Visual en Cuadrícula (Sin Panel Lateral) */}
         <DashboardNavbar 
           userEmail={effectiveUser?.email || undefined} 
           userId={effectiveUser?.id || undefined} 
@@ -83,9 +83,9 @@ export default async function DashboardLayout({
           isWhiteLabeledClient={!showMasterAdminSidebar && whiteLabelInfo.isWhiteLabeledClient}
         />
 
-        {/* Contenido Principal */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 pb-24 md:pb-8 w-full overflow-x-hidden">
-          <div className="max-w-5xl mx-auto w-full space-y-6">
+        {/* Contenido Principal en Pantalla Limpia */}
+        <main className="flex-1 p-4 sm:p-6 md:p-8 w-full overflow-x-hidden">
+          <div className="max-w-6xl mx-auto w-full space-y-6">
             {/* Banner de Instalación PWA (Agregar a pantalla de inicio) */}
             <PwaInstallPrompt />
 

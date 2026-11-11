@@ -35,6 +35,7 @@ import { cookies } from 'next/headers'
 import { getEffectiveUser, ADMIN_AGENCY_MODE_COOKIE } from '@/lib/auth/effectiveUser'
 import IndustrySwitcher from '@/components/IndustrySwitcher'
 import { getIndustryConfig, normalizeIndustry } from '@/lib/industries'
+import { resolveUserWhiteLabel } from '@/lib/whitelabel'
 
 // Mapeo de iconos para tarjetas
 const cardIcons: Record<string, any> = {
@@ -62,10 +63,11 @@ export default async function DashboardPage() {
   }
 
   // 1. Obtener plan, perfil y giro del negocio
-  const [planInfo, { data: profile }, cookieStore] = await Promise.all([
+  const [planInfo, { data: profile }, cookieStore, wlInfo] = await Promise.all([
     getUserPlanInfo(supabase, user.id),
     supabase.from('users').select('full_name, account_type, industry').eq('id', user.id).maybeSingle(),
-    cookies()
+    cookies(),
+    resolveUserWhiteLabel(user.id, false)
   ])
 
   const {
@@ -637,79 +639,218 @@ export default async function DashboardPage() {
           </div>
         </div>
         
-        {/* 4. HERRAMIENTAS PRIORITARIAS PARA ESTE GIRO */}
+        {/* 4. CUADRÍCULA VISUAL DE TODAS TUS HERRAMIENTAS (ICONOS Y NOMBRES LIMPIOS) */}
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-extrabold text-gray-900">
-              Herramientas Clave para {isHardwareActive && hasNfcCard && !planInfo.canAccessProSuite ? 'tu Tarjeta NFC' : industryConfig.shortName}
+            <h2 className="text-base sm:text-lg font-extrabold text-gray-900">
+              Menú en Cuadrícula • {isHardwareActive && hasNfcCard && !planInfo.canAccessProSuite ? 'Tu Tarjeta NFC' : industryConfig.shortName}
             </h2>
             <p className="text-xs text-gray-500">
-              {isHardwareActive && hasNfcCard && !planInfo.canAccessProSuite
-                ? 'Gestiona tu tarjeta de presentación digital y contactos capturados.'
-                : 'Funcionalidades recomendadas para potenciar tu operación diaria.'}
+              Toca cualquier icono para abrir su herramienta limpia en pantalla completa.
             </p>
           </div>
         </div>
 
         {(() => {
-          const displayedCards = (!planInfo.canAccessProSuite && (hasNfcCard || accountType === 'professional'))
-            ? [
-                {
-                  href: '/dashboard/vcard',
-                  title: 'Mi vCard Digital',
-                  description: 'Tu perfil interactivo para compartir tus datos con un toque de tu tarjeta NFC.',
-                  actionText: 'Gestionar vCard',
-                  icon: 'user',
-                  badge: '1 Año Activo',
-                  badgeColor: 'bg-blue-100 text-blue-800'
-                },
-                {
-                  href: '/dashboard/leads',
-                  title: 'Contactos & Leads (CRM)',
-                  description: 'Personas que han guardado tu contacto o intercambiado datos desde tu tarjeta.',
-                  actionText: 'Ver Contactos',
-                  icon: 'users',
-                  badge: 'CRM',
-                  badgeColor: 'bg-emerald-100 text-emerald-800'
-                },
-                {
-                  href: '/dashboard/analytics',
-                  title: 'Métricas de Escaneos',
-                  description: 'Revisa cuántas personas han tocado tu tarjeta física o visto tu perfil virtual.',
-                  actionText: 'Ver Métricas',
-                  icon: 'star',
-                  badge: 'NFC',
-                  badgeColor: 'bg-purple-100 text-purple-800'
-                }
-              ]
-            : industryConfig.featuredCards
+          const allVisualModules = [
+            {
+              href: '/dashboard/vcard',
+              title: 'Mi vCard Digital',
+              description: 'Perfil interactivo y redes sociales',
+              icon: UserCircle,
+              iconBg: 'bg-violet-600 text-white',
+              cardBg: 'from-violet-50/70 to-white border-violet-200/80 hover:border-violet-400',
+              badge: 'NFC'
+            },
+            {
+              href: '/dashboard/qr-studio',
+              title: 'Estudio QR (HD)',
+              description: 'Imprimibles para mesas o mostrador',
+              icon: QrCode,
+              iconBg: 'bg-indigo-600 text-white',
+              cardBg: 'from-indigo-50/70 to-white border-indigo-200/80 hover:border-indigo-400',
+              badge: 'HD'
+            },
+            {
+              href: '/dashboard/devices',
+              title: 'Reseñas Google 5★',
+              description: 'Escudo protector y placas NFC',
+              icon: Star,
+              iconBg: 'bg-amber-500 text-white',
+              cardBg: 'from-amber-50/70 to-white border-amber-200/80 hover:border-amber-400',
+              badge: '5★'
+            },
+            {
+              href: '/dashboard/google-business',
+              title: 'Google Maps & SEO',
+              description: 'Posicionamiento local con IA',
+              icon: MapPin,
+              iconBg: 'bg-sky-600 text-white',
+              cardBg: 'from-sky-50/70 to-white border-sky-200/80 hover:border-sky-400',
+              badge: 'IA'
+            },
+            {
+              href: '/dashboard/menus',
+              title: normalizedIndustry === 'retail' ? 'Catálogo Online' : 'Menú Digital QR',
+              description: 'Productos, precios, fotos y turnos',
+              icon: normalizedIndustry === 'retail' ? ShoppingBag : Coffee,
+              iconBg: 'bg-orange-500 text-white',
+              cardBg: 'from-orange-50/70 to-white border-orange-200/80 hover:border-orange-400',
+              badge: 'Ventas'
+            },
+            {
+              href: '/dashboard/comandas',
+              title: 'Comandas en Vivo',
+              description: 'Pedidos recibidos en tiempo real',
+              icon: Zap,
+              iconBg: 'bg-emerald-600 text-white',
+              cardBg: 'from-emerald-50/70 to-white border-emerald-200/80 hover:border-emerald-400',
+              badge: 'En Vivo'
+            },
+            {
+              href: '/dashboard/appointments',
+              title: 'Agendas & Citas',
+              description: 'Reservas 24/7 y especialistas',
+              icon: normalizedIndustry === 'health' ? Stethoscope : Scissors,
+              iconBg: 'bg-pink-600 text-white',
+              cardBg: 'from-pink-50/70 to-white border-pink-200/80 hover:border-pink-400',
+              badge: '24/7'
+            },
+            ...(normalizedIndustry === 'health'
+              ? [
+                  {
+                    href: '/dashboard/patients',
+                    title: 'Pacientes & ECE',
+                    description: 'Expediente Clínico Electrónico',
+                    icon: Stethoscope,
+                    iconBg: 'bg-cyan-600 text-white',
+                    cardBg: 'from-cyan-50/70 to-white border-cyan-200/80 hover:border-cyan-400',
+                    badge: 'Médico'
+                  }
+                ]
+              : []),
+            {
+              href: '/dashboard/gift-cards',
+              title: 'Gift Cards',
+              description: 'Tarjetas de regalo con código QR',
+              icon: Gift,
+              iconBg: 'bg-purple-600 text-white',
+              cardBg: 'from-purple-50/70 to-white border-purple-200/80 hover:border-purple-400',
+              badge: 'VIP'
+            },
+            {
+              href: '/dashboard/loyalty',
+              title: 'Club de Sellos',
+              description: 'Fidelización de clientes frecuentes',
+              icon: Sparkles,
+              iconBg: 'bg-fuchsia-600 text-white',
+              cardBg: 'from-fuchsia-50/70 to-white border-fuchsia-200/80 hover:border-fuchsia-400',
+              badge: 'Lealtad'
+            },
+            {
+              href: '/dashboard/ruleta',
+              title: 'Ruleta & Raspa',
+              description: 'Juegos de premios en mesa',
+              icon: Disc,
+              iconBg: 'bg-amber-600 text-white',
+              cardBg: 'from-amber-50/70 to-white border-amber-200/80 hover:border-amber-400',
+              badge: 'Juegos'
+            },
+            {
+              href: '/dashboard/leads',
+              title: 'Contactos (CRM)',
+              description: 'Base de datos de clientes',
+              icon: Users,
+              iconBg: 'bg-teal-600 text-white',
+              cardBg: 'from-teal-50/70 to-white border-teal-200/80 hover:border-teal-400',
+              badge: 'CRM'
+            },
+            {
+              href: '/dashboard/feedback',
+              title: 'Quejas Privadas',
+              description: 'Buzón retenido 1-3 estrellas',
+              icon: AlertTriangle,
+              iconBg: 'bg-rose-600 text-white',
+              cardBg: 'from-rose-50/70 to-white border-rose-200/80 hover:border-rose-400',
+              badge: 'Escudo'
+            },
+            {
+              href: '/dashboard/analytics',
+              title: 'Estadísticas',
+              description: 'Métricas de escaneos y visitas',
+              icon: BarChart3,
+              iconBg: 'bg-blue-600 text-white',
+              cardBg: 'from-blue-50/70 to-white border-blue-200/80 hover:border-blue-400',
+              badge: 'Datos'
+            },
+            {
+              href: '/dashboard/billing',
+              title: 'Suscripción',
+              description: 'Estado de tu plan y pagos',
+              icon: CreditCard,
+              iconBg: 'bg-emerald-600 text-white',
+              cardBg: 'from-emerald-50/70 to-white border-emerald-200/80 hover:border-emerald-400',
+              badge: 'Plan'
+            },
+            {
+              href: '/dashboard/settings',
+              title: 'Configuración',
+              description: 'Ajustes de cuenta y seguridad',
+              icon: UserCircle,
+              iconBg: 'bg-gray-800 text-white',
+              cardBg: 'from-gray-50 to-white border-gray-200 hover:border-gray-400',
+              badge: 'Cuenta'
+            },
+            ...(wlInfo.isReseller
+              ? [
+                  {
+                    href: '/dashboard/reseller',
+                    title: 'Mi Agencia Marca Blanca',
+                    description: 'Tus sub-clientes, logo y pasarela',
+                    icon: Building2,
+                    iconBg: 'bg-purple-700 text-white',
+                    cardBg: 'from-purple-50 to-white border-purple-300 hover:border-purple-500',
+                    badge: 'Partner'
+                  }
+                ]
+              : [])
+          ]
+
+          const visibleModules = (!planInfo.canAccessProSuite && (hasNfcCard || accountType === 'professional'))
+            ? allVisualModules.filter(m => ['/dashboard/vcard', '/dashboard/leads', '/dashboard/analytics', '/dashboard/billing', '/dashboard/settings'].includes(m.href))
+            : allVisualModules.filter(m => !(industryConfig.hiddenHrefs || []).includes(m.href))
 
           return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayedCards.map((card) => {
-                const Icon = cardIcons[card.icon] || Sparkles
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4">
+              {visibleModules.map((mod) => {
+                const Icon = mod.icon
                 return (
-                  <Link 
-                    key={card.href}
-                    href={card.href} 
-                    className="group p-5 border border-gray-100 rounded-2xl bg-gray-50/70 hover:bg-gray-50 hover:border-gray-200 transition-all flex flex-col justify-between"
+                  <Link
+                    key={mod.href}
+                    href={mod.href}
+                    className={`group p-4 sm:p-5 border rounded-2xl bg-gradient-to-b ${mod.cardBg} transition-all duration-200 flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md`}
                   >
                     <div>
-                      <div className="w-10 h-10 bg-white shadow-xs rounded-xl flex items-center justify-center text-gray-900 mb-3 group-hover:scale-105 transition-transform border border-gray-100">
-                        <Icon className="w-5 h-5" style={{ color: industryConfig.accentColor }} />
-                      </div>
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <h3 className="font-bold text-sm sm:text-base text-gray-900 truncate">{card.title}</h3>
-                        {card.badge && (
-                          <span className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded shrink-0 ${card.badgeColor || 'bg-gray-200 text-gray-800'}`}>
-                            {card.badge}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-xs transition-transform group-hover:scale-105 ${mod.iconBg}`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        {mod.badge && (
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-white border border-gray-200 text-gray-700">
+                            {mod.badge}
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-500 text-xs leading-relaxed line-clamp-2">{card.description}</p>
+                      <h3 className="font-black text-xs sm:text-sm text-gray-950 group-hover:text-purple-700 transition">
+                        {mod.title}
+                      </h3>
+                      <p className="text-gray-500 text-[11px] leading-relaxed mt-1 line-clamp-2">
+                        {mod.description}
+                      </p>
                     </div>
-                    <span className="mt-4 text-xs font-bold text-black inline-flex items-center gap-1 group-hover:underline">
-                      {card.actionText} <ArrowRight className="w-3.5 h-3.5" />
+                    <span className="mt-3 pt-2 border-t border-gray-100/80 text-[11px] font-bold text-gray-700 group-hover:text-purple-700 inline-flex items-center justify-between">
+                      <span>Abrir</span>
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                     </span>
                   </Link>
                 )
