@@ -81,21 +81,21 @@ export async function createResellerSubClientAction(formData: FormData) {
   }
 
   // Verificar vigencia de la suscripción del Distribuidor
-  if (!isAdmin && resellerMeta.reseller_expires_at) {
+  if (resellerMeta.reseller_expires_at) {
     if (new Date(resellerMeta.reseller_expires_at) <= new Date()) {
-      throw new Error('Tu suscripción de Distribuidor con OmniTag ha vencido. Renuévala para crear más cuentas.')
+      throw new Error('Tu suscripción de Agencia Marca Blanca ha vencido. Renuévala desde el Panel Master o en Hotmart para crear más cuentas.')
     }
   }
 
-  // Verificar cupo disponible
-  const quota = isAdmin ? 9999 : Number(resellerMeta.reseller_quota || 25)
+  // Verificar cupo disponible (incluso si eres Admin, tu cuenta de Agencia respeta el cupo asignado como cualquier suscriptor)
+  const quota = Number(resellerMeta.reseller_quota || 25)
   const { data: allUsersList } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
   const currentSubClients = (allUsersList?.users || []).filter(
     u => u.user_metadata?.parent_reseller_id === user.id
   )
 
-  if (!isAdmin && currentSubClients.length >= quota) {
-    throw new Error(`Has alcanzado el límite de tu plan de Distribuidor (${quota} clientes). Amplía tu plan con OmniTag.`)
+  if (currentSubClients.length >= quota) {
+    throw new Error(`Has alcanzado el límite de tu plan de Agencia (${quota} clientes). Amplía tu cupo de Agencia desde el Panel de Suscriptores Marca Blanca.`)
   }
 
   const clientEmail = (formData.get('email') as string)?.trim().toLowerCase()
@@ -232,29 +232,71 @@ export async function adminConfigureDistributorAction(formData: FormData) {
   }
 
   const targetEmail = (formData.get('email') as string)?.trim().toLowerCase()
+  const targetPassword = (formData.get('password') as string)?.trim()
+  const targetName = (formData.get('full_name') as string)?.trim()
+  const brandName = (formData.get('brand_name') as string)?.trim()
   const quota = Number(formData.get('quota') || 25)
   const durationDays = Number(formData.get('duration_days') || 30)
   const enableReseller = formData.get('enable_reseller') !== 'false'
 
-  if (!targetEmail) throw new Error('Ingresa el correo del usuario a convertir en Distribuidor.')
+  if (!targetEmail) throw new Error('Ingresa el correo del usuario o nueva Agencia.')
 
   const adminClient = getAdminClient()
-  const { data: targetUserRow } = await adminClient
+  let { data: targetUserRow } = await adminClient
     .from('users')
     .select('id, email, full_name')
     .ilike('email', targetEmail)
     .maybeSingle()
 
+  // Si el correo aún no existe y el Super Admin ingresó contraseña, crear la cuenta de Agencia automáticamente
   if (!targetUserRow) {
-    throw new Error(`No existe ningún usuario registrado con el correo ${targetEmail}.`)
+    if (!targetPassword || targetPassword.length < 6) {
+      throw new Error(`El correo ${targetEmail} no existe aún. Ingresa una contraseña inicial (mín. 6 caracteres) para crear la cuenta de Agencia automáticamente.`)
+    }
+
+    const { data: createdAgency, error: createErr } = await adminClient.auth.admin.createUser({
+      email: targetEmail,
+      password: targetPassword,
+      email_confirm: true,
+      user_metadata: {
+        full_name: targetName || brandName || targetEmail.split('@')[0],
+        industry: 'professional',
+        industry_locked: true,
+        account_type: 'business',
+      },
+    })
+
+    if (createErr || !createdAgency?.user) {
+      throw new Error(createErr?.message || 'No se pudo crear la nueva cuenta de Agencia.')
+    }
+
+    await adminClient.from('users').upsert({
+      id: createdAgency.user.id,
+      email: targetEmail,
+      full_name: targetName || brandName || targetEmail.split('@')[0],
+      industry: 'professional',
+      account_type: 'business',
+    })
+
+    targetUserRow = {
+      id: createdAgency.user.id,
+      email: targetEmail,
+      full_name: targetName || brandName || targetEmail.split('@')[0],
+    }
   }
 
   const { data: targetAuth } = await adminClient.auth.admin.getUserById(targetUserRow.id)
   const existingMeta = targetAuth?.user?.user_metadata || {}
+  const existingWl = existingMeta.white_label_config || {}
 
   const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + Math.max(1, durationDays))
-  const expiresIso = enableReseller ? expiresAt.toISOString() : null
+  if (durationDays <= 0) {
+    // Suspender agencia poniendo fecha en el pasado
+    expiresAt.setDate(expiresAt.getDate() - 1)
+  } else {
+    expiresAt.setDate(expiresAt.getDate() + durationDays)
+  }
+  const expiresIso = expiresAt.toISOString()
 
   const { error } = await adminClient.auth.admin.updateUserById(targetUserRow.id, {
     user_metadata: {
@@ -262,19 +304,22 @@ export async function adminConfigureDistributorAction(formData: FormData) {
       is_reseller: enableReseller,
       reseller_quota: quota,
       reseller_expires_at: expiresIso,
+      white_label_config: {
+        ...existingWl,
+        ...(brandName ? { brand_name: brandName } : {}),
+      },
     },
   })
 
   if (error) throw new Error(error.message)
 
-  if (enableReseller && expiresIso) {
-    await adminClient
-      .from('users')
-      .update({
-        subscription_expires_at: expiresIso,
-      })
-      .eq('id', targetUserRow.id)
-  }
+  await adminClient
+    .from('users')
+    .update({
+      subscription_expires_at: expiresIso,
+      trial_expires_at: expiresIso,
+    })
+    .eq('id', targetUserRow.id)
 
   revalidatePath('/dashboard/reseller')
   revalidatePath('/dashboard/admin')
@@ -285,4 +330,59 @@ export async function adminConfigureDistributorAction(formData: FormData) {
     isReseller: enableReseller,
     quota,
   }
+}
+
+export async function adminQuickManageAgencyAction(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('No autorizado')
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('is_admin')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!profile?.is_admin) {
+    throw new Error('Solo el Super Administrador puede gestionar suscripciones de Agencias.')
+  }
+
+  const agencyId = (formData.get('agency_id') as string)?.trim()
+  const actionType = (formData.get('action_type') as string)?.trim() // 'add_30' | 'add_365' | 'suspend' | 'set_quota'
+  const newQuota = Number(formData.get('quota') || 25)
+
+  if (!agencyId) throw new Error('Agencia inválida')
+
+  const adminClient = getAdminClient()
+  const { data: targetAuth } = await adminClient.auth.admin.getUserById(agencyId)
+  const existingMeta = targetAuth?.user?.user_metadata || {}
+
+  const updatedMeta: Record<string, any> = {
+    ...existingMeta,
+    is_reseller: true,
+  }
+
+  const now = new Date()
+  if (actionType === 'set_quota') {
+    updatedMeta.reseller_quota = newQuota
+  } else if (actionType === 'suspend') {
+    const past = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()
+    updatedMeta.reseller_expires_at = past
+    await adminClient.from('users').update({ subscription_expires_at: past }).eq('id', agencyId)
+  } else if (actionType === 'add_30' || actionType === 'add_365') {
+    const days = actionType === 'add_365' ? 365 : 30
+    const future = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString()
+    updatedMeta.reseller_expires_at = future
+    if (!updatedMeta.reseller_quota) updatedMeta.reseller_quota = 25
+    await adminClient.from('users').update({ subscription_expires_at: future, trial_expires_at: future }).eq('id', agencyId)
+  }
+
+  const { error } = await adminClient.auth.admin.updateUserById(agencyId, {
+    user_metadata: updatedMeta,
+  })
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/reseller')
+  return { success: true }
 }

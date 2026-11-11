@@ -9,7 +9,14 @@ import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { resolveUserWhiteLabel } from '@/lib/whitelabel'
 import ResellerDashboardClient, { SubClientItem, DistributorSummaryItem } from './ResellerDashboardClient'
 
-export default async function ResellerPage() {
+export default async function ResellerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>
+}) {
+  const params = await searchParams
+  const requestedView = params?.view === 'master' ? 'master' : 'agency'
+
   const supabase = await createClient()
   const { user: effectiveUser, realAdmin, isImpersonating } = await getEffectiveUser(supabase)
 
@@ -132,10 +139,9 @@ export default async function ResellerPage() {
     }
   }
 
-  // 2. Si es Super Admin de OmniTag, armar también el listado de todos los Distribuidores Marca Blanca
+  // 2. Si es Super Admin de OmniTag, armar también el listado de todos los Distribuidores Marca Blanca (incluida su propia cuenta de Agencia como un suscriptor más)
   const allDistributors: DistributorSummaryItem[] = []
   if (isAdmin) {
-    // Contar cuántos sub-clientes tiene cada distribuidor
     const countByReseller = new Map<string, number>()
     for (const au of allAuthUsers) {
       const pid = au.user_metadata?.parent_reseller_id
@@ -146,7 +152,8 @@ export default async function ResellerPage() {
 
     for (const au of allAuthUsers) {
       const meta = au.user_metadata || {}
-      if (meta.is_reseller) {
+      const isSelfAgency = au.id === effectiveUser.id
+      if (meta.is_reseller || isSelfAgency) {
         const pub = publicMap.get(au.id)
         const wlCfg = meta.white_label_config || {}
         const exp = meta.reseller_expires_at || pub?.subscription_expires_at || null
@@ -155,16 +162,20 @@ export default async function ResellerPage() {
         allDistributors.push({
           id: au.id,
           email: au.email || pub?.email || '',
-          full_name: pub?.full_name || meta.full_name || 'Distribuidor',
-          brand_name: wlCfg.brand_name || 'Sin configurar aún',
+          full_name: pub?.full_name || meta.full_name || (isSelfAgency ? 'Mi Agencia Propia' : 'Distribuidor'),
+          brand_name: wlCfg.brand_name || (isSelfAgency ? 'Mi Agencia (Sin nombre aún)' : 'Sin configurar aún'),
           logo_url: wlCfg.logo_url || '',
           quota: Number(meta.reseller_quota || 25),
           used_clients: countByReseller.get(au.id) || 0,
           expires_at: exp,
           is_active: isActive,
+          is_owner_agency: isSelfAgency,
         })
       }
     }
+
+    // Ordenar para que tu propia cuenta de Agencia aparezca de primera en la tabla de suscriptores
+    allDistributors.sort((a, b) => (b.is_owner_agency ? 1 : 0) - (a.is_owner_agency ? 1 : 0))
   }
 
   return (
@@ -172,6 +183,7 @@ export default async function ResellerPage() {
       resellerId={effectiveUser.id}
       resellerEmail={effectiveUser.email || ''}
       isAdmin={isAdmin}
+      viewMode={isAdmin && requestedView === 'master' ? 'master' : 'agency'}
       isResellerActive={wlInfo.isResellerActive}
       quota={wlInfo.resellerQuota}
       expiresAt={wlInfo.resellerExpiresAt}

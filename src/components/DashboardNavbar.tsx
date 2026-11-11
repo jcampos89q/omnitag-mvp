@@ -193,7 +193,7 @@ export default function DashboardNavbar({
     ...filteredBaseItems,
     ...((isReseller || isAdmin) ? [
       { 
-        name: isAdmin ? '🏢 Distribuidores (Marca Blanca)' : '🏢 Mi Agencia (Marca Blanca)', 
+        name: '🏢 Mi Agencia (Marca Blanca)', 
         href: '/dashboard/reseller', 
         icon: Building2, 
         badge: 'Partner',
@@ -202,6 +202,7 @@ export default function DashboardNavbar({
       }
     ] : []),
     ...(isAdmin ? [
+      { name: '👑 Admin Suscriptores Agencias', href: '/dashboard/reseller?view=master', icon: ShieldCheck, badge: 'Master', adminOnly: true, section: 'admin' },
       { name: '🏷️ Lotes Tarjetas NFC', href: '/dashboard/admin?tab=nfc-batches', icon: CreditCard, adminOnly: true, section: 'admin' },
       { name: 'Panel Admin & Marketing', href: '/dashboard/admin', icon: ShieldCheck, adminOnly: true, section: 'admin' }
     ] : [])

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
   Building2,
   Users,
@@ -19,7 +20,9 @@ import {
   Ban,
   Sparkles,
   Crown,
-  ExternalLink
+  ExternalLink,
+  Eye,
+  ArrowRight
 } from 'lucide-react'
 import { INDUSTRIES, SELECTABLE_INDUSTRY_IDS, SelectableIndustryId, getIndustryConfig } from '@/lib/industries'
 import type { WhiteLabelBrandConfig } from '@/lib/whitelabel'
@@ -27,8 +30,10 @@ import {
   saveWhiteLabelBrandAction,
   createResellerSubClientAction,
   manageSubClientPlanAction,
-  adminConfigureDistributorAction
+  adminConfigureDistributorAction,
+  adminQuickManageAgencyAction
 } from './actions'
+import { startImpersonation } from '@/app/dashboard/admin/impersonateActions'
 import { showToast } from '@/components/GlobalToast'
 
 export interface SubClientItem {
@@ -52,12 +57,14 @@ export interface DistributorSummaryItem {
   used_clients: number
   expires_at: string | null
   is_active: boolean
+  is_owner_agency?: boolean
 }
 
 interface ResellerDashboardClientProps {
   resellerId: string
   resellerEmail: string
   isAdmin: boolean
+  viewMode?: 'master' | 'agency'
   isResellerActive: boolean
   quota: number
   expiresAt: string | null
@@ -70,6 +77,7 @@ export default function ResellerDashboardClient({
   resellerId,
   resellerEmail,
   isAdmin,
+  viewMode = 'agency',
   isResellerActive,
   quota,
   expiresAt,
@@ -78,8 +86,10 @@ export default function ResellerDashboardClient({
   allDistributors
 }: ResellerDashboardClientProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'clients' | 'brand' | 'master'>(isAdmin ? 'master' : 'clients')
+  const [activeTab, setActiveTab] = useState<'clients' | 'brand'>('clients')
   const [copiedLink, setCopiedLink] = useState(false)
+  const [loadingAgencyId, setLoadingAgencyId] = useState<string | null>(null)
+  const [showNewAgencyPassword, setShowNewAgencyPassword] = useState(false)
 
   // Estado formulario crear sub-cliente
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -162,279 +172,452 @@ export default function ResellerDashboardClient({
     try {
       const formData = new FormData(e.currentTarget)
       const res = await adminConfigureDistributorAction(formData)
-      showToast(`Distribuidor ${res.email} actualizado (Cupo: ${res.quota} clientes)`, 'success')
+      showToast(`Suscriptor Agencia ${res.email} actualizado (Cupo: ${res.quota} clientes)`, 'success')
       router.refresh()
     } catch (err: any) {
-      showToast(err.message || 'Error al configurar el distribuidor', 'error')
+      showToast(err.message || 'Error al configurar la agencia', 'error')
     } finally {
       setSavingDistributor(false)
     }
   }
 
+  const handleQuickAgencyManage = async (
+    agencyId: string,
+    actionType: 'add_30' | 'add_365' | 'suspend' | 'set_quota',
+    newQuota?: number
+  ) => {
+    setLoadingAgencyId(agencyId)
+    try {
+      const fd = new FormData()
+      fd.set('agency_id', agencyId)
+      fd.set('action_type', actionType)
+      if (newQuota) fd.set('quota', String(newQuota))
+      await adminQuickManageAgencyAction(fd)
+      showToast('Suscripción de la Agencia actualizada con éxito', 'success')
+      router.refresh()
+    } catch (err: any) {
+      showToast(err.message || 'No se pudo actualizar la Agencia', 'error')
+    } finally {
+      setLoadingAgencyId(null)
+    }
+  }
+
+  const handleEnterAgencyConsole = async (dist: DistributorSummaryItem) => {
+    if (dist.id === resellerId) {
+      router.push('/dashboard/reseller')
+      return
+    }
+    setLoadingAgencyId(dist.id)
+    try {
+      await startImpersonation(dist.id)
+    } catch (err: any) {
+      showToast(err.message || 'Error al entrar a la consola de la agencia', 'error')
+      setLoadingAgencyId(null)
+    }
+  }
+
+  const isMasterMode = Boolean(isAdmin && viewMode === 'master')
+
   return (
     <div className="space-y-6">
-      {/* Encabezado Principal */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-indigo-500/20">
+      {/* Selector Rápido de Rol (Solo visible para ti como Super Admin) */}
+      {isAdmin && (
+        <div className="bg-white rounded-2xl p-3 border border-gray-200 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 px-2">
+            <Crown className="w-4 h-4 text-purple-600 shrink-0" />
+            <span className="text-xs font-extrabold text-gray-800">
+              Selector de Vista (Super Admin):
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/reseller?view=master"
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                isMasterMode
+                  ? 'bg-purple-700 text-white shadow-xs'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Crown className="w-3.5 h-3.5" />
+              <span>Panel Admin de Suscriptores ({allDistributors.length})</span>
+            </Link>
+            <Link
+              href="/dashboard/reseller"
+              className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                !isMasterMode
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Mi Propia Cuenta de Agencia ({subClients.length}/{quota})</span>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Encabezado Principal diferenciado según el modo */}
+      <div className={`rounded-3xl p-6 sm:p-8 shadow-xl border text-white ${
+        isMasterMode
+          ? 'bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-900 border-purple-500/30'
+          : 'bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-indigo-500/20'
+      }`}>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-extrabold uppercase tracking-wider">
-              <Building2 className="w-3.5 h-3.5" />
-              {isAdmin ? 'OmniTag Master SaaS • Control de Distribuidores' : 'Licencia de Agencia & Distribuidor Marca Blanca'}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-indigo-200 text-xs font-extrabold uppercase tracking-wider">
+              {isMasterMode ? <Crown className="w-3.5 h-3.5 text-amber-300" /> : <Building2 className="w-3.5 h-3.5" />}
+              <span>
+                {isMasterMode
+                  ? 'Panel Master OmniTag • Administración de Suscriptores Marca Blanca'
+                  : 'Consola de Agencia Suscriptora • Marca Blanca'}
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-              {isAdmin
-                ? 'Red de Distribuidores & Marca Blanca'
-                : `Consola de Agencia: ${initialBrandConfig.brand_name || 'Mi Marca'}`}
+              {isMasterMode
+                ? 'Suscriptores de Marca Blanca & Agencias'
+                : `Mi Agencia: ${initialBrandConfig.brand_name || 'Configura tu Marca'}`}
             </h1>
-            <p className="text-slate-300 text-sm leading-relaxed">
-              {isAdmin
-                ? 'Tú mantienes el control total bajo la marca oficial OmniTag y vendes suscripciones de Distribuidor (Marca Blanca) para que otras agencias revendan el sistema con su propio logo y precios.'
-                : 'Personaliza tu propio logo, nombre comercial y pasarela de cobro. Todos los clientes que registres verán únicamente tu marca en su panel.'}
+            <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+              {isMasterMode
+                ? 'Administra todas las Agencias suscritas a OmniTag (incluida tu propia cuenta de Agencia como un suscriptor más). Asigna cupos de 10, 25 o 100 clientes, renueva vigencias o crea nuevas agencias.'
+                : 'Administra tu propia cartera de clientes, tu logo y tu pasarela de cobro exactamente igual que cualquier suscriptor de Marca Blanca.'}
             </p>
           </div>
 
-          {/* Tarjeta de Cupo de Licencias */}
+          {/* Tarjeta de Cupo */}
           <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 sm:p-5 shrink-0 min-w-[230px]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-200">
-              {isAdmin ? 'Distribuidores Activos' : 'Cupo de Clientes Activos'}
+              {isMasterMode ? 'Agencias Registradas' : 'Tu Cupo de Agencia'}
             </p>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-3xl font-black text-white">
-                {isAdmin ? allDistributors.length : subClients.length}
+                {isMasterMode ? allDistributors.length : subClients.length}
               </span>
               <span className="text-sm font-bold text-slate-300">
-                / {isAdmin ? 'Ilimitado (Master)' : `${quota} licencias`}
+                / {isMasterMode ? 'Agencias' : `${quota} clientes`}
               </span>
             </div>
             <div className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-emerald-300">
               <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>
-                {isAdmin
-                  ? 'Marca Master: OmniTag'
+                {isMasterMode
+                  ? 'Control Global de Licencias'
                   : isResellerActive
-                  ? 'Suscripción Partner Activa'
-                  : 'Suscripción Partner Vencida'}
+                  ? expiresAt
+                    ? `Vigente hasta ${new Date(expiresAt).toLocaleDateString()}`
+                    : 'Suscripción de Agencia Activa'
+                  : 'Suscripción de Agencia Vencida'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Enlace de Invitación Marca Blanca */}
-        <div className="mt-6 pt-5 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="text-xs text-slate-300">
-            <span className="font-bold text-white">Tu Link de Registro Marca Blanca: </span>
-            Comparte este link para que tus clientes se registren viendo tu marca y queden vinculados a tu cartera:
+        {/* Enlace de Invitación Marca Blanca (Solo en la vista de Mi Agencia) */}
+        {!isMasterMode && (
+          <div className="mt-6 pt-5 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="text-xs text-slate-300">
+              <span className="font-bold text-white">Tu Link de Registro Marca Blanca: </span>
+              Comparte este link para que tus clientes vean tu marca al registrarse:
+            </div>
+            <div className="flex items-center gap-2 bg-black/40 border border-white/15 rounded-xl px-3 py-2">
+              <code className="text-xs text-indigo-200 truncate max-w-[240px] sm:max-w-xs">
+                {partnerRegisterUrl}
+              </code>
+              <button
+                type="button"
+                onClick={handleCopyInviteLink}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer shrink-0"
+              >
+                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedLink ? 'Copiado' : 'Copiar Link'}
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2 bg-black/40 border border-white/15 rounded-xl px-3 py-2">
-            <code className="text-xs text-indigo-200 truncate max-w-[260px] sm:max-w-xs">
-              {partnerRegisterUrl}
-            </code>
-            <button
-              type="button"
-              onClick={handleCopyInviteLink}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer shrink-0"
-            >
-              {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copiedLink ? 'Copiado' : 'Copiar Link'}
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Pestañas de Navegación */}
-      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
-        {isAdmin && (
+      {/* Pestañas de Navegación (Solo para la vista de Mi Agencia) */}
+      {!isMasterMode && (
+        <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
           <button
             type="button"
-            onClick={() => setActiveTab('master')}
+            onClick={() => setActiveTab('clients')}
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-              activeTab === 'master'
-                ? 'bg-purple-700 text-white shadow-sm'
+              activeTab === 'clients'
+                ? 'bg-slate-900 text-white shadow-sm'
                 : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
             }`}
           >
-            <Crown className="w-4 h-4" />
-            👑 Distribuidores OmniTag ({allDistributors.length})
+            <Users className="w-4 h-4" />
+            Mis Sub-Clientes ({subClients.length} / {quota})
           </button>
-        )}
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('clients')}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-            activeTab === 'clients'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          Sub-Clientes de Agencia ({subClients.length})
-        </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('brand')}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
+              activeTab === 'brand'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+            }`}
+          >
+            <Palette className="w-4 h-4" />
+            Configurar Mi Marca Blanca & Pasarela
+          </button>
+        </div>
+      )}
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('brand')}
-          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer ${
-            activeTab === 'brand'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-          }`}
-        >
-          <Palette className="w-4 h-4" />
-          Configurar Marca Blanca & Pasarela de Agencia
-        </button>
-      </div>
-
-      {/* TAB MASTER (SOLO SUPER ADMIN DE OMNITAG) */}
-      {isAdmin && activeTab === 'master' && (
+      {/* ===================================================================== */}
+      {/* VISTA 1: PANEL MASTER DE SUSCRIPTORES DE MARCA BLANCA / AGENCIAS      */}
+      {/* ===================================================================== */}
+      {isMasterMode && (
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-purple-200 p-6 shadow-xs">
-            <div className="flex items-start justify-between gap-4 mb-5">
+          <div className="bg-white rounded-2xl border border-purple-200 p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md mb-1.5">
-                  <Crown className="w-3.5 h-3.5" /> Exclusivo Super Admin OmniTag
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md mb-1">
+                  <Crown className="w-3.5 h-3.5" /> Alta / Renovación de Suscriptor de Agencia
                 </span>
-                <h2 className="text-lg font-bold text-gray-900">
-                  Autorizar o Renovar Distribuidor (Marca Blanca)
+                <h2 className="text-base sm:text-lg font-bold text-gray-900">
+                  Crear Nueva Agencia o Actualizar Suscriptor Existente
                 </h2>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Tu panel principal sigue siendo <strong>OmniTag</strong>. Aquí puedes activar a cualquier cliente que te compre la licencia de Distribuidor (o se activará automáticamente vía Webhook de Hotmart si el nombre del plan incluye la palabra <code>Distribuidor</code> o <code>Agencia</code>).
+                <p className="text-xs text-gray-500">
+                  Puedes ingresar tu propio correo (<code>{resellerEmail}</code>) o el de cualquier agencia para asignarle su plan (10, 25 o 100 clientes). Si el correo no existe, marca "Es una cuenta nueva" para crearla al instante.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNewAgencyPassword(!showNewAgencyPassword)}
+                className="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-xl transition cursor-pointer shrink-0"
+              >
+                {showNewAgencyPassword ? 'Ocultar campos de cuenta nueva' : '+ Crear Cuenta de Agencia desde Cero'}
+              </button>
+            </div>
+
+            <form onSubmit={handleAdminSaveDistributor} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end">
+                <div className="lg:col-span-2">
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Correo de la Agencia Suscriptora *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder="agencia@ejemplo.com"
+                    className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Plan / Cupo de Clientes
+                  </label>
+                  <select
+                    name="quota"
+                    defaultValue="25"
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none bg-white"
+                  >
+                    <option value="10">Starter Partner (10 Clientes)</option>
+                    <option value="25">Agency Partner (25 Clientes)</option>
+                    <option value="100">Country Partner (100 Clientes)</option>
+                    <option value="500">Master Partner (500 Clientes)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Vigencia Suscripción
+                  </label>
+                  <select
+                    name="duration_days"
+                    defaultValue="30"
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none bg-white"
+                  >
+                    <option value="30">+30 Días (Mensual)</option>
+                    <option value="90">+90 Días (Trimestral)</option>
+                    <option value="365">+365 Días (1 Año)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <input type="hidden" name="enable_reseller" value="true" />
+                  <button
+                    type="submit"
+                    disabled={savingDistributor}
+                    className="w-full py-2.5 px-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs sm:text-sm rounded-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {savingDistributor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    <span>Guardar Agencia</span>
+                  </button>
+                </div>
+              </div>
+
+              {showNewAgencyPassword && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-gray-100">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Nombre Comercial / Marca Blanca Inicial
+                    </label>
+                    <input
+                      type="text"
+                      name="brand_name"
+                      placeholder="Ej. Mi Agencia Digital"
+                      className="w-full px-3.5 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      Contraseña Inicial (Si el correo aún no existe)
+                    </label>
+                    <input
+                      type="text"
+                      name="password"
+                      defaultValue="Agencia2026*"
+                      minLength={6}
+                      className="w-full px-3.5 py-2 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+            </form>
+          </div>
+
+          {/* Tabla de Suscriptores de Marca Blanca (Incluida la cuenta de Agencia del Dueño) */}
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
+            <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm sm:text-base">
+                  Suscriptores de Marca Blanca & Agencias ({allDistributors.length})
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Tu propia cuenta de Agencia aparece en esta lista y se administra con los mismos botones que cualquier suscriptor.
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleAdminSaveDistributor} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-              <div className="lg:col-span-2">
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Correo del Usuario Distribuidor
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  required
-                  placeholder="agencia@ejemplo.com"
-                  className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Cupo Máx. de Clientes
-                </label>
-                <select
-                  name="quota"
-                  defaultValue="25"
-                  className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none bg-white"
-                >
-                  <option value="10">10 Sub-Clientes (Starter)</option>
-                  <option value="25">25 Sub-Clientes (Agency)</option>
-                  <option value="50">50 Sub-Clientes (Pro Agency)</option>
-                  <option value="100">100 Sub-Clientes (Enterprise)</option>
-                  <option value="500">500 Sub-Clientes (Country Partner)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Vigencia Suscripción
-                </label>
-                <select
-                  name="duration_days"
-                  defaultValue="30"
-                  className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none bg-white"
-                >
-                  <option value="30">+30 Días (Mensual)</option>
-                  <option value="90">+90 Días (Trimestral)</option>
-                  <option value="365">+365 Días (Anual)</option>
-                </select>
-              </div>
-
-              <div>
-                <input type="hidden" name="enable_reseller" value="true" />
-                <button
-                  type="submit"
-                  disabled={savingDistributor}
-                  className="w-full py-2.5 px-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-sm rounded-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  {savingDistributor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  Activar Partner
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Lista de Distribuidores Activos */}
-          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-bold text-gray-900 text-base">
-                Distribuidores Marca Blanca Registrados ({allDistributors.length})
-              </h3>
-            </div>
-
-            {allDistributors.length === 0 ? (
-              <div className="p-8 text-center text-gray-500 text-sm">
-                Aún no has activado distribuidores externos. Usa el formulario superior para convertir a un usuario en Distribuidor Marca Blanca.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold uppercase text-gray-500">
-                      <th className="py-3 px-4">Distribuidor</th>
-                      <th className="py-3 px-4">Marca Blanca Configurada</th>
-                      <th className="py-3 px-4">Sub-Clientes Usados</th>
-                      <th className="py-3 px-4">Vencimiento Partner</th>
-                      <th className="py-3 px-4 text-right">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 text-sm">
-                    {allDistributors.map((dist) => (
-                      <tr key={dist.id} className="hover:bg-gray-50/70">
-                        <td className="py-3.5 px-4">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold uppercase text-gray-500">
+                    <th className="py-3 px-4">Suscriptor / Agencia</th>
+                    <th className="py-3 px-4">Marca Blanca</th>
+                    <th className="py-3 px-4">Plan / Cupo Usado</th>
+                    <th className="py-3 px-4">Vencimiento</th>
+                    <th className="py-3 px-4 text-right">Administrar como Suscriptor</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 text-sm">
+                  {allDistributors.map((dist) => (
+                    <tr key={dist.id} className={dist.is_owner_agency ? 'bg-purple-50/40 hover:bg-purple-50/70' : 'hover:bg-gray-50/70'}>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-gray-900">{dist.full_name || 'Sin nombre'}</p>
-                          <p className="text-xs text-gray-500">{dist.email}</p>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-2">
-                            {dist.logo_url ? (
-                              <img src={dist.logo_url} alt={dist.brand_name} className="w-6 h-6 rounded object-contain border border-gray-200" />
-                            ) : (
-                              <Building2 className="w-5 h-5 text-indigo-600" />
-                            )}
-                            <span className="font-bold text-indigo-950">{dist.brand_name}</span>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
-                            {dist.used_clients} / {dist.quota} cuentas
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-xs text-gray-600">
-                          {dist.expires_at ? new Date(dist.expires_at).toLocaleDateString() : 'Sin límite'}
-                        </td>
-                        <td className="py-3.5 px-4 text-right">
-                          {dist.is_active ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
-                              Activo
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700">
-                              Vencido
+                          {dist.is_owner_agency && (
+                            <span className="text-[10px] font-black uppercase bg-purple-600 text-white px-2 py-0.5 rounded-full">
+                              Tu Cuenta de Agencia
                             </span>
                           )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                        </div>
+                        <p className="text-xs text-gray-500">{dist.email}</p>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2">
+                          {dist.logo_url ? (
+                            <img src={dist.logo_url} alt={dist.brand_name} className="w-6 h-6 rounded object-contain border border-gray-200" />
+                          ) : (
+                            <Building2 className="w-5 h-5 text-indigo-600 shrink-0" />
+                          )}
+                          <span className="font-bold text-gray-900 text-xs sm:text-sm">{dist.brand_name}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
+                            {dist.used_clients} / {dist.quota} clientes
+                          </span>
+                          <select
+                            value={dist.quota}
+                            disabled={loadingAgencyId === dist.id}
+                            onChange={(e) => handleQuickAgencyManage(dist.id, 'set_quota', Number(e.target.value))}
+                            className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white font-semibold text-gray-700 cursor-pointer"
+                            title="Cambiar plan de cupos"
+                          >
+                            <option value={10}>Plan 10</option>
+                            <option value={25}>Plan 25</option>
+                            <option value={100}>Plan 100</option>
+                            <option value={500}>Plan 500</option>
+                          </select>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-xs">
+                        {dist.expires_at ? (
+                          <span className={`font-bold ${dist.is_active ? 'text-emerald-700' : 'text-red-600'}`}>
+                            {dist.is_active ? 'Activo hasta: ' : 'Vencido: '}
+                            {new Date(dist.expires_at).toLocaleDateString()}
+                          </span>
+                        ) : (
+                          <span className="text-emerald-700 font-bold">Activo</span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="inline-flex items-center justify-end gap-1.5 flex-wrap">
+                          <button
+                            type="button"
+                            disabled={loadingAgencyId === dist.id}
+                            onClick={() => handleQuickAgencyManage(dist.id, 'add_30')}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition cursor-pointer"
+                            title="Activar +30 días"
+                          >
+                            +30d
+                          </button>
+                          <button
+                            type="button"
+                            disabled={loadingAgencyId === dist.id}
+                            onClick={() => handleQuickAgencyManage(dist.id, 'add_365')}
+                            className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition cursor-pointer"
+                            title="Activar +1 Año"
+                          >
+                            +1 Año
+                          </button>
+                          <button
+                            type="button"
+                            disabled={loadingAgencyId === dist.id}
+                            onClick={() => handleQuickAgencyManage(dist.id, 'suspend')}
+                            className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition cursor-pointer"
+                            title="Pausar suscripción de Agencia"
+                          >
+                            Pausar
+                          </button>
+                          <button
+                            type="button"
+                            disabled={loadingAgencyId === dist.id}
+                            onClick={() => handleEnterAgencyConsole(dist)}
+                            className="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs transition inline-flex items-center gap-1 cursor-pointer"
+                            title="Abrir consola de esta Agencia"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>{dist.is_owner_agency ? 'Ir a Mi Agencia' : 'Abrir Agencia'}</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* TAB 1: GESTIÓN DE SUB-CLIENTES DEL DISTRIBUIDOR */}
-      {activeTab === 'clients' && (
+      {/* ===================================================================== */}
+      {/* VISTA 2: CONSOLA INDIVIDUAL DE "MI AGENCIA" (COMO UN SUSCRIPTOR MÁS)  */}
+      {/* ===================================================================== */}
+      {!isMasterMode && activeTab === 'clients' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
             <div>
@@ -655,7 +838,7 @@ export default function ResellerDashboardClient({
       )}
 
       {/* TAB 2: CONFIGURACIÓN DE MARCA BLANCA Y PASARELA DEL DISTRIBUIDOR */}
-      {activeTab === 'brand' && (
+      {!isMasterMode && activeTab === 'brand' && (
         <form onSubmit={handleSaveBrand} className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6">
           <div className="border-b border-gray-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

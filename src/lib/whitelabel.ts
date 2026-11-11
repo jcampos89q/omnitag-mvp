@@ -70,12 +70,11 @@ export async function resolveUserWhiteLabel(userId?: string | null, isAdmin = fa
     const meta = authData?.user?.user_metadata || {}
 
     const isReseller = Boolean(isAdmin || meta.is_reseller)
-    const resellerQuota = isAdmin ? 9999 : Number(meta.reseller_quota || (meta.is_reseller ? 25 : 0))
+    const resellerQuota = Number(meta.reseller_quota || (isReseller ? 25 : 0))
     const resellerExpiresAt = (meta.reseller_expires_at as string) || null
     const now = new Date()
     const isResellerActive = Boolean(
-      isAdmin ||
-      (isReseller && (!resellerExpiresAt || new Date(resellerExpiresAt) > now))
+      isReseller && (!resellerExpiresAt || new Date(resellerExpiresAt) > now)
     )
 
     const ownBrandConfig: WhiteLabelBrandConfig = {
