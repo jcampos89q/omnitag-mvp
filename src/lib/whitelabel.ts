@@ -88,22 +88,21 @@ export async function resolveUserWhiteLabel(userId?: string | null, isAdmin = fa
     if (parentResellerId && !isAdmin) {
       const { data: parentAuth } = await adminClient.auth.admin.getUserById(parentResellerId)
       const parentMeta = parentAuth?.user?.user_metadata || {}
-      if (parentMeta?.white_label_config?.brand_name) {
-        const inheritedBrand: WhiteLabelBrandConfig = {
-          ...DEFAULT_OMNITAG_BRAND,
-          ...parentMeta.white_label_config,
-          hide_omnitag_branding: true,
-        }
-        return {
-          activeBrand: inheritedBrand,
-          isWhiteLabeledClient: true,
-          isReseller,
-          isResellerActive,
-          resellerQuota,
-          resellerExpiresAt,
-          ownBrandConfig,
-          parentResellerId,
-        }
+      const inheritedBrand: WhiteLabelBrandConfig = {
+        ...DEFAULT_OMNITAG_BRAND,
+        ...(parentMeta.white_label_config || {}),
+        brand_name: parentMeta.white_label_config?.brand_name || 'Agencia Partner',
+        hide_omnitag_branding: true,
+      }
+      return {
+        activeBrand: inheritedBrand,
+        isWhiteLabeledClient: true,
+        isReseller: false,
+        isResellerActive: false,
+        resellerQuota: 0,
+        resellerExpiresAt: null,
+        ownBrandConfig: inheritedBrand,
+        parentResellerId,
       }
     }
 

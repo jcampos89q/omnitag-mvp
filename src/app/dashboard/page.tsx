@@ -455,7 +455,7 @@ export default async function DashboardPage() {
               <span>Ver mi vCard</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-          ) : !isPro && isDiscountEligible ? (
+          ) : !wlInfo.isWhiteLabeledClient && !isPro && isDiscountEligible ? (
             <Link
               href="/dashboard/billing#metodos-pago"
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
@@ -464,7 +464,7 @@ export default async function DashboardPage() {
               <span>50% OFF: Primer mes por L. 275</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-          ) : !isPro ? (
+          ) : !wlInfo.isWhiteLabeledClient && !isPro ? (
             <Link
               href="/dashboard/billing#metodos-pago"
               className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
