@@ -6,6 +6,7 @@ import IndustrySettingsForm from './IndustrySettingsForm'
 import BusinessPaymentSettingsForm from './BusinessPaymentSettingsForm'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { normalizeIndustry } from '@/lib/industries'
+import { resolveUserWhiteLabel } from '@/lib/whitelabel'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -17,13 +18,14 @@ export default async function SettingsPage() {
 
   const db = isImpersonating ? getAdminClient() : supabase
 
-  const [{ data: profile }, { data: authTarget }] = await Promise.all([
+  const [{ data: profile }, { data: authTarget }, wlInfo] = await Promise.all([
     db
       .from('users')
       .select('industry, account_type, currency, currency_symbol, is_admin')
       .eq('id', user.id)
       .single(),
-    getAdminClient().auth.admin.getUserById(user.id)
+    getAdminClient().auth.admin.getUserById(user.id),
+    resolveUserWhiteLabel(user.id, false)
   ])
 
   const currentIndustry = normalizeIndustry(profile?.industry)
@@ -31,6 +33,7 @@ export default async function SettingsPage() {
   const currencyCode = profile?.currency || 'HNL'
   const currencySymbol = profile?.currency_symbol || 'L.'
   const isAdmin = Boolean(profile?.is_admin || realAdmin)
+  const isSubClient = wlInfo.isWhiteLabeledClient
 
   const targetMeta = authTarget?.user?.user_metadata || {}
   const lastIndustryChangedAt = (targetMeta.industry_changed_at as string) || null
@@ -58,14 +61,16 @@ export default async function SettingsPage() {
         isAdmin={isAdmin}
       />
 
-      {/* 2. Mi Pasarela y Métodos de Cobro Propios del Negocio (B2C) */}
-      <BusinessPaymentSettingsForm initialConfig={businessPaymentConfig} />
-
-      {/* 3. Selector de Moneda Predeterminada */}
-      <CurrencySettingsForm 
-        initialCurrencyCode={currencyCode}
-        initialCurrencySymbol={currencySymbol}
-      />
+      {/* 2. Mi Pasarela y Métodos de Cobro Propios del Negocio (Solo para cuentas directas o negocios que cobran pedidos/citas) */}
+      {!isSubClient && (
+        <>
+          <BusinessPaymentSettingsForm initialConfig={businessPaymentConfig} />
+          <CurrencySettingsForm 
+            initialCurrencyCode={currencyCode}
+            initialCurrencySymbol={currencySymbol}
+          />
+        </>
+      )}
 
       <div className="bg-white rounded-2xl shadow-xs border border-gray-200 p-6">
         <h2 className="text-base font-bold text-gray-900 mb-4">Detalles Técnicos de la Cuenta</h2>
