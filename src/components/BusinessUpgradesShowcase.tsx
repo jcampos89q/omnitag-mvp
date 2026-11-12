@@ -46,7 +46,7 @@ const BUSINESS_FEATURES: FeatureAd[] = [
     icon: Coffee,
     iconBg: 'bg-amber-500 text-white',
     accentColor: 'border-amber-500/30 bg-amber-50/40 text-amber-900',
-    ctaText: 'Sumar Menú Digital por L. 550/mes'
+    ctaText: 'Desbloquear Suite PRO Completa'
   },
   {
     id: 'loyalty',
@@ -63,7 +63,7 @@ const BUSINESS_FEATURES: FeatureAd[] = [
     icon: Gift,
     iconBg: 'bg-purple-600 text-white',
     accentColor: 'border-purple-500/30 bg-purple-50/40 text-purple-900',
-    ctaText: 'Activar Club de Sellos por L. 550/mes'
+    ctaText: 'Desbloquear Suite PRO Completa'
   },
   {
     id: 'appointments',
@@ -80,7 +80,7 @@ const BUSINESS_FEATURES: FeatureAd[] = [
     icon: Scissors,
     iconBg: 'bg-indigo-600 text-white',
     accentColor: 'border-indigo-500/30 bg-indigo-50/40 text-indigo-900',
-    ctaText: 'Tener Agenda Online por L. 550/mes'
+    ctaText: 'Desbloquear Suite PRO Completa'
   },
   {
     id: 'ruleta',
@@ -97,7 +97,7 @@ const BUSINESS_FEATURES: FeatureAd[] = [
     icon: Disc,
     iconBg: 'bg-rose-600 text-white',
     accentColor: 'border-rose-500/30 bg-rose-50/40 text-rose-900',
-    ctaText: 'Instalar Ruleta por L. 550/mes'
+    ctaText: 'Desbloquear Suite PRO Completa'
   },
   {
     id: 'qr_studio',
@@ -114,7 +114,7 @@ const BUSINESS_FEATURES: FeatureAd[] = [
     icon: QrCode,
     iconBg: 'bg-emerald-600 text-white',
     accentColor: 'border-emerald-500/30 bg-emerald-50/40 text-emerald-900',
-    ctaText: 'Desbloquear Estudio QR HD por L. 550/mes'
+    ctaText: 'Desbloquear Suite PRO Completa'
   },
   {
     id: 'gift_cards',
@@ -131,7 +131,7 @@ const BUSINESS_FEATURES: FeatureAd[] = [
     icon: Gift,
     iconBg: 'bg-pink-600 text-white',
     accentColor: 'border-pink-500/30 bg-pink-50/40 text-pink-900',
-    ctaText: 'Emitir Gift Cards por L. 550/mes'
+    ctaText: 'Desbloquear Suite PRO Completa'
   }
 ]
 
@@ -155,33 +155,34 @@ export default function BusinessUpgradesShowcase({
   return (
     <div className="bg-white rounded-3xl border border-gray-200/90 shadow-xs p-5 sm:p-7 space-y-6 overflow-hidden relative">
       {/* Cabecera del Showcase */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="bg-linear-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
               <Sparkles className="w-3 h-3 text-yellow-300 fill-yellow-300" />
-              ECOSISTEMA EMPRESARIAL OMNITAG
+              SUITE EMPRESARIAL COMPLETA
             </span>
-            <span className="text-xs font-bold text-gray-500 hidden sm:inline">
-              • Suscripción Mensual
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              ✓ Todo Incluido en 1 Sola Mensualidad
             </span>
           </div>
           <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 tracking-tight">
             Descubre las aplicaciones de marketing que puedes sumar a tu cuenta
           </h2>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {currentAccountType === 'review_plate'
-              ? 'Tu Placa NFC incluye 1 año de Reseñas Google. Si tu negocio también necesita catálogo, citas o fidelización, puedes sumarlos con la membresía mensual.'
-              : 'Tu perfil actual cuenta con vCard Digital. Puedes transformar tu cuenta en una central completa de ventas y marketing con nuestra suite mensual.'}
+          <p className="text-xs text-gray-600 mt-1">
+            No pagas por herramienta individual: una única suscripción mensual activa <b>todas las 6 herramientas al mismo tiempo</b>. Explora las pestañas a continuación para ver todo lo que recibes:
           </p>
         </div>
 
-        <div className="text-left sm:text-right shrink-0 bg-gray-50 px-3.5 py-2 rounded-2xl border border-gray-100">
-          <div className="text-xs font-bold text-gray-500">Suite Completa</div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-lg font-black text-gray-900">L. 550</span>
-            <span className="text-[10px] text-gray-500 font-medium">HNL / mes</span>
+        <div className="text-left sm:text-right shrink-0 bg-purple-50/70 border border-purple-200/80 px-4 py-2.5 rounded-2xl">
+          <div className="text-[10px] font-black text-purple-700 uppercase tracking-wider flex items-center sm:justify-end gap-1">
+            <Sparkles className="w-3 h-3 text-purple-600" /> Plan Completo
           </div>
+          <div className="flex items-baseline gap-1 sm:justify-end">
+            <span className="text-xl font-black text-gray-900">L. 550</span>
+            <span className="text-xs text-gray-600 font-semibold">HNL / mes</span>
+          </div>
+          <div className="text-[10px] text-gray-500 font-medium sm:text-right">6 aplicaciones incluidas</div>
         </div>
       </div>
 
@@ -247,33 +248,37 @@ export default function BusinessUpgradesShowcase({
           {/* Tarjeta de Acción / Upgrade */}
           <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between space-y-4">
             <div>
+              <div className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border border-emerald-200 mb-2">
+                <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                Todas las 6 Apps Incluidas
+              </div>
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                Precio de Membresía
+                Membresía Mensual Unificada
               </span>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-black text-gray-900">L. 550</span>
+                <span className="text-3xl font-black text-gray-900">L. 550</span>
                 <span className="text-xs text-gray-500 font-medium">HNL / mes</span>
               </div>
-              <p className="text-[11px] text-gray-500 mt-1 leading-snug">
-                Incluye <b>todas</b> las herramientas de marketing, menús, sellos, citas, ruleta y QR HD para tu negocio.
+              <p className="text-xs text-gray-600 mt-2 leading-relaxed">
+                <b>Un solo pago mensual activa todo:</b> Menús con pedidos a WhatsApp, Sellos de Lealtad, Citas 24/7, Ruleta, Códigos QR HD y Gift Cards sin costos por separado.
               </p>
             </div>
 
             <div className="space-y-2">
               <Link
                 href="/dashboard/billing#metodos-pago"
-                className="w-full bg-black hover:bg-gray-800 text-white font-extrabold text-xs py-3 px-4 rounded-xl transition flex items-center justify-center gap-1.5 shadow-xs"
+                className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-purple-500/20"
               >
-                <span>{activeAd.ctaText}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Activar Todas las Apps por L. 550/mes</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
               <a
-                href="https://wa.me/50487724813?text=Hola%20OmniTag,%20tengo%20una%20cuenta%20anual%20y%20me%20gustar%C3%ADa%20activar%20la%20Suite%20Empresarial%20mensual"
+                href="https://wa.me/50487724813?text=Hola%20OmniTag,%20deseo%20activar%20la%20Suite%20Empresarial%20mensual%20(todas%20las%206%20aplicaciones%20incluidas%20por%20L.550/mes)"
                 target="_blank"
                 rel="noreferrer"
                 className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 border border-emerald-200"
               >
-                <span>Consultar por WhatsApp</span>
+                <span>Consultar Activación por WhatsApp</span>
               </a>
             </div>
           </div>
