@@ -108,15 +108,28 @@ export default function ResellerDashboardClient({
   // Estado formulario Super Admin para alta de distribuidor
   const [savingDistributor, setSavingDistributor] = useState(false)
 
+  const [copiedLoginLink, setCopiedLoginLink] = useState(false)
+
   const partnerRegisterUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/register?partner=${resellerId}`
     : `https://www.omnitag.site/register?partner=${resellerId}`
+
+  const partnerLoginUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/login?partner=${resellerId}`
+    : `https://www.omnitag.site/login?partner=${resellerId}`
 
   const handleCopyInviteLink = () => {
     navigator.clipboard.writeText(partnerRegisterUrl)
     setCopiedLink(true)
     showToast('Enlace de registro Marca Blanca copiado al portapapeles', 'success')
     setTimeout(() => setCopiedLink(false), 2500)
+  }
+
+  const handleCopyLoginLink = () => {
+    navigator.clipboard.writeText(partnerLoginUrl)
+    setCopiedLoginLink(true)
+    showToast('Portal de Acceso de tu Agencia copiado al portapapeles', 'success')
+    setTimeout(() => setCopiedLoginLink(false), 2500)
   }
 
   const handleCreateSubClient = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -446,25 +459,47 @@ export default function ResellerDashboardClient({
           </div>
         </div>
 
-        {/* Enlace de Invitación Marca Blanca (Solo en la vista de Mi Agencia) */}
+        {/* Enlaces de Invitación y Portal de Acceso de Marca Blanca */}
         {!isMasterMode && (
-          <div className="mt-6 pt-5 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="text-xs text-slate-300">
-              <span className="font-bold text-white">Tu Link de Registro Marca Blanca: </span>
-              Comparte este link para que tus clientes vean tu marca al registrarse:
+          <div className="mt-6 pt-5 border-t border-white/10 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="text-xs text-slate-300">
+                <span className="font-bold text-white">Portal de Acceso / Login de tus Clientes: </span>
+                Tus clientes entrarán desde aquí viendo tu marca y sin enlaces a OmniTag:
+              </div>
+              <div className="flex items-center gap-2 bg-black/40 border border-white/15 rounded-xl px-3 py-1.5">
+                <code className="text-xs text-emerald-300 truncate max-w-[200px] sm:max-w-xs">
+                  {partnerLoginUrl}
+                </code>
+                <button
+                  type="button"
+                  onClick={handleCopyLoginLink}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition cursor-pointer shrink-0"
+                >
+                  {copiedLoginLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedLoginLink ? 'Copiado' : 'Copiar Login'}
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2 bg-black/40 border border-white/15 rounded-xl px-3 py-2">
-              <code className="text-xs text-indigo-200 truncate max-w-[240px] sm:max-w-xs">
-                {partnerRegisterUrl}
-              </code>
-              <button
-                type="button"
-                onClick={handleCopyInviteLink}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer shrink-0"
-              >
-                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copiedLink ? 'Copiado' : 'Copiar Link'}
-              </button>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-white/5">
+              <div className="text-xs text-slate-300">
+                <span className="font-bold text-white">Link de Registro Directo: </span>
+                Para que nuevos negocios se registren bajo tu marca:
+              </div>
+              <div className="flex items-center gap-2 bg-black/40 border border-white/15 rounded-xl px-3 py-1.5">
+                <code className="text-xs text-indigo-200 truncate max-w-[200px] sm:max-w-xs">
+                  {partnerRegisterUrl}
+                </code>
+                <button
+                  type="button"
+                  onClick={handleCopyInviteLink}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer shrink-0"
+                >
+                  {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedLink ? 'Copiado' : 'Copiar Registro'}
+                </button>
+              </div>
             </div>
           </div>
         )}

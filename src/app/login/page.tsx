@@ -1,44 +1,76 @@
 import { login } from '@/app/auth/actions'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
+import { getPartnerBrandById } from '@/lib/whitelabel'
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; message?: string; next?: string }>
+  searchParams: Promise<{ error?: string; message?: string; next?: string; partner?: string }>
 }) {
   const params = await searchParams
+  const partnerBrand = await getPartnerBrandById(params?.partner)
+  const isWhiteLabel = Boolean(partnerBrand)
+
+  const brandName = partnerBrand?.brand_name || 'OmniTag'
+  const brandLogo = partnerBrand?.logo_url || '/logo-light.png'
+  const homeUrl = partnerBrand?.website_url || (isWhiteLabel ? '#' : '/')
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-      {/* Botón para regresar al inicio de la web */}
-      <div className="w-full max-w-md mb-3 flex items-center justify-between">
-        <Link 
-          href="/" 
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black transition bg-white hover:bg-gray-100 px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Volver al Inicio</span>
-        </Link>
-        <span className="text-xs font-medium text-gray-400">OmniTag Web</span>
-      </div>
+      {/* Botón superior: solo si NO es marca blanca o si la agencia configuró su propia web */}
+      {!isWhiteLabel && (
+        <div className="w-full max-w-md mb-3 flex items-center justify-between">
+          <Link 
+            href={homeUrl} 
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black transition bg-white hover:bg-gray-100 px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Volver al Inicio</span>
+          </Link>
+          <span className="text-xs font-medium text-gray-400">OmniTag Web</span>
+        </div>
+      )}
+
+      {isWhiteLabel && partnerBrand?.website_url && (
+        <div className="w-full max-w-md mb-3 flex items-center justify-between">
+          <a 
+            href={partnerBrand.website_url} 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black transition bg-white hover:bg-gray-100 px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Volver a {brandName}</span>
+          </a>
+          <span className="text-xs font-medium text-gray-400">Acceso Seguro</span>
+        </div>
+      )}
 
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-gray-100">
         <div className="text-center">
-          <Link href="/" title="Volver a la página principal" className="inline-block hover:scale-105 transition-transform mb-3">
-            <Image
-              src="/logo-light.png"
-              alt="OmniTag"
-              width={64}
-              height={64}
-              className="w-16 h-16 object-contain mx-auto"
-              priority
-            />
-          </Link>
+          <div className="inline-block mb-3">
+            {brandLogo.startsWith('/') ? (
+              <Image
+                src={brandLogo}
+                alt={brandName}
+                width={64}
+                height={64}
+                className="w-16 h-16 object-contain mx-auto"
+                priority
+              />
+            ) : (
+              <img
+                src={brandLogo}
+                alt={brandName}
+                className="w-16 h-16 object-contain mx-auto rounded-xl"
+              />
+            )}
+          </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">
-            Bienvenido a OmniTag
+            {isWhiteLabel ? `Portal ${brandName}` : 'Bienvenido a OmniTag'}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Inicia sesión en tu cuenta
@@ -108,24 +140,33 @@ export default async function LoginPage({
           </div>
         </form>
 
-        <div className="text-center text-xs sm:text-sm text-gray-600 space-y-1.5">
-          <p>
-            ¿Ya realizaste tu pago en Hotmart?{' '}
-            <Link href="/activar-compra" className="font-extrabold text-purple-700 hover:underline">
-              Activa tu acceso aquí
-            </Link>
-          </p>
-          <p className="text-xs text-gray-500">
-            ¿Aún no tienes licencia?{' '}
-            <Link href="/agencias" className="font-bold text-black hover:underline">
-              Ver Licencias Marca Blanca
-            </Link>{' '}
-            o{' '}
-            <Link href="/tienda" className="font-bold text-emerald-700 hover:underline">
-              Activar Tarjeta NFC
-            </Link>
-          </p>
-        </div>
+        {/* Enlaces inferiores: solo para usuarios directos de OmniTag */}
+        {!isWhiteLabel ? (
+          <div className="text-center text-xs sm:text-sm text-gray-600 space-y-1.5">
+            <p>
+              ¿Ya realizaste tu pago en Hotmart?{' '}
+              <Link href="/activar-compra" className="font-extrabold text-purple-700 hover:underline">
+                Activa tu acceso aquí
+              </Link>
+            </p>
+            <p className="text-xs text-gray-500">
+              ¿Aún no tienes licencia?{' '}
+              <Link href="/agencias" className="font-bold text-black hover:underline">
+                Ver Licencias Marca Blanca
+              </Link>{' '}
+              o{' '}
+              <Link href="/tienda" className="font-bold text-emerald-700 hover:underline">
+                Activar Tarjeta NFC
+              </Link>
+            </p>
+          </div>
+        ) : (
+          <div className="text-center text-xs text-gray-500 space-y-1">
+            <p className="font-medium">
+              Plataforma tecnológica exclusiva para clientes de <b>{brandName}</b>.
+            </p>
+          </div>
+        )}
 
         <div className="pt-4 border-t border-gray-100 text-center">
           <Link 
