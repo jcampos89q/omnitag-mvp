@@ -79,7 +79,7 @@ export default async function DashboardLayout({
           userIndustry={effectiveUser?.industry || 'professional'} 
           accountType={effectiveUser?.account_type || 'professional'}
           planInfo={planInfo}
-          whiteLabelBrand={showMasterAdminSidebar ? undefined : whiteLabelInfo.ownBrandConfig}
+          whiteLabelBrand={showMasterAdminSidebar ? undefined : whiteLabelInfo.activeBrand}
           isWhiteLabeledClient={!showMasterAdminSidebar && whiteLabelInfo.isWhiteLabeledClient}
         />
 
