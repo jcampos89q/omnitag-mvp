@@ -8,6 +8,7 @@ import DevicesManager from './DevicesManager'
 import { getUserPlanInfo } from '@/lib/plans'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import ProFeaturePaywall from '@/components/ProFeaturePaywall'
+import { resolveUserWhiteLabel } from '@/lib/whitelabel'
 
 export default async function DevicesPage({
   searchParams
@@ -20,12 +21,14 @@ export default async function DevicesPage({
   const { success, error } = await searchParams
 
   // 1. Obtener plan y privilegios del usuario (Admins siempre son PRO)
-  const [planInfo, { data: profile }] = await Promise.all([
+  const [planInfo, { data: profile }, wlInfo] = await Promise.all([
     getUserPlanInfo(db, user?.id),
-    db.from('users').select('account_type').eq('id', user?.id).maybeSingle()
+    db.from('users').select('account_type').eq('id', user?.id).maybeSingle(),
+    resolveUserWhiteLabel(user?.id, false)
   ])
   const { isPro, hasReviewPlate } = planInfo
   const accountType = profile?.account_type || 'business'
+  const isSubClient = wlInfo.isWhiteLabeledClient
 
   if (!planInfo.canAccessReviewPlate) {
     return (
@@ -93,6 +96,7 @@ export default async function DevicesPage({
           isPro={isPro}
           accountType={accountType}
           hasReviewPlate={Boolean(hasReviewPlate || (devices && devices.length > 0))}
+          isSubClient={isSubClient}
         />
       </div>
     </div>

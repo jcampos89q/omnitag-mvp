@@ -476,102 +476,104 @@ export default async function DashboardPage() {
           ) : null}
         </div>
 
-        {/* 2 CAJAS CLARAS: HARDWARE (1 AÑO GARANTIZADO) Y SUITE EXTENDIDA PRO */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {/* Caja A: Hardware Físico (1 Año Garantizado) */}
-          <div className="p-4 rounded-2xl border text-xs bg-linear-to-r from-blue-50/90 to-indigo-50/80 border-blue-200 text-blue-950 flex flex-col justify-between shadow-2xs">
-            <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs font-black">
-                <CreditCard className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-extrabold text-sm text-gray-900">
-                    {hasNfcCard ? 'Tarjeta Física Inteligente NFC' : 'Dispositivo NFC / vCard'}
-                  </span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${
-                    isHardwareActive ? 'bg-blue-200 text-blue-950' : 'bg-gray-200 text-gray-700'
-                  }`}>
-                    {isHardwareActive ? '✓ 1 Año Garantizado' : 'Básico ($0)'}
-                  </span>
+        {/* 2 CAJAS CLARAS: HARDWARE (1 AÑO GARANTIZADO) Y SUITE EXTENDIDA PRO (Oculta para sub-clientes de marca blanca) */}
+        {!wlInfo.isWhiteLabeledClient && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {/* Caja A: Hardware Físico (1 Año Garantizado) */}
+            <div className="p-4 rounded-2xl border text-xs bg-linear-to-r from-blue-50/90 to-indigo-50/80 border-blue-200 text-blue-950 flex flex-col justify-between shadow-2xs">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs font-black">
+                  <CreditCard className="w-4 h-4" />
                 </div>
-                <p className="text-[11px] text-gray-600 mt-1 font-medium">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-extrabold text-sm text-gray-900">
+                      {hasNfcCard ? 'Tarjeta Física Inteligente NFC' : 'Dispositivo NFC / vCard'}
+                    </span>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${
+                      isHardwareActive ? 'bg-blue-200 text-blue-950' : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {isHardwareActive ? '✓ 1 Año Garantizado' : 'Básico ($0)'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-600 mt-1 font-medium">
+                    {isHardwareActive
+                      ? `✓ Tu tarjeta NFC, perfil vCard, CRM de contactos y estadísticas están cubiertos por ${hardwareDaysLeft} días restantes sin mensualidades obligatorias.`
+                      : 'Dispones de vCard básica digital. Adquiere tu Tarjeta Inteligente NFC con chip para activar 1 año completo de servicio sin pagos mensuales.'}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-blue-200/60 flex items-center justify-between text-[11px]">
+                <span className="text-gray-500 font-semibold">
                   {isHardwareActive
-                    ? `✓ Tu tarjeta NFC, perfil vCard, CRM de contactos y estadísticas están cubiertos por ${hardwareDaysLeft} días restantes sin mensualidades obligatorias.`
-                    : 'Dispones de vCard básica digital. Adquiere tu Tarjeta Inteligente NFC con chip para activar 1 año completo de servicio sin pagos mensuales.'}
-                </p>
+                    ? `Vence: ${hardwareExpiresAt ? new Date(hardwareExpiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }) : '1 Año'}`
+                    : 'Sin tarjeta NFC física'}
+                </span>
+                <Link
+                  href={hasNfcCard ? "/dashboard/vcard" : "/dashboard/billing#metodos-pago"}
+                  className="font-extrabold text-blue-700 hover:underline flex items-center gap-1"
+                >
+                  {hasNfcCard ? 'Ver mi vCard' : 'Pedir Tarjeta (L. 1,200)'} <ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-blue-200/60 flex items-center justify-between text-[11px]">
-              <span className="text-gray-500 font-semibold">
-                {isHardwareActive
-                  ? `Vence: ${hardwareExpiresAt ? new Date(hardwareExpiresAt).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' }) : '1 Año'}`
-                  : 'Sin tarjeta NFC física'}
-              </span>
-              <Link
-                href={hasNfcCard ? "/dashboard/vcard" : "/dashboard/billing#metodos-pago"}
-                className="font-extrabold text-blue-700 hover:underline flex items-center gap-1"
-              >
-                {hasNfcCard ? 'Ver mi vCard' : 'Pedir Tarjeta (L. 1,200)'} <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-          </div>
 
-          {/* Caja B: Suite Extendida PRO (Software Opcional o Mes de Cortesía) */}
-          <div className={`p-4 rounded-2xl border text-xs flex flex-col justify-between shadow-2xs ${
-            planInfo.isMonthlyPro
-              ? 'bg-purple-50/90 border-purple-200 text-purple-950'
-              : planInfo.isTrial
-              ? 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
-              : 'bg-gray-50 border-gray-200 text-gray-800'
-          }`}>
-            <div className="flex items-start gap-2.5">
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs text-white ${
-                planInfo.isMonthlyPro ? 'bg-purple-600' : planInfo.isTrial ? 'bg-emerald-600' : 'bg-gray-700'
-              }`}>
-                <Sparkles className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-extrabold text-sm text-gray-900">
-                    Suite Extendida de Negocio ({industryConfig.shortName})
-                  </span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${
-                    planInfo.isMonthlyPro
-                      ? 'bg-purple-200 text-purple-900'
-                      : planInfo.isTrial
-                      ? 'bg-emerald-200 text-emerald-900'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}>
-                    {planInfo.isMonthlyPro ? 'PRO Mensual' : planInfo.isTrial ? `Mes Cortesía (${planInfo.trialDaysLeft}d)` : 'Opcional'}
-                  </span>
+            {/* Caja B: Suite Extendida PRO (Software Opcional o Mes de Cortesía) */}
+            <div className={`p-4 rounded-2xl border text-xs flex flex-col justify-between shadow-2xs ${
+              planInfo.isMonthlyPro
+                ? 'bg-purple-50/90 border-purple-200 text-purple-950'
+                : planInfo.isTrial
+                ? 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
+                : 'bg-gray-50 border-gray-200 text-gray-800'
+            }`}>
+              <div className="flex items-start gap-2.5">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs text-white ${
+                  planInfo.isMonthlyPro ? 'bg-purple-600' : planInfo.isTrial ? 'bg-emerald-600' : 'bg-gray-700'
+                }`}>
+                  <Sparkles className="w-4 h-4" />
                 </div>
-                <p className="text-[11px] opacity-90 mt-1 font-medium">
-                  {planInfo.isMonthlyPro
-                    ? 'Acceso total: Menús/Catálogos con WhatsApp, Agendas de turnos, Ruleta de premios y Club de Fidelización.'
-                    : planInfo.isTrial
-                    ? `🎁 Cortesía de tu compra de hardware: Tienes ${planInfo.trialDaysLeft} días de prueba para usar todas las herramientas avanzadas.`
-                    : `Desbloquea Menús digitales, Agendas de citas, Ruleta interactiva y Sellos digitales para tu ${industryConfig.shortName.toLowerCase()}.`}
-                </p>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-extrabold text-sm text-gray-900">
+                      Suite Extendida de Negocio ({industryConfig.shortName})
+                    </span>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${
+                      planInfo.isMonthlyPro
+                        ? 'bg-purple-200 text-purple-900'
+                        : planInfo.isTrial
+                        ? 'bg-emerald-200 text-emerald-900'
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {planInfo.isMonthlyPro ? 'PRO Mensual' : planInfo.isTrial ? `Mes Cortesía (${planInfo.trialDaysLeft}d)` : 'Opcional'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] opacity-90 mt-1 font-medium">
+                    {planInfo.isMonthlyPro
+                      ? 'Acceso total: Menús/Catálogos con WhatsApp, Agendas de turnos, Ruleta de premios y Club de Fidelización.'
+                      : planInfo.isTrial
+                      ? `🎁 Cortesía de tu compra de hardware: Tienes ${planInfo.trialDaysLeft} días de prueba para usar todas las herramientas avanzadas.`
+                      : `Desbloquea Menús digitales, Agendas de citas, Ruleta interactiva y Sellos digitales para tu ${industryConfig.shortName.toLowerCase()}.`}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-gray-200/60 flex items-center justify-between text-[11px]">
-              <span className="font-semibold text-gray-500">
-                {planInfo.isMonthlyPro 
-                  ? `Vence: ${expiresAt ? new Date(expiresAt).toLocaleDateString('es-HN') : 'Activo'}` 
-                  : planInfo.isTrial 
-                  ? 'Mes de cortesía incluido' 
-                  : 'L. 550 HNL / mes voluntario'}
-              </span>
-              <Link
-                href="/dashboard/billing#metodos-pago"
-                className="font-extrabold text-black hover:underline flex items-center gap-1"
-              >
-                {planInfo.isMonthlyPro ? 'Gestionar' : planInfo.isTrial ? 'Ver detalles' : 'Activar por L. 550'} <ArrowRight className="w-3 h-3" />
-              </Link>
+              <div className="mt-3 pt-2.5 border-t border-gray-200/60 flex items-center justify-between text-[11px]">
+                <span className="font-semibold text-gray-500">
+                  {planInfo.isMonthlyPro 
+                    ? `Vence: ${expiresAt ? new Date(expiresAt).toLocaleDateString('es-HN') : 'Activo'}` 
+                    : planInfo.isTrial 
+                    ? 'Mes de cortesía incluido' 
+                    : 'L. 550 HNL / mes voluntario'}
+                </span>
+                <Link
+                  href="/dashboard/billing#metodos-pago"
+                  className="font-extrabold text-black hover:underline flex items-center gap-1"
+                >
+                  {planInfo.isMonthlyPro ? 'Gestionar' : planInfo.isTrial ? 'Ver detalles' : 'Activar por L. 550'} <ArrowRight className="w-3 h-3" />
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* AVISO DE PLAN EXPIRADO */}
         {isExpired && (

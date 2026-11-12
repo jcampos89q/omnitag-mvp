@@ -42,6 +42,7 @@ interface DevicesManagerProps {
   isPro?: boolean
   accountType?: string
   hasReviewPlate?: boolean
+  isSubClient?: boolean
 }
 
 export default function DevicesManager({ 
@@ -52,7 +53,8 @@ export default function DevicesManager({
   wheel,
   isPro = false,
   accountType = 'business',
-  hasReviewPlate = false
+  hasReviewPlate = false,
+  isSubClient = false
 }: DevicesManagerProps) {
   const [deviceType, setDeviceType] = useState<string>('tap_to_rate')
   const [reviewFilter, setReviewFilter] = useState<boolean>(true)
@@ -240,6 +242,27 @@ export default function DevicesManager({
               </a>
             </div>
           )}
+        </div>
+      ) : isSubClient ? (
+        <div className="bg-linear-to-r from-gray-950 via-slate-900 to-indigo-950 text-white p-5 rounded-2xl border border-indigo-500/30 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Escudo 5★ y Enlaces Inteligentes
+            </div>
+            <h3 className="text-base font-extrabold text-white">Escudo Anti-Quejas & Códigos de Mostrador</h3>
+            <p className="text-xs text-gray-300 max-w-xl">
+              Genera tu enlace y código QR inteligente con Escudo Anti-Quejas para imprimirlo en displays de mesa o programarlo en cualquier sticker o chip NFC compatible con tu teléfono celular.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+            <Link
+              href="/dashboard/qr-studio"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-black px-4 py-2.5 rounded-xl text-xs transition shadow-md"
+            >
+              <QrCode className="w-4 h-4" />
+              <span>Diseñar QR de Mesa</span>
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="bg-linear-to-r from-gray-950 via-gray-900 to-black text-white p-5 rounded-2xl border border-gray-800 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

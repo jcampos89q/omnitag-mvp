@@ -12,6 +12,7 @@ import { getUserPlanInfo } from '@/lib/plans'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import ProFeaturePaywall from '@/components/ProFeaturePaywall'
+import { resolveUserWhiteLabel } from '@/lib/whitelabel'
 
 export default async function VCardBuilderPage({
   searchParams,
@@ -28,8 +29,12 @@ export default async function VCardBuilderPage({
   }
 
   // 1. Obtener estado del plan y hardware vinculado
-  const planInfo = await getUserPlanInfo(db, user.id)
+  const [planInfo, wlInfo] = await Promise.all([
+    getUserPlanInfo(db, user.id),
+    resolveUserWhiteLabel(user.id, false)
+  ])
   const { isPro, hasNfcCard, nfcCardToken } = planInfo
+  const isSubClient = wlInfo.isWhiteLabeledClient
 
   if (!planInfo.canAccessVCard) {
     return (
@@ -113,7 +118,7 @@ export default async function VCardBuilderPage({
             </div>
           )}
 
-          {/* Banner de Tarjeta NFC: Si ya la tiene vinculada, mostrar estado activo; si no la tiene, invitar a pedirla */}
+          {/* Banner de Tarjeta NFC: Si ya la tiene vinculada, mostrar estado activo; si no la tiene, invitar a pedirla (Solo para usuarios directos de OmniTag) */}
           {hasNfcCard ? (
             <div className="mt-4 p-4 sm:p-5 bg-gradient-to-r from-emerald-950 via-slate-900 to-slate-950 text-white rounded-2xl border border-emerald-500/30 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
@@ -148,7 +153,7 @@ export default async function VCardBuilderPage({
                 </Link>
               </div>
             </div>
-          ) : accountType !== 'review_plate' ? (
+          ) : !isSubClient && accountType !== 'review_plate' ? (
             <div className="mt-4 p-4 sm:p-5 bg-gradient-to-r from-slate-950 via-slate-900 to-purple-950 text-white rounded-2xl border border-purple-900/40 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0 mt-0.5">
@@ -173,6 +178,27 @@ export default async function VCardBuilderPage({
               >
                 <CreditCard className="w-3.5 h-3.5" />
                 <span>Pedir Tarjeta NFC (L. 1,200)</span>
+              </Link>
+            </div>
+          ) : isSubClient ? (
+            <div className="mt-4 p-4 sm:p-5 bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-950 text-white rounded-2xl border border-indigo-500/20 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                  <QrCode className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm text-white">Perfil Digital vCard & Código QR para Impresión</h3>
+                  <p className="text-xs text-gray-300 mt-1 max-w-xl leading-relaxed">
+                    Comparte tu perfil digital por redes, WhatsApp o descárgalo en alta definición (2000px) desde el Estudio QR para imprimirlo en tus tarjetas o displays. Compatible con cualquier chip NFC que desees programar.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard/qr-studio"
+                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                <span>Diseñar QR de Tarjeta</span>
               </Link>
             </div>
           ) : null}
