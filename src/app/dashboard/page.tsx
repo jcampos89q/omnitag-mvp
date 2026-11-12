@@ -337,9 +337,11 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          <div className="pt-2">
-            <BusinessUpgradesShowcase currentAccountType="review_plate" />
-          </div>
+          {!wlInfo.isWhiteLabeledClient && (
+            <div className="pt-2">
+              <BusinessUpgradesShowcase currentAccountType="review_plate" />
+            </div>
+          )}
         </div>
       </div>
     )
@@ -891,8 +893,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Vitrina de Mejoras para Cuentas Profesionales */}
-      {accountType === 'professional' && (
+      {/* Vitrina de Mejoras para Cuentas Profesionales (Solo para clientes directos de OmniTag) */}
+      {!wlInfo.isWhiteLabeledClient && accountType === 'professional' && (
         <BusinessUpgradesShowcase currentAccountType="professional" />
       )}
     </div>
