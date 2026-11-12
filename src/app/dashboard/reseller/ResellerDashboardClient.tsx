@@ -1001,6 +1001,9 @@ export default function ResellerDashboardClient({
                                   try {
                                     await startImpersonation(client.id)
                                   } catch (err: any) {
+                                    if (err?.message?.includes('NEXT_REDIRECT') || err?.digest?.includes('NEXT_REDIRECT')) {
+                                      return
+                                    }
                                     showToast(err.message || 'No se pudo abrir el panel del cliente', 'error')
                                     setLoadingClientId(null)
                                   }
@@ -1008,7 +1011,11 @@ export default function ResellerDashboardClient({
                                 className="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs transition inline-flex items-center gap-1 cursor-pointer"
                                 title="Entrar al panel de negocio de este cliente para configurar su menú, citas o QR"
                               >
-                                <Eye className="w-3.5 h-3.5" />
+                                {loadingClientId === client.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Eye className="w-3.5 h-3.5" />
+                                )}
                                 <span>Abrir Negocio</span>
                               </button>
                             </div>
