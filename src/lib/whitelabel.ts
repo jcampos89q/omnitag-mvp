@@ -211,9 +211,14 @@ export function normalizeDomain(raw?: string | null): string {
 
 export const AGENCY_PORTAL_HOST = 'app.omnitag.site'
 export const AGENCY_PORTAL_BASE_URL = `https://${AGENCY_PORTAL_HOST}`
+export const AGENCIES_SALES_HOST = 'agencias.omnitag.site'
 
 export function isAgencyPortalHost(rawHost?: string | null): boolean {
   return normalizeDomain(rawHost) === AGENCY_PORTAL_HOST
+}
+
+export function isAgenciesSalesHost(rawHost?: string | null): boolean {
+  return normalizeDomain(rawHost) === AGENCIES_SALES_HOST
 }
 
 export function isMainPlatformHost(rawHost?: string | null): boolean {
@@ -222,6 +227,7 @@ export function isMainPlatformHost(rawHost?: string | null): boolean {
   if (
     host === 'omnitag.site' ||
     host === AGENCY_PORTAL_HOST ||
+    host === AGENCIES_SALES_HOST ||
     host === 'localhost' ||
     host === '127.0.0.1' ||
     host.endsWith('.vercel.app')

@@ -51,18 +51,18 @@ export default function LandingPage() {
       {/* 0. CINTILLO SUPERIOR DE OFERTA */}
       <div className="bg-gradient-to-r from-purple-800 via-indigo-700 to-emerald-700 text-white py-2 px-4 text-center text-xs font-bold flex items-center justify-center gap-2 shadow-xs">
         <span className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0">
-          SAAS & HARDWARE NFC
+          OFERTA DE LANZAMIENTO
         </span>
         <span className="truncate sm:overflow-visible sm:whitespace-normal">
-          🚀 <b>50% OFF (L. 275 / $10)</b> en tu primer mes PRO • O adquiere tu <b>Licencia de Agencia Marca Blanca</b> para revender el sistema.
+          🚀 <b>50% OFF (L. 275 / $10)</b> en tu primer mes PRO • Activa todas las herramientas digitales para tu negocio hoy mismo.
         </span>
-        <Link 
-          href="/agencias" 
+        <a 
+          href="#precios" 
           className="hidden sm:inline-flex items-center gap-1 underline font-black text-yellow-300 hover:text-white transition ml-1 shrink-0"
         >
-          <span>Ver Licencia Marca Blanca</span>
+          <span>Ver Planes</span>
           <ArrowRight className="w-3 h-3" />
-        </Link>
+        </a>
       </div>
 
       {/* 1. NAVEGACIÓN PRINCIPAL */}
@@ -79,7 +79,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black tracking-wide shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600 fill-current animate-pulse" />
-              <span>PLATAFORMA TODO-EN-UNO PARA NEGOCIOS FÍSICOS Y AGENCIAS</span>
+              <span>PLATAFORMA TODO-EN-UNO PARA NEGOCIOS FÍSICOS Y PROFESIONALES</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-gray-950 leading-[1.08]">
@@ -103,15 +103,8 @@ export default function LandingPage() {
                 <ArrowRight className="w-4 h-4" />
               </a>
               <Link 
-                href="/agencias" 
-                className="w-full sm:w-auto bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 px-6 py-4 rounded-2xl font-black text-sm sm:text-base transition flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-4 h-4 text-purple-700" />
-                <span>SaaS Marca Blanca</span>
-              </Link>
-              <Link 
                 href="/tienda" 
-                className="w-full sm:w-auto bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 px-5 py-4 rounded-2xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 px-6 py-4 rounded-2xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2"
               >
                 <CreditCard className="w-4 h-4 text-emerald-700" />
                 <span>Tienda NFC</span>
@@ -715,63 +708,8 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-              {/* PLAN 1: LICENCIA SAAS MARCA BLANCA / AGENCIA */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs flex flex-col justify-between">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-wider text-purple-700">Para Agencias</span>
-                    <span className="text-[10px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
-                      Marca Blanca
-                    </span>
-                  </div>
-
-                  <div>
-                    <h3 className="text-2xl font-black text-gray-900">Licencia Distribuidor</h3>
-                    <p className="text-xs text-gray-500 mt-1">Revende nuestra plataforma bajo tu propio logo, marca y precios.</p>
-                  </div>
-
-                  <div className="pt-2">
-                    <span className="text-4xl font-black text-gray-900">$99</span>
-                    <span className="text-xs text-gray-500 ml-1">USD / mes</span>
-                  </div>
-
-                  <div className="pt-4 space-y-2.5 border-t border-gray-100 text-xs text-gray-700">
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Hasta 25 sub-cuentas</b> de clientes activas</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Tu propio Logo y Nombre</b> en todo el panel</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Conecta tu pasarela</b> y cobra el 100% directo</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Los 5 giros verticales</b> listos para vender</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Sin rastro de OmniTag</b> para tus sub-clientes</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-8">
-                  <Link
-                    href="/agencias"
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-black py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition"
-                  >
-                    <span>Ver Licencia Marca Blanca</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-
-              {/* PLAN 2: MENSUALIDAD PRO (RECOMENDADO) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-6 lg:gap-8 items-stretch">
+              {/* PLAN 1: MENSUALIDAD PRO (RECOMENDADO) */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-purple-600 shadow-xl flex flex-col justify-between relative transform md:-translate-y-2">
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-700 to-indigo-600 text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
                   ⭐ MÁS POPULAR • 50% OFF
@@ -925,23 +863,23 @@ export default function LandingPage() {
 
             <div className="relative space-y-3">
               <span className="text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30 shadow-xs">
-                SUSCRIPCIONES Y MARCA BLANCA
+                DIGITALIZA TU NEGOCIO HOY
               </span>
               <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
                 Empieza a digitalizar tu negocio hoy mismo
               </h2>
               <p className="text-xs sm:text-base text-gray-300 max-w-lg mx-auto font-medium leading-relaxed">
-                Adquiere tu membresía o tu Licencia de Agencia Marca Blanca y activa en segundos el menú con turnos activos, la ruleta en mesa, gift cards, agendas de citas y escudo de reseñas.
+                Adquiere tu membresía o tu dispositivo NFC y activa en segundos el menú con turnos activos, la ruleta en mesa, gift cards, agendas de citas y escudo de reseñas.
               </p>
             </div>
 
             <div className="relative pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link 
-                href="/agencias" 
+              <a 
+                href="#precios" 
                 className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-bold px-6 py-3 rounded-xl text-xs sm:text-sm transition shadow-lg cursor-pointer"
               >
-                Ver Licencia Marca Blanca
-              </Link>
+                Ver Planes para mi Negocio
+              </a>
               <Link 
                 href="/activar-compra" 
                 className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl text-xs sm:text-sm transition"

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { getClientIp, getRateLimitRule, checkRateLimit, createRateLimitResponse } from '@/lib/rateLimit'
-import { isAgencyPortalHost, isMainPlatformHost, normalizeDomain, resolvePartnerByDomain } from '@/lib/whitelabel'
+import { isAgenciesSalesHost, isAgencyPortalHost, isMainPlatformHost, normalizeDomain, resolvePartnerByDomain } from '@/lib/whitelabel'
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -33,7 +33,16 @@ export async function middleware(request: NextRequest) {
     | { partnerId?: string; customDomain?: string; agencyPortal?: boolean; rewriteToPath?: string }
     | undefined
 
-  if (isAgencyPortalHost(rawHost)) {
+  if (isAgenciesSalesHost(rawHost)) {
+    // Subdominio exclusivo de venta de licencias Marca Blanca (agencias.omnitag.site)
+    if (pathname === '/tienda') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    customContext = {
+      rewriteToPath: pathname === '/' ? '/agencias' : undefined,
+    }
+  } else if (isAgencyPortalHost(rawHost)) {
     // Bloquear páginas comerciales de OmniTag en app.omnitag.site
     if (
       pathname === '/agencias' ||
