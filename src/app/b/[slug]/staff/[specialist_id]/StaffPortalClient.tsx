@@ -59,12 +59,14 @@ export default function StaffPortalClient({
   business,
   specialist,
   initialBookings,
-  reviews
+  reviews,
+  brandName = 'OmniTag'
 }: {
   business: any
   specialist: Specialist
   initialBookings: Booking[]
   reviews: any[]
+  brandName?: string
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
   const [isAuthChecked, setIsAuthChecked] = useState<boolean>(false)
@@ -277,7 +279,7 @@ export default function StaffPortalClient({
         </div>
 
         <p className="text-center text-[11px] text-gray-500 pb-4">
-          OmniTag Security • Consulta tu PIN con la administración
+          {brandName} Security • Consulta tu PIN con la administración
         </p>
       </div>
     )

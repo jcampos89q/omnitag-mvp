@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import WheelPublicClient from './WheelPublicClient'
 import { Metadata } from 'next'
+import { getPublicBrandForOwner } from '@/lib/whitelabel'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -69,6 +70,8 @@ export default async function PublicWheelPage({ params, searchParams }: Props) {
     }
   }
 
+  const publicBrand = await getPublicBrandForOwner(wheel.user_id)
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-3 sm:p-6 select-none">
       <WheelPublicClient 
@@ -76,7 +79,8 @@ export default async function PublicWheelPage({ params, searchParams }: Props) {
         items={activeItems} 
         isClosed={isClosed} 
         closedReason={closedReason} 
-        table={table} 
+        table={table}
+        brandName={publicBrand.brandName}
       />
     </main>
   )

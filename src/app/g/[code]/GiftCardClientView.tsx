@@ -35,9 +35,10 @@ interface Props {
     logo?: string | null
   }
   redemptions: any[]
+  brandName?: string
 }
 
-export default function GiftCardClientView({ card, business, redemptions }: Props) {
+export default function GiftCardClientView({ card, business, redemptions, brandName = 'OmniTag' }: Props) {
   const [showPin, setShowPin] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isWalletLoading, setIsWalletLoading] = useState(false)
@@ -541,7 +542,7 @@ export default function GiftCardClientView({ card, business, redemptions }: Prop
           </div>
 
           <div className="text-center text-[9px] text-slate-500 pt-1 font-sans">
-            Certificado emitido con tecnología OmniTag. Válido únicamente en establecimientos autorizados de {business.name}.
+            Certificado emitido con tecnología {brandName}. Válido únicamente en establecimientos autorizados de {business.name}.
           </div>
         </div>
       </div>

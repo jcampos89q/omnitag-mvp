@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import CurrencySettingsForm from './CurrencySettingsForm'
 import IndustrySettingsForm from './IndustrySettingsForm'
 import BusinessPaymentSettingsForm from './BusinessPaymentSettingsForm'
+import CustomPublicBrandForm from './CustomPublicBrandForm'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { normalizeIndustry } from '@/lib/industries'
 import { resolveUserWhiteLabel } from '@/lib/whitelabel'
@@ -38,6 +39,8 @@ export default async function SettingsPage() {
   const targetMeta = authTarget?.user?.user_metadata || {}
   const lastIndustryChangedAt = (targetMeta.industry_changed_at as string) || null
   const businessPaymentConfig = targetMeta.business_payment_config || null
+  const customPublicBrand = (targetMeta.custom_public_brand as string) || ''
+  const inheritedBrand = wlInfo.activeBrand.brand_name || 'OmniTag'
 
   const accountTypeLabels: Record<string, string> = {
     'business': 'Negocio / Empresa Comercial',
@@ -59,6 +62,12 @@ export default async function SettingsPage() {
         initialIndustry={currentIndustry} 
         lastChangedAt={lastIndustryChangedAt}
         isAdmin={isAdmin}
+      />
+
+      {/* 1B. Marca Propia en Herramientas Públicas (vCard, Menú, Citas, Sellos, Ruleta, Gift Cards) */}
+      <CustomPublicBrandForm
+        initialBrand={customPublicBrand}
+        inheritedBrand={inheritedBrand}
       />
 
       {/* 2. Mi Pasarela y Métodos de Cobro Propios del Negocio (Solo para cuentas directas o negocios que cobran pedidos/citas) */}

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { getGiftCardPublic } from '@/app/dashboard/gift-cards/actions'
 import GiftCardClientView from './GiftCardClientView'
 import type { Metadata } from 'next'
+import { getPublicBrandForOwner } from '@/lib/whitelabel'
 
 interface PageProps {
   params: Promise<{ code: string }>
@@ -30,12 +31,15 @@ export default async function GiftCardPage({ params }: PageProps) {
     notFound()
   }
 
+  const publicBrand = await getPublicBrandForOwner(data.card?.user_id)
+
   return (
     <main className="min-h-screen bg-slate-900 py-6 sm:py-12 px-4 flex items-center justify-center">
       <GiftCardClientView 
         card={data.card} 
         business={data.business} 
-        redemptions={data.redemptions} 
+        redemptions={data.redemptions}
+        brandName={publicBrand.brandName}
       />
     </main>
   )

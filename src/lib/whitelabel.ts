@@ -153,14 +153,19 @@ export async function getPublicBrandForOwner(ownerId?: string | null): Promise<{
     const adminClient = getAdminClient()
     const { data: ownerAuth } = await adminClient.auth.admin.getUserById(ownerId)
     const meta = ownerAuth?.user?.user_metadata || {}
+    const customPublicBrand = typeof meta.custom_public_brand === 'string' ? meta.custom_public_brand.trim() : ''
+
     if (meta.parent_reseller_id) {
       const { data: parentAuth } = await adminClient.auth.admin.getUserById(meta.parent_reseller_id)
       const pMeta = parentAuth?.user?.user_metadata || {}
       return {
-        brandName: pMeta.white_label_config?.brand_name || 'Agencia Partner',
+        brandName: customPublicBrand || pMeta.white_label_config?.brand_name || 'Agencia Partner',
         partnerId: meta.parent_reseller_id as string,
         isWhiteLabel: true,
       }
+    }
+    if (customPublicBrand) {
+      return { brandName: customPublicBrand, partnerId: null, isWhiteLabel: true }
     }
     const ownBrand = meta.white_label_config?.brand_name
     if (meta.is_reseller && ownBrand && ownBrand !== 'OmniTag') {

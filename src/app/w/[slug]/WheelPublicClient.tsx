@@ -20,6 +20,7 @@ interface WheelPublicClientProps {
   isClosed: boolean
   closedReason: string
   table?: string
+  brandName?: string
 }
 
 export default function WheelPublicClient({
@@ -27,7 +28,8 @@ export default function WheelPublicClient({
   items,
   isClosed,
   closedReason,
-  table: initialTable
+  table: initialTable,
+  brandName = 'OmniTag'
 }: WheelPublicClientProps) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -868,7 +870,7 @@ export default function WheelPublicClient({
       <div className="pt-2 border-t border-slate-800 text-center">
         <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
           <span>🔒</span>
-          <span>Tecnología de Gamificación & Fidelización <b>OmniTag</b></span>
+          <span>Tecnología de Gamificación & Fidelización <b>{brandName}</b></span>
         </p>
       </div>
 

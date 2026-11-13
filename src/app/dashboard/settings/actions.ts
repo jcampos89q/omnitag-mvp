@@ -275,3 +275,38 @@ export async function updateBusinessPaymentConfigAction(formData: FormData) {
 
   return { success: true, config }
 }
+
+/**
+ * Permite que cualquier cliente (directo o sub-cliente) configure el nombre de marca
+ * que aparecerá al pie de todas sus herramientas públicas (vCard, Menú, Citas, Sellos, Ruleta, Gift Cards).
+ * Si se deja vacío, vuelve a heredar la marca de su Agencia (o OmniTag si es cliente directo).
+ */
+export async function updateCustomPublicBrandAction(formData: FormData) {
+  const supabase = await createClient()
+  const { user } = await getEffectiveUser(supabase)
+  if (!user) throw new Error('No autorizado')
+
+  const rawBrand = ((formData.get('custom_public_brand') as string) || '').trim().slice(0, 60)
+  const admin = getAdminClient()
+  const { data: authData } = await admin.auth.admin.getUserById(user.id)
+  const existingMeta = authData?.user?.user_metadata || {}
+
+  const { error } = await admin.auth.admin.updateUserById(user.id, {
+    user_metadata: {
+      ...existingMeta,
+      custom_public_brand: rawBrand,
+    },
+  })
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/settings')
+  revalidatePath('/v', 'layout')
+  revalidatePath('/m', 'layout')
+  revalidatePath('/b', 'layout')
+  revalidatePath('/l', 'layout')
+  revalidatePath('/w', 'layout')
+  revalidatePath('/g', 'layout')
+
+  return { success: true, customPublicBrand: rawBrand }
+}

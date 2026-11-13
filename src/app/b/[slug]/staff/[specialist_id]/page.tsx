@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import StaffPortalClient from './StaffPortalClient'
+import { getPublicBrandForOwner } from '@/lib/whitelabel'
 
 export async function generateMetadata({
   params
@@ -72,12 +73,15 @@ export default async function SpecialistPortalPage({
       .eq('specialist_id', specialist.id)
   ])
 
+  const publicBrand = await getPublicBrandForOwner(business.user_id)
+
   return (
     <StaffPortalClient
       business={business}
       specialist={specialist}
       initialBookings={bookings || []}
       reviews={reviews || []}
+      brandName={publicBrand.brandName}
     />
   )
 }
