@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { headers } from 'next/headers'
 import { ArrowLeft, ShieldCheck, Sparkles, CreditCard, ArrowRight, Building2 } from 'lucide-react'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 import RegisterForm from './RegisterForm'
@@ -11,16 +12,23 @@ export default async function RegisterPage({
   searchParams: Promise<{ error?: string; message?: string; token?: string; partner?: string }>
 }) {
   const params = await searchParams
-  const partnerBrand = await getPartnerBrandById(params?.partner)
+  const headersList = await headers()
+  const effectivePartnerId = params?.partner || headersList.get('x-partner-id') || undefined
+  const isCustomDomain = Boolean(headersList.get('x-custom-domain'))
+  const partnerBrand = await getPartnerBrandById(effectivePartnerId)
   const hasValidInviteOrToken = Boolean(params?.token || partnerBrand)
 
   const displayBrandName = partnerBrand?.brand_name || 'OmniTag'
   const displayLogo = partnerBrand?.logo_url || '/logo-light.png'
-  const homeUrl = partnerBrand?.website_url || '/'
+  const loginHref = partnerBrand && effectivePartnerId && !isCustomDomain
+    ? `/login?partner=${encodeURIComponent(effectivePartnerId)}`
+    : '/login'
+  const homeUrl = partnerBrand?.website_url || (partnerBrand ? loginHref : '/')
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 font-sans antialiased">
       {/* Botón para regresar al inicio de la web */}
+      {(!partnerBrand || Boolean(partnerBrand.website_url)) && (
       <div className="w-full max-w-md mb-3 flex items-center justify-between">
         <Link 
           href={homeUrl} 
@@ -31,6 +39,7 @@ export default async function RegisterPage({
         </Link>
         <span className="text-xs font-medium text-gray-400">{displayBrandName}</span>
       </div>
+      )}
 
       <div className="w-full max-w-md space-y-6 rounded-3xl bg-white p-8 shadow-xl border border-gray-100">
         <div className="text-center">
@@ -75,7 +84,7 @@ export default async function RegisterPage({
         {hasValidInviteOrToken ? (
           <RegisterForm 
             token={params?.token} 
-            partnerId={partnerBrand ? params?.partner : undefined}
+            partnerId={partnerBrand ? effectivePartnerId : undefined}
             error={params?.error} 
             message={params?.message} 
           />
@@ -153,7 +162,7 @@ export default async function RegisterPage({
 
         <p className="text-center text-sm text-gray-600">
           ¿Ya tienes una cuenta activa?{' '}
-          <Link href="/login" className="font-bold text-black hover:underline">
+          <Link href={loginHref} className="font-bold text-black hover:underline">
             Inicia sesión aquí
           </Link>
         </p>

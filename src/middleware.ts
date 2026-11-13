@@ -1,6 +1,7 @@
-import { type NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { getClientIp, getRateLimitRule, checkRateLimit, createRateLimitResponse } from '@/lib/rateLimit'
+import { isMainPlatformHost, normalizeDomain, resolvePartnerByDomain } from '@/lib/whitelabel'
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -26,8 +27,34 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Session Management
-  return await updateSession(request)
+  // 2. Resolución de Dominio Personalizado Marca Blanca (Opción 1)
+  const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
+  let customContext:
+    | { partnerId?: string; customDomain?: string; rewriteToPath?: string }
+    | undefined
+
+  if (!isMainPlatformHost(rawHost)) {
+    const partnerMatch = await resolvePartnerByDomain(rawHost)
+    if (partnerMatch) {
+      // Bloquear rutas comerciales de OmniTag dentro de un dominio de Agencia
+      if (
+        pathname === '/agencias' ||
+        pathname === '/tienda' ||
+        pathname === '/activar-compra'
+      ) {
+        return NextResponse.redirect(new URL('/login', request.url))
+      }
+
+      customContext = {
+        partnerId: partnerMatch.partnerId,
+        customDomain: normalizeDomain(rawHost),
+        rewriteToPath: pathname === '/' ? '/login' : undefined,
+      }
+    }
+  }
+
+  // 3. Session Management
+  return await updateSession(request, customContext)
 }
 
 export const config = {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 
@@ -52,7 +53,8 @@ export async function signup(formData: FormData) {
   const industry = rawIndustry === 'general' ? 'professional' : rawIndustry
   const professionTitle = (formData.get('profession_title') as string)?.trim() || ''
   const cardToken = (formData.get('card_token') as string)?.trim() || ''
-  const partnerId = (formData.get('partner_id') as string)?.trim() || ''
+  const headersList = await headers()
+  const partnerId = (formData.get('partner_id') as string)?.trim() || headersList.get('x-partner-id') || ''
   const privacyAccepted = formData.get('privacy_accepted')
 
   if (!privacyAccepted) {
@@ -232,9 +234,14 @@ export async function forgotPassword(formData: FormData) {
     redirect('/forgot-password?error=' + encodeURIComponent('Por favor ingresa tu correo electrónico.') + partnerQs)
   }
 
+  const headersList = await headers()
+  const host = headersList.get('x-forwarded-host') || headersList.get('host') || 'www.omnitag.site'
+  const proto = headersList.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https')
+  const origin = `${proto}://${host}`
+
   const nextPath = partner ? `/reset-password?partner=${encodeURIComponent(partner)}` : '/reset-password'
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `https://www.omnitag.site/auth/callback?next=${encodeURIComponent(nextPath)}`,
+    redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
   })
 
   if (error) {
@@ -258,25 +265,31 @@ export async function resetPassword(formData: FormData) {
     redirect('/reset-password?error=' + encodeURIComponent(error.message))
   }
 
+  const headersList = await headers()
+  const isCustomDomain = Boolean(headersList.get('x-custom-domain'))
   const parentPartner = updated?.user?.user_metadata?.parent_reseller_id as string | undefined
-  const loginBase = parentPartner ? `/login?partner=${encodeURIComponent(parentPartner)}&message=` : '/login?message='
+  const loginBase = parentPartner && !isCustomDomain ? `/login?partner=${encodeURIComponent(parentPartner)}&message=` : '/login?message='
   redirect(loginBase + encodeURIComponent('¡Tu contraseña ha sido actualizada con éxito! Ya puedes iniciar sesión.'))
 }
 
 export async function logout() {
   const supabase = await createClient()
+  const headersList = await headers()
+  const isCustomDomain = Boolean(headersList.get('x-custom-domain'))
   // Antes de cerrar sesión, detectar si el usuario pertenece a una Agencia (sub-cliente) o es una Agencia con marca propia,
   // para devolverlo a SU portal de marca blanca y no al login público de OmniTag.
   let partnerId: string | null = null
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    const meta = user?.user_metadata || {}
-    if (meta.parent_reseller_id) {
-      partnerId = meta.parent_reseller_id as string
-    } else if (meta.is_reseller && meta.white_label_config?.brand_name && meta.white_label_config.brand_name !== 'OmniTag') {
-      partnerId = user!.id
-    }
-  } catch {}
+  if (!isCustomDomain) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      const meta = user?.user_metadata || {}
+      if (meta.parent_reseller_id) {
+        partnerId = meta.parent_reseller_id as string
+      } else if (meta.is_reseller && meta.white_label_config?.brand_name && meta.white_label_config.brand_name !== 'OmniTag') {
+        partnerId = user!.id
+      }
+    } catch {}
+  }
   await supabase.auth.signOut()
   redirect(partnerId ? `/login?partner=${encodeURIComponent(partnerId)}` : '/login')
 }

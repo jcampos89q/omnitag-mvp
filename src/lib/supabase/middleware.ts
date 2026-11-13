@@ -1,21 +1,49 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function updateSession(request: NextRequest) {
+export async function updateSession(
+  request: NextRequest,
+  customContext?: {
+    partnerId?: string
+    customDomain?: string
+    rewriteToPath?: string
+  }
+) {
   const pathname = request.nextUrl.pathname
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-current-path', pathname)
+  if (customContext?.partnerId) {
+    requestHeaders.set('x-partner-id', customContext.partnerId)
+  }
+  if (customContext?.customDomain) {
+    requestHeaders.set('x-custom-domain', customContext.customDomain)
+  }
 
-  let supabaseResponse = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  })
+  const buildResponse = () => {
+    if (customContext?.rewriteToPath) {
+      const rewriteUrl = request.nextUrl.clone()
+      rewriteUrl.pathname = customContext.rewriteToPath
+      return NextResponse.rewrite(rewriteUrl, {
+        request: { headers: requestHeaders },
+      })
+    }
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    })
+  }
+
+  let supabaseResponse = buildResponse()
 
   // Solo verificar y refrescar sesión de Auth en rutas protegidas del Dashboard o Auth
   // Rutas públicas (/v/, /m/, /b/, /l/, /r/, /) cargan al instante sin latencia de Auth
-  const isDashboardRoute = pathname.startsWith('/dashboard')
-  const isAuthRoute = pathname.startsWith('/auth') || pathname === '/login' || pathname === '/register'
+  const effectivePath = customContext?.rewriteToPath || pathname
+  const isDashboardRoute = effectivePath.startsWith('/dashboard')
+  const isAuthRoute =
+    effectivePath.startsWith('/auth') ||
+    effectivePath === '/login' ||
+    effectivePath === '/register' ||
+    effectivePath === '/forgot-password' ||
+    effectivePath === '/reset-password'
 
   if (!isDashboardRoute && !isAuthRoute) {
     return supabaseResponse
@@ -30,10 +58,8 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = buildResponse()
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )

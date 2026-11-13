@@ -1,6 +1,7 @@
 import { login } from '@/app/auth/actions'
 import Link from 'next/link'
 import Image from 'next/image'
+import { headers } from 'next/headers'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 import { getPartnerBrandById } from '@/lib/whitelabel'
@@ -11,7 +12,10 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; message?: string; next?: string; partner?: string }>
 }) {
   const params = await searchParams
-  const partnerBrand = await getPartnerBrandById(params?.partner)
+  const headersList = await headers()
+  const effectivePartnerId = params?.partner || headersList.get('x-partner-id') || undefined
+  const isCustomDomain = Boolean(headersList.get('x-custom-domain'))
+  const partnerBrand = await getPartnerBrandById(effectivePartnerId)
   const isWhiteLabel = Boolean(partnerBrand)
 
   const brandName = partnerBrand?.brand_name || 'OmniTag'
@@ -81,8 +85,8 @@ export default async function LoginPage({
           {params?.next && (
             <input type="hidden" name="next" value={params.next} />
           )}
-          {isWhiteLabel && params?.partner && (
-            <input type="hidden" name="partner" value={params.partner} />
+          {isWhiteLabel && effectivePartnerId && !isCustomDomain && (
+            <input type="hidden" name="partner" value={effectivePartnerId} />
           )}
           <div className="space-y-4">
             <div>
@@ -105,7 +109,7 @@ export default async function LoginPage({
                   Contraseña
                 </label>
                 <Link
-                  href={isWhiteLabel && params?.partner ? `/forgot-password?partner=${encodeURIComponent(params.partner)}` : '/forgot-password'}
+                  href={isWhiteLabel && effectivePartnerId && !isCustomDomain ? `/forgot-password?partner=${encodeURIComponent(effectivePartnerId)}` : '/forgot-password'}
                   className="text-xs font-bold text-purple-700 hover:text-purple-900 hover:underline"
                 >
                   ¿Olvidaste tu contraseña?

@@ -101,6 +101,7 @@ export default function ResellerDashboardClient({
   const [savingBrand, setSavingBrand] = useState(false)
   const [brandName, setBrandName] = useState(initialBrandConfig.brand_name || '')
   const [logoUrl, setLogoUrl] = useState(initialBrandConfig.logo_url || '')
+  const [customDomain, setCustomDomain] = useState(initialBrandConfig.custom_domain || '')
 
   // Estado acciones sobre sub-clientes
   const [loadingClientId, setLoadingClientId] = useState<string | null>(null)
@@ -110,11 +111,16 @@ export default function ResellerDashboardClient({
 
   const [copiedLoginLink, setCopiedLoginLink] = useState(false)
 
-  const partnerRegisterUrl = typeof window !== 'undefined'
+  const cleanSavedDomain = (initialBrandConfig.custom_domain || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+  const partnerRegisterUrl = cleanSavedDomain
+    ? `https://${cleanSavedDomain}/register`
+    : typeof window !== 'undefined'
     ? `${window.location.origin}/register?partner=${resellerId}`
     : `https://www.omnitag.site/register?partner=${resellerId}`
 
-  const partnerLoginUrl = typeof window !== 'undefined'
+  const partnerLoginUrl = cleanSavedDomain
+    ? `https://${cleanSavedDomain}/login`
+    : typeof window !== 'undefined'
     ? `${window.location.origin}/login?partner=${resellerId}`
     : `https://www.omnitag.site/login?partner=${resellerId}`
 
@@ -1097,6 +1103,55 @@ export default function ResellerDashboardClient({
                 placeholder="https://miagencianfc.com"
                 className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
               />
+            </div>
+          </div>
+
+          {/* 1B. Dominio Personalizado Marca Blanca */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/60 border border-indigo-200/80 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-indigo-950 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-indigo-600" />
+                  Dominio Personalizado de tu Plataforma (Marca Blanca Total)
+                </h3>
+                <p className="text-xs text-indigo-900/75 mt-0.5">
+                  Conecta tu propio dominio (ej. <code className="bg-white px-1.5 py-0.5 rounded font-bold">app.tuagencia.com</code>) para que tus clientes nunca vean el nombre de OmniTag en la barra de direcciones.
+                </p>
+              </div>
+              {cleanSavedDomain && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full shrink-0">
+                  ✓ {cleanSavedDomain}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+              <div className="lg:col-span-5">
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  Dominio o Subdominio (sin https://)
+                </label>
+                <input
+                  type="text"
+                  name="custom_domain"
+                  value={customDomain}
+                  onChange={(e) => setCustomDomain(e.target.value)}
+                  placeholder="app.tuagencia.com"
+                  className="w-full px-3.5 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div className="lg:col-span-7 bg-white/90 border border-indigo-100 rounded-xl p-3 text-[11px] text-gray-700 space-y-1.5">
+                <p className="font-bold text-gray-900">Configuración DNS en GoDaddy / Hostinger:</p>
+                <p>
+                  • <strong>Si usas subdominio (recomendado, ej. <code className="text-indigo-700">app.tuagencia.com</code>):</strong> Crea un registro <strong>CNAME</strong> con Nombre <code className="bg-gray-100 px-1 rounded">app</code> apuntando a <code className="bg-gray-100 px-1 rounded font-bold">cname.vercel-dns.com</code>
+                </p>
+                <p>
+                  • <strong>Si usas dominio raíz (ej. <code className="text-indigo-700">tuagencia.com</code>):</strong> Crea un registro <strong>A</strong> con Nombre <code className="bg-gray-100 px-1 rounded">@</code> apuntando a <code className="bg-gray-100 px-1 rounded font-bold">76.76.21.21</code>
+                </p>
+                <p className="text-[10px] text-gray-500">
+                  * Una vez configurado el DNS, el administrador de la plataforma activará el dominio en el servidor para emitir tu certificado SSL automático.
+                </p>
+              </div>
             </div>
           </div>
 

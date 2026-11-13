@@ -1,5 +1,6 @@
 import { forgotPassword } from '@/app/auth/actions'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import { KeyRound, ArrowLeft, Mail, CheckCircle2 } from 'lucide-react'
 import { getPartnerBrandById } from '@/lib/whitelabel'
 
@@ -9,9 +10,14 @@ export default async function ForgotPasswordPage({
   searchParams: Promise<{ error?: string; success?: string; email?: string; partner?: string }>
 }) {
   const params = await searchParams
-  const partnerBrand = await getPartnerBrandById(params?.partner)
+  const headersList = await headers()
+  const effectivePartnerId = params?.partner || headersList.get('x-partner-id') || undefined
+  const isCustomDomain = Boolean(headersList.get('x-custom-domain'))
+  const partnerBrand = await getPartnerBrandById(effectivePartnerId)
   const isWhiteLabel = Boolean(partnerBrand)
-  const loginHref = isWhiteLabel ? `/login?partner=${encodeURIComponent(params.partner!)}` : '/login'
+  const loginHref = isWhiteLabel && effectivePartnerId && !isCustomDomain
+    ? `/login?partner=${encodeURIComponent(effectivePartnerId)}`
+    : '/login'
   const homeHref = isWhiteLabel ? loginHref : '/'
 
   return (
@@ -70,7 +76,9 @@ export default async function ForgotPasswordPage({
           </div>
         ) : (
           <form className="space-y-4" action={forgotPassword}>
-            {isWhiteLabel && <input type="hidden" name="partner" value={params.partner} />}
+            {isWhiteLabel && effectivePartnerId && !isCustomDomain && (
+              <input type="hidden" name="partner" value={effectivePartnerId} />
+            )}
             <div>
               <label htmlFor="email" className="block text-xs font-bold text-gray-700 uppercase mb-1">
                 Correo Electrónico

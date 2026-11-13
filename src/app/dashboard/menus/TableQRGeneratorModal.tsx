@@ -28,7 +28,8 @@ export default function TableQRGeneratorModal({
   const tables = Array.from({ length: Math.min(tableCount, maxAllowedTables) }, (_, i) => i + 1)
 
   const currentTableLabel = `${tablePrefix} #${selectedTable}`
-  const currentTableUrl = `https://www.omnitag.site/m/${menuSlug}?mesa=${selectedTable}`
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.omnitag.site'
+  const currentTableUrl = `${origin}/m/${menuSlug}?mesa=${selectedTable}`
 
   // Renderizar QR en Canvas con Marco Imprimible
   useEffect(() => {
@@ -88,7 +89,8 @@ export default function TableQRGeneratorModal({
       // Pie de página
       ctx.fillStyle = '#94A3B8'
       ctx.font = 'bold 12px system-ui, -apple-system, sans-serif'
-      ctx.fillText('DIGITALIZADO POR OMNITAG.SITE', width / 2, 760)
+      const hostLabel = typeof window !== 'undefined' ? window.location.hostname.replace(/^www\./, '').toUpperCase() : 'OMNITAG.SITE'
+      ctx.fillText(`DIGITALIZADO POR ${hostLabel}`, width / 2, 760)
     }
     qrImg.src = qrApiUrl
   }, [isOpen, selectedTable, tablePrefix, currentTableLabel, currentTableUrl, menuName])

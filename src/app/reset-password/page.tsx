@@ -1,4 +1,5 @@
 import { resetPassword } from '@/app/auth/actions'
+import { headers } from 'next/headers'
 import { LockKeyhole, Sparkles } from 'lucide-react'
 
 export default async function ResetPasswordPage({
@@ -7,7 +8,8 @@ export default async function ResetPasswordPage({
   searchParams: Promise<{ error?: string; partner?: string }>
 }) {
   const params = await searchParams
-  const isWhiteLabel = Boolean(params?.partner)
+  const headersList = await headers()
+  const isWhiteLabel = Boolean(params?.partner || headersList.get('x-partner-id'))
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">

@@ -5,6 +5,7 @@ import { getAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
+import { getPublicBaseUrlForOwner } from '@/lib/whitelabel'
 
 export async function createDevice(formData: FormData) {
   const supabase = await createClient()
@@ -26,6 +27,8 @@ export async function createDevice(formData: FormData) {
     redirectUrl = `https://search.google.com/local/writereview?placeid=${redirectUrl}`
   }
 
+  const publicBaseUrl = await getPublicBaseUrlForOwner(user.id)
+
   // Si es vincular a vCard
   if (deviceType === 'vcard') {
     const { data: vcard } = await db
@@ -35,7 +38,7 @@ export async function createDevice(formData: FormData) {
       .maybeSingle()
     if (vcard) {
       vcardId = vcard.id
-      redirectUrl = `https://www.omnitag.site/v/${vcard.slug}`
+      redirectUrl = `${publicBaseUrl}/v/${vcard.slug}`
     }
   }
 
@@ -47,7 +50,7 @@ export async function createDevice(formData: FormData) {
       .eq('user_id', user.id)
       .maybeSingle()
     if (menu) {
-      redirectUrl = `https://www.omnitag.site/m/${menu.slug}`
+      redirectUrl = `${publicBaseUrl}/m/${menu.slug}`
     }
   }
 
@@ -60,7 +63,7 @@ export async function createDevice(formData: FormData) {
       .maybeSingle()
     if (loyalty) {
       loyaltyId = loyalty.id
-      redirectUrl = `https://www.omnitag.site/l/${loyalty.slug}`
+      redirectUrl = `${publicBaseUrl}/l/${loyalty.slug}`
     }
   }
 
@@ -70,7 +73,7 @@ export async function createDevice(formData: FormData) {
     const wifiPass = (formData.get('wifi_password') as string)?.trim() || ''
     const wifiName = (formData.get('wifi_name') as string)?.trim() || ''
     const menuSlug = (formData.get('wifi_menu_slug') as string)?.trim() || ''
-    redirectUrl = `https://www.omnitag.site/wifi?ssid=${encodeURIComponent(wifiSsid)}&pass=${encodeURIComponent(wifiPass)}&name=${encodeURIComponent(wifiName)}&menu=${encodeURIComponent(menuSlug)}`
+    redirectUrl = `${publicBaseUrl}/wifi?ssid=${encodeURIComponent(wifiSsid)}&pass=${encodeURIComponent(wifiPass)}&name=${encodeURIComponent(wifiName)}&menu=${encodeURIComponent(menuSlug)}`
   }
 
   if (!redirectUrl) {

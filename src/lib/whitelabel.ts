@@ -16,6 +16,7 @@ export interface WhiteLabelBrandConfig {
   bank_account_holder?: string
   bank_account_id_doc?: string
   hide_omnitag_branding?: boolean
+  custom_domain?: string
 }
 
 export interface ResellerStatus {
@@ -191,5 +192,142 @@ export async function getPartnerBrandById(partnerId?: string | null): Promise<Wh
     }
   } catch {
     return null
+  }
+}
+
+/**
+ * Normaliza un dominio o URL ingresado por la agencia o recibido en el header Host.
+ * Ej: "https://www.App.MiAgencia.com/" -> "app.miagencia.com"
+ */
+export function normalizeDomain(raw?: string | null): string {
+  if (!raw) return ''
+  let clean = raw.trim().toLowerCase()
+  clean = clean.replace(/^https?:\/\//, '')
+  clean = clean.split('/')[0].split('?')[0].split('#')[0]
+  clean = clean.split(':')[0] // quitar puerto (:3000)
+  clean = clean.replace(/^www\./, '')
+  return clean.trim()
+}
+
+export function isMainPlatformHost(rawHost?: string | null): boolean {
+  const host = normalizeDomain(rawHost)
+  if (!host) return true
+  if (
+    host === 'omnitag.site' ||
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.endsWith('.vercel.app')
+  ) {
+    return true
+  }
+  return false
+}
+
+export function isValidCustomDomain(raw?: string | null): boolean {
+  const host = normalizeDomain(raw)
+  if (!host || isMainPlatformHost(host)) return false
+  return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/.test(host)
+}
+
+type DomainCacheEntry = {
+  expiresAt: number
+  map: Map<string, { partnerId: string; brandName: string }>
+}
+
+const DOMAIN_CACHE_TTL_MS = 60_000
+
+export function invalidateDomainCache() {
+  ;(globalThis as Record<string, unknown>).__omnitagDomainCache = undefined
+}
+
+/**
+ * Resuelve qué Agencia es dueña de un dominio personalizado (ej. app.miagencia.com).
+ * - Si el host es de la plataforma principal (omnitag.site / localhost / *.vercel.app), retorna null al instante sin consultar Supabase.
+ * - Utiliza caché en memoria de 60s por instancia para evitar saturar la API de Auth ante tráfico alto.
+ */
+export async function resolvePartnerByDomain(
+  rawHost?: string | null
+): Promise<{ partnerId: string; brandName: string } | null> {
+  const cleanHost = normalizeDomain(rawHost)
+  if (!cleanHost || isMainPlatformHost(cleanHost)) return null
+
+  const g = globalThis as Record<string, unknown>
+  const cached = g.__omnitagDomainCache as DomainCacheEntry | undefined
+  const now = Date.now()
+
+  if (cached && cached.expiresAt > now) {
+    return cached.map.get(cleanHost) || null
+  }
+
+  try {
+    const adminClient = getAdminClient()
+    const map = new Map<string, { partnerId: string; brandName: string }>()
+    let page = 1
+    const perPage = 1000
+
+    // Paginar hasta 5 páginas (5,000 usuarios) por seguridad
+    while (page <= 5) {
+      const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage })
+      if (error || !data?.users?.length) break
+
+      for (const u of data.users) {
+        const meta = u.user_metadata || {}
+        if (!meta.is_reseller) continue
+        const expiresAt = meta.reseller_expires_at as string | undefined
+        if (expiresAt && new Date(expiresAt) <= new Date()) continue
+
+        const domain = normalizeDomain(meta.white_label_config?.custom_domain)
+        if (domain && !isMainPlatformHost(domain)) {
+          map.set(domain, {
+            partnerId: u.id,
+            brandName: meta.white_label_config?.brand_name || meta.full_name || 'Agencia Partner',
+          })
+        }
+      }
+
+      if (data.users.length < perPage) break
+      page += 1
+    }
+
+    g.__omnitagDomainCache = {
+      expiresAt: now + DOMAIN_CACHE_TTL_MS,
+      map,
+    } satisfies DomainCacheEntry
+
+    return map.get(cleanHost) || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Devuelve la URL base pública que debe usarse para enlaces NFC, QR y WhatsApp de un negocio.
+ * Si el negocio pertenece a una Agencia con dominio propio configurado, usa ese dominio (ej. https://app.suagencia.com).
+ * De lo contrario usa https://www.omnitag.site.
+ */
+export async function getPublicBaseUrlForOwner(ownerId?: string | null): Promise<string> {
+  const fallback = 'https://www.omnitag.site'
+  if (!ownerId) return fallback
+  try {
+    const adminClient = getAdminClient()
+    const { data: ownerAuth } = await adminClient.auth.admin.getUserById(ownerId)
+    const meta = ownerAuth?.user?.user_metadata || {}
+
+    const targetAgencyId = (meta.parent_reseller_id as string) || (meta.is_reseller ? ownerId : null)
+    if (!targetAgencyId) return fallback
+
+    let agencyMeta = meta
+    if (targetAgencyId !== ownerId) {
+      const { data: parentAuth } = await adminClient.auth.admin.getUserById(targetAgencyId)
+      agencyMeta = parentAuth?.user?.user_metadata || {}
+    }
+
+    const customDomain = normalizeDomain(agencyMeta.white_label_config?.custom_domain)
+    if (customDomain && isValidCustomDomain(customDomain)) {
+      return `https://${customDomain}`
+    }
+    return fallback
+  } catch {
+    return fallback
   }
 }

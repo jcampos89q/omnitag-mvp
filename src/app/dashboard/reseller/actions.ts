@@ -6,7 +6,12 @@ import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { ADMIN_AGENCY_MODE_COOKIE, IMPERSONATE_COOKIE_NAME } from '@/lib/auth/effectiveUser'
 import { normalizeIndustry, SELECTABLE_INDUSTRY_IDS, SelectableIndustryId } from '@/lib/industries'
-import type { WhiteLabelBrandConfig } from '@/lib/whitelabel'
+import {
+  invalidateDomainCache,
+  isValidCustomDomain,
+  normalizeDomain,
+  type WhiteLabelBrandConfig,
+} from '@/lib/whitelabel'
 
 export async function switchAdminAgencyModeAction(enableAgencyMode: boolean) {
   const cookieStore = await cookies()
@@ -46,6 +51,26 @@ export async function saveWhiteLabelBrandAction(formData: FormData) {
     throw new Error('Tu cuenta no tiene una suscripción activa de Distribuidor Marca Blanca.')
   }
 
+  const rawCustomDomain = (formData.get('custom_domain') as string)?.trim() || ''
+  const normalizedCustomDomain = rawCustomDomain ? normalizeDomain(rawCustomDomain) : ''
+
+  if (normalizedCustomDomain && !isValidCustomDomain(normalizedCustomDomain)) {
+    throw new Error('Ingresa un dominio válido (ej. app.tuagencia.com), sin http:// ni rutas.')
+  }
+
+  if (normalizedCustomDomain) {
+    const { data: usersList } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+    const takenByOther = (usersList?.users || []).find(
+      (u) =>
+        u.id !== user.id &&
+        u.user_metadata?.is_reseller &&
+        normalizeDomain(u.user_metadata?.white_label_config?.custom_domain) === normalizedCustomDomain
+    )
+    if (takenByOther) {
+      throw new Error('Este dominio ya está asignado a otra agencia en la plataforma.')
+    }
+  }
+
   const brandConfig: WhiteLabelBrandConfig = {
     brand_name: (formData.get('brand_name') as string)?.trim() || 'Mi Marca NFC',
     logo_url: (formData.get('logo_url') as string)?.trim() || '',
@@ -61,6 +86,7 @@ export async function saveWhiteLabelBrandAction(formData: FormData) {
     bank_account_holder: (formData.get('bank_account_holder') as string)?.trim() || '',
     bank_account_id_doc: (formData.get('bank_account_id_doc') as string)?.trim() || '',
     hide_omnitag_branding: formData.get('hide_omnitag_branding') === 'true',
+    custom_domain: normalizedCustomDomain,
   }
 
   const { error } = await adminClient.auth.admin.updateUserById(user.id, {
@@ -71,6 +97,8 @@ export async function saveWhiteLabelBrandAction(formData: FormData) {
   })
 
   if (error) throw new Error(error.message)
+
+  invalidateDomainCache()
 
   revalidatePath('/dashboard', 'layout')
   revalidatePath('/dashboard/reseller')
