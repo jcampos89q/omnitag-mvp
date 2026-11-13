@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { getClientIp, getRateLimitRule, checkRateLimit, createRateLimitResponse } from '@/lib/rateLimit'
-import { isMainPlatformHost, normalizeDomain, resolvePartnerByDomain } from '@/lib/whitelabel'
+import { isAgencyPortalHost, isMainPlatformHost, normalizeDomain, resolvePartnerByDomain } from '@/lib/whitelabel'
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -27,13 +27,27 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Resolución de Dominio Personalizado Marca Blanca (Opción 1)
+  // 2. Resolución de Portal SaaS de Agencias (app.omnitag.site) o Dominio Personalizado
   const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
   let customContext:
-    | { partnerId?: string; customDomain?: string; rewriteToPath?: string }
+    | { partnerId?: string; customDomain?: string; agencyPortal?: boolean; rewriteToPath?: string }
     | undefined
 
-  if (!isMainPlatformHost(rawHost)) {
+  if (isAgencyPortalHost(rawHost)) {
+    // Bloquear páginas comerciales de OmniTag en app.omnitag.site
+    if (
+      pathname === '/agencias' ||
+      pathname === '/tienda' ||
+      pathname === '/activar-compra'
+    ) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    customContext = {
+      agencyPortal: true,
+      rewriteToPath: pathname === '/' ? '/login' : undefined,
+    }
+  } else if (!isMainPlatformHost(rawHost)) {
     const partnerMatch = await resolvePartnerByDomain(rawHost)
     if (partnerMatch) {
       // Bloquear rutas comerciales de OmniTag dentro de un dominio de Agencia

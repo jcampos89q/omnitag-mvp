@@ -15,17 +15,19 @@ export default async function LoginPage({
   const headersList = await headers()
   const effectivePartnerId = params?.partner || headersList.get('x-partner-id') || undefined
   const isCustomDomain = Boolean(headersList.get('x-custom-domain'))
+  const isAgencyPortal = headersList.get('x-agency-portal') === 'true'
   const partnerBrand = await getPartnerBrandById(effectivePartnerId)
   const isWhiteLabel = Boolean(partnerBrand)
+  const hideOmniTagLinks = isWhiteLabel || isAgencyPortal
 
-  const brandName = partnerBrand?.brand_name || 'OmniTag'
+  const brandName = partnerBrand?.brand_name || (isAgencyPortal ? 'Portal SaaS' : 'OmniTag')
   const brandLogo = partnerBrand?.logo_url || '/logo-light.png'
-  const homeUrl = partnerBrand?.website_url || (isWhiteLabel ? '#' : '/')
+  const homeUrl = partnerBrand?.website_url || (hideOmniTagLinks ? '#' : '/')
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-      {/* Botón superior: solo si NO es marca blanca o si la agencia configuró su propia web */}
-      {!isWhiteLabel && (
+      {/* Botón superior: solo si NO es marca blanca ni portal de agencia */}
+      {!hideOmniTagLinks && (
         <div className="w-full max-w-md mb-3 flex items-center justify-between">
           <Link 
             href={homeUrl} 
@@ -74,7 +76,7 @@ export default async function LoginPage({
             )}
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">
-            {isWhiteLabel ? `Portal ${brandName}` : 'Bienvenido a OmniTag'}
+            {isWhiteLabel ? `Portal ${brandName}` : isAgencyPortal ? 'Portal de Acceso' : 'Bienvenido a OmniTag'}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Inicia sesión en tu cuenta
@@ -148,7 +150,7 @@ export default async function LoginPage({
         </form>
 
         {/* Enlaces inferiores: solo para usuarios directos de OmniTag */}
-        {!isWhiteLabel ? (
+        {!hideOmniTagLinks ? (
           <div className="text-center text-xs sm:text-sm text-gray-600 space-y-1.5">
             <p>
               ¿Ya realizaste tu pago en Hotmart?{' '}

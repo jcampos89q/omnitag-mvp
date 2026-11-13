@@ -114,15 +114,11 @@ export default function ResellerDashboardClient({
   const cleanSavedDomain = (initialBrandConfig.custom_domain || '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
   const partnerRegisterUrl = cleanSavedDomain
     ? `https://${cleanSavedDomain}/register`
-    : typeof window !== 'undefined'
-    ? `${window.location.origin}/register?partner=${resellerId}`
-    : `https://www.omnitag.site/register?partner=${resellerId}`
+    : `https://app.omnitag.site/register?partner=${resellerId}`
 
   const partnerLoginUrl = cleanSavedDomain
     ? `https://${cleanSavedDomain}/login`
-    : typeof window !== 'undefined'
-    ? `${window.location.origin}/login?partner=${resellerId}`
-    : `https://www.omnitag.site/login?partner=${resellerId}`
+    : `https://app.omnitag.site/login?partner=${resellerId}`
 
   const handleCopyInviteLink = () => {
     navigator.clipboard.writeText(partnerRegisterUrl)

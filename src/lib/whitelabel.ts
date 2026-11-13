@@ -209,11 +209,19 @@ export function normalizeDomain(raw?: string | null): string {
   return clean.trim()
 }
 
+export const AGENCY_PORTAL_HOST = 'app.omnitag.site'
+export const AGENCY_PORTAL_BASE_URL = `https://${AGENCY_PORTAL_HOST}`
+
+export function isAgencyPortalHost(rawHost?: string | null): boolean {
+  return normalizeDomain(rawHost) === AGENCY_PORTAL_HOST
+}
+
 export function isMainPlatformHost(rawHost?: string | null): boolean {
   const host = normalizeDomain(rawHost)
   if (!host) return true
   if (
     host === 'omnitag.site' ||
+    host === AGENCY_PORTAL_HOST ||
     host === 'localhost' ||
     host === '127.0.0.1' ||
     host.endsWith('.vercel.app')
@@ -325,6 +333,10 @@ export async function getPublicBaseUrlForOwner(ownerId?: string | null): Promise
     const customDomain = normalizeDomain(agencyMeta.white_label_config?.custom_domain)
     if (customDomain && isValidCustomDomain(customDomain)) {
       return `https://${customDomain}`
+    }
+    // Sub-cliente o agencia usando el subdominio dedicado app.omnitag.site
+    if (meta.parent_reseller_id || (meta.is_reseller && agencyMeta.white_label_config?.brand_name && agencyMeta.white_label_config.brand_name !== 'OmniTag')) {
+      return AGENCY_PORTAL_BASE_URL
     }
     return fallback
   } catch {

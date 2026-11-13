@@ -13,17 +13,18 @@ export default async function ForgotPasswordPage({
   const headersList = await headers()
   const effectivePartnerId = params?.partner || headersList.get('x-partner-id') || undefined
   const isCustomDomain = Boolean(headersList.get('x-custom-domain'))
+  const isAgencyPortal = headersList.get('x-agency-portal') === 'true'
   const partnerBrand = await getPartnerBrandById(effectivePartnerId)
   const isWhiteLabel = Boolean(partnerBrand)
   const loginHref = isWhiteLabel && effectivePartnerId && !isCustomDomain
     ? `/login?partner=${encodeURIComponent(effectivePartnerId)}`
     : '/login'
-  const homeHref = isWhiteLabel ? loginHref : '/'
+  const homeHref = isWhiteLabel || isAgencyPortal ? loginHref : '/'
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
       {/* Botón para regresar al inicio de la web (solo OmniTag directo) */}
-      {!isWhiteLabel && (
+      {!isWhiteLabel && !isAgencyPortal && (
       <div className="w-full max-w-md mb-3 flex items-center justify-between">
         <Link 
           href="/" 

@@ -6,6 +6,7 @@ export async function updateSession(
   customContext?: {
     partnerId?: string
     customDomain?: string
+    agencyPortal?: boolean
     rewriteToPath?: string
   }
 ) {
@@ -17,6 +18,9 @@ export async function updateSession(
   }
   if (customContext?.customDomain) {
     requestHeaders.set('x-custom-domain', customContext.customDomain)
+  }
+  if (customContext?.agencyPortal) {
+    requestHeaders.set('x-agency-portal', 'true')
   }
 
   const buildResponse = () => {

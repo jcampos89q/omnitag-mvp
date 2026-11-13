@@ -15,20 +15,21 @@ export default async function RegisterPage({
   const headersList = await headers()
   const effectivePartnerId = params?.partner || headersList.get('x-partner-id') || undefined
   const isCustomDomain = Boolean(headersList.get('x-custom-domain'))
+  const isAgencyPortal = headersList.get('x-agency-portal') === 'true'
   const partnerBrand = await getPartnerBrandById(effectivePartnerId)
   const hasValidInviteOrToken = Boolean(params?.token || partnerBrand)
 
-  const displayBrandName = partnerBrand?.brand_name || 'OmniTag'
+  const displayBrandName = partnerBrand?.brand_name || (isAgencyPortal ? 'Portal SaaS' : 'OmniTag')
   const displayLogo = partnerBrand?.logo_url || '/logo-light.png'
   const loginHref = partnerBrand && effectivePartnerId && !isCustomDomain
     ? `/login?partner=${encodeURIComponent(effectivePartnerId)}`
     : '/login'
-  const homeUrl = partnerBrand?.website_url || (partnerBrand ? loginHref : '/')
+  const homeUrl = partnerBrand?.website_url || (partnerBrand || isAgencyPortal ? loginHref : '/')
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 font-sans antialiased">
       {/* Botón para regresar al inicio de la web */}
-      {(!partnerBrand || Boolean(partnerBrand.website_url)) && (
+      {((!partnerBrand && !isAgencyPortal) || Boolean(partnerBrand?.website_url)) && (
       <div className="w-full max-w-md mb-3 flex items-center justify-between">
         <Link 
           href={homeUrl} 
