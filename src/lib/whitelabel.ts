@@ -140,6 +140,38 @@ export async function resolveUserWhiteLabel(userId?: string | null, isAdmin = fa
 }
 
 /**
+ * Marca pública que debe mostrarse en las páginas públicas (vCard, menú, citas, lealtad) de un negocio.
+ * - Negocio de un Sub-Cliente de Agencia -> marca de la Agencia (nunca OmniTag).
+ * - Negocio de una Agencia con marca propia -> su propia marca.
+ * - Cliente directo de OmniTag -> OmniTag.
+ */
+export async function getPublicBrandForOwner(ownerId?: string | null): Promise<{ brandName: string; partnerId: string | null; isWhiteLabel: boolean }> {
+  const fallback = { brandName: 'OmniTag', partnerId: null, isWhiteLabel: false }
+  if (!ownerId) return fallback
+  try {
+    const adminClient = getAdminClient()
+    const { data: ownerAuth } = await adminClient.auth.admin.getUserById(ownerId)
+    const meta = ownerAuth?.user?.user_metadata || {}
+    if (meta.parent_reseller_id) {
+      const { data: parentAuth } = await adminClient.auth.admin.getUserById(meta.parent_reseller_id)
+      const pMeta = parentAuth?.user?.user_metadata || {}
+      return {
+        brandName: pMeta.white_label_config?.brand_name || 'Agencia Partner',
+        partnerId: meta.parent_reseller_id as string,
+        isWhiteLabel: true,
+      }
+    }
+    const ownBrand = meta.white_label_config?.brand_name
+    if (meta.is_reseller && ownBrand && ownBrand !== 'OmniTag') {
+      return { brandName: ownBrand, partnerId: ownerId, isWhiteLabel: true }
+    }
+    return fallback
+  } catch {
+    return fallback
+  }
+}
+
+/**
  * Obtiene la configuración de marca pública de un Distribuidor por su ID (para /register?partner=ID)
  */
 export async function getPartnerBrandById(partnerId?: string | null): Promise<WhiteLabelBrandConfig | null> {

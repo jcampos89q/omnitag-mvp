@@ -1,17 +1,23 @@
 import { forgotPassword } from '@/app/auth/actions'
 import Link from 'next/link'
 import { KeyRound, ArrowLeft, Mail, CheckCircle2 } from 'lucide-react'
+import { getPartnerBrandById } from '@/lib/whitelabel'
 
 export default async function ForgotPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; success?: string; email?: string }>
+  searchParams: Promise<{ error?: string; success?: string; email?: string; partner?: string }>
 }) {
   const params = await searchParams
+  const partnerBrand = await getPartnerBrandById(params?.partner)
+  const isWhiteLabel = Boolean(partnerBrand)
+  const loginHref = isWhiteLabel ? `/login?partner=${encodeURIComponent(params.partner!)}` : '/login'
+  const homeHref = isWhiteLabel ? loginHref : '/'
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-      {/* Botón para regresar al inicio de la web */}
+      {/* Botón para regresar al inicio de la web (solo OmniTag directo) */}
+      {!isWhiteLabel && (
       <div className="w-full max-w-md mb-3 flex items-center justify-between">
         <Link 
           href="/" 
@@ -22,13 +28,19 @@ export default async function ForgotPasswordPage({
         </Link>
         <span className="text-xs font-medium text-gray-400">OmniTag Web</span>
       </div>
+      )}
 
       <div className="w-full max-w-md space-y-6 rounded-2xl bg-white p-8 shadow-lg border border-gray-100">
         <div className="text-center">
-          <Link href="/" title="Volver a la página principal" className="inline-block hover:scale-105 transition-transform">
+          <Link href={homeHref} title="Volver" className="inline-block hover:scale-105 transition-transform">
+            {isWhiteLabel && partnerBrand?.logo_url && !partnerBrand.logo_url.startsWith('/') ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={partnerBrand.logo_url} alt={partnerBrand.brand_name} className="w-14 h-14 object-contain mx-auto mb-3 rounded-xl" />
+            ) : (
             <div className="w-12 h-12 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs">
               <KeyRound className="w-6 h-6" />
             </div>
+            )}
           </Link>
           <h2 className="text-2xl font-extrabold tracking-tight text-gray-900">
             Recuperar Contraseña
@@ -49,7 +61,7 @@ export default async function ForgotPasswordPage({
             </div>
 
             <Link
-              href="/login"
+              href={loginHref}
               className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-black hover:underline pt-2"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -58,6 +70,7 @@ export default async function ForgotPasswordPage({
           </div>
         ) : (
           <form className="space-y-4" action={forgotPassword}>
+            {isWhiteLabel && <input type="hidden" name="partner" value={params.partner} />}
             <div>
               <label htmlFor="email" className="block text-xs font-bold text-gray-700 uppercase mb-1">
                 Correo Electrónico
@@ -90,7 +103,7 @@ export default async function ForgotPasswordPage({
 
             <div className="text-center pt-2">
               <Link
-                href="/login"
+                href={loginHref}
                 className="inline-flex items-center gap-1 text-xs font-bold text-gray-600 hover:text-black hover:underline"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />

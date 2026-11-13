@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import BookingClient from './BookingClient'
 import { Scissors, MapPin, Phone, Sparkles, ArrowLeft } from 'lucide-react'
+import PublicPoweredBy from '@/components/PublicPoweredBy'
 
 export async function generateMetadata({
   params
@@ -172,7 +173,7 @@ export default async function PublicBookingPage({
       </main>
 
       <footer className="text-center pb-8 opacity-60 text-xs font-medium border-t border-gray-200 pt-6">
-        Digitalizado por <span className="font-bold">OmniTag</span>
+        <PublicPoweredBy ownerId={business.user_id} />
       </footer>
     </div>
   )

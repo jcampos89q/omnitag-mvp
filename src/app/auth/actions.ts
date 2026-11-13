@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -10,7 +11,9 @@ export async function login(formData: FormData) {
   const email = (formData.get('email') as string)?.trim()
   const password = formData.get('password') as string
   const next = (formData.get('next') as string)?.trim()
-  const nextQuery = next && next.startsWith('/') ? '&next=' + encodeURIComponent(next) : ''
+  const partner = (formData.get('partner') as string)?.trim() || ''
+  const nextQuery = (next && next.startsWith('/') ? '&next=' + encodeURIComponent(next) : '') +
+    (partner ? '&partner=' + encodeURIComponent(partner) : '')
 
   if (!email || !password) {
     redirect('/login?error=' + encodeURIComponent('Por favor ingresa tu correo y contraseña.') + nextQuery)
@@ -72,6 +75,35 @@ export async function signup(formData: FormData) {
   }
 
   // Si envió un token NFC, verificar antes de crear la cuenta que el token exista y no haya sido reclamado
+  // Validar que el partner_id corresponda a una Agencia real, vigente y con cupo disponible.
+  // Evita que alguien use ?partner=<cualquier-id> para saltarse el pago o colgarse de otra agencia.
+  if (partnerId && !cardToken) {
+    const partnerErrorUrl = `/register?partner=${encodeURIComponent(partnerId)}&error=`
+    try {
+      const adminClient = getAdminClient()
+      const { data: partnerAuth } = await adminClient.auth.admin.getUserById(partnerId)
+      const partnerMeta = partnerAuth?.user?.user_metadata || {}
+      const partnerExpiresAt = partnerMeta.reseller_expires_at as string | undefined
+      const partnerActive = Boolean(
+        partnerAuth?.user &&
+        partnerMeta.is_reseller &&
+        (!partnerExpiresAt || new Date(partnerExpiresAt) > new Date())
+      )
+      if (!partnerActive) {
+        redirect(partnerErrorUrl + encodeURIComponent('Este enlace de registro ya no está activo. Contacta a tu proveedor.'))
+      }
+      const quota = Number(partnerMeta.reseller_quota || 25)
+      const { data: usersList } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+      const used = (usersList?.users || []).filter(u => u.user_metadata?.parent_reseller_id === partnerId).length
+      if (used >= quota) {
+        redirect(partnerErrorUrl + encodeURIComponent('Tu proveedor alcanzó el límite de cuentas disponibles. Contáctalo para habilitar tu acceso.'))
+      }
+    } catch (err: any) {
+      if (err?.digest?.includes?.('NEXT_REDIRECT') || err?.message?.includes?.('NEXT_REDIRECT')) throw err
+      redirect(partnerErrorUrl + encodeURIComponent('No pudimos validar el enlace de registro. Intenta más tarde.'))
+    }
+  }
+
   if (cardToken) {
     const { data: validCard } = await supabase
       .from('nfc_cards')
@@ -193,20 +225,23 @@ export async function signup(formData: FormData) {
 export async function forgotPassword(formData: FormData) {
   const supabase = await createClient()
   const email = (formData.get('email') as string)?.trim()
+  const partner = (formData.get('partner') as string)?.trim() || ''
+  const partnerQs = partner ? `&partner=${encodeURIComponent(partner)}` : ''
 
   if (!email) {
-    redirect('/forgot-password?error=' + encodeURIComponent('Por favor ingresa tu correo electrónico.'))
+    redirect('/forgot-password?error=' + encodeURIComponent('Por favor ingresa tu correo electrónico.') + partnerQs)
   }
 
+  const nextPath = partner ? `/reset-password?partner=${encodeURIComponent(partner)}` : '/reset-password'
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://www.omnitag.site/auth/callback?next=/reset-password',
+    redirectTo: `https://www.omnitag.site/auth/callback?next=${encodeURIComponent(nextPath)}`,
   })
 
   if (error) {
-    redirect('/forgot-password?error=' + encodeURIComponent(error.message))
+    redirect('/forgot-password?error=' + encodeURIComponent(error.message) + partnerQs)
   }
 
-  redirect('/forgot-password?success=true&email=' + encodeURIComponent(email))
+  redirect('/forgot-password?success=true&email=' + encodeURIComponent(email) + partnerQs)
 }
 
 export async function resetPassword(formData: FormData) {
@@ -217,17 +252,31 @@ export async function resetPassword(formData: FormData) {
     redirect('/reset-password?error=' + encodeURIComponent('La contraseña debe tener al menos 6 caracteres.'))
   }
 
-  const { error } = await supabase.auth.updateUser({ password })
+  const { data: updated, error } = await supabase.auth.updateUser({ password })
 
   if (error) {
     redirect('/reset-password?error=' + encodeURIComponent(error.message))
   }
 
-  redirect('/login?message=' + encodeURIComponent('¡Tu contraseña ha sido actualizada con éxito! Ya puedes iniciar sesión.'))
+  const parentPartner = updated?.user?.user_metadata?.parent_reseller_id as string | undefined
+  const loginBase = parentPartner ? `/login?partner=${encodeURIComponent(parentPartner)}&message=` : '/login?message='
+  redirect(loginBase + encodeURIComponent('¡Tu contraseña ha sido actualizada con éxito! Ya puedes iniciar sesión.'))
 }
 
 export async function logout() {
   const supabase = await createClient()
+  // Antes de cerrar sesión, detectar si el usuario pertenece a una Agencia (sub-cliente) o es una Agencia con marca propia,
+  // para devolverlo a SU portal de marca blanca y no al login público de OmniTag.
+  let partnerId: string | null = null
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    const meta = user?.user_metadata || {}
+    if (meta.parent_reseller_id) {
+      partnerId = meta.parent_reseller_id as string
+    } else if (meta.is_reseller && meta.white_label_config?.brand_name && meta.white_label_config.brand_name !== 'OmniTag') {
+      partnerId = user!.id
+    }
+  } catch {}
   await supabase.auth.signOut()
-  redirect('/login')
+  redirect(partnerId ? `/login?partner=${encodeURIComponent(partnerId)}` : '/login')
 }

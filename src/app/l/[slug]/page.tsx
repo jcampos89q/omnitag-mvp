@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import LoyaltyCardClient from './LoyaltyCardClient'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
+import PublicPoweredBy from '@/components/PublicPoweredBy'
 
 export async function generateMetadata({
   params
@@ -105,7 +106,7 @@ export default async function PublicLoyaltyPage({
 
         <footer className="mt-8 text-center pb-4 opacity-60">
           <p className="text-xs font-medium">
-            Fidelización digital impulsada por <span className="font-bold">OmniTag</span>
+            <PublicPoweredBy ownerId={program.user_id} prefix="Fidelización digital impulsada por" />
           </p>
         </footer>
       </div>

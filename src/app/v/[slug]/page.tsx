@@ -32,6 +32,7 @@ import GoogleWalletButton from '@/components/GoogleWalletButton'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
 import { cookies } from 'next/headers'
+import PublicPoweredBy, { OwnerLoginLink } from '@/components/PublicPoweredBy'
 
 const getVCard = cache(async (slug: string) => {
   const supabase = await createClient()
@@ -652,18 +653,19 @@ export default async function PublicVCardPage({
         {/* Pie de Página */}
         <div className="mt-6 text-center space-y-2 opacity-70">
           <p className="text-xs font-semibold" style={{ color: theme.text_color }}>
-            Tarjeta Digital creada con <span className="font-bold">OmniTag</span>
+            <PublicPoweredBy ownerId={ownerId} prefix="Tarjeta Digital creada con" />
           </p>
           {!currentUser && (
             <p className="text-[11px]">
-              <Link 
-                href={`/login?next=/dashboard/vcard`}
+              <OwnerLoginLink 
+                ownerId={ownerId}
+                next="/dashboard/vcard"
                 className="hover:underline inline-flex items-center gap-1 font-medium transition opacity-80 hover:opacity-100"
                 style={{ color: theme.text_color }}
               >
                 <Lock className="w-3 h-3" />
                 <span>¿Eres el dueño de esta tarjeta? Inicia sesión aquí</span>
-              </Link>
+              </OwnerLoginLink>
             </p>
           )}
         </div>

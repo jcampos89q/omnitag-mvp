@@ -6,6 +6,7 @@ import { ArrowLeft, UserCircle2 } from 'lucide-react'
 import PublicMenuClient from './PublicMenuClient'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
+import PublicPoweredBy from '@/components/PublicPoweredBy'
 
 export async function generateMetadata({
   params
@@ -200,7 +201,7 @@ export default async function PublicMenuPage({
 
         <footer className="mt-8 text-center pb-8 border-t border-black/5 pt-8 opacity-60">
           <p className="text-xs font-medium">
-            Digitalizado por <span className="font-bold">OmniTag</span>
+            <PublicPoweredBy ownerId={menu.user_id} />
           </p>
         </footer>
       </div>

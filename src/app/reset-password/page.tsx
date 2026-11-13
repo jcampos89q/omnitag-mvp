@@ -4,9 +4,10 @@ import { LockKeyhole, Sparkles } from 'lucide-react'
 export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; partner?: string }>
 }) {
   const params = await searchParams
+  const isWhiteLabel = Boolean(params?.partner)
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
@@ -19,7 +20,9 @@ export default async function ResetPasswordPage({
             Establecer Nueva Contraseña
           </h2>
           <p className="mt-1.5 text-xs text-gray-500">
-            Ingresa tu nueva contraseña para acceder a tu cuenta de OmniTag.
+            {isWhiteLabel
+              ? 'Ingresa tu nueva contraseña para acceder a tu panel.'
+              : 'Ingresa tu nueva contraseña para acceder a tu cuenta de OmniTag.'}
           </p>
         </div>
 

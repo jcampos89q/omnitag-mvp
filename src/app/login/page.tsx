@@ -81,6 +81,9 @@ export default async function LoginPage({
           {params?.next && (
             <input type="hidden" name="next" value={params.next} />
           )}
+          {isWhiteLabel && params?.partner && (
+            <input type="hidden" name="partner" value={params.partner} />
+          )}
           <div className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-xs font-bold text-gray-700 uppercase mb-1">
@@ -102,7 +105,7 @@ export default async function LoginPage({
                   Contraseña
                 </label>
                 <Link
-                  href="/forgot-password"
+                  href={isWhiteLabel && params?.partner ? `/forgot-password?partner=${encodeURIComponent(params.partner)}` : '/forgot-password'}
                   className="text-xs font-bold text-purple-700 hover:text-purple-900 hover:underline"
                 >
                   ¿Olvidaste tu contraseña?
