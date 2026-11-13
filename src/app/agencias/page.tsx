@@ -4,9 +4,11 @@ import {
   Check,
   Sparkles,
   ArrowRight,
-  ShieldCheck
+  ShieldCheck,
+  CreditCard
 } from 'lucide-react'
 import CanvaWorkspaceShowcase from './CanvaWorkspaceShowcase'
+import PaddleCheckoutButton from '@/components/PaddleCheckoutButton'
 
 export const metadata = {
   title: 'Licencia SaaS Marca Blanca & Programa de Agencias | OmniTag',
@@ -247,15 +249,21 @@ export default async function AgenciasWhiteLabelPage({
                   </ul>
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-6 space-y-2">
+                  <PaddleCheckoutButton
+                    priceId={process.env.NEXT_PUBLIC_PADDLE_AGENCY_STARTER_PRICE_ID || 'pri_01m7b4yqxqmn1x4bbc7kd8b4rz'}
+                    className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
+                  >
+                    <span>Pagar con Tarjeta / PayPal ($49/mes)</span>
+                  </PaddleCheckoutButton>
                   <a
                     href={starterHotmartUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition"
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition"
                   >
-                    <span>Elegir Plan Starter</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <CreditCard className="w-3.5 h-3.5 text-gray-500" />
+                    <span>Alternativa: Pagar en Hotmart</span>
                   </a>
                 </div>
               </div>
@@ -311,15 +319,21 @@ export default async function AgenciasWhiteLabelPage({
                   </ul>
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-6 space-y-2">
+                  <PaddleCheckoutButton
+                    priceId={process.env.NEXT_PUBLIC_PADDLE_AGENCY_PRO_PRICE_ID || 'pri_01m7b5999d227mew1kmd1mn0gd'}
+                    className="w-full bg-linear-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
+                  >
+                    <span>Pagar con Tarjeta / PayPal ($99/mes)</span>
+                  </PaddleCheckoutButton>
                   <a
                     href={agencyHotmartUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-sm"
+                    className="w-full bg-purple-50 hover:bg-purple-100 text-purple-900 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition"
                   >
-                    <span>Elegir Plan Agency</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <CreditCard className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Alternativa: Pagar en Hotmart</span>
                   </a>
                 </div>
               </div>
@@ -367,15 +381,21 @@ export default async function AgenciasWhiteLabelPage({
                   </ul>
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-6 space-y-2">
+                  <PaddleCheckoutButton
+                    priceId={process.env.NEXT_PUBLIC_PADDLE_AGENCY_ENTERPRISE_PRICE_ID || 'pri_01m7b5c5zsva2rb1g2za305nbh'}
+                    className="w-full bg-linear-to-r from-gray-900 to-gray-950 hover:from-black hover:to-gray-900 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer border border-gray-800"
+                  >
+                    <span>Pagar con Tarjeta / PayPal ($199/mes)</span>
+                  </PaddleCheckoutButton>
                   <a
                     href={enterpriseHotmartUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-gray-950 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition"
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 transition"
                   >
-                    <span>Elegir Plan Country</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <CreditCard className="w-3.5 h-3.5 text-gray-500" />
+                    <span>Alternativa: Pagar en Hotmart</span>
                   </a>
                 </div>
               </div>
