@@ -117,28 +117,110 @@ export async function POST(request: NextRequest) {
       const isSubscriptionActive = data?.status === 'active' || eventType === 'transaction.completed'
 
       if (isSubscriptionActive) {
-        // Otorgar 35 días de vigencia mensual
-        const newExpiry = new Date(Date.now() + 35 * 24 * 60 * 60 * 1000).toISOString()
+        // Otorgar 35 días de vigencia mensual (margen seguro para ciclo de cobro)
+        const durationDays = 35
+        const newExpiry = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString()
 
-        await admin
-          .from('users')
-          .update({
-            plan: 'pro',
-            plan_status: 'active',
-            plan_expires_at: newExpiry,
-            updated_at: new Date().toISOString()
+        // Identificar el Price ID del ítem comprado
+        const purchasedPriceId = (
+          data?.items?.[0]?.price?.id ||
+          data?.price_id ||
+          data?.priceId ||
+          data?.details?.line_items?.[0]?.price_id ||
+          ''
+        ).toString().trim()
+
+        const payloadStr = JSON.stringify(data || {}).toLowerCase()
+
+        // Mapeo oficial de planes y licencias de Agencias
+        const starterPrice = process.env.NEXT_PUBLIC_PADDLE_AGENCY_STARTER_PRICE_ID || 'pri_01m7b4yqxqmn1x4bbc7kd8b4rz'
+        const proAgencyPrice = process.env.NEXT_PUBLIC_PADDLE_AGENCY_PRO_PRICE_ID || 'pri_01m7b5999d227mew1kmd1mn0gd'
+        const enterpriseAgencyPrice = process.env.NEXT_PUBLIC_PADDLE_AGENCY_ENTERPRISE_PRICE_ID || 'pri_01m7b5c5zsva2rb1g2za305nbh'
+
+        const isAgencyStarter = purchasedPriceId === starterPrice || payloadStr.includes('starter') || payloadStr.includes(starterPrice)
+        const isAgencyPro = purchasedPriceId === proAgencyPrice || payloadStr.includes('pro agency') || payloadStr.includes('agencia pro') || payloadStr.includes(proAgencyPrice)
+        const isAgencyEnterprise = purchasedPriceId === enterpriseAgencyPrice || payloadStr.includes('enterprise') || payloadStr.includes('country') || payloadStr.includes(enterpriseAgencyPrice)
+
+        const isResellerPlan = isAgencyStarter || isAgencyPro || isAgencyEnterprise
+
+        if (isResellerPlan) {
+          const quota = isAgencyEnterprise ? 100 : isAgencyPro ? 25 : 10
+
+          const { data: targetAuth } = await admin.auth.admin.getUserById(targetUser.id)
+          const existingMeta = targetAuth?.user?.user_metadata || {}
+
+          await admin.auth.admin.updateUserById(targetUser.id, {
+            user_metadata: {
+              ...existingMeta,
+              is_reseller: true,
+              reseller_quota: quota,
+              reseller_expires_at: newExpiry,
+            }
           })
-          .eq('id', targetUser.id)
 
-        // Registrar notificación
-        await admin.from('notifications').insert({
-          user_id: targetUser.id,
-          type: 'plan_upgraded',
-          title: '🎉 ¡Suscripción PRO Activada vía Paddle!',
-          message: `Tu pago seguro fue procesado con éxito. Tu cuenta cuenta con acceso PRO activo hasta el ${new Date(newExpiry).toLocaleDateString('es-HN')}.`,
-          read: false,
-          created_at: new Date().toISOString()
-        })
+          await admin
+            .from('users')
+            .update({
+              plan: 'pro',
+              plan_status: 'active',
+              plan_expires_at: newExpiry,
+              subscription_expires_at: newExpiry,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', targetUser.id)
+
+          await admin
+            .from('workspaces')
+            .upsert({
+              id: targetUser.id,
+              name: data?.customer?.name || targetUser.email?.split('@')[0] || 'Mi Agencia',
+              slug: (targetUser.email?.split('@')[0] || 'agencia').toLowerCase().replace(/[^a-z0-9]/g, ''),
+              subscription_expires_at: newExpiry,
+              plan_type: 'agency',
+              updated_at: new Date().toISOString()
+            })
+
+          await admin.from('notifications').insert({
+            user_id: targetUser.id,
+            type: 'plan_upgraded',
+            title: '🚀 ¡Licencia de Agencia Activada vía Paddle!',
+            message: `Tu pago fue procesado con éxito. Tienes acceso completo a tu Panel de Revendedor Marca Blanca con cupo para ${quota} clientes activo hasta el ${new Date(newExpiry).toLocaleDateString('es-HN')}.`,
+            read: false,
+            created_at: new Date().toISOString()
+          })
+        } else {
+          // Cliente Final / Plan Negocio PRO ($25/mes)
+          await admin
+            .from('users')
+            .update({
+              plan: 'pro',
+              plan_status: 'active',
+              plan_expires_at: newExpiry,
+              subscription_expires_at: newExpiry,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', targetUser.id)
+
+          await admin
+            .from('workspaces')
+            .upsert({
+              id: targetUser.id,
+              name: data?.customer?.name || targetUser.email?.split('@')[0] || 'Mi Negocio',
+              slug: (targetUser.email?.split('@')[0] || 'negocio').toLowerCase().replace(/[^a-z0-9]/g, ''),
+              subscription_expires_at: newExpiry,
+              plan_type: 'pro',
+              updated_at: new Date().toISOString()
+            })
+
+          await admin.from('notifications').insert({
+            user_id: targetUser.id,
+            type: 'plan_upgraded',
+            title: '🎉 ¡Suscripción PRO Activada vía Paddle!',
+            message: `Tu pago seguro fue procesado con éxito. Tu cuenta cuenta con acceso PRO activo hasta el ${new Date(newExpiry).toLocaleDateString('es-HN')}.`,
+            read: false,
+            created_at: new Date().toISOString()
+          })
+        }
       }
     }
 

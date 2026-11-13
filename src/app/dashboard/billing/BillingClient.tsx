@@ -519,12 +519,12 @@ export default function BillingClient({
             </div>
             <div className="pt-4 border-t border-gray-100 space-y-2">
               <PaddleCheckoutButton
-                priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID}
+                priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID || 'pri_01m7b4g3v0p8jdrszjpa3bbyfy'}
                 userEmail={userEmail}
                 userId={userId}
                 className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                Suscribirme con Tarjeta (Paddle - $20/mes)
+                Suscribirme con Tarjeta (Paddle - $25/mes)
               </PaddleCheckoutButton>
               <a
                 href={hotmartCheckoutUrl}
