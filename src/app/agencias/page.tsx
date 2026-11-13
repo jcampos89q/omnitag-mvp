@@ -435,12 +435,15 @@ export default async function AgenciasWhiteLabelPage({
 
           <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
             <ShieldCheck className="w-4 h-4 text-purple-600" />
-            <span>Pagos Seguros y Activación Inmediata vía Hotmart</span>
+            <span>Pagos Seguros y Facturación Digital Oficial</span>
           </div>
 
           <div className="flex items-center gap-4 text-xs font-bold text-gray-600">
             <Link href="/" className="hover:text-purple-700 transition">
               Inicio
+            </Link>
+            <Link href="/privacidad" className="hover:text-purple-700 transition">
+              Términos y Privacidad
             </Link>
             <Link href="/activar-compra" className="hover:text-purple-700 transition">
               Activar Compra
