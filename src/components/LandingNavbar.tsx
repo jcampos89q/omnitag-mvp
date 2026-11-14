@@ -43,10 +43,10 @@ export default function LandingNavbar() {
             <span>🍽️ Menús QR</span>
           </a>
           <a href="#gamificacion" className="text-amber-800 hover:text-amber-950 transition flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-            <span>🎰 Ruleta & Raspables</span>
+            <span>🎰 Ruleta Interactiva</span>
           </a>
-          <a href="#giftcards" className="text-purple-700 hover:text-purple-900 transition flex items-center gap-1 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-            <span>🎁 Gift Cards</span>
+          <a href="#fidelizacion" className="text-purple-700 hover:text-purple-900 transition flex items-center gap-1 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+            <span>🎟️ Cupones y Fidelización</span>
           </a>
           <a href="#citas" className="hover:text-black transition flex items-center gap-1">
             <span>💈 Citas</span>
@@ -54,10 +54,6 @@ export default function LandingNavbar() {
           <a href="#reputacion" className="hover:text-black transition flex items-center gap-1">
             <span>⭐ Reseñas Google</span>
           </a>
-          <Link href="/tienda" className="text-emerald-700 hover:text-emerald-900 transition flex items-center gap-1 font-extrabold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>Tienda NFC</span>
-          </Link>
           <a href="#precios" className="text-gray-900 hover:text-purple-900 transition flex items-center gap-1 font-extrabold">
             <Tag className="w-3.5 h-3.5 text-purple-600" />
             <span>Precios</span>
@@ -112,11 +108,11 @@ export default function LandingNavbar() {
               <span>🎰 Ruleta & Raspa</span>
             </a>
             <a 
-              href="#giftcards" 
+              href="#fidelizacion" 
               onClick={() => setMobileMenuOpen(false)}
               className="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 flex items-center gap-2"
             >
-              <span>🎁 Gift Cards</span>
+              <span>🎟️ Fidelización</span>
             </a>
             <a 
               href="#citas" 
@@ -132,14 +128,14 @@ export default function LandingNavbar() {
             >
               <span>⭐ Reseñas Google</span>
             </a>
-            <Link 
-              href="/tienda" 
+            <a 
+              href="#precios" 
               onClick={() => setMobileMenuOpen(false)}
               className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-2 font-black"
             >
-              <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Tienda NFC</span>
-            </Link>
+              <Tag className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Ver Planes</span>
+            </a>
           </div>
 
           <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs font-bold">

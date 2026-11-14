@@ -279,43 +279,43 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* CARD 3: GIFT CARDS DIGITALES PREPAGADAS */}
-            <div id="giftcards" className="bg-gradient-to-b from-purple-50/50 via-white to-white rounded-3xl p-6 sm:p-7 border-2 border-purple-300 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
+            {/* CARD 3: CUPONES & PROMOCIONES DIGITALES */}
+            <div id="promociones" className="bg-gradient-to-b from-purple-50/50 via-white to-white rounded-3xl p-6 sm:p-7 border-2 border-purple-300 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-xl shadow-xs">
-                    🎁
+                    🎟️
                   </div>
                   <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-100 text-purple-900 border border-purple-200">
-                    Venta por Adelantado
+                    Marketing Digital
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-purple-950 transition">
-                    Gift Cards Digitales (Tarjetas de Regalo)
+                    Cupones de Descuento & Promociones
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Permite a tus clientes comprar saldo de consumo para obsequiar a familiares o amigos en cumpleaños y fechas especiales. Cobras por adelantado y recibes nuevos clientes garantizados.
+                    Crea campañas de cupones digitales con códigos de descuento promocionales para atraer nuevos clientes y fidelizar a tu clientela habitual.
                   </p>
                 </div>
 
                 <div className="pt-2 space-y-2 border-t border-purple-100">
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Flujo de Caja Inmediato:</b> Vendes consumo antes de que el cliente visite el local.</span>
+                    <span><b>Campañas de Descuento:</b> Crea ofertas por porcentaje o descuento fijo en consumo.</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Dedicatoria Personalizada:</b> Diseños festivos con nombres ("De: Juan, Para: María").</span>
+                    <span><b>Difusión Digital Inmediata:</b> Comparte tus promociones por WhatsApp o redes sociales.</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Canje Seguro Antifraude:</b> Validación rápida en caja por código QR o PIN de 4 dígitos.</span>
+                    <span><b>Validación Antifraude:</b> Control y verificación de cupones mediante código QR o PIN.</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Atracción de Clientes Nuevos:</b> Quien recibe el regalo visita tu negocio por primera vez.</span>
+                    <span><b>Atracción de Clientes Nuevos:</b> Incentiva visitas recurrentes con ofertas atractivas.</span>
                   </div>
                 </div>
               </div>
@@ -325,7 +325,7 @@ export default function LandingPage() {
                   href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-900 hover:text-purple-700 transition"
                 >
-                  <span>Emitir gift cards para mi negocio</span>
+                  <span>Crear cupones para mi negocio</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
                 </a>
               </div>
@@ -419,7 +419,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Placas Físicas en PVC:</b> Disponibles en la tienda oficial con 1 año PRO incluido.</span>
+                    <span><b>Generador de Código QR HD:</b> Diseñado para colocar en mesas, mostradores o vitrinas.</span>
                   </div>
                 </div>
               </div>
@@ -593,55 +593,55 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 4. HARDWARE FÍSICO NFC & TIENDA OFICIAL */}
+        {/* 4. HERRAMIENTAS DIGITALES Y VINCULACIÓN SMART */}
         <section className="py-16 sm:py-20 bg-gradient-to-br from-gray-950 via-slate-900 to-black text-white px-4 sm:px-6">
           <div className="max-w-6xl mx-auto space-y-10">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
               <div className="space-y-4 max-w-xl text-center lg:text-left">
                 <span className="text-xs font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
-                  Dispositivos Físicos Contactless
+                  Tecnología Cloud & Contactless
                 </span>
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
-                  Equipa tu local con Placas & Tarjetas Inteligentes NFC
+                  Herramientas Digitales Compatibles con Cualquier Dispositivo
                 </h2>
                 <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium">
-                  Lleva tu negocio al siguiente nivel físico con dispositivos de alta gama. Placas para mesas y mostradores en vinil sobre PVC altamente resistente y tarjetas de presentación Matte Black con chip NFC integrado.
+                  Configura tus menús, tarjetas de presentación digital y ruletas interactivas en minutos. Tus clientes acceden al instante escaneando tus códigos QR generados en alta resolución desde cualquier smartphone.
                 </p>
                 <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3 text-xs font-bold text-gray-300">
                   <span className="flex items-center gap-1.5 text-emerald-400">
-                    <Truck className="w-4 h-4" />
-                    <span>Envíos a toda Honduras</span>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Activación 100% Inmediata en la Nube</span>
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1.5 text-yellow-300">
                     <Sparkles className="w-4 h-4 fill-current" />
-                    <span>Incluyen 1 Año Completo PRO</span>
+                    <span>Compatible con iOS y Android</span>
                   </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:max-w-md">
                 <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/15 space-y-3">
-                  <div className="text-2xl">💳</div>
-                  <h4 className="font-extrabold text-base text-white">Tarjeta NFC Matte Black</h4>
-                  <p className="text-xs text-gray-300">Para ejecutivos y profesionales. Comparte tu vCard con un toque.</p>
+                  <div className="text-2xl">💼</div>
+                  <h4 className="font-extrabold text-base text-white">vCard Digital Cloud</h4>
+                  <p className="text-xs text-gray-300">Para ejecutivos y profesionales. Comparte tu perfil y catálogo con un toque digital.</p>
                   <div className="flex items-center justify-between pt-2">
-                    <span className="text-sm font-black text-yellow-300">L. 1,200 HNL</span>
-                    <Link href="/tienda" className="text-xs font-black bg-white text-black px-3 py-1.5 rounded-xl hover:bg-gray-200 transition">
-                      Ver en Tienda
-                    </Link>
+                    <span className="text-sm font-black text-emerald-400">Incluido en PRO</span>
+                    <a href="#precios" className="text-xs font-black bg-white text-black px-3 py-1.5 rounded-xl hover:bg-gray-200 transition">
+                      Ver Planes
+                    </a>
                   </div>
                 </div>
 
                 <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/15 space-y-3">
                   <div className="text-2xl">⭐</div>
-                  <h4 className="font-extrabold text-base text-white">Placa Reseñas Google NFC</h4>
-                  <p className="text-xs text-gray-300">En Vinil sobre PVC ultrarresistente para mesas o mostrador.</p>
+                  <h4 className="font-extrabold text-base text-white">Captura de Reseñas Google</h4>
+                  <p className="text-xs text-gray-300">Filtro inteligente para multiplicar tus 5 estrellas en Google Maps.</p>
                   <div className="flex items-center justify-between pt-2">
-                    <span className="text-sm font-black text-yellow-300">L. 1,200 HNL</span>
-                    <Link href="/tienda" className="text-xs font-black bg-white text-black px-3 py-1.5 rounded-xl hover:bg-gray-200 transition">
-                      Ver en Tienda
-                    </Link>
+                    <span className="text-sm font-black text-emerald-400">Incluido en PRO</span>
+                    <a href="#precios" className="text-xs font-black bg-white text-black px-3 py-1.5 rounded-xl hover:bg-gray-200 transition">
+                      Ver Planes
+                    </a>
                   </div>
                 </div>
               </div>
@@ -911,12 +911,20 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4 text-xs font-semibold text-gray-500">
+            <Link href="/pricing" className="hover:text-black hover:underline">
+              Planes y Precios
+            </Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-black hover:underline">
+              Términos de Servicio
+            </Link>
+            <span>•</span>
             <Link href="/privacidad" className="hover:text-black hover:underline">
               Políticas de Privacidad
             </Link>
             <span>•</span>
-            <Link href="/tienda" className="hover:text-black hover:underline">
-              Tienda Oficial NFC
+            <Link href="/refunds" className="hover:text-black hover:underline">
+              Reembolsos
             </Link>
             <span>•</span>
             <Link href="/login" className="hover:text-black hover:underline">
