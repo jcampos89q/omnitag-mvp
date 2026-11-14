@@ -103,11 +103,11 @@ export default function LandingPage() {
                 <ArrowRight className="w-4 h-4" />
               </a>
               <Link 
-                href="/tienda" 
-                className="w-full sm:w-auto bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 px-6 py-4 rounded-2xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2"
+                href="/pricing" 
+                className="w-full sm:w-auto bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 px-6 py-4 rounded-2xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2"
               >
-                <CreditCard className="w-4 h-4 text-emerald-700" />
-                <span>Tienda NFC</span>
+                <Tag className="w-4 h-4 text-purple-700" />
+                <span>Planes Oficiales</span>
               </Link>
             </div>
 
@@ -523,7 +523,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Tarjetas Físicas Matte Black:</b> Disponibles con envío a domicilio.</span>
+                    <span><b>Generación de Código QR Directo:</b> Para imprimir en papelería o compartir digitalmente.</span>
                   </div>
                 </div>
               </div>
@@ -781,56 +781,56 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* PLAN 3: DISPOSITIVOS FÍSICOS NFC */}
+              {/* PLAN 3: PLAN ANUAL PRO CLOUD */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs flex flex-col justify-between">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-wider text-emerald-700">Hardware Físico</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-emerald-700">Plan Anual SaaS</span>
                     <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                      1 Año PRO Incluido
+                      Ahorra 2 Meses
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-2xl font-black text-gray-900">Dispositivo NFC Físico</h3>
-                    <p className="text-xs text-gray-500 mt-1">Placas vinil sobre PVC para mesas o Tarjeta Matte Black.</p>
+                    <h3 className="text-2xl font-black text-gray-900">Suscripción Anual PRO</h3>
+                    <p className="text-xs text-gray-500 mt-1">Acceso ilimitado a todas las herramientas digitales por 12 meses.</p>
                   </div>
 
                   <div className="pt-2">
-                    <span className="text-4xl font-black text-gray-900">L. 1,200</span>
-                    <span className="text-xs text-gray-500 ml-1">pago único</span>
-                    <p className="text-[11px] text-purple-700 font-bold mt-1">
-                      🎁 Incluye 1 Año Completo PRO de cortesía
+                    <span className="text-4xl font-black text-gray-900">$200</span>
+                    <span className="text-xs text-gray-500 ml-1">USD / año</span>
+                    <p className="text-[11px] text-emerald-700 font-bold mt-1">
+                      Facturación anual recurrente con soporte prioritario
                     </p>
                   </div>
 
                   <div className="pt-4 space-y-2.5 border-t border-gray-100 text-xs text-gray-700">
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>1 Dispositivo Físico</b> con chip NFC de largo alcance</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                       <span><b>12 meses de suscripción PRO</b> completamente incluidos</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Envío rápido a domicilio en toda Honduras</span>
+                      <span>Generador QR HD y vCards digitales ilimitadas</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Configuración y asesoría directa por WhatsApp</span>
+                      <span>Ruleta de premios y catálogo interactivo en la nube</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Soporte prioritario y actualizaciones continuas</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="pt-8">
                   <Link
-                    href="/tienda"
+                    href="/pricing"
                     className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs"
                   >
-                    <CreditCard className="w-3.5 h-3.5" />
-                    <span>Ver Catálogo en la Tienda</span>
+                    <span>Ver Planes Disponibles</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
@@ -869,7 +869,7 @@ export default function LandingPage() {
                 Empieza a digitalizar tu negocio hoy mismo
               </h2>
               <p className="text-xs sm:text-base text-gray-300 max-w-lg mx-auto font-medium leading-relaxed">
-                Adquiere tu membresía o tu dispositivo NFC y activa en segundos el menú con turnos activos, la ruleta en mesa, gift cards, agendas de citas y escudo de reseñas.
+                Adquiere tu suscripción comercial o plan de agencia y activa en segundos el menú con turnos activos, la ruleta en mesa, cupones digitales, agendas de citas y escudo de reseñas Google.
               </p>
             </div>
 
