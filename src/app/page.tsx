@@ -43,7 +43,7 @@ export default function LandingPage() {
     { name: 'Barberías & Salones', emoji: '💈', desc: 'Reservas online 24/7 con selección de especialista, Gift Cards y club de sellos.' },
     { name: 'Spas & Estética', emoji: '💆‍♀️', desc: 'Tarjetas de regalo prepago, agendamiento de turnos y opiniones privadas.' },
     { name: 'Clínicas & Médicos', emoji: '🩺', desc: 'Citas ordenadas, perfil profesional y reseñas de pacientes verificadas en Google.' },
-    { name: 'Profesionales & Negocios', emoji: '💼', desc: 'vCards NFC, intercambio de contactos y captura de prospectos permanente.' }
+    { name: 'Profesionales & Negocios', emoji: '💼', desc: 'vCards digitales, intercambio de contactos y captura de prospectos permanente.' }
   ]
 
   return (
@@ -79,18 +79,18 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black tracking-wide shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600 fill-current animate-pulse" />
-              <span>PLATAFORMA TODO-EN-UNO PARA NEGOCIOS FÍSICOS Y PROFESIONALES</span>
+              <span>PLATAFORMA SAAS TODO-EN-UNO PARA COMERCIOS Y PROFESIONALES</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-gray-950 leading-[1.08]">
-              Tu negocio en el mundo físico, <br />
+              Digitaliza tu negocio local, <br />
               <span className="bg-gradient-to-r from-purple-600 via-amber-600 to-emerald-600 bg-clip-text text-transparent">
-                conectado al mundo digital.
+                con herramientas cloud en un solo lugar.
               </span>
             </h1>
 
             <p className="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium">
-              Todo en un solo lugar: <b>Menús con turnos y comandas por mesa a WhatsApp</b>, <b>Ruleta de Premios & Tarjetas Raspables</b> para cautivar comensales, <b>Gift Cards prepagadas</b>, <b>Citas 24/7 con especialistas</b> y <b>Reseñas 5★ en Google Maps</b> sin instalar apps.
+              Todo en un solo software: <b>Menús interactivos y comandas a WhatsApp</b>, <b>Ruleta de Premios & Promociones</b> para fidelizar clientes, <b>Cupones de Descuento</b>, <b>Agendas de Citas 24/7</b> y <b>Filtro Inteligente de Reseñas en Google Maps</b> 100% digital.
             </p>
 
             {/* Botones de Acción */}
@@ -400,14 +400,14 @@ export default function LandingPage() {
                     Reseñas Google & Escudo Antirreclamos
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Multiplica las opiniones de 5 estrellas en tu perfil de Google Maps con tecnología Tap-to-Rate NFC & QR, desviando quejas a un buzón privado para resolverlas antes de que dañen tu imagen.
+                    Multiplica las opiniones de 5 estrellas en tu perfil de Google Maps con tecnología Smart Review & QR, desviando quejas a un buzón privado para resolverlas antes de que dañen tu imagen.
                   </p>
                 </div>
 
                 <div className="pt-2 space-y-2 border-t border-gray-100">
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Tap-to-Rate NFC & QR:</b> El cliente califica acercando su smartphone al mostrador.</span>
+                    <span><b>Smart Review & QR Dinámico:</b> El cliente califica escaneando desde su smartphone.</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -459,7 +459,7 @@ export default function LandingPage() {
                 <div className="pt-2 space-y-2 border-t border-gray-100">
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Sin Descargar Apps:</b> Funciona al instante en cualquier teléfono con QR o NFC.</span>
+                    <span><b>Sin Descargar Apps:</b> Funciona al instante en cualquier teléfono mediante escaneo QR.</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -501,10 +501,10 @@ export default function LandingPage() {
 
                 <div>
                   <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-blue-900 transition">
-                    vCards NFC Profesionales & CRM Permanente
+                    vCards Profesionales Cloud & CRM Digital
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Comparte tu tarjeta de presentación profesional, catálogo, redes sociales y formas de pago con un toque NFC. Los contactos que interactúan quedan guardados en tu base de datos CRM.
+                    Comparte tu tarjeta de presentación profesional interactiva, catálogo, redes sociales y formas de pago con un clic o código QR. Los contactos que interactúan quedan guardados en tu base de datos CRM.
                   </p>
                 </div>
 
@@ -567,7 +567,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Conexión Wi-Fi Instantánea:</b> Conexión rápida por escaneo QR o toque NFC en mesa.</span>
+                    <span><b>Conexión Wi-Fi Instantánea:</b> Conexión rápida por escaneo de código QR en mesa.</span>
                   </div>
                   <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -685,9 +685,9 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-black text-lg mx-auto shadow-xs">
                 3
               </div>
-              <h3 className="font-extrabold text-base text-gray-900">Conecta Clientes por QR o NFC</h3>
+              <h3 className="font-extrabold text-base text-gray-900">Conecta Clientes por Códigos QR</h3>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Coloca los códigos QR en tus mesas o mostradores y recibe pedidos, ventas de gift cards y reservas directo a WhatsApp.
+                Coloca los códigos QR generados en tus mesas o mostradores y recibe pedidos, cupones canjeados y reservas directo a WhatsApp.
               </p>
             </div>
           </div>

@@ -106,7 +106,7 @@ export default function PrivacyPolicyPage() {
           </div>
 
           <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-            La plataforma tecnológica <b>OmniTag</b> (disponible en <code className="bg-gray-100 px-2 py-0.5 rounded text-black font-semibold">https://omnitag.site</code>) es operada y administrada por <b>Nexoriama Tech</b>. A través de este portal se ofrecen servicios SaaS de tarjetas digitales (vCards), programas de lealtad, menús interactivos, reservas de turnos, gestión de reputación con placas NFC y conexión con monederos digitales como Google Wallet.
+            La plataforma tecnológica <b>OmniTag</b> (disponible en <code className="bg-gray-100 px-2 py-0.5 rounded text-black font-semibold">https://omnitag.site</code>) es operada y administrada por <b>Nexoriama Tech</b>. A través de este portal se ofrecen servicios SaaS de tarjetas digitales interactivas (vCards), programas de lealtad, menús interactivos, reservas de turnos, gestión de reputación para Google Maps y conexión con monederos digitales como Google Wallet. Todos los servicios ofrecidos son 100% digitales y basados en la nube.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">

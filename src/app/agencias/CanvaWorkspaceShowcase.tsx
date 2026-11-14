@@ -144,8 +144,8 @@ const CATEGORIES = [
       },
       {
         icon: '💳',
-        title: 'Compatible con Tarjetas NFC',
-        text: 'Puedes venderles tarjetas o placas NFC físicas junto con la mensualidad del software.'
+        title: 'Acceso a vCard Digital',
+        text: 'Tus clientes configuran su tarjeta digital interactiva lista para compartir por QR o enlace directo.'
       },
       {
         icon: '🎟️',

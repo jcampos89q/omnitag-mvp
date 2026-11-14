@@ -44,17 +44,17 @@ export async function generateMetadata(): Promise<Metadata> {
           template: `%s | ${brandTitle}`,
         }
       : {
-          default: "OmniTag - Conecta el mundo físico con tu ecosistema digital",
+          default: "OmniTag - Plataforma SaaS de Marketing y Fidelización Digital",
           template: "%s | OmniTag",
         },
     description: isWhiteLabelHost
       ? `Plataforma digital de ${brandTitle}.`
-      : "Tarjetas vCard inteligentes, menús digitales con pedidos a WhatsApp y placas Tap-to-Rate para Google Reviews.",
+      : "Software SaaS en la nube para menús digitales interactivos, agendas de citas, cupones y captación inteligente de reseñas en Google.",
     openGraph: {
-      title: isWhiteLabelHost ? brandTitle : "OmniTag - Conecta el mundo físico con tu ecosistema digital",
+      title: isWhiteLabelHost ? brandTitle : "OmniTag - Plataforma SaaS de Marketing y Fidelización Digital",
       description: isWhiteLabelHost
         ? `Plataforma digital de ${brandTitle}.`
-        : "Tarjetas vCard inteligentes, menús digitales con pedidos a WhatsApp y placas Tap-to-Rate para Google Reviews.",
+        : "Software SaaS en la nube para menús digitales interactivos, agendas de citas, cupones y captación inteligente de reseñas en Google.",
       url: baseUrl,
       siteName: brandTitle,
       locale: "es_ES",

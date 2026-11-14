@@ -136,18 +136,18 @@ export default async function RegisterPage({
               </div>
             </div>
 
-            {/* Opción 3: Tiene código de Tarjeta Física NFC */}
+            {/* Opción 3: Tiene código de Invitación o Canje Digital */}
             <form action="/register" method="GET" className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-2.5">
               <div className="flex items-center gap-2 text-gray-800 font-extrabold text-xs uppercase tracking-wider">
                 <CreditCard className="w-4 h-4 text-gray-600" />
-                3. ¿Tienes una Tarjeta o Placa NFC física?
+                3. ¿Tienes un Código de Canje o Cupón Digital?
               </div>
               <div className="flex gap-2">
                 <input
                   type="text"
                   name="token"
                   required
-                  placeholder="Código de tu tarjeta NFC"
+                  placeholder="Código de canje o activación"
                   className="flex-1 px-3 py-2 text-xs rounded-xl border border-gray-300 bg-white text-gray-900 focus:border-black focus:outline-none"
                 />
                 <button
