@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { SUPPORTED_CURRENCIES } from '@/lib/currency'
+import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { 
   normalizeIndustry, 
   SELECTABLE_INDUSTRY_IDS, 
@@ -156,7 +157,7 @@ export async function lockInitialIndustryAction(formData: FormData) {
  */
 export async function updateIndustrySetting(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, isImpersonating, realAdmin } = await getEffectiveUser(supabase)
   if (!user) throw new Error('No autorizado')
 
   const rawIndustry = (formData.get('industry') as string)?.trim()
@@ -171,14 +172,17 @@ export async function updateIndustrySetting(formData: FormData) {
     throw new Error('Debes escribir exactamente CAMBIAR GIRO para confirmar la transición técnica.')
   }
 
-  // Verificar si es administrador (los admins no tienen bloqueo de 30 días)
-  const { data: profile } = await supabase
+  const admin = getAdminClient()
+  const db = isImpersonating ? admin : supabase
+
+  // Verificar si es administrador (los admins y cuando estás en soporte ghost mode no tienen bloqueo de 30 días)
+  const { data: profile } = await db
     .from('users')
     .select('industry, is_admin, account_type')
     .eq('id', user.id)
     .maybeSingle()
 
-  const isAdmin = Boolean(profile?.is_admin)
+  const isAdmin = Boolean(profile?.is_admin || realAdmin)
   const lastChangedAtRaw = user.user_metadata?.industry_changed_at as string | undefined
 
   if (!isAdmin && lastChangedAtRaw) {
@@ -199,7 +203,7 @@ export async function updateIndustrySetting(formData: FormData) {
     ? 'review_plate'
     : (normalized === 'professional' ? 'professional' : 'business')
 
-  const { error: userError } = await supabase
+  const { error: userError } = await db
     .from('users')
     .update({
       industry: normalized,
@@ -210,13 +214,24 @@ export async function updateIndustrySetting(formData: FormData) {
   if (userError) throw new Error(userError.message)
 
   // Registrar marca de tiempo del cambio para el bloqueo de 30 días
-  const admin = getAdminClient()
   await admin.auth.admin.updateUserById(user.id, {
     user_metadata: {
       ...(user.user_metadata || {}),
       industry: normalized,
       industry_locked: true,
       industry_changed_at: nowIso,
+      previous_industry: profile?.industry || null
+    }
+  })
+
+  await applyTechnicalIndustryTransition(user.id, normalized)
+
+  revalidatePath('/', 'layout')
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/settings')
+
+  return { success: true, industry: normalized }
+}
       previous_industry: profile?.industry || null
     }
   })
