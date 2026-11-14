@@ -30,6 +30,20 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
+  async redirects() {
+    return [
+      {
+        source: '/tienda',
+        destination: '/pricing',
+        permanent: true,
+      },
+      {
+        source: '/tienda/:path*',
+        destination: '/pricing',
+        permanent: true,
+      },
+    ]
+  },
 };
 
 export default nextConfig;
