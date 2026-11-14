@@ -6,6 +6,11 @@ import { isAgenciesSalesHost, isAgencyPortalHost, isMainPlatformHost, normalizeD
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // 0. Redirigir la tienda física a los planes SaaS oficiales para cumplimiento Paddle
+  if (pathname === '/tienda' || pathname.startsWith('/tienda/')) {
+    return NextResponse.redirect(new URL('/pricing', request.url))
+  }
+
   // 1. Rate Limiting per IP on API endpoints (Prevents DoS, scraping, and bot loops)
   const rule = getRateLimitRule(pathname)
   if (rule) {
