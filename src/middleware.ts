@@ -27,6 +27,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // 1.5. Bloquear ruta pública de venta física /tienda en producción para cumplimiento SaaS internacional
+  if (pathname === '/tienda') {
+    return NextResponse.redirect(new URL('/pricing', request.url))
+  }
+
   // 2. Resolución de Portal SaaS de Agencias (app.omnitag.site) o Dominio Personalizado
   const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
   let customContext:

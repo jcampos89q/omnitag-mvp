@@ -164,8 +164,8 @@ export default async function LoginPage({
                 Ver Licencias Marca Blanca
               </Link>{' '}
               o{' '}
-              <Link href="/tienda" className="font-bold text-emerald-700 hover:underline">
-                Activar Tarjeta NFC
+              <Link href="/pricing" className="font-bold text-purple-700 hover:underline">
+                Ver Planes para Comercios
               </Link>
             </p>
           </div>
