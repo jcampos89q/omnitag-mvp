@@ -199,7 +199,7 @@ export default function PrivacyPolicyPage() {
               </p>
             </div>
 
-            {/* F: Placas NFC & Feedback */}
+            {/* F: Smart Review & Feedback */}
             <div className="p-5 rounded-2xl bg-gray-50 border border-gray-200 space-y-2">
               <div className="flex items-center gap-2 text-black font-extrabold text-sm">
                 <Star className="w-4 h-4 text-yellow-600" />

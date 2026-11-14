@@ -68,7 +68,7 @@ export default async function RegisterPage({
           <p className="mt-2 text-xs sm:text-sm text-gray-600 font-medium">
             {hasValidInviteOrToken
               ? `Completa tus datos para comenzar en ${displayBrandName}`
-              : 'Para crear tu cuenta necesitas haber adquirido tu suscripción en Hotmart o contar con un dispositivo físico NFC.'}
+              : 'Para crear tu cuenta necesitas contar con una suscripción activa o un código de activación digital.'}
           </p>
         </div>
 
@@ -128,7 +128,7 @@ export default async function RegisterPage({
                   Licencia Marca Blanca
                 </Link>
                 <Link
-                  href="/#precios"
+                  href="/pricing"
                   className="py-2.5 px-3 rounded-xl bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 font-bold text-xs text-center transition"
                 >
                   Planes para mi Negocio

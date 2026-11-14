@@ -12,7 +12,7 @@ import PaddleCheckoutButton from '@/components/PaddleCheckoutButton'
 
 export const metadata = {
   title: 'Licencia SaaS Marca Blanca & Programa de Agencias | OmniTag',
-  description: 'Lanza tu propia plataforma SaaS de Menús QR, Agendas Médicas, Fidelización y Tarjetas NFC bajo tu propia marca y cobra el 100% directo a tus clientes.',
+  description: 'Lanza tu propia plataforma SaaS de Menús QR, Agendas Médicas, Fidelización y vCards Digitales bajo tu propia marca y cobra el 100% directo a tus clientes.',
 }
 
 export default async function AgenciasWhiteLabelPage({
@@ -314,7 +314,7 @@ export default async function AgenciasWhiteLabelPage({
                     </li>
                     <li className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                      <span><b>Menús, Citas, ECE Médico, Ruleta y NFC</b></span>
+                      <span><b>Menús, Citas, ECE Médico, Ruleta y vCards</b></span>
                     </li>
                   </ul>
                 </div>

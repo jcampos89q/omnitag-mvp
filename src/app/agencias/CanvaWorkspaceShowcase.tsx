@@ -134,8 +134,8 @@ const CATEGORIES = [
     inactivePill: 'bg-white text-gray-700 hover:bg-purple-50 border-gray-200',
     cardBg: 'from-purple-50/80 via-indigo-50/30 to-white',
     badge: 'Sistema para Tiendas, Boutiques y Profesionales',
-    headline: 'Catálogo con Carrito a WhatsApp, vCard NFC y Cupones',
-    description: 'Para todo comercio local o profesional que quiera vender más por WhatsApp y usar tarjetas NFC:',
+    headline: 'Catálogo con Carrito a WhatsApp, vCard Digital y Cupones',
+    description: 'Para todo comercio local o profesional que quiera vender más por WhatsApp y usar perfiles digitales:',
     cards: [
       {
         icon: '🛒',

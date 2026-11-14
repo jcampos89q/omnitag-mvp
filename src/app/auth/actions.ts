@@ -71,9 +71,9 @@ export async function signup(formData: FormData) {
     redirect(errorUrl + encodeURIComponent('Por favor completa todos los campos requeridos.'))
   }
 
-  // Bloquear registro gratuito sin token NFC físico ni invitación de Agencia Partner
+  // Bloquear registro gratuito sin código de activación digital ni invitación de Agencia Partner
   if (!cardToken && !partnerId) {
-    redirect('/register?error=' + encodeURIComponent('El registro directo requiere una compra activa en Hotmart o un código de tarjeta NFC física.'))
+    redirect('/register?error=' + encodeURIComponent('El registro directo requiere una suscripción activa o un código de activación digital.'))
   }
 
   // Si envió un token NFC, verificar antes de crear la cuenta que el token exista y no haya sido reclamado
@@ -115,7 +115,7 @@ export async function signup(formData: FormData) {
       .maybeSingle()
 
     if (!validCard) {
-      redirect('/register?error=' + encodeURIComponent('El código de tarjeta NFC ingresado no es válido o ya fue utilizado anteriormente.'))
+      redirect('/register?error=' + encodeURIComponent('El código de activación ingresado no es válido o ya fue utilizado anteriormente.'))
     }
   }
 

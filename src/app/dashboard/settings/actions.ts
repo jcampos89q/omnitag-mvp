@@ -226,18 +226,6 @@ export async function updateIndustrySetting(formData: FormData) {
 
   await applyTechnicalIndustryTransition(user.id, normalized)
 
-  revalidatePath('/', 'layout')
-  revalidatePath('/dashboard')
-  revalidatePath('/dashboard/settings')
-
-  return { success: true, industry: normalized }
-}
-      previous_industry: profile?.industry || null
-    }
-  })
-
-  await applyTechnicalIndustryTransition(user.id, normalized)
-
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/settings')
   revalidatePath('/dashboard/menus')
