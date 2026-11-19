@@ -977,3 +977,35 @@ export function getIndustryConfig(rawIndustry?: string | null): IndustryConfig {
 
 export const INDUSTRY_COOLDOWN_DAYS = 30
 
+/**
+ * Retorna el nombre localizado del giro según el idioma (es / en)
+ */
+export function getLocalizedIndustryName(rawIndustry?: string | null, isEn = false): string {
+  const normalized = normalizeIndustry(rawIndustry)
+  if (!isEn) return (INDUSTRIES[normalized] || INDUSTRIES.professional).name
+  switch (normalized) {
+    case 'restaurant': return 'Restaurants, Bars & Cafés'
+    case 'beauty': return 'Salons, Barbershops & Spas'
+    case 'health': return 'Health, Clinics & Doctors'
+    case 'retail': return 'Retail, Boutiques & Stores'
+    case 'professional':
+    default: return 'Professional Services & B2B'
+  }
+}
+
+/**
+ * Retorna el nombre corto localizado del giro según el idioma (es / en)
+ */
+export function getLocalizedIndustryShortName(rawIndustry?: string | null, isEn = false): string {
+  const normalized = normalizeIndustry(rawIndustry)
+  if (!isEn) return (INDUSTRIES[normalized] || INDUSTRIES.professional).shortName
+  switch (normalized) {
+    case 'restaurant': return 'Restaurants'
+    case 'beauty': return 'Salons & Spas'
+    case 'health': return 'Clinics & Doctors'
+    case 'retail': return 'Retail'
+    case 'professional':
+    default: return 'B2B Services'
+  }
+}
+

@@ -24,7 +24,8 @@ import {
   Eye,
   ArrowRight
 } from 'lucide-react'
-import { INDUSTRIES, SELECTABLE_INDUSTRY_IDS, SelectableIndustryId, getIndustryConfig } from '@/lib/industries'
+import { INDUSTRIES, SELECTABLE_INDUSTRY_IDS, SelectableIndustryId, getIndustryConfig, getLocalizedIndustryName, getLocalizedIndustryShortName } from '@/lib/industries'
+import { useTranslation } from '@/lib/i18n/context'
 import type { WhiteLabelBrandConfig } from '@/lib/whitelabel'
 import {
   saveWhiteLabelBrandAction,
@@ -87,6 +88,9 @@ export default function ResellerDashboardClient({
   allDistributors
 }: ResellerDashboardClientProps) {
   const router = useRouter()
+  const { dict, locale } = useTranslation()
+  const isEn = locale === 'en'
+  const t = dict.agencyConsole
   const [activeTab, setActiveTab] = useState<'clients' | 'brand'>('clients')
   const [copiedLink, setCopiedLink] = useState(false)
   const [loadingAgencyId, setLoadingAgencyId] = useState<string | null>(null)
@@ -123,14 +127,14 @@ export default function ResellerDashboardClient({
   const handleCopyInviteLink = () => {
     navigator.clipboard.writeText(partnerRegisterUrl)
     setCopiedLink(true)
-    showToast('Enlace de registro Marca Blanca copiado al portapapeles', 'success')
+    showToast(isEn ? 'White-Label registration link copied to clipboard' : 'Enlace de registro Marca Blanca copiado al portapapeles', 'success')
     setTimeout(() => setCopiedLink(false), 2500)
   }
 
   const handleCopyLoginLink = () => {
     navigator.clipboard.writeText(partnerLoginUrl)
     setCopiedLoginLink(true)
-    showToast('Portal de Acceso de tu Agencia copiado al portapapeles', 'success')
+    showToast(isEn ? 'Agency access portal copied to clipboard' : 'Portal de Acceso de tu Agencia copiado al portapapeles', 'success')
     setTimeout(() => setCopiedLoginLink(false), 2500)
   }
 
@@ -261,8 +265,8 @@ export default function ResellerDashboardClient({
               <Crown className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-black text-xs sm:text-sm text-gray-950">Suscriptores Agencias</p>
-              <p className="text-[11px] text-gray-500">{allDistributors.length} agencias activas</p>
+              <p className="font-black text-xs sm:text-sm text-gray-950">{t.masterTitle}</p>
+              <p className="text-[11px] text-gray-500">{allDistributors.length} {isEn ? 'active agencies' : 'agencias activas'}</p>
             </div>
           </button>
 
@@ -275,8 +279,8 @@ export default function ResellerDashboardClient({
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-black text-xs sm:text-sm text-gray-950">Mi Propia Agencia</p>
-              <p className="text-[11px] text-gray-500">Usados: {subClients.length} / {quota} cupos</p>
+              <p className="font-black text-xs sm:text-sm text-gray-950">{t.myOwnAgency}</p>
+              <p className="text-[11px] text-gray-500">{isEn ? 'Used: ' : 'Usados: '}{subClients.length} / {quota} {isEn ? 'slots' : 'cupos'}</p>
             </div>
           </button>
 
@@ -288,8 +292,8 @@ export default function ResellerDashboardClient({
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-black text-xs sm:text-sm text-gray-950">Usuarios & Pagos</p>
-              <p className="text-[11px] text-gray-500">Base de datos global</p>
+              <p className="font-black text-xs sm:text-sm text-gray-950">{t.usersAndPayments}</p>
+              <p className="text-[11px] text-gray-500">{t.globalDatabase}</p>
             </div>
           </Link>
 
@@ -301,8 +305,8 @@ export default function ResellerDashboardClient({
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-black text-xs sm:text-sm text-gray-950">Lotes Tarjetas NFC</p>
-              <p className="text-[11px] text-gray-500">Generar e imprimir lotes</p>
+              <p className="font-black text-xs sm:text-sm text-gray-950">{t.nfcBatches}</p>
+              <p className="text-[11px] text-gray-500">{t.generateBatches}</p>
             </div>
           </Link>
         </div>
@@ -314,7 +318,7 @@ export default function ResellerDashboardClient({
           {isAdmin && (
             <div className="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-2xl px-4 py-2.5">
               <span className="text-xs font-bold text-purple-900">
-                🏢 Estás viendo tu Consola de Partner / Agencia Suscriptora (tal como la ve quien te compra una licencia)
+                {t.partnerNotice}
               </span>
               <button
                 type="button"
@@ -323,7 +327,7 @@ export default function ResellerDashboardClient({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold transition cursor-pointer shrink-0"
               >
                 <Crown className="w-3.5 h-3.5" />
-                <span>Volver a Panel Admin Master</span>
+                <span>{t.backToMaster}</span>
               </button>
             </div>
           )}
@@ -342,8 +346,8 @@ export default function ResellerDashboardClient({
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-black text-xs sm:text-sm text-gray-950">Cartera de Clientes</p>
-                <p className="text-[11px] text-gray-500">{subClients.length} de {quota} cupos activos</p>
+                <p className="font-black text-xs sm:text-sm text-gray-950">{t.clientPortfolio}</p>
+                <p className="text-[11px] text-gray-500">{subClients.length} {isEn ? 'of' : 'de'} {quota} {isEn ? 'active slots' : 'cupos activos'}</p>
               </div>
             </button>
 
@@ -363,8 +367,8 @@ export default function ResellerDashboardClient({
                 <Plus className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-black text-xs sm:text-sm text-gray-950">Nuevo Sub-Cliente</p>
-                <p className="text-[11px] text-gray-500">Crear negocio y asignar giro</p>
+                <p className="font-black text-xs sm:text-sm text-gray-950">{t.newSubClient}</p>
+                <p className="text-[11px] text-gray-500">{t.createAndAssign}</p>
               </div>
             </button>
 
@@ -381,8 +385,8 @@ export default function ResellerDashboardClient({
                 <Palette className="w-5 h-5" />
               </div>
               <div>
-                <p className="font-black text-xs sm:text-sm text-gray-950">Mi Marca & Precios</p>
-                <p className="text-[11px] text-gray-500">Logo, pasarela y cuánto cobras</p>
+                <p className="font-black text-xs sm:text-sm text-gray-950">{t.myBrandAndPricing}</p>
+                <p className="text-[11px] text-gray-500">{t.logoAndGateways}</p>
               </div>
             </button>
 
@@ -396,9 +400,9 @@ export default function ResellerDashboardClient({
               </div>
               <div>
                 <p className="font-black text-xs sm:text-sm text-gray-950">
-                  {copiedLink ? '¡Link Copiado!' : 'Link de Registro'}
+                  {copiedLink ? t.linkCopied : t.registerLink}
                 </p>
-                <p className="text-[11px] text-gray-500">Copiar invitación con tu marca</p>
+                <p className="text-[11px] text-gray-500">{t.copyInviteWithBrand}</p>
               </div>
             </button>
           </div>
@@ -416,46 +420,42 @@ export default function ResellerDashboardClient({
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-indigo-200 text-xs font-extrabold uppercase tracking-wider">
               {isMasterMode ? <Crown className="w-3.5 h-3.5 text-amber-300" /> : <Building2 className="w-3.5 h-3.5" />}
               <span>
-                {isMasterMode
-                  ? 'Panel Master OmniTag • Administración de Suscriptores Marca Blanca'
-                  : 'Consola de Agencia Suscriptora • Marca Blanca'}
+                {isMasterMode ? t.masterBadge : t.agencyBadge}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
               {isMasterMode
-                ? 'Suscriptores de Marca Blanca & Agencias'
-                : `Mi Agencia: ${initialBrandConfig.brand_name || 'Configura tu Marca'}`}
+                ? t.masterTitle
+                : (initialBrandConfig.brand_name ? (isEn ? `My Agency: ${initialBrandConfig.brand_name}` : `Mi Agencia: ${initialBrandConfig.brand_name}`) : t.configureYourBrand)}
             </h1>
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-              {isMasterMode
-                ? 'Administra todas las Agencias suscritas a OmniTag (incluida tu propia cuenta de Agencia como un suscriptor más). Asigna cupos de 10, 25 o 100 clientes, renueva vigencias o crea nuevas agencias.'
-                : 'Administra tu propia cartera de clientes, tu logo y tu pasarela de cobro exactamente igual que cualquier suscriptor de Marca Blanca.'}
+              {isMasterMode ? t.masterDesc : t.agencyDesc}
             </p>
           </div>
 
           {/* Tarjeta de Cupo */}
           <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 sm:p-5 shrink-0 min-w-[230px]">
             <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-200">
-              {isMasterMode ? 'Agencias Registradas' : 'Tu Cupo de Agencia'}
+              {isMasterMode ? t.registeredAgencies : t.yourAgencyQuota}
             </p>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-3xl font-black text-white">
                 {isMasterMode ? allDistributors.length : subClients.length}
               </span>
               <span className="text-sm font-bold text-slate-300">
-                / {isMasterMode ? 'Agencias' : `${quota} clientes`}
+                / {isMasterMode ? (isEn ? 'Agencies' : 'Agencias') : (isEn ? `${quota} clients` : `${quota} clientes`)}
               </span>
             </div>
             <div className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-emerald-300">
               <ShieldCheck className="w-4 h-4 shrink-0" />
               <span>
                 {isMasterMode
-                  ? 'Control Global de Licencias'
+                  ? t.globalLicenseControl
                   : isResellerActive
                   ? expiresAt
-                    ? `Vigente hasta ${new Date(expiresAt).toLocaleDateString()}`
-                    : 'Suscripción de Agencia Activa'
-                  : 'Suscripción de Agencia Vencida'}
+                    ? (isEn ? `Active until ${new Date(expiresAt).toLocaleDateString()}` : `Vigente hasta ${new Date(expiresAt).toLocaleDateString()}`)
+                    : t.activeSubscription
+                  : t.expiredSubscription}
               </span>
             </div>
           </div>
@@ -466,8 +466,8 @@ export default function ResellerDashboardClient({
           <div className="mt-6 pt-5 border-t border-white/10 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="text-xs text-slate-300">
-                <span className="font-bold text-white">Portal de Acceso / Login de tus Clientes: </span>
-                Tus clientes entrarán desde aquí viendo tu marca y sin enlaces a OmniTag:
+                <span className="font-bold text-white">{t.clientLoginPortal} </span>
+                {t.clientLoginDesc}
               </div>
               <div className="flex items-center gap-2 bg-black/40 border border-white/15 rounded-xl px-3 py-1.5">
                 <code className="text-xs text-emerald-300 truncate max-w-[200px] sm:max-w-xs">
@@ -479,15 +479,15 @@ export default function ResellerDashboardClient({
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition cursor-pointer shrink-0"
                 >
                   {copiedLoginLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copiedLoginLink ? 'Copiado' : 'Copiar Login'}
+                  {copiedLoginLink ? t.copied : t.copyLogin}
                 </button>
               </div>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-white/5">
               <div className="text-xs text-slate-300">
-                <span className="font-bold text-white">Link de Registro Directo: </span>
-                Para que nuevos negocios se registren bajo tu marca:
+                <span className="font-bold text-white">{t.directRegisterLink} </span>
+                {t.directRegisterDesc}
               </div>
               <div className="flex items-center gap-2 bg-black/40 border border-white/15 rounded-xl px-3 py-1.5">
                 <code className="text-xs text-indigo-200 truncate max-w-[200px] sm:max-w-xs">
@@ -499,7 +499,7 @@ export default function ResellerDashboardClient({
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition cursor-pointer shrink-0"
                 >
                   {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copiedLink ? 'Copiado' : 'Copiar Registro'}
+                  {copiedLink ? t.copied : t.copyRegister}
                 </button>
               </div>
             </div>
@@ -520,7 +520,7 @@ export default function ResellerDashboardClient({
             }`}
           >
             <Users className="w-4 h-4" />
-            Mis Sub-Clientes ({subClients.length} / {quota})
+            <span>{isEn ? `My Sub-Clients (${subClients.length} / ${quota})` : `Mis Sub-Clientes (${subClients.length} / ${quota})`}</span>
           </button>
 
           <button
@@ -533,7 +533,7 @@ export default function ResellerDashboardClient({
             }`}
           >
             <Palette className="w-4 h-4" />
-            Configurar Mi Marca Blanca & Pasarela
+            <span>{t.tabBrandSettings}</span>
           </button>
         </div>
       )}
@@ -547,13 +547,13 @@ export default function ResellerDashboardClient({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md mb-1">
-                  <Crown className="w-3.5 h-3.5" /> Alta / Renovación de Suscriptor de Agencia
+                  <Crown className="w-3.5 h-3.5" /> {t.masterNewAgencyBadge}
                 </span>
                 <h2 className="text-base sm:text-lg font-bold text-gray-900">
-                  Crear Nueva Agencia o Actualizar Suscriptor Existente
+                  {t.masterNewAgencyTitle}
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Puedes ingresar tu propio correo (<code>{resellerEmail}</code>) o el de cualquier agencia para asignarle su plan (10, 25 o 100 clientes). Si el correo no existe, marca "Es una cuenta nueva" para crearla al instante.
+                  {t.masterNewAgencyDesc}
                 </p>
               </div>
               <button
@@ -561,7 +561,7 @@ export default function ResellerDashboardClient({
                 onClick={() => setShowNewAgencyPassword(!showNewAgencyPassword)}
                 className="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-2 rounded-xl transition cursor-pointer shrink-0"
               >
-                {showNewAgencyPassword ? 'Ocultar campos de cuenta nueva' : '+ Crear Cuenta de Agencia desde Cero'}
+                {showNewAgencyPassword ? t.masterToggleHideAgency : t.masterToggleNewAgency}
               </button>
             </div>
 
@@ -569,7 +569,7 @@ export default function ResellerDashboardClient({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end">
                 <div className="lg:col-span-2">
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Correo de la Agencia Suscriptora *
+                    {t.masterEmailLabel}
                   </label>
                   <input
                     type="email"
@@ -582,32 +582,32 @@ export default function ResellerDashboardClient({
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Plan / Cupo de Clientes
+                    {t.masterQuotaLabel}
                   </label>
                   <select
                     name="quota"
                     defaultValue="25"
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none bg-white"
                   >
-                    <option value="10">Starter Partner (10 Clientes)</option>
-                    <option value="25">Agency Partner (25 Clientes)</option>
-                    <option value="100">Country Partner (100 Clientes)</option>
-                    <option value="500">Master Partner (500 Clientes)</option>
+                    <option value="10">Starter Partner ({isEn ? '10 Clients' : '10 Clientes'})</option>
+                    <option value="25">Agency Partner ({isEn ? '25 Clients' : '25 Clientes'})</option>
+                    <option value="100">Country Partner ({isEn ? '100 Clients' : '100 Clientes'})</option>
+                    <option value="500">Master Partner ({isEn ? '500 Clients' : '500 Clientes'})</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Vigencia Suscripción
+                    {t.masterDurationLabel}
                   </label>
                   <select
                     name="duration_days"
                     defaultValue="30"
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:outline-none bg-white"
                   >
-                    <option value="30">+30 Días (Mensual)</option>
-                    <option value="90">+90 Días (Trimestral)</option>
-                    <option value="365">+365 Días (1 Año)</option>
+                    <option value="30">+30 {isEn ? 'Days (Monthly)' : 'Días (Mensual)'}</option>
+                    <option value="90">+90 {isEn ? 'Days (Quarterly)' : 'Días (Trimestral)'}</option>
+                    <option value="365">+365 {isEn ? 'Days (1 Year)' : 'Días (1 Año)'}</option>
                   </select>
                 </div>
 
@@ -619,7 +619,7 @@ export default function ResellerDashboardClient({
                     className="w-full py-2.5 px-4 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs sm:text-sm rounded-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {savingDistributor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    <span>Guardar Agencia</span>
+                    <span>{t.masterSaveAgencyBtn}</span>
                   </button>
                 </div>
               </div>
@@ -628,7 +628,7 @@ export default function ResellerDashboardClient({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-gray-100">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Nombre Comercial / Marca Blanca Inicial
+                      {t.masterCommercialNameLabel}
                     </label>
                     <input
                       type="text"
@@ -639,7 +639,7 @@ export default function ResellerDashboardClient({
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">
-                      Contraseña Inicial (Si el correo aún no existe)
+                      {t.masterInitialPasswordLabel}
                     </label>
                     <input
                       type="text"
@@ -659,10 +659,10 @@ export default function ResellerDashboardClient({
             <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="font-bold text-gray-900 text-sm sm:text-base">
-                  Suscriptores de Marca Blanca & Agencias ({allDistributors.length})
+                  {t.masterAgenciesTableTitle} ({allDistributors.length})
                 </h3>
                 <p className="text-xs text-gray-500">
-                  Tu propia cuenta de Agencia aparece en esta lista y se administra con los mismos botones que cualquier suscriptor.
+                  {t.masterAgenciesTableSubtitle}
                 </p>
               </div>
             </div>
@@ -671,11 +671,11 @@ export default function ResellerDashboardClient({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold uppercase text-gray-500">
-                    <th className="py-3 px-4">Suscriptor / Agencia</th>
-                    <th className="py-3 px-4">Marca Blanca</th>
-                    <th className="py-3 px-4">Plan / Cupo Usado</th>
-                    <th className="py-3 px-4">Vencimiento</th>
-                    <th className="py-3 px-4 text-right">Administrar como Suscriptor</th>
+                    <th className="py-3 px-4">{t.masterColSubscriber}</th>
+                    <th className="py-3 px-4">{t.masterColBrand}</th>
+                    <th className="py-3 px-4">{t.masterColQuota}</th>
+                    <th className="py-3 px-4">{t.masterColExpiration}</th>
+                    <th className="py-3 px-4 text-right">{t.masterColManage}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
@@ -683,10 +683,10 @@ export default function ResellerDashboardClient({
                     <tr key={dist.id} className={dist.is_owner_agency ? 'bg-purple-50/40 hover:bg-purple-50/70' : 'hover:bg-gray-50/70'}>
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-bold text-gray-900">{dist.full_name || 'Sin nombre'}</p>
+                          <p className="font-bold text-gray-900">{dist.full_name || (isEn ? 'Unnamed' : 'Sin nombre')}</p>
                           {dist.is_owner_agency && (
                             <span className="text-[10px] font-black uppercase bg-purple-600 text-white px-2 py-0.5 rounded-full">
-                              Tu Cuenta de Agencia
+                              {t.masterYourAgencyTag}
                             </span>
                           )}
                         </div>
@@ -707,14 +707,14 @@ export default function ResellerDashboardClient({
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-2">
                           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
-                            {dist.used_clients} / {dist.quota} clientes
+                            {dist.used_clients} / {dist.quota} {isEn ? 'clients' : 'clientes'}
                           </span>
                           <select
                             value={dist.quota}
                             disabled={loadingAgencyId === dist.id}
                             onChange={(e) => handleQuickAgencyManage(dist.id, 'set_quota', Number(e.target.value))}
                             className="text-xs border border-gray-200 rounded-lg px-2 py-1 bg-white font-semibold text-gray-700 cursor-pointer"
-                            title="Cambiar plan de cupos"
+                            title={isEn ? 'Change client quota' : 'Cambiar plan de cupos'}
                           >
                             <option value={10}>Plan 10</option>
                             <option value={25}>Plan 25</option>
@@ -727,11 +727,11 @@ export default function ResellerDashboardClient({
                       <td className="py-3.5 px-4 text-xs">
                         {dist.expires_at ? (
                           <span className={`font-bold ${dist.is_active ? 'text-emerald-700' : 'text-red-600'}`}>
-                            {dist.is_active ? 'Activo hasta: ' : 'Vencido: '}
+                            {dist.is_active ? (isEn ? 'Active until: ' : 'Activo hasta: ') : (isEn ? 'Expired: ' : 'Vencido: ')}
                             {new Date(dist.expires_at).toLocaleDateString()}
                           </span>
                         ) : (
-                          <span className="text-emerald-700 font-bold">Activo</span>
+                          <span className="text-emerald-700 font-bold">{isEn ? 'Active' : 'Activo'}</span>
                         )}
                       </td>
 
@@ -742,7 +742,7 @@ export default function ResellerDashboardClient({
                             disabled={loadingAgencyId === dist.id}
                             onClick={() => handleQuickAgencyManage(dist.id, 'add_30')}
                             className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition cursor-pointer"
-                            title="Activar +30 días"
+                            title={isEn ? 'Activate +30 days' : 'Activar +30 días'}
                           >
                             +30d
                           </button>
@@ -751,28 +751,28 @@ export default function ResellerDashboardClient({
                             disabled={loadingAgencyId === dist.id}
                             onClick={() => handleQuickAgencyManage(dist.id, 'add_365')}
                             className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition cursor-pointer"
-                            title="Activar +1 Año"
+                            title={isEn ? 'Activate +1 Year' : 'Activar +1 Año'}
                           >
-                            +1 Año
+                            +1 {isEn ? 'Year' : 'Año'}
                           </button>
                           <button
                             type="button"
                             disabled={loadingAgencyId === dist.id}
                             onClick={() => handleQuickAgencyManage(dist.id, 'suspend')}
                             className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition cursor-pointer"
-                            title="Pausar suscripción de Agencia"
+                            title={isEn ? 'Pause agency subscription' : 'Pausar suscripción de Agencia'}
                           >
-                            Pausar
+                            {t.actionPause}
                           </button>
                           <button
                             type="button"
                             disabled={loadingAgencyId === dist.id}
                             onClick={() => handleEnterAgencyConsole(dist)}
                             className="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs transition inline-flex items-center gap-1 cursor-pointer"
-                            title="Abrir consola de esta Agencia"
+                            title={isEn ? 'Open agency console' : 'Abrir consola de esta Agencia'}
                           >
                             <Eye className="w-3 h-3" />
-                            <span>{dist.is_owner_agency ? 'Ir a Mi Agencia' : 'Abrir Agencia'}</span>
+                            <span>{dist.is_owner_agency ? t.masterGoToMyAgencyBtn : t.masterOpenAgencyBtn}</span>
                           </button>
                         </div>
                       </td>
@@ -792,9 +792,11 @@ export default function ResellerDashboardClient({
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-xs">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Cartera de Clientes bajo tu Marca</h2>
+              <h2 className="text-lg font-bold text-gray-900">{t.tableTitle}</h2>
               <p className="text-xs text-gray-500">
-                Crea cuentas para tus clientes con su giro de negocio ya asignado y bloqueado. Ellos verán tu marca <strong>{initialBrandConfig.brand_name || 'personalizada'}</strong> en todo su panel.
+                {isEn 
+                  ? 'Create accounts for your clients with their business industry pre-assigned and locked. They will see your brand across their entire dashboard.' 
+                  : `Crea cuentas para tus clientes con su giro de negocio ya asignado y bloqueado. Ellos verán tu marca ${initialBrandConfig.brand_name || 'personalizada'} en todo su panel.`}
               </p>
             </div>
             <button
@@ -803,7 +805,7 @@ export default function ResellerDashboardClient({
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" />
-              {showCreateForm ? 'Cerrar Formulario' : 'Crear Nuevo Sub-Cliente'}
+              <span>{showCreateForm ? (isEn ? 'Close Form' : 'Cerrar Formulario') : t.createSubClientBtn}</span>
             </button>
           </div>
 
@@ -813,64 +815,69 @@ export default function ResellerDashboardClient({
               className="bg-white rounded-2xl border-2 border-indigo-600/20 p-6 shadow-md space-y-5 animate-in fade-in duration-150"
             >
               <div className="border-b border-gray-100 pb-3">
-                <h3 className="text-base font-bold text-gray-900">Alta Directa de Cliente (Con Giro Bloqueado)</h3>
+                <h3 className="text-base font-bold text-gray-900">
+                  {isEn ? 'Direct Client Provisioning (Locked Industry)' : 'Alta Directa de Cliente (Con Giro Bloqueado)'}
+                </h3>
                 <p className="text-xs text-gray-500">
-                  El cliente entrará directamente con las herramientas exclusivas del giro que elijas aquí (y bloqueo de cambio por 30 días).
+                  {isEn 
+                    ? 'The client will log in directly with the exclusive tools for the industry you choose here (with 30-day lock).' 
+                    : 'El cliente entrará directamente con las herramientas exclusivas del giro que elijas aquí (y bloqueo de cambio por 30 días).'}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Nombre del Negocio / Cliente *</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">{t.modalBusinessName}</label>
                   <input
                     type="text"
                     name="full_name"
                     required
-                    placeholder="Ej. Barbería Los Reyes"
+                    placeholder={t.modalBusinessNamePlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Correo de Acceso *</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">{t.modalClientEmail}</label>
                   <input
                     type="email"
                     name="email"
                     required
-                    placeholder="cliente@negocio.com"
+                    placeholder={t.modalClientEmailPlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Contraseña Inicial *</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">{t.modalPassword}</label>
                   <input
                     type="text"
                     name="password"
                     required
                     minLength={6}
                     defaultValue="Cliente2026*"
+                    placeholder={t.modalPasswordPlaceholder}
                     className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Tiempo de Plan Inicial *</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">{t.modalDuration}</label>
                   <select
                     name="plan_days"
                     defaultValue="30"
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none bg-white"
                   >
-                    <option value="14">14 Días (Prueba de Agencia)</option>
-                    <option value="30">30 Días (Plan Mensual)</option>
-                    <option value="365">365 Días (Plan Anual / Tarjeta NFC)</option>
+                    <option value="14">{t.modalDurationAgencyTrial}</option>
+                    <option value="30">{t.modalDurationMonthly}</option>
+                    <option value="365">{t.modalDurationAnnual}</option>
                   </select>
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2">
-                  Selecciona el Giro Oficial del Negocio (Aísla los módulos del cliente) *
+                  {t.modalSelectIndustry}
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
                   {SELECTABLE_INDUSTRY_IDS.map((indId) => {
@@ -887,8 +894,12 @@ export default function ResellerDashboardClient({
                             : 'border-gray-200 hover:border-gray-300 bg-white'
                         }`}
                       >
-                        <p className="text-xs font-extrabold text-gray-900">{cfg.shortName}</p>
-                        <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">{cfg.tagline}</p>
+                        <p className="text-xs font-extrabold text-gray-900">{getLocalizedIndustryShortName(indId, isEn)}</p>
+                        <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">
+                          {isEn
+                            ? (indId === 'restaurant' ? 'Digital menu & orders' : indId === 'beauty' ? 'Bookings & specialists' : indId === 'health' ? 'EHR & appointments' : indId === 'retail' ? 'Catalog & rewards' : 'vCard & CRM')
+                            : cfg.tagline}
+                        </p>
                       </button>
                     )
                   })}
@@ -901,7 +912,7 @@ export default function ResellerDashboardClient({
                   onClick={() => setShowCreateForm(false)}
                   className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
                 >
-                  Cancelar
+                  {t.modalCancelBtn}
                 </button>
                 <button
                   type="submit"
@@ -909,7 +920,7 @@ export default function ResellerDashboardClient({
                   className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {creatingClient ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  Crear Cuenta del Cliente
+                  {creatingClient ? t.modalSubmitting : t.modalSubmitBtn}
                 </button>
               </div>
             </form>
@@ -920,9 +931,9 @@ export default function ResellerDashboardClient({
             {subClients.length === 0 ? (
               <div className="p-10 text-center space-y-2">
                 <Users className="w-10 h-10 text-gray-300 mx-auto" />
-                <p className="text-sm font-bold text-gray-800">Aún no tienes sub-clientes registrados</p>
+                <p className="text-sm font-bold text-gray-800">{t.noSubClients}</p>
                 <p className="text-xs text-gray-500 max-w-md mx-auto">
-                  Usa el botón <strong>"Crear Nuevo Sub-Cliente"</strong> o comparte tu enlace de registro de Marca Blanca para empezar a vender suscripciones bajo tu propia marca.
+                  {t.createFirstSubClient}
                 </p>
               </div>
             ) : (
@@ -930,10 +941,10 @@ export default function ResellerDashboardClient({
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold uppercase text-gray-500">
-                      <th className="py-3 px-4">Cliente / Negocio</th>
-                      <th className="py-3 px-4">Giro Configurado</th>
-                      <th className="py-3 px-4">Vencimiento</th>
-                      <th className="py-3 px-4 text-right">Acciones de Suscripción</th>
+                      <th className="py-3 px-4">{t.colClient}</th>
+                      <th className="py-3 px-4">{t.colIndustry}</th>
+                      <th className="py-3 px-4">{t.colExpiration}</th>
+                      <th className="py-3 px-4 text-right">{t.colActions}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 text-sm">
@@ -946,22 +957,22 @@ export default function ResellerDashboardClient({
                       return (
                         <tr key={client.id} className="hover:bg-gray-50/60">
                           <td className="py-3.5 px-4">
-                            <p className="font-bold text-gray-900">{client.full_name || 'Cliente'}</p>
+                            <p className="font-bold text-gray-900">{client.full_name || (isEn ? 'Client' : 'Cliente')}</p>
                             <p className="text-xs text-gray-500">{client.email}</p>
                           </td>
                           <td className="py-3.5 px-4">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${indCfg.badgeClass}`}>
-                              {indCfg.shortName}
+                              {getLocalizedIndustryShortName(client.industry, isEn)}
                             </span>
                           </td>
                           <td className="py-3.5 px-4">
                             {client.subscription_expires_at ? (
                               <span className={`text-xs font-bold ${isExpired ? 'text-red-600' : 'text-emerald-700'}`}>
-                                {isExpired ? 'Vencido: ' : 'Activo hasta: '}
+                                {isExpired ? (isEn ? 'Expired: ' : 'Vencido: ') : (isEn ? 'Active until: ' : 'Activo hasta: ')}
                                 {new Date(client.subscription_expires_at).toLocaleDateString()}
                               </span>
                             ) : (
-                              <span className="text-xs text-gray-400">Sin fecha</span>
+                              <span className="text-xs text-gray-400">{isEn ? 'No date' : 'Sin fecha'}</span>
                             )}
                           </td>
                           <td className="py-3.5 px-4 text-right">
@@ -971,29 +982,29 @@ export default function ResellerDashboardClient({
                                 disabled={loadingClientId === client.id}
                                 onClick={() => handleManageClientPlan(client.id, 'add_30')}
                                 className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition cursor-pointer"
-                                title="Activar +30 días"
+                                title={isEn ? 'Activate +30 days' : 'Activar +30 días'}
                               >
                                 <Calendar className="w-3.5 h-3.5 inline mr-1" />
-                                +30d
+                                {t.actionAdd30d}
                               </button>
                               <button
                                 type="button"
                                 disabled={loadingClientId === client.id}
                                 onClick={() => handleManageClientPlan(client.id, 'add_365')}
                                 className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition cursor-pointer"
-                                title="Activar +1 Año"
+                                title={isEn ? 'Activate +1 Year' : 'Activar +1 Año'}
                               >
-                                +1 Año
+                                {t.actionAdd1Year}
                               </button>
                               <button
                                 type="button"
                                 disabled={loadingClientId === client.id}
                                 onClick={() => handleManageClientPlan(client.id, 'suspend')}
                                 className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs transition cursor-pointer"
-                                title="Suspender acceso"
+                                title={isEn ? 'Suspend access' : 'Suspender acceso'}
                               >
                                 <Ban className="w-3.5 h-3.5 inline mr-1" />
-                                Pausar
+                                {t.actionPause}
                               </button>
                               <button
                                 type="button"
@@ -1006,19 +1017,19 @@ export default function ResellerDashboardClient({
                                     if (err?.message?.includes('NEXT_REDIRECT') || err?.digest?.includes('NEXT_REDIRECT')) {
                                       return
                                     }
-                                    showToast(err.message || 'No se pudo abrir el panel del cliente', 'error')
+                                    showToast(err.message || (isEn ? 'Could not open client dashboard' : 'No se pudo abrir el panel del cliente'), 'error')
                                     setLoadingClientId(null)
                                   }
                                 }}
                                 className="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs transition inline-flex items-center gap-1 cursor-pointer"
-                                title="Entrar al panel de negocio de este cliente para configurar su menú, citas o QR"
+                                title={isEn ? 'Log in to this client dashboard' : 'Entrar al panel de negocio de este cliente para configurar su menú, citas o QR'}
                               >
                                 {loadingClientId === client.id ? (
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                 ) : (
                                   <Eye className="w-3.5 h-3.5" />
                                 )}
-                                <span>Abrir Negocio</span>
+                                <span>{t.actionOpenBusiness}</span>
                               </button>
                             </div>
                           </td>
@@ -1038,9 +1049,9 @@ export default function ResellerDashboardClient({
         <form onSubmit={handleSaveBrand} className="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6">
           <div className="border-b border-gray-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Identidad de Marca Blanca & Pasarela de Cobro a tus Clientes</h2>
+              <h2 className="text-lg font-bold text-gray-900">{t.brandTitle}</h2>
               <p className="text-xs text-gray-500 mt-0.5">
-                Todo lo que configures aquí reemplazará el nombre, logo y página de suscripción para todos tus sub-clientes.
+                {t.brandDesc}
               </p>
             </div>
             {/* Vista Previa de Cabecera */}
@@ -1051,8 +1062,8 @@ export default function ResellerDashboardClient({
                 <Building2 className="w-6 h-6 text-indigo-600" />
               )}
               <div>
-                <p className="text-[10px] uppercase font-bold text-gray-400">Vista Previa Navbar</p>
-                <p className="text-sm font-black text-gray-900">{brandName || 'Mi Marca SaaS'}</p>
+                <p className="text-[10px] uppercase font-bold text-gray-400">{t.brandPreviewNavbar}</p>
+                <p className="text-sm font-black text-gray-900">{brandName || (isEn ? 'My SaaS Brand' : 'Mi Marca SaaS')}</p>
               </div>
             </div>
           </div>
@@ -1061,7 +1072,7 @@ export default function ResellerDashboardClient({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">
-                Nombre de tu Marca / Plataforma *
+                {t.brandNameLabel}
               </label>
               <input
                 type="text"
@@ -1069,28 +1080,28 @@ export default function ResellerDashboardClient({
                 required
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
-                placeholder="Ej. TapCard Pro"
+                placeholder={t.brandNamePlaceholder}
                 className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">
-                URL de tu Logo (PNG/SVG transparente)
+                {t.brandLogoLabel}
               </label>
               <input
                 type="url"
                 name="logo_url"
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="https://midominio.com/logo.png"
+                placeholder={t.brandLogoPlaceholder}
                 className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">
-                Sitio Web de tu Agencia (Opcional)
+                {t.brandWebsiteLabel}
               </label>
               <input
                 type="url"
@@ -1108,10 +1119,10 @@ export default function ResellerDashboardClient({
               <div>
                 <h3 className="text-sm font-bold text-indigo-950 flex items-center gap-2">
                   <Globe className="w-4 h-4 text-indigo-600" />
-                  Dominio Personalizado de tu Plataforma (Marca Blanca Total)
+                  {t.brandCustomDomainTitle}
                 </h3>
                 <p className="text-xs text-indigo-900/75 mt-0.5">
-                  Conecta tu propio dominio (ej. <code className="bg-white px-1.5 py-0.5 rounded font-bold">app.tuagencia.com</code>) para que tus clientes nunca vean el nombre de OmniTag en la barra de direcciones.
+                  {t.brandCustomDomainDesc}
                 </p>
               </div>
               {cleanSavedDomain && (
@@ -1124,7 +1135,7 @@ export default function ResellerDashboardClient({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
               <div className="lg:col-span-5">
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Dominio o Subdominio (sin https://)
+                  {t.brandCustomDomainInputLabel}
                 </label>
                 <input
                   type="text"
@@ -1137,15 +1148,15 @@ export default function ResellerDashboardClient({
               </div>
 
               <div className="lg:col-span-7 bg-white/90 border border-indigo-100 rounded-xl p-3 text-[11px] text-gray-700 space-y-1.5">
-                <p className="font-bold text-gray-900">Configuración DNS en GoDaddy / Hostinger:</p>
+                <p className="font-bold text-gray-900">{isEn ? 'DNS Setup (GoDaddy / Cloudflare / Hostinger):' : 'Configuración DNS en GoDaddy / Hostinger:'}</p>
                 <p>
-                  • <strong>Si usas subdominio (recomendado, ej. <code className="text-indigo-700">app.tuagencia.com</code>):</strong> Crea un registro <strong>CNAME</strong> con Nombre <code className="bg-gray-100 px-1 rounded">app</code> apuntando a <code className="bg-gray-100 px-1 rounded font-bold">cname.vercel-dns.com</code>
+                  • <strong>{isEn ? 'Subdomain (recommended, e.g. ' : 'Si usas subdominio (recomendado, ej. '}<code className="text-indigo-700">app.tuagencia.com</code>):</strong> {isEn ? 'Create a CNAME record with Host ' : 'Crea un registro CNAME con Nombre '}<code className="bg-gray-100 px-1 rounded">app</code> {isEn ? 'pointing to ' : 'apuntando a '}<code className="bg-gray-100 px-1 rounded font-bold">cname.vercel-dns.com</code>
                 </p>
                 <p>
-                  • <strong>Si usas dominio raíz (ej. <code className="text-indigo-700">tuagencia.com</code>):</strong> Crea un registro <strong>A</strong> con Nombre <code className="bg-gray-100 px-1 rounded">@</code> apuntando a <code className="bg-gray-100 px-1 rounded font-bold">76.76.21.21</code>
+                  • <strong>{isEn ? 'Apex/root domain (e.g. ' : 'Si usas dominio raíz (ej. '}<code className="text-indigo-700">tuagencia.com</code>):</strong> {isEn ? 'Create an A record with Host ' : 'Crea un registro A con Nombre '}<code className="bg-gray-100 px-1 rounded">@</code> {isEn ? 'pointing to ' : 'apuntando a '}<code className="bg-gray-100 px-1 rounded font-bold">76.76.21.21</code>
                 </p>
                 <p className="text-[10px] text-gray-500">
-                  * Una vez configurado el DNS, el administrador de la plataforma activará el dominio en el servidor para emitir tu certificado SSL automático.
+                  {isEn ? '* Once DNS is propagated, your automatic SSL certificate will be issued.' : '* Una vez configurado el DNS, el administrador de la plataforma activará el dominio en el servidor para emitir tu certificado SSL automático.'}
                 </p>
               </div>
             </div>
@@ -1156,16 +1167,16 @@ export default function ResellerDashboardClient({
             <div>
               <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-indigo-600" />
-                Tus Links de Suscripción y Precios (Para cobrarle a tus Sub-Clientes)
+                {t.brandPricingSectionTitle}
               </h3>
               <p className="text-xs text-gray-500">
-                Cuando uno de tus sub-clientes entre a la sección <strong>Suscripción</strong> para renovar su plan, verá tus precios y tus propios links de pago (Hotmart, Stripe, PayPal, Tilopay, etc.).
+                {t.brandPricingSectionDesc}
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Tu Precio Mensual (USD)</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">{t.brandPriceMonthlyLabel}</label>
                 <input
                   type="text"
                   name="price_monthly"
@@ -1177,7 +1188,7 @@ export default function ResellerDashboardClient({
 
               <div className="sm:col-span-1 lg:col-span-3">
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Tu Link de Cobro Mensual (Hotmart, Stripe, Tilopay, PayPal...)
+                  {t.brandLinkMonthlyLabel}
                 </label>
                 <input
                   type="url"
@@ -1189,7 +1200,7 @@ export default function ResellerDashboardClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Tu Precio Anual (USD)</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">{t.brandPriceYearlyLabel}</label>
                 <input
                   type="text"
                   name="price_yearly"
@@ -1201,7 +1212,7 @@ export default function ResellerDashboardClient({
 
               <div className="sm:col-span-1 lg:col-span-3">
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Tu Link de Cobro Anual
+                  {t.brandLinkYearlyLabel}
                 </label>
                 <input
                   type="url"
@@ -1218,12 +1229,12 @@ export default function ResellerDashboardClient({
           <div className="pt-4 border-t border-gray-100 space-y-4">
             <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
               <Phone className="w-4 h-4 text-emerald-600" />
-              Soporte y Transferencia Bancaria Directa a tu Agencia
+              {t.brandSupportSectionTitle}
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">WhatsApp de Soporte de tu Agencia</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">{t.brandSupportWhatsAppLabel}</label>
                 <input
                   type="text"
                   name="support_whatsapp"
@@ -1234,7 +1245,7 @@ export default function ResellerDashboardClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Banco para Transferencias (Opcional)</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">{t.brandBankNameLabel}</label>
                 <input
                   type="text"
                   name="bank_name"
@@ -1245,7 +1256,7 @@ export default function ResellerDashboardClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Número de Cuenta</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">{t.brandBankAccountLabel}</label>
                 <input
                   type="text"
                   name="bank_account_number"
@@ -1256,36 +1267,36 @@ export default function ResellerDashboardClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Titular de la Cuenta</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">{t.brandBankHolderLabel}</label>
                 <input
                   type="text"
                   name="bank_account_holder"
                   defaultValue={initialBrandConfig.bank_account_holder || ''}
-                  placeholder="Nombre o Razón Social"
+                  placeholder={isEn ? 'Account holder name' : 'Nombre o Razón Social'}
                   className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Identificación / RTN / NIT</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">{t.brandBankDocLabel}</label>
                 <input
                   type="text"
                   name="bank_account_id_doc"
                   defaultValue={initialBrandConfig.bank_account_id_doc || ''}
-                  placeholder="Documento fiscal"
+                  placeholder={isEn ? 'Tax ID / Document' : 'Documento fiscal'}
                   className="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Ocultar sello OmniTag</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1">{t.brandHideBrandingLabel}</label>
                 <select
                   name="hide_omnitag_branding"
                   defaultValue={initialBrandConfig.hide_omnitag_branding !== false ? 'true' : 'false'}
                   className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none bg-white"
                 >
-                  <option value="true">Sí, ocultar OmniTag en mis clientes</option>
-                  <option value="false">No, mantener sello estándar</option>
+                  <option value="true">{t.brandHideBrandingYes}</option>
+                  <option value="false">{t.brandHideBrandingNo}</option>
                 </select>
               </div>
             </div>
@@ -1298,7 +1309,7 @@ export default function ResellerDashboardClient({
               className="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {savingBrand ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              Guardar Mi Marca Blanca
+              {savingBrand ? t.brandSaving : t.brandSaveBtn}
             </button>
           </div>
         </form>

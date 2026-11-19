@@ -8,6 +8,7 @@ import CustomPublicBrandForm from './CustomPublicBrandForm'
 import { getEffectiveUser } from '@/lib/auth/effectiveUser'
 import { normalizeIndustry } from '@/lib/industries'
 import { resolveUserWhiteLabel } from '@/lib/whitelabel'
+import { getServerDictionary } from '@/lib/i18n/server'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -19,15 +20,18 @@ export default async function SettingsPage() {
 
   const db = isImpersonating ? getAdminClient() : supabase
 
-  const [{ data: profile }, { data: authTarget }, wlInfo] = await Promise.all([
+  const [{ data: profile }, { data: authTarget }, wlInfo, { locale }] = await Promise.all([
     db
       .from('users')
       .select('industry, account_type, currency, currency_symbol, is_admin')
       .eq('id', user.id)
       .single(),
     getAdminClient().auth.admin.getUserById(user.id),
-    resolveUserWhiteLabel(user.id, false)
+    resolveUserWhiteLabel(user.id, false),
+    getServerDictionary()
   ])
+
+  const isEn = locale === 'en'
 
   const currentIndustry = normalizeIndustry(profile?.industry)
   const currentAccountType = profile?.account_type || 'professional'
@@ -43,17 +47,21 @@ export default async function SettingsPage() {
   const inheritedBrand = wlInfo.activeBrand.brand_name || 'OmniTag'
 
   const accountTypeLabels: Record<string, string> = {
-    'business': 'Negocio / Empresa Comercial',
-    'professional': 'Profesional / Servicios B2B',
-    'review_plate': 'Placa de Reseñas NFC'
+    'business': isEn ? 'Business / Commercial Company' : 'Negocio / Empresa Comercial',
+    'professional': isEn ? 'Professional / B2B Services' : 'Profesional / Servicios B2B',
+    'review_plate': isEn ? 'NFC Review Plate' : 'Placa de Reseñas NFC'
   }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">Configuración del Negocio y Cuenta</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+          {isEn ? 'Business & Account Settings' : 'Configuración del Negocio y Cuenta'}
+        </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Administra el giro oficial de tu negocio (protegido por períodos de 30 días), tu pasarela de cobro para clientes y la moneda del sistema.
+          {isEn
+            ? 'Manage your official business industry (protected by 30-day periods), customer payment gateway, and platform currency.'
+            : 'Administra el giro oficial de tu negocio (protegido por períodos de 30 días), tu pasarela de cobro para clientes y la moneda del sistema.'}
         </p>
       </div>
 
@@ -82,12 +90,14 @@ export default async function SettingsPage() {
       )}
 
       <div className="bg-white rounded-2xl shadow-xs border border-gray-200 p-6">
-        <h2 className="text-base font-bold text-gray-900 mb-4">Detalles Técnicos de la Cuenta</h2>
+        <h2 className="text-base font-bold text-gray-900 mb-4">
+          {isEn ? 'Account Technical Details' : 'Detalles Técnicos de la Cuenta'}
+        </h2>
         
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-              Modalidad de Suscripción / Cuenta
+              {isEn ? 'Subscription / Account Type' : 'Modalidad de Suscripción / Cuenta'}
             </label>
             <div className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs sm:text-sm text-gray-700 font-medium">
               {accountTypeLabels[currentAccountType] || currentAccountType}

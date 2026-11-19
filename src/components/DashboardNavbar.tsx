@@ -226,6 +226,8 @@ export default function DashboardNavbar({
 }) {
   const pathname = usePathname()
   const router = useRouter()
+  const { dict, locale } = useTranslation()
+  const isEn = locale === 'en'
   const [isGridLauncherOpen, setIsGridLauncherOpen] = useState(false)
 
   const normalizedIndustry = normalizeIndustry(userIndustry)
@@ -253,14 +255,14 @@ export default function DashboardNavbar({
 
     if (normalizedIndustry === 'health') {
       filteredBaseItems.splice(1, 0, { 
-        name: 'Pacientes & ECE', 
+        name: isEn ? 'Patients & EHR' : 'Pacientes & ECE', 
         href: '/dashboard/patients', 
         icon: Stethoscope, 
-        badge: 'Médico', 
+        badge: isEn ? 'Medical' : 'Médico', 
         section: 'creaciones',
         colorClass: 'from-cyan-50/80 to-white border-cyan-200',
         iconBgClass: 'bg-cyan-600 text-white',
-        description: 'Expediente Clínico Electrónico e historial'
+        description: isEn ? 'Electronic Health Records & history' : 'Expediente Clínico Electrónico e historial'
       })
     }
   } else {
@@ -280,7 +282,31 @@ export default function DashboardNavbar({
     filteredBaseItems = baseNavItems.filter(item => allowedHrefs.includes(item.href))
   }
 
-  // Adaptar nombres e iconos contextuales según el giro
+  // Adaptar nombres e iconos contextuales según el giro e idioma
+  const getLocalizedItemName = (href: string, fallback: string) => {
+    if (!isEn) return fallback
+    switch (href) {
+      case '/dashboard': return 'Main Menu'
+      case '/dashboard/vcard': return 'My Digital vCard'
+      case '/dashboard/qr-studio': return 'QR Studio (HD)'
+      case '/dashboard/devices': return 'Google Reviews & NFC'
+      case '/dashboard/google-business': return 'Google Maps & SEO'
+      case '/dashboard/menus': return normalizedIndustry === 'retail' ? 'Online Catalog' : 'Digital Menu'
+      case '/dashboard/comandas': return 'Kitchen & Orders'
+      case '/dashboard/appointments': return 'Booking & Appointments'
+      case '/dashboard/patients': return 'Patients & EHR'
+      case '/dashboard/gift-cards': return 'Gift Cards'
+      case '/dashboard/loyalty': return 'Loyalty Stamp Club'
+      case '/dashboard/ruleta': return 'Prize Wheel'
+      case '/dashboard/leads': return 'Contacts (CRM)'
+      case '/dashboard/feedback': return 'Private Feedback'
+      case '/dashboard/analytics': return 'Analytics'
+      case '/dashboard/billing': return 'Subscription'
+      case '/dashboard/settings': return 'Settings'
+      default: return fallback
+    }
+  }
+
   filteredBaseItems = filteredBaseItems.map(item => {
     const override = industryConfig.routeLabels[item.href]
     let currentIcon = item.icon
@@ -291,9 +317,10 @@ export default function DashboardNavbar({
       currentIcon = Stethoscope
     }
 
+    const baseName = override?.name || item.name
     return {
       ...item,
-      name: override?.name || item.name,
+      name: getLocalizedItemName(item.href, baseName),
       badge: override?.badge || item.badge,
       icon: currentIcon,
       priority: industryConfig.priorityHrefs.includes(item.href)
@@ -313,104 +340,104 @@ export default function DashboardNavbar({
   }
 
   filteredBaseItems.push({
-    name: 'Configuración',
+    name: isEn ? 'Settings' : 'Configuración',
     href: '/dashboard/settings',
     icon: UserCircle,
     section: 'cuenta',
     colorClass: 'from-gray-50 to-white border-gray-200',
     iconBgClass: 'bg-gray-800 text-white',
-    description: 'Ajustes de cuenta y contraseña'
+    description: isEn ? 'Account settings & security' : 'Ajustes de cuenta y contraseña'
   })
 
   const navItems: NavItem[] = isAdmin
     ? [
         {
-          name: 'Suscriptores de Agencias',
+          name: isEn ? 'Agency Subscribers' : 'Suscriptores de Agencias',
           href: '/dashboard/reseller?view=master',
           icon: Crown,
           badge: 'Master',
           adminOnly: true,
           colorClass: 'from-purple-50 to-white border-purple-200',
           iconBgClass: 'bg-purple-600 text-white',
-          description: 'Administra cupos, planes y vencimientos de Agencias'
+          description: isEn ? 'Manage quotas, plans, and Agency renewals' : 'Administra cupos, planes y vencimientos de Agencias'
         },
         {
-          name: 'Mi Propia Agencia',
+          name: isEn ? 'My Own Agency' : 'Mi Propia Agencia',
           href: '/dashboard/reseller?view=agency',
           icon: Building2,
-          badge: 'Tu Agencia',
+          badge: isEn ? 'Your Agency' : 'Tu Agencia',
           adminOnly: true,
           colorClass: 'from-indigo-50 to-white border-indigo-200',
           iconBgClass: 'bg-indigo-600 text-white',
-          description: 'Entra a tu cuenta de Agencia como un suscriptor más'
+          description: isEn ? 'Log in to your Agency account as a subscriber' : 'Entra a tu cuenta de Agencia como un suscriptor más'
         },
         {
-          name: 'Panel Global & Usuarios',
+          name: isEn ? 'Global Admin & Users' : 'Panel Global & Usuarios',
           href: '/dashboard/admin',
           icon: BarChart3,
           adminOnly: true,
           colorClass: 'from-blue-50 to-white border-blue-200',
           iconBgClass: 'bg-blue-600 text-white',
-          description: 'Métricas globales, usuarios y transferencias'
+          description: isEn ? 'Global metrics, users, and transactions' : 'Métricas globales, usuarios y transferencias'
         },
         {
-          name: 'Lotes Tarjetas NFC',
+          name: isEn ? 'NFC Card Batches' : 'Lotes Tarjetas NFC',
           href: '/dashboard/admin?tab=nfc-batches',
           icon: CreditCard,
           adminOnly: true,
           colorClass: 'from-emerald-50 to-white border-emerald-200',
           iconBgClass: 'bg-emerald-600 text-white',
-          description: 'Generación y control de tarjetas físicas NFC'
+          description: isEn ? 'Generation and control of physical NFC cards' : 'Generación y control de tarjetas físicas NFC'
         },
         {
-          name: 'Configuración Master',
+          name: isEn ? 'Master Settings' : 'Configuración Master',
           href: '/dashboard/settings',
           icon: UserCircle,
           colorClass: 'from-gray-50 to-white border-gray-200',
           iconBgClass: 'bg-gray-800 text-white',
-          description: 'Preferencias de tu cuenta administradora'
+          description: isEn ? 'Preferences of your master account' : 'Preferencias de tu cuenta administradora'
         }
       ]
     : isReseller
     ? [
         {
-          name: 'Clientes de Mi Agencia',
+          name: isEn ? 'Agency Clients' : 'Clientes de Mi Agencia',
           href: '/dashboard/reseller?view=agency&tab=clients',
           icon: Users,
           badge: 'Partner',
           colorClass: 'from-indigo-50 to-white border-indigo-200',
           iconBgClass: 'bg-indigo-600 text-white',
-          description: 'Da de alta negocios clientes, asigna su giro y controla su mes'
+          description: isEn ? 'Create client accounts, assign industry and control duration' : 'Da de alta negocios clientes, asigna su giro y controla su mes'
         },
         {
-          name: 'Mi Marca Blanca & Precios',
+          name: isEn ? 'White-Label Brand & Pricing' : 'Mi Marca Blanca & Precios',
           href: '/dashboard/reseller?view=agency&tab=brand',
           icon: Sparkles,
           badge: 'Marca Blanca',
           colorClass: 'from-purple-50 to-white border-purple-200',
           iconBgClass: 'bg-purple-600 text-white',
-          description: 'Configura tu propio Logo, Nombre, Precios y Links de Cobro'
+          description: isEn ? 'Configure your logo, name, pricing, and gateway links' : 'Configura tu propio Logo, Nombre, Precios y Links de Cobro'
         },
         {
-          name: 'Mi Suscripción Partner',
+          name: isEn ? 'Partner Subscription' : 'Mi Suscripción Partner',
           href: '/dashboard/billing',
           icon: CreditCard,
           badge: 'Licencia',
           colorClass: 'from-emerald-50 to-white border-emerald-200',
           iconBgClass: 'bg-emerald-600 text-white',
-          description: 'Estado de tu licencia de Agencia y ampliación de cupos'
+          description: isEn ? 'Status of your Agency license and slot upgrades' : 'Estado de tu licencia de Agencia y ampliación de cupos'
         },
         {
-          name: 'Configuración de Cuenta',
+          name: isEn ? 'Account Settings' : 'Configuración de Cuenta',
           href: '/dashboard/settings',
           icon: UserCircle,
           colorClass: 'from-gray-50 to-white border-gray-200',
           iconBgClass: 'bg-gray-800 text-white',
-          description: 'Datos de acceso y seguridad de tu cuenta Partner'
+          description: isEn ? 'Access credentials and security settings' : 'Datos de acceso y seguridad de tu cuenta Partner'
         },
         ...(isRealSuperAdmin ? [
           { 
-            name: 'Volver a Panel Master', 
+            name: isEn ? 'Return to Master Panel' : 'Volver a Panel Master', 
             href: '/dashboard/reseller?view=master', 
             icon: Crown, 
             badge: 'Admin',
@@ -418,7 +445,7 @@ export default function DashboardNavbar({
             section: 'admin',
             colorClass: 'from-amber-50 to-white border-amber-200',
             iconBgClass: 'bg-amber-500 text-white',
-            description: 'Regresar al control global de suscriptores de agencias'
+            description: isEn ? 'Return to global control of agency subscribers' : 'Regresar al control global de suscriptores de agencias'
           }
         ] : [])
       ]
@@ -426,7 +453,7 @@ export default function DashboardNavbar({
         ...filteredBaseItems,
         ...(isRealSuperAdmin ? [
           { 
-            name: 'Volver a Panel Master', 
+            name: isEn ? 'Return to Master Panel' : 'Volver a Panel Master', 
             href: '/dashboard/reseller?view=master', 
             icon: Crown, 
             badge: 'Admin',
@@ -434,12 +461,11 @@ export default function DashboardNavbar({
             section: 'admin',
             colorClass: 'from-amber-50 to-white border-amber-200',
             iconBgClass: 'bg-amber-500 text-white',
-            description: 'Regresar al control global de suscriptores de agencias'
+            description: isEn ? 'Return to global control of agency subscribers' : 'Regresar al control global de suscriptores de agencias'
           }
         ] : [])
       ]
 
-  const { dict } = useTranslation()
   const isActive = (href: string) => {
     const cleanHref = href.split('?')[0]
     if (cleanHref === '/dashboard') return pathname === '/dashboard'
@@ -505,7 +531,7 @@ export default function DashboardNavbar({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-xs transition shrink-0"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Volver al Menú</span>
+                  <span>{isEn ? 'Back to Menu' : 'Volver al Menú'}</span>
                 </Link>
               </>
             )}
@@ -536,7 +562,7 @@ export default function DashboardNavbar({
               <Link
                 href={externalWebUrl}
                 className="hidden sm:inline-flex p-2 text-gray-500 hover:text-gray-900 rounded-xl hover:bg-gray-100 transition"
-                title="Ir a la página web pública"
+                title={isEn ? "Go to public website" : "Ir a la página web pública"}
               >
                 <Globe className="w-4 h-4" />
               </Link>
@@ -546,7 +572,7 @@ export default function DashboardNavbar({
               <button
                 type="submit"
                 className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
-                title="Cerrar Sesión"
+                title={isEn ? "Log Out" : "Cerrar Sesión"}
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -574,10 +600,10 @@ export default function DashboardNavbar({
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-black text-gray-950">
-                    {isAdmin ? 'Menú Master de Administración' : `Menú de Herramientas • ${brandName}`}
+                    {isAdmin ? (isEn ? 'Master Administration Menu' : 'Menú Master de Administración') : (isEn ? `Tools Menu • ${brandName}` : `Menú de Herramientas • ${brandName}`)}
                   </h2>
                   <p className="text-xs text-gray-500">
-                    Selecciona cualquier herramienta para abrirla limpia en pantalla completa
+                    {isEn ? 'Select any tool to open it in full screen' : 'Selecciona cualquier herramienta para abrirla limpia en pantalla completa'}
                   </p>
                 </div>
               </div>
@@ -635,7 +661,7 @@ export default function DashboardNavbar({
                       </div>
 
                       <div className="pt-3 mt-2 flex items-center justify-between text-[11px] font-bold text-gray-500 group-hover:text-purple-700">
-                        <span>{active ? 'Abierto ahora' : 'Abrir'}</span>
+                        <span>{active ? (isEn ? 'Currently Open' : 'Abierto ahora') : (isEn ? 'Open' : 'Abrir')}</span>
                         <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                       </div>
                     </Link>

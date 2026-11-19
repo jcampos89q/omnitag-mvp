@@ -168,8 +168,8 @@ export async function updateIndustrySetting(formData: FormData) {
     throw new Error('Selecciona un giro de negocio válido.')
   }
 
-  if (confirmationText !== 'CAMBIAR GIRO') {
-    throw new Error('Debes escribir exactamente CAMBIAR GIRO para confirmar la transición técnica.')
+  if (confirmationText !== 'CAMBIAR GIRO' && confirmationText !== 'CHANGE INDUSTRY') {
+    throw new Error('Debes escribir exactamente CAMBIAR GIRO o CHANGE INDUSTRY para confirmar la transición técnica.')
   }
 
   const admin = getAdminClient()

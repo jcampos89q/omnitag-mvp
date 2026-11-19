@@ -24,10 +24,13 @@ import {
   SelectableIndustryId,
   normalizeIndustry, 
   getIndustryConfig,
-  INDUSTRY_COOLDOWN_DAYS
+  INDUSTRY_COOLDOWN_DAYS,
+  getLocalizedIndustryName,
+  getLocalizedIndustryShortName
 } from '@/lib/industries'
 import { updateIndustrySetting } from './actions'
 import { showToast } from '@/components/GlobalToast'
+import { useTranslation } from '@/lib/i18n/context'
 
 const industryIcons: Record<SelectableIndustryId, any> = {
   restaurant: Utensils,
@@ -49,6 +52,9 @@ export default function IndustrySettingsForm({
   isAdmin = false 
 }: IndustrySettingsFormProps) {
   const router = useRouter()
+  const { locale } = useTranslation()
+  const isEn = locale === 'en'
+
   const currentNormalized = normalizeIndustry(initialIndustry) as SelectableIndustryId
   const currentConfig = getIndustryConfig(currentNormalized)
   const CurrentIcon = industryIcons[currentNormalized] || Briefcase
@@ -79,8 +85,9 @@ export default function IndustrySettingsForm({
   async function handleConfirmMigration(e: React.FormEvent) {
     e.preventDefault()
     if (!targetIndustry || targetIndustry === currentNormalized) return
-    if (confirmationText.trim().toUpperCase() !== 'CAMBIAR GIRO') {
-      setErrorMsg('Escribe exactamente CAMBIAR GIRO en el campo de confirmación.')
+    const cleaned = confirmationText.trim().toUpperCase()
+    if (cleaned !== 'CAMBIAR GIRO' && cleaned !== 'CHANGE INDUSTRY') {
+      setErrorMsg(isEn ? 'Type exactly CHANGE INDUSTRY in the confirmation field.' : 'Escribe exactamente CAMBIAR GIRO en el campo de confirmación.')
       return
     }
 
@@ -91,16 +98,16 @@ export default function IndustrySettingsForm({
     try {
       const formData = new FormData()
       formData.set('industry', targetIndustry)
-      formData.set('confirmation_text', confirmationText)
+      formData.set('confirmation_text', cleaned)
       await updateIndustrySetting(formData)
       setSavedSuccess(true)
       setIsWizardOpen(false)
       setTargetIndustry(null)
       setConfirmationText('')
-      showToast(`Giro migrado a: ${INDUSTRIES[targetIndustry].name}`, 'success')
+      showToast(isEn ? `Industry updated to: ${getLocalizedIndustryName(targetIndustry, true)}` : `Giro migrado a: ${INDUSTRIES[targetIndustry].name}`, 'success')
       router.refresh()
     } catch (err: any) {
-      setErrorMsg(err.message || 'Error al realizar el cambio de giro.')
+      setErrorMsg(err.message || (isEn ? 'Error while changing industry.' : 'Error al realizar el cambio de giro.'))
     } finally {
       setIsSaving(false)
     }
@@ -116,13 +123,13 @@ export default function IndustrySettingsForm({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-extrabold text-gray-900">Giro Oficial del Negocio</h2>
+              <h2 className="text-base font-extrabold text-gray-900">{isEn ? 'Official Business Industry' : 'Giro Oficial del Negocio'}</h2>
               <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full border border-gray-200">
-                <Lock className="w-2.5 h-2.5" /> Protegido (30 días)
+                <Lock className="w-2.5 h-2.5" /> {isEn ? 'Protected (30 Days)' : 'Protegido (30 días)'}
               </span>
             </div>
             <p className="text-xs text-gray-500 mt-0.5">
-              Define las herramientas exclusivas, rutas habilitadas y vocabulario técnico de tu panel comercial.
+              {isEn ? 'Defines exclusive tools, enabled routes, and technical vocabulary for your commercial dashboard.' : 'Define las herramientas exclusivas, rutas habilitadas y vocabulario técnico de tu panel comercial.'}
             </p>
           </div>
         </div>
@@ -131,7 +138,7 @@ export default function IndustrySettingsForm({
       {savedSuccess && (
         <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-bold flex items-center gap-2">
           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>¡Migración técnica completada! Tu cuenta quedó configurada como <b>{currentConfig.name}</b> por los próximos 30 días.</span>
+          <span>{isEn ? `Technical migration completed! Your account is configured as ${getLocalizedIndustryName(currentNormalized, true)} for the next 30 days.` : `¡Migración técnica completada! Tu cuenta quedó configurada como ${currentConfig.name} por los próximos 30 días.`}</span>
         </div>
       )}
 
@@ -144,11 +151,11 @@ export default function IndustrySettingsForm({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white px-2.5 py-0.5 rounded-full">
-                ✓ Giro Activo
+                ✓ {isEn ? 'Active Industry' : 'Giro Activo'}
               </span>
-              <span className="text-xs text-gray-400 font-semibold">{currentConfig.shortName}</span>
+              <span className="text-xs text-gray-400 font-semibold">{getLocalizedIndustryShortName(currentNormalized, isEn)}</span>
             </div>
-            <h3 className="text-lg font-extrabold text-white mt-1">{currentConfig.name}</h3>
+            <h3 className="text-lg font-extrabold text-white mt-1">{getLocalizedIndustryName(currentNormalized, isEn)}</h3>
             <p className="text-xs text-gray-300 mt-0.5 max-w-xl leading-relaxed">
               {currentConfig.description}
             </p>
@@ -160,10 +167,10 @@ export default function IndustrySettingsForm({
             <div className="bg-white/10 border border-white/15 rounded-xl px-3.5 py-2.5 text-xs text-amber-300 font-bold flex items-center gap-2">
               <Clock className="w-4 h-4 shrink-0" />
               <div>
-                <div>Cambio disponible en {daysRemaining} {daysRemaining === 1 ? 'día' : 'días'}</div>
+                <div>{isEn ? `Change available in ${daysRemaining} ${daysRemaining === 1 ? 'day' : 'days'}` : `Cambio disponible en ${daysRemaining} ${daysRemaining === 1 ? 'día' : 'días'}`}</div>
                 {nextAllowedDate && (
                   <div className="text-[10px] text-gray-400 font-normal">
-                    Habilitado el {nextAllowedDate.toLocaleDateString('es-HN')}
+                    {isEn ? `Available on ${nextAllowedDate.toLocaleDateString('en-US')}` : `Habilitado el ${nextAllowedDate.toLocaleDateString('es-HN')}`}
                   </div>
                 )}
               </div>
@@ -177,7 +184,7 @@ export default function IndustrySettingsForm({
               }}
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-extrabold transition cursor-pointer"
             >
-              {isWizardOpen ? 'Cancelar Cambio' : 'Solicitar Cambio de Giro'}
+              {isWizardOpen ? (isEn ? 'Cancel Change' : 'Cancelar Cambio') : (isEn ? 'Request Industry Change' : 'Solicitar Cambio de Giro')}
             </button>
           )}
         </div>
@@ -186,7 +193,7 @@ export default function IndustrySettingsForm({
       {/* Herramientas actualmente instaladas en este giro */}
       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
         <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-500 block">
-          Módulos Especializados Habilitados en tu Giro:
+          {isEn ? 'Specialized Modules Enabled in Your Industry:' : 'Módulos Especializados Habilitados en tu Giro:'}
         </span>
         <div className="flex flex-wrap gap-1.5">
           {currentConfig.featuredCards.map((fc) => (
@@ -209,10 +216,12 @@ export default function IndustrySettingsForm({
             </div>
             <div>
               <h3 className="text-sm font-black text-gray-900">
-                Asistente Técnico de Cambio de Giro (Regla de 30 Días)
+                {isEn ? 'Industry Migration Technical Assistant (30-Day Rule)' : 'Asistente Técnico de Cambio de Giro (Regla de 30 Días)'}
               </h3>
               <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
-                Cambiar el giro de tu cuenta adapta la estructura técnica de tu negocio: oculta las herramientas que no corresponden al nuevo rubro, pausa sus enlaces públicos para evitar confusiones y activa los módulos del nuevo sector. <b>Una vez confirmado, no podrás volver a cambiarlo durante 30 días.</b>
+                {isEn
+                  ? 'Changing your business industry adapts your technical tools: hides modules from the previous sector, pauses their public links, and activates new sector features. Once confirmed, you cannot change it again for 30 days.'
+                  : 'Cambiar el giro de tu cuenta adapta la estructura técnica de tu negocio: oculta las herramientas que no corresponden al nuevo rubro, pausa sus enlaces públicos para evitar confusiones y activa los módulos del nuevo sector. Una vez confirmado, no podrás volver a cambiarlo durante 30 días.'}
               </p>
             </div>
           </div>
@@ -220,7 +229,7 @@ export default function IndustrySettingsForm({
           {/* 1. Elegir nuevo giro */}
           <div className="space-y-2">
             <label className="block text-xs font-extrabold text-gray-800 uppercase tracking-wider">
-              1. Selecciona el nuevo giro al que deseas migrar:
+              {isEn ? '1. Select the new industry to migrate to:' : '1. Selecciona el nuevo giro al que deseas migrar:'}
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {SELECTABLE_INDUSTRY_IDS.filter(id => id !== currentNormalized).map((id) => {
@@ -248,7 +257,7 @@ export default function IndustrySettingsForm({
                       <Icon className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-extrabold text-xs">{item.name}</div>
+                      <div className="font-extrabold text-xs">{getLocalizedIndustryName(id, isEn)}</div>
                       <p className={`text-[11px] mt-0.5 leading-snug ${isSelected ? 'text-gray-300' : 'text-gray-500'}`}>
                         {item.description}
                       </p>
@@ -266,16 +275,16 @@ export default function IndustrySettingsForm({
                 <div className="p-3.5 rounded-xl bg-white border border-red-200 space-y-1.5">
                   <div className="font-extrabold text-red-700 flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4" />
-                    <span>Se ocultarán de tu panel actual ({currentConfig.shortName}):</span>
+                    <span>{isEn ? `Will be hidden from current panel (${getLocalizedIndustryShortName(currentNormalized, isEn)}):` : `Se ocultarán de tu panel actual (${currentConfig.shortName}):`}</span>
                   </div>
                   <ul className="text-[11px] text-gray-600 space-y-1 pl-4 list-disc">
                     {currentConfig.featuredCards
                       .filter(c => !targetConfig.priorityHrefs.includes(c.href))
                       .map(c => (
-                        <li key={c.href}><b>{c.title}</b> (se pausará su vista en el menú)</li>
+                        <li key={c.href}><b>{c.title}</b> ({isEn ? 'will be paused' : 'se pausará su vista en el menú'})</li>
                       ))}
                     {currentConfig.featuredCards.filter(c => !targetConfig.priorityHrefs.includes(c.href)).length === 0 && (
-                      <li>Se adaptarán los nombres al nuevo vocabulario.</li>
+                      <li>{isEn ? 'Terminology will adapt to the new industry.' : 'Se adaptarán los nombres al nuevo vocabulario.'}</li>
                     )}
                   </ul>
                 </div>
@@ -283,7 +292,7 @@ export default function IndustrySettingsForm({
                 <div className="p-3.5 rounded-xl bg-white border border-emerald-200 space-y-1.5">
                   <div className="font-extrabold text-emerald-700 flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4" />
-                    <span>Se activarán para {targetConfig.shortName}:</span>
+                    <span>{isEn ? `Will be activated for ${getLocalizedIndustryShortName(targetIndustry!, isEn)}:` : `Se activarán para ${targetConfig.shortName}:`}</span>
                   </div>
                   <ul className="text-[11px] text-gray-600 space-y-1 pl-4 list-disc">
                     {targetConfig.featuredCards.map(c => (
@@ -301,29 +310,31 @@ export default function IndustrySettingsForm({
 
               <div>
                 <label className="block text-xs font-extrabold text-gray-800 mb-1">
-                  2. Para confirmar la migración y el bloqueo por 30 días, escribe <span className="font-mono bg-white px-2 py-0.5 rounded border border-gray-300 text-red-700">CAMBIAR GIRO</span>:
+                  {isEn
+                    ? <>2. To confirm migration and the 30-day lock, type <span className="font-mono bg-white px-2 py-0.5 rounded border border-gray-300 text-red-700">CHANGE INDUSTRY</span>:</>
+                    : <>2. Para confirmar la migración y el bloqueo por 30 días, escribe <span className="font-mono bg-white px-2 py-0.5 rounded border border-gray-300 text-red-700">CAMBIAR GIRO</span>:</>}
                 </label>
                 <div className="flex flex-col sm:flex-row gap-2.5">
                   <input
                     type="text"
                     value={confirmationText}
                     onChange={(e) => setConfirmationText(e.target.value)}
-                    placeholder="Escribe CAMBIAR GIRO"
+                    placeholder={isEn ? "Type CHANGE INDUSTRY" : "Escribe CAMBIAR GIRO"}
                     className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-300 bg-white text-xs font-mono font-bold text-gray-900 focus:border-black focus:outline-none"
                   />
                   <button
                     type="submit"
-                    disabled={isSaving || confirmationText.trim().toUpperCase() !== 'CAMBIAR GIRO'}
+                    disabled={isSaving || (confirmationText.trim().toUpperCase() !== 'CAMBIAR GIRO' && confirmationText.trim().toUpperCase() !== 'CHANGE INDUSTRY')}
                     className="bg-black hover:bg-gray-800 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {isSaving ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Migrando Giro...</span>
+                        <span>{isEn ? 'Migrating Industry...' : 'Migrando Giro...'}</span>
                       </>
                     ) : (
                       <>
-                        <span>Confirmar y Bloquear por 30 Días</span>
+                        <span>{isEn ? 'Confirm & Lock for 30 Days' : 'Confirmar y Bloquear por 30 Días'}</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}

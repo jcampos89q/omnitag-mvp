@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Eye, ArrowLeft, Loader2, LifeBuoy, ShieldAlert } from 'lucide-react'
 import { stopImpersonation } from '@/app/dashboard/admin/impersonateActions'
+import { useTranslation } from '@/lib/i18n/context'
 
 interface ImpersonationBannerProps {
   impersonatedUser: {
@@ -15,6 +16,8 @@ interface ImpersonationBannerProps {
 
 export default function ImpersonationBanner({ impersonatedUser }: ImpersonationBannerProps) {
   const [isExiting, setIsExiting] = useState(false)
+  const { dict, locale } = useTranslation()
+  const isEn = locale === 'en'
 
   const handleExit = async () => {
     setIsExiting(true)
@@ -36,17 +39,19 @@ export default function ImpersonationBanner({ impersonatedUser }: ImpersonationB
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="bg-black text-amber-300 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
-                Modo Soporte Técnico (Ghost Mode)
+                {isEn ? 'Technical Support Mode (Ghost Mode)' : 'Modo Soporte Técnico (Ghost Mode)'}
               </span>
               <span className="font-extrabold text-gray-900">
-                Viendo como: {impersonatedUser.full_name || 'Cliente'}
+                {isEn ? 'Viewing as: ' : 'Viendo como: '}{impersonatedUser.full_name || (isEn ? 'Client' : 'Cliente')}
               </span>
               <span className="text-[11px] text-amber-950 font-mono hidden md:inline">
                 ({impersonatedUser.email})
               </span>
             </div>
             <p className="text-[11px] text-amber-950 mt-0.5 leading-tight">
-              Cualquier cambio que realices en menús, vCards o placas se aplicará en la cuenta de este cliente.
+              {isEn 
+                ? 'Any changes you make to menus, vCards, or settings will apply directly to this client account.' 
+                : 'Cualquier cambio que realices en menús, vCards o placas se aplicará en la cuenta de este cliente.'}
             </p>
           </div>
         </div>
@@ -62,7 +67,7 @@ export default function ImpersonationBanner({ impersonatedUser }: ImpersonationB
           ) : (
             <ArrowLeft className="w-3.5 h-3.5" />
           )}
-          <span>Salir del Negocio y Volver a Mi Consola</span>
+          <span>{isEn ? 'Exit Business & Return to My Console' : 'Salir del Negocio y Volver a Mi Consola'}</span>
         </button>
       </div>
     </div>
