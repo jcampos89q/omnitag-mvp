@@ -7,6 +7,7 @@ import PublicMenuClient from './PublicMenuClient'
 import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
 import PublicPoweredBy from '@/components/PublicPoweredBy'
+import LanguageSelector from '@/components/LanguageSelector'
 
 export async function generateMetadata({
   params
@@ -161,7 +162,10 @@ export default async function PublicMenuPage({
           className="shadow-sm sticky top-0 z-20 border-b border-black/5 backdrop-blur-md"
           style={{ backgroundColor: `${theme.card_bg}F0` }}
         >
-          <div className="max-w-3xl mx-auto px-4 py-5 text-center">
+          <div className="max-w-3xl mx-auto px-4 py-3 sm:py-4 text-center relative">
+            <div className="absolute right-4 top-3">
+              <LanguageSelector variant="pill" />
+            </div>
             {menu.logo_url && (
               <div 
                 className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2.5 rounded-2xl overflow-hidden shadow-md border-2 bg-white flex items-center justify-center p-1"

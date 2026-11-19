@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { saveLead } from './actions'
 import { Users, X, CheckCircle2, Send } from 'lucide-react'
 import { ThemeConfig } from '@/lib/themes'
+import { useTranslation } from '@/lib/i18n/context'
 
 export default function LeadCaptureModal({ 
   vcardId, 
@@ -16,6 +17,10 @@ export default function LeadCaptureModal({
   mainColor?: string
   theme?: ThemeConfig 
 }) {
+  const { dict, locale } = useTranslation()
+  const v = dict.publicVcard
+  const isEn = locale === 'en'
+
   const [isOpen, setIsOpen] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -76,7 +81,7 @@ export default function LeadCaptureModal({
         }}
       >
         <Users className="w-4 h-4" />
-        Intercambiar Contacto / Dejar Mis Datos
+        {v.btnExchangeContact}
       </button>
 
       {isOpen && (
@@ -93,17 +98,17 @@ export default function LeadCaptureModal({
                 <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${primaryColor}20` }}>
                   <CheckCircle2 className="w-10 h-10" style={{ color: primaryColor }} />
                 </div>
-                <h3 className="text-xl font-bold mb-1" style={{ color: textColor }}>¡Contacto enviado!</h3>
+                <h3 className="text-xl font-bold mb-1" style={{ color: textColor }}>{v.leadSuccessTitle}</h3>
                 <p className="opacity-70 text-xs leading-relaxed">
-                  Tus datos han sido compartidos con éxito.
+                  {v.leadSuccessDesc}
                 </p>
               </div>
             ) : (
               <>
                 <div className="flex justify-between items-center px-6 py-4 border-b border-black/5">
                   <div>
-                    <h3 className="font-bold text-base sm:text-lg" style={{ color: textColor }}>Intercambiar Contacto</h3>
-                    <p className="text-xs opacity-60">Comparte tu información directamente</p>
+                    <h3 className="font-bold text-base sm:text-lg" style={{ color: textColor }}>{v.leadModalTitle}</h3>
+                    <p className="text-xs opacity-60">{v.leadModalSubtitle}</p>
                   </div>
                   <button 
                     type="button"
@@ -127,13 +132,13 @@ export default function LeadCaptureModal({
                   
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider opacity-80 mb-1.5" style={{ color: textColor }}>
-                      Nombre Completo *
+                      {v.leadName}
                     </label>
                     <input 
                       type="text" 
                       name="name" 
                       required 
-                      placeholder="Ej. Juan Pérez"
+                      placeholder={isEn ? "e.g. John Smith" : "Ej. Juan Pérez"}
                       className="w-full rounded-xl border px-3.5 py-2.5 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-black placeholder:text-gray-400 font-medium" 
                       style={{ 
                         backgroundColor: inputBg,
@@ -145,12 +150,12 @@ export default function LeadCaptureModal({
 
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider opacity-80 mb-1.5" style={{ color: textColor }}>
-                      Teléfono / WhatsApp
+                      {v.leadPhone}
                     </label>
                     <input 
                       type="tel" 
                       name="phone" 
-                      placeholder="Ej. +504 9988-0000"
+                      placeholder={isEn ? "e.g. +1 555-0199" : "Ej. +504 9988-0000"}
                       className="w-full rounded-xl border px-3.5 py-2.5 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-black placeholder:text-gray-400 font-medium" 
                       style={{ 
                         backgroundColor: inputBg,
@@ -162,12 +167,12 @@ export default function LeadCaptureModal({
 
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider opacity-80 mb-1.5" style={{ color: textColor }}>
-                      Correo Electrónico
+                      {v.leadEmail}
                     </label>
                     <input 
                       type="email" 
                       name="email" 
-                      placeholder="juan@empresa.com"
+                      placeholder={isEn ? "john@example.com" : "juan@empresa.com"}
                       className="w-full rounded-xl border px-3.5 py-2.5 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-black placeholder:text-gray-400 font-medium" 
                       style={{ 
                         backgroundColor: inputBg,
@@ -188,7 +193,7 @@ export default function LeadCaptureModal({
                         className="mt-0.5 w-3.5 h-3.5 rounded border-gray-300 text-black cursor-pointer shrink-0" 
                       />
                       <span>
-                        Acepto compartir mis datos y acepto la{' '}
+                        {isEn ? 'I agree to share my information and accept the ' : 'Acepto compartir mis datos y acepto la '}
                         <a 
                           href="/privacidad" 
                           target="_blank" 
@@ -196,7 +201,7 @@ export default function LeadCaptureModal({
                           className="underline font-bold hover:opacity-100"
                           style={{ color: primaryColor }}
                         >
-                          Política de Privacidad
+                          {isEn ? 'Privacy Policy' : 'Política de Privacidad'}
                         </a>.
                       </span>
                     </label>
@@ -210,7 +215,7 @@ export default function LeadCaptureModal({
                       className={`w-full text-white font-bold py-3.5 text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${btnRadiusClass}`}
                     >
                       <Send className="w-4 h-4" />
-                      {loading ? 'Guardando...' : 'Enviar Mis Datos'}
+                      {loading ? v.leadSending : v.leadBtnSend}
                     </button>
                   </div>
                 </form>

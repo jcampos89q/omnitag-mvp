@@ -83,7 +83,7 @@ export function formatMinutesToTime(totalMinutes: number): string {
 
 export const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 
-const DAY_LABELS: Record<string, string> = {
+const DAY_LABELS_ES: Record<string, string> = {
   monday: 'Lunes',
   tuesday: 'Martes',
   wednesday: 'Miércoles',
@@ -91,6 +91,16 @@ const DAY_LABELS: Record<string, string> = {
   friday: 'Viernes',
   saturday: 'Sábado',
   sunday: 'Domingo'
+}
+
+const DAY_LABELS_EN: Record<string, string> = {
+  monday: 'Monday',
+  tuesday: 'Tuesday',
+  wednesday: 'Wednesday',
+  thursday: 'Thursday',
+  friday: 'Friday',
+  saturday: 'Saturday',
+  sunday: 'Sunday'
 }
 
 export function getDayKeyForDate(dateStr: string): typeof DAY_KEYS[number] {
@@ -139,11 +149,15 @@ export function generateTimeSlotsForDate(
   return slots
 }
 
-export function formatScheduleSummaryText(config: ScheduleConfig | null | undefined): string {
+export function formatScheduleSummaryText(
+  config: ScheduleConfig | null | undefined,
+  locale: 'es' | 'en' = 'es'
+): string {
   const schedule = config || DEFAULT_SCHEDULE_CONFIG
   const days = schedule.days
   if (!days) return ''
 
+  const isEn = locale === 'en'
   const mon = days.monday
   const tue = days.tuesday
   const wed = days.wednesday
@@ -160,34 +174,38 @@ export function formatScheduleSummaryText(config: ScheduleConfig | null | undefi
 
   const parts: string[] = []
   if (weekdaySame) {
-    parts.push(`Lunes a Viernes de ${mon.open} a ${mon.close}`)
+    parts.push(isEn ? `Monday to Friday ${mon.open} - ${mon.close}` : `Lunes a Viernes de ${mon.open} a ${mon.close}`)
   } else {
     const activeDays: string[] = []
-    if (mon?.enabled) activeDays.push(`Lun (${mon.open}-${mon.close})`)
-    if (tue?.enabled) activeDays.push(`Mar (${tue.open}-${tue.close})`)
-    if (wed?.enabled) activeDays.push(`Mié (${wed.open}-${wed.close})`)
-    if (thu?.enabled) activeDays.push(`Jue (${thu.open}-${thu.close})`)
-    if (fri?.enabled) activeDays.push(`Vie (${fri.open}-${fri.close})`)
+    if (mon?.enabled) activeDays.push(isEn ? `Mon (${mon.open}-${mon.close})` : `Lun (${mon.open}-${mon.close})`)
+    if (tue?.enabled) activeDays.push(isEn ? `Tue (${tue.open}-${tue.close})` : `Mar (${tue.open}-${tue.close})`)
+    if (wed?.enabled) activeDays.push(isEn ? `Wed (${wed.open}-${wed.close})` : `Mié (${wed.open}-${wed.close})`)
+    if (thu?.enabled) activeDays.push(isEn ? `Thu (${thu.open}-${thu.close})` : `Jue (${thu.open}-${thu.close})`)
+    if (fri?.enabled) activeDays.push(isEn ? `Fri (${fri.open}-${fri.close})` : `Vie (${fri.open}-${fri.close})`)
     if (activeDays.length > 0) parts.push(activeDays.join(', '))
   }
 
   if (sat?.enabled) {
-    parts.push(`Sábados de ${sat.open} a ${sat.close}`)
+    parts.push(isEn ? `Saturdays ${sat.open} - ${sat.close}` : `Sábados de ${sat.open} a ${sat.close}`)
   } else {
-    parts.push(`Sábados: Cerrado`)
+    parts.push(isEn ? `Saturdays: Closed` : `Sábados: Cerrado`)
   }
 
   if (sun?.enabled) {
-    parts.push(`Domingos de ${sun.open} a ${sun.close}`)
+    parts.push(isEn ? `Sundays ${sun.open} - ${sun.close}` : `Domingos de ${sun.open} a ${sun.close}`)
   } else {
-    parts.push(`Domingos: Cerrado`)
+    parts.push(isEn ? `Sundays: Closed` : `Domingos: Cerrado`)
   }
 
   return parts.join(' • ')
 }
 
-export function getBusinessLiveStatus(config: ScheduleConfig | null | undefined): BusinessLiveStatus {
+export function getBusinessLiveStatus(
+  config: ScheduleConfig | null | undefined,
+  locale: 'es' | 'en' = 'es'
+): BusinessLiveStatus {
   const schedule = config || DEFAULT_SCHEDULE_CONFIG
+  const isEn = locale === 'en'
   const now = new Date()
   const currentDayIndex = now.getDay() // 0 = Sunday, 1 = Monday...
   const currentDayKey = DAY_KEYS[currentDayIndex]
@@ -201,7 +219,7 @@ export function getBusinessLiveStatus(config: ScheduleConfig | null | undefined)
 
   if (!isOpenToday) {
     isOpenNow = false
-    statusDetailText = 'Cerrado hoy'
+    statusDetailText = isEn ? 'Closed today' : 'Cerrado hoy'
   } else {
     const openMin = parseTimeToMinutes(dayConfig.open || '08:00 AM')
     const closeMin = parseTimeToMinutes(dayConfig.close || '07:00 PM')
@@ -211,26 +229,29 @@ export function getBusinessLiveStatus(config: ScheduleConfig | null | undefined)
 
     if (lunchEnabled && currentMinutes >= lunchStart && currentMinutes < lunchEnd) {
       isOpenNow = false
-      statusDetailText = `En pausa de comida hasta las ${schedule.lunch_break?.end || ''}`
+      statusDetailText = isEn
+        ? `On lunch break until ${schedule.lunch_break?.end || ''}`
+        : `En pausa de comida hasta las ${schedule.lunch_break?.end || ''}`
     } else if (currentMinutes >= openMin && currentMinutes < closeMin) {
       isOpenNow = true
-      statusDetailText = `Abierto hasta las ${dayConfig.close}`
+      statusDetailText = isEn ? `Open until ${dayConfig.close}` : `Abierto hasta las ${dayConfig.close}`
     } else if (currentMinutes < openMin) {
       isOpenNow = false
-      statusDetailText = `Abre hoy a las ${dayConfig.open}`
+      statusDetailText = isEn ? `Opens today at ${dayConfig.open}` : `Abre hoy a las ${dayConfig.open}`
     } else {
       isOpenNow = false
-      statusDetailText = `Cerró hoy a las ${dayConfig.close}`
+      statusDetailText = isEn ? `Closed today at ${dayConfig.close}` : `Cerró hoy a las ${dayConfig.close}`
     }
   }
 
   const orderKeys: Array<typeof DAY_KEYS[number]> = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+  const dayLabels = isEn ? DAY_LABELS_EN : DAY_LABELS_ES
 
   const weeklySchedule: WeeklyScheduleDayItem[] = orderKeys.map(key => {
     const d = schedule.days?.[key] || { enabled: false, open: '08:00 AM', close: '07:00 PM' }
     return {
       key,
-      label: DAY_LABELS[key] || key,
+      label: dayLabels[key] || key,
       enabled: d.enabled,
       open: d.open || '08:00 AM',
       close: d.close || '07:00 PM',
@@ -240,11 +261,13 @@ export function getBusinessLiveStatus(config: ScheduleConfig | null | undefined)
 
   const todayScheduleText = isOpenToday 
     ? `${dayConfig?.open} - ${dayConfig?.close}`
-    : 'Cerrado'
+    : (isEn ? 'Closed' : 'Cerrado')
 
   return {
     isOpenNow,
-    statusBadgeText: isOpenNow ? 'Abierto Ahora' : 'Cerrado Ahora',
+    statusBadgeText: isOpenNow 
+      ? (isEn ? 'Open Now' : 'Abierto Ahora') 
+      : (isEn ? 'Closed Now' : 'Cerrado Ahora'),
     statusDetailText,
     todayScheduleText,
     weeklySchedule

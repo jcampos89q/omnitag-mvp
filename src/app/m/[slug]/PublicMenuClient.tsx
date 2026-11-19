@@ -30,6 +30,7 @@ import { ThemeConfig } from '@/lib/themes'
 import RestaurantGamificationModal from './RestaurantGamificationModal'
 import DishLightboxModal from './DishLightboxModal'
 import { resolveCategorySchedule, isScheduleActiveNow, formatTime24To12 } from '@/lib/menuSchedule'
+import { useTranslation } from '@/lib/i18n/context'
 
 type MenuItem = {
   id: string
@@ -70,6 +71,10 @@ export default function PublicMenuClient({
   wheel?: any,
   reviewDevice?: any
 }) {
+  const { dict, locale } = useTranslation()
+  const m = dict.publicMenu
+  const isEn = locale === 'en'
+
   const [cart, setCart] = useState<CartItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [tableNumber, setTableNumber] = useState<string>(initialTable)
@@ -265,42 +270,44 @@ export default function PublicMenuClient({
 
     const locationHeader = orderType === 'table'
       ? tableNumber 
-        ? (tableNumber.toLowerCase().startsWith('mesa') || tableNumber.toLowerCase().startsWith('barra') || tableNumber.toLowerCase().startsWith('terraza') || tableNumber.toLowerCase().startsWith('patio'))
-          ? `📍 *UBICACIÓN:* ${tableNumber}`
-          : `📍 *MESA:* #${tableNumber}`
-        : '📍 *UBICACIÓN:* En el local'
+        ? (tableNumber.toLowerCase().startsWith('mesa') || tableNumber.toLowerCase().startsWith('table') || tableNumber.toLowerCase().startsWith('barra') || tableNumber.toLowerCase().startsWith('terraza') || tableNumber.toLowerCase().startsWith('patio'))
+          ? `${isEn ? '📍 LOCATION:' : '📍 UBICACIÓN:'} ${tableNumber}`
+          : `${isEn ? '📍 TABLE:' : '📍 MESA:'} #${tableNumber}`
+        : (isEn ? '📍 LOCATION: In-store' : '📍 UBICACIÓN: En el local')
       : orderType === 'takeout'
-      ? '📦 *TIPO:* Para Llevar / Takeout'
-      : '🛵 *TIPO:* A Domicilio / Delivery'
+      ? (isEn ? '📦 TYPE: Takeout' : '📦 TIPO: Para Llevar / Takeout')
+      : (isEn ? '🛵 TYPE: Delivery' : '🛵 TIPO: A Domicilio / Delivery')
 
     let text = `===============================%0A`
-    text += `🍽️ *NUEVO PEDIDO DIGITAL - ${menu.name.toUpperCase()}*%0A`
+    text += `${isEn ? '🍽️ *DIGITAL ORDER*' : '🍽️ *NUEVO PEDIDO DIGITAL*'} - ${menu.name.toUpperCase()}%0A`
     text += `${locationHeader}%0A`
     if (customerName.trim()) {
-      text += `👤 *Cliente:* ${customerName.trim()}%0A`
+      text += `${isEn ? '👤 Customer:' : '👤 Cliente:'} ${customerName.trim()}%0A`
     }
     text += `===============================%0A%0A`
 
-    text += `*DETALLE DE LA ORDEN:*%0A`
+    text += `${isEn ? '*ORDER DETAILS:*' : '*DETALLE DE LA ORDEN:*'}%0A`
     cart.forEach(c => {
       text += `• ${c.quantity}x ${c.item.name} — ${currencySymbol}${(c.item.price * c.quantity).toFixed(2)}%0A`
     })
 
     if (orderNotes.trim()) {
-      text += `%0A📝 *Notas / Instrucciones:* ${orderNotes.trim()}%0A`
+      text += `%0A${isEn ? '📝 *Notes / Instructions:*' : '📝 *Notas / Instrucciones:*'} ${orderNotes.trim()}%0A`
     }
 
     if (activeCoupon?.label) {
-      text += `%0A🎁 *CUPÓN DE PREMIO CANJEADO:*%0A`
-      text += `• Beneficio: ${activeCoupon.label}%0A`
-      text += `• Código Único: ${activeCoupon.code}%0A`
+      text += `%0A${isEn ? '🎁 *COUPON REDEEMED:*' : '🎁 *CUPÓN DE PREMIO CANJEADO:*'}%0A`
+      text += `• ${isEn ? 'Benefit:' : 'Beneficio:'} ${activeCoupon.label}%0A`
+      text += `• ${isEn ? 'Code:' : 'Código Único:'} ${activeCoupon.code}%0A`
     }
 
     text += `%0A-------------------------------%0A`
-    text += `💰 *TOTAL A PAGAR: ${currencySymbol}${totalPrice.toFixed(2)}*%0A`
-    text += `⏰ *Hora:* ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}%0A`
+    text += `${isEn ? '💰 *TOTAL TO PAY:' : '💰 *TOTAL A PAGAR:'} ${currencySymbol}${totalPrice.toFixed(2)}*%0A`
+    text += `⏰ ${isEn ? '*Time:*' : '*Hora:*'} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}%0A`
     text += `===============================%0A`
-    text += `¿Podrían confirmarme la recepción y tiempo estimado? ¡Muchas gracias!`
+    text += isEn
+      ? `Could you please confirm receipt and estimated time? Thank you!`
+      : `¿Podrían confirmarme la recepción y tiempo estimado? ¡Muchas gracias!`
 
     // Registrar comanda en la base de datos en paralelo
     try {
@@ -1020,7 +1027,7 @@ export default function PublicMenuClient({
               style={{ backgroundColor: primaryColor }}
               className={`text-white font-bold px-5 py-2.5 text-xs sm:text-sm flex items-center gap-2 hover:opacity-90 transition cursor-pointer shadow-md ${btnRadiusClass}`}
             >
-              <ShoppingBag className="w-4 h-4" /> Ver Mi Pedido
+              <ShoppingBag className="w-4 h-4" /> {isEn ? 'View My Order' : 'Ver Mi Pedido'}
             </button>
           </div>
         </div>
@@ -1040,7 +1047,7 @@ export default function PublicMenuClient({
             <div className="p-5 border-b border-black/5 flex justify-between items-center bg-black/5">
               <h2 className="text-lg font-extrabold flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5" style={{ color: primaryColor }} /> 
-                <span>Comanda de Pedido</span>
+                <span>{m.cartTitle}</span>
               </h2>
               <button onClick={() => setIsCartOpen(false)} className="opacity-70 hover:opacity-100 p-2 rounded-full cursor-pointer text-base">
                 ✕
@@ -1052,7 +1059,7 @@ export default function PublicMenuClient({
               <div className="p-4 bg-black/5 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="font-extrabold text-xs uppercase tracking-wider flex items-center gap-1.5 opacity-80">
-                    <MapPin className="w-4 h-4" style={{ color: primaryColor }} /> Ubicación del Pedido
+                    <MapPin className="w-4 h-4" style={{ color: primaryColor }} /> {m.tableNumber}
                   </label>
                   <div className="flex gap-1">
                     <button
@@ -1062,7 +1069,7 @@ export default function PublicMenuClient({
                         orderType === 'table' ? 'bg-black text-white' : 'bg-white/80 text-gray-700'
                       }`}
                     >
-                      En Mesa
+                      {m.typeTable}
                     </button>
                     <button
                       type="button"
@@ -1071,7 +1078,7 @@ export default function PublicMenuClient({
                         orderType === 'takeout' ? 'bg-black text-white' : 'bg-white/80 text-gray-700'
                       }`}
                     >
-                      Llevar
+                      {m.typeTakeout}
                     </button>
                     <button
                       type="button"
@@ -1080,17 +1087,17 @@ export default function PublicMenuClient({
                         orderType === 'delivery' ? 'bg-black text-white' : 'bg-white/80 text-gray-700'
                       }`}
                     >
-                      Domicilio
+                      {m.typeDelivery}
                     </button>
                   </div>
                 </div>
 
                 {orderType === 'table' && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold opacity-70">Número / Nombre de Mesa:</span>
+                    <span className="text-xs font-semibold opacity-70">{m.tableNumber}:</span>
                     <input
                       type="text"
-                      placeholder="Ej. 4, Terraza 2, Barra"
+                      placeholder={m.tablePlaceholder}
                       value={tableNumber}
                       onChange={(e) => setTableNumber(e.target.value)}
                       className="flex-1 px-3 py-1.5 rounded-xl border border-black/10 bg-white text-xs font-bold focus:outline-none focus:ring-1"
@@ -1103,11 +1110,11 @@ export default function PublicMenuClient({
               <div className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider opacity-70 mb-1 flex items-center gap-1">
-                    <User className="w-3.5 h-3.5" /> Tu Nombre (Opcional)
+                    <User className="w-3.5 h-3.5" /> {m.yourName}
                   </label>
                   <input
                     type="text"
-                    placeholder="Ej. Carlos Mendoza"
+                    placeholder={m.yourNamePlaceholder}
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl border border-black/10 bg-white text-xs font-medium focus:outline-none focus:ring-1"
@@ -1116,11 +1123,11 @@ export default function PublicMenuClient({
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider opacity-70 mb-1 flex items-center gap-1">
-                    <FileText className="w-3.5 h-3.5" /> Notas Especiales para la Cocina
+                    <FileText className="w-3.5 h-3.5" /> {m.kitchenNotes}
                   </label>
                   <textarea
                     rows={2}
-                    placeholder="Ej. Sin cebolla, aderezo aparte, bien cocido..."
+                    placeholder={m.kitchenNotesPlaceholder}
                     value={orderNotes}
                     onChange={(e) => setOrderNotes(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl border border-black/10 bg-white text-xs font-medium focus:outline-none focus:ring-1 resize-none"
@@ -1130,12 +1137,14 @@ export default function PublicMenuClient({
 
               {/* 3. Lista de Productos en el Carrito */}
               <div className="space-y-3 pt-2">
-                <p className="font-extrabold text-xs uppercase tracking-wider opacity-60">Platos & Bebidas Seleccionados:</p>
+                <p className="font-extrabold text-xs uppercase tracking-wider opacity-60">
+                  {isEn ? 'Selected Items:' : 'Platos & Bebidas Seleccionados:'}
+                </p>
                 {cart.map((c) => (
                   <div key={c.item.id} className="flex justify-between items-center gap-4 border-b border-black/5 pb-3">
                     <div className="flex-1">
                       <p className="font-bold text-sm" style={{ color: textColor }}>{c.item.name}</p>
-                      <p className="opacity-60 text-xs font-medium">{currencySymbol} {c.item.price} c/u</p>
+                      <p className="opacity-60 text-xs font-medium">{currencySymbol} {c.item.price} {isEn ? 'ea.' : 'c/u'}</p>
                     </div>
                     <div className="flex items-center gap-2 bg-black/5 p-1 rounded-xl">
                       <button onClick={() => removeFromCart(c.item.id)} className="w-7 h-7 flex items-center justify-center bg-white rounded-lg shadow-xs text-gray-700 cursor-pointer"><Minus className="w-3.5 h-3.5"/></button>
@@ -1155,17 +1164,17 @@ export default function PublicMenuClient({
                     <span className="text-base">🎁</span>
                     <div>
                       <span className="font-extrabold text-amber-950 block leading-tight">{activeCoupon.label}</span>
-                      <span className="text-[10px] text-amber-800 font-mono font-bold">Cupón: {activeCoupon.code}</span>
+                      <span className="text-[10px] text-amber-800 font-mono font-bold">{isEn ? 'Coupon:' : 'Cupón:'} {activeCoupon.code}</span>
                     </div>
                   </div>
                   <span className="text-[10px] bg-amber-600 text-white font-extrabold px-2 py-0.5 rounded-md">
-                    Aplicado
+                    {isEn ? 'Applied' : 'Aplicado'}
                   </span>
                 </div>
               )}
 
               <div className="flex justify-between items-center">
-                <span className="font-medium opacity-70 text-xs sm:text-sm">Total a Pagar:</span>
+                <span className="font-medium opacity-70 text-xs sm:text-sm">{m.total}:</span>
                 <span className="font-extrabold text-xl sm:text-2xl" style={{ color: primaryColor }}>{currencySymbol} {totalPrice.toFixed(2)}</span>
               </div>
               <button 
@@ -1173,7 +1182,7 @@ export default function PublicMenuClient({
                 className={`w-full bg-[#25D366] hover:bg-[#1EBE57] text-white font-extrabold px-6 py-3.5 flex items-center justify-center gap-2.5 shadow-lg transition-all cursor-pointer text-sm ${btnRadiusClass}`}
               >
                 <MessageCircle className="w-5 h-5 fill-white" /> 
-                <span>Enviar Pedido a Cocina por WhatsApp</span>
+                <span>{m.btnSendWhatsapp}</span>
               </button>
             </div>
           </div>

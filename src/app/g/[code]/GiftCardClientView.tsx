@@ -24,6 +24,8 @@ import {
   Smartphone
 } from 'lucide-react'
 import { getGoogleWalletGiftCardUrl } from '@/app/dashboard/gift-cards/actions'
+import { useTranslation } from '@/lib/i18n/context'
+import LanguageSelector from '@/components/LanguageSelector'
 
 interface Props {
   card: any
@@ -39,6 +41,11 @@ interface Props {
 }
 
 export default function GiftCardClientView({ card, business, redemptions, brandName = 'OmniTag' }: Props) {
+  const { dict, locale } = useTranslation()
+  const g = dict.publicGiftCard || {}
+  const isEn = locale === 'en'
+  const dateLocale = isEn ? 'en-US' : 'es-HN'
+
   const [showPin, setShowPin] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isWalletLoading, setIsWalletLoading] = useState(false)
@@ -53,7 +60,11 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
   const phone = business.contact?.phone || business.contact?.whatsapp || ''
   const cleanPhone = phone.replace(/[^0-9]/g, '')
   const whatsappBookingUrl = cleanPhone 
-    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(`Hola ${business.name}, tengo el Certificado de Regalo #${card.code} a nombre de ${card.recipient_name} y me gustaría agendar una cita para canjearlo.`)}`
+    ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+        isEn
+          ? `Hello ${business.name}, I have Gift Certificate #${card.code} for ${card.recipient_name} and would like to schedule an appointment to redeem it.`
+          : `Hola ${business.name}, tengo el Certificado de Regalo #${card.code} a nombre de ${card.recipient_name} y me gustaría agendar una cita para canjearlo.`
+      )}`
     : null
 
   const handleCopyCode = () => {
@@ -76,10 +87,10 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
       if (res.success && res.url) {
         window.open(res.url, '_blank')
       } else {
-        setWalletError(res.error || 'No se pudo generar el pase de Google Wallet.')
+        setWalletError(res.error || (isEn ? 'Could not generate Google Wallet pass.' : 'No se pudo generar el pase de Google Wallet.'))
       }
     } catch (err: any) {
-      setWalletError(err.message || 'Error al conectar con Google Wallet.')
+      setWalletError(err.message || (isEn ? 'Error connecting to Google Wallet.' : 'Error al conectar con Google Wallet.'))
     } finally {
       setIsWalletLoading(false)
     }
@@ -94,10 +105,10 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
 
   // Fecha de expiración formateada
   const formattedExpiry = card.expires_at 
-    ? new Date(card.expires_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })
-    : 'Sin fecha de vencimiento'
+    ? new Date(card.expires_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })
+    : (isEn ? 'No expiration date' : 'Sin fecha de vencimiento')
 
-  const formattedCreated = new Date(card.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'long', year: 'numeric' })
+  const formattedCreated = new Date(card.created_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })
 
   // Estilos y acabados según el tema de la tarjeta
   const theme = card.theme_color || '#18181b'
@@ -113,6 +124,14 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
       {/* 1. VISTA DE PANTALLA DIGITAL (MÓVIL / PWA)                      */}
       {/* ============================================================== */}
       <div className="w-full max-w-md mx-auto space-y-5 print:hidden">
+        {/* Selector de Idioma */}
+        <div className="flex justify-between items-center px-1">
+          <span className="text-[11px] font-bold text-slate-400">
+            {isEn ? 'Digital Gift Certificate' : 'Certificado de Regalo Digital'}
+          </span>
+          <LanguageSelector variant="dark" />
+        </div>
+
         {/* TARJETA FÍSICA REALISTA DE REGALO */}
         <div 
           className="w-full rounded-[26px] shadow-2xl relative overflow-hidden transition-all duration-300 transform hover:scale-[1.01] border-2 border-white/20 select-none text-white"
@@ -163,7 +182,7 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
                     ? 'bg-amber-900/80 text-amber-200 border border-amber-400/30' 
                     : 'bg-white text-gray-950 font-black'
                 }`}>
-                  {isRedeemed ? 'Canjeada' : isCancelled ? 'Anulada' : isExpired ? 'Expirada' : 'Activa'}
+                  {isRedeemed ? (isEn ? 'Redeemed' : 'Canjeada') : isCancelled ? (isEn ? 'Cancelled' : 'Anulada') : isExpired ? (isEn ? 'Expired' : 'Expirada') : (isEn ? 'Active' : 'Activa')}
                 </span>
               </div>
 
@@ -193,14 +212,14 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
             {/* Dedicatoria y Destinatario */}
             <div className="my-2 py-3 border-y border-white/20 space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-white/80">Para:</span>
+                <span className="text-white/80">{g.forRecipient || (isEn ? 'To:' : 'Para:')}</span>
                 <span className="font-serif font-black text-sm tracking-wide text-white drop-shadow-xs">
                   {card.recipient_name}
                 </span>
               </div>
               {card.buyer_name && (
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/70">De:</span>
+                  <span className="text-white/70">{g.fromSender || (isEn ? 'From:' : 'De:')}</span>
                   <span className="font-bold text-white/95">{card.buyer_name}</span>
                 </div>
               )}
@@ -215,12 +234,12 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
             <div className="pt-2 flex items-end justify-between">
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-amber-200/80 block">
-                  {card.card_type === 'service' ? 'Servicio Incluido' : 'Saldo Disponible'}
+                  {card.card_type === 'service' ? (isEn ? 'Service Included' : 'Servicio Incluido') : (g.balance || (isEn ? 'Available Balance' : 'Saldo Disponible'))}
                 </span>
                 <span className="text-3xl font-serif font-black tracking-tight text-white drop-shadow-md">
                   {card.card_type === 'service' 
-                    ? (isRedeemed ? 'Servicio Canjeado' : card.service_name || '1x Servicio Completo')
-                    : `${card.currency_symbol} ${Number(card.current_balance).toLocaleString('es-HN', { minimumFractionDigits: 2 })}`}
+                    ? (isRedeemed ? (isEn ? 'Service Redeemed' : 'Servicio Canjeado') : card.service_name || (isEn ? '1x Full Service' : '1x Servicio Completo'))
+                    : `${card.currency_symbol} ${Number(card.current_balance).toLocaleString(dateLocale, { minimumFractionDigits: 2 })}`}
                 </span>
               </div>
 
@@ -230,7 +249,7 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
                   {card.code}
                 </span>
                 <span className="text-[9px] text-white/60 font-mono mt-1 block">
-                  {card.expires_at ? `Vence: ${new Date(card.expires_at).toLocaleDateString('es-HN')}` : 'Sin vencimiento'}
+                  {card.expires_at ? `${isEn ? 'Expires:' : 'Vence:'} ${new Date(card.expires_at).toLocaleDateString(dateLocale)}` : (isEn ? 'No expiration' : 'Sin vencimiento')}
                 </span>
               </div>
             </div>
@@ -252,7 +271,7 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
               </svg>
             </div>
-            <span>{isWalletLoading ? 'Generando Pase...' : 'Guardar en Google Wallet'}</span>
+            <span>{isWalletLoading ? (isEn ? 'Generating Pass...' : 'Generando Pase...') : (g.btnGoogleWallet || (isEn ? 'Save to Google Wallet' : 'Guardar en Google Wallet'))}</span>
           </button>
 
           {walletError && (
@@ -267,13 +286,13 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
           <div>
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-pink-50 text-pink-700 text-xs font-bold uppercase tracking-wider mb-2">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Presenta este voucher al pagar</span>
+              <span>{isEn ? 'Present this voucher when paying' : 'Presenta este voucher al pagar'}</span>
             </span>
             <h4 className="text-base font-black text-gray-900">
-              Escanea o dicta tu código en el local
+              {isEn ? 'Scan or show your code at the store' : 'Escanea o dicta tu código en el local'}
             </h4>
             <p className="text-xs text-gray-500 mt-0.5">
-              El personal de {business.name} validará tu saldo al instante.
+              {isEn ? `${business.name} staff will instantly validate your balance.` : `El personal de ${business.name} validará tu saldo al instante.`}
             </p>
           </div>
 
@@ -299,7 +318,7 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
             <div className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between">
               <div className="text-left">
                 <span className="text-[10px] uppercase font-bold text-gray-400 block tracking-wider">
-                  PIN de Seguridad en Caja
+                  {isEn ? 'In-Store Security PIN' : 'PIN de Seguridad en Caja'}
                 </span>
                 <span className="text-base font-mono font-black text-gray-900 tracking-widest">
                   {showPin ? card.security_pin : '••••'}
@@ -311,13 +330,13 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
                 className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-100 transition cursor-pointer shadow-xs"
               >
                 {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                <span>{showPin ? 'Ocultar' : 'Revelar PIN'}</span>
+                <span>{showPin ? (isEn ? 'Hide' : 'Ocultar') : (isEn ? 'Reveal PIN' : 'Revelar PIN')}</span>
               </button>
             </div>
           ) : (
             <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-center gap-2 text-emerald-800 text-xs font-bold">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Tarjeta al portador (Sin PIN requerido en caja)</span>
+              <span>{isEn ? 'Bearer card (No PIN required at checkout)' : 'Tarjeta al portador (Sin PIN requerido en caja)'}</span>
             </div>
           )}
 
@@ -331,7 +350,7 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
                 className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm shadow-md transition cursor-pointer"
               >
                 <Phone className="w-4 h-4" />
-                <span>Agendar Cita en WhatsApp</span>
+                <span>{g.btnBookAppointment || (isEn ? 'Book Appointment on WhatsApp' : 'Agendar Cita en WhatsApp')}</span>
               </a>
             )}
 
@@ -341,7 +360,7 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs transition cursor-pointer"
               >
                 {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? '¡Copiado!' : 'Copiar Código'}</span>
+                <span>{copied ? (isEn ? 'Copied!' : '¡Copiado!') : (isEn ? 'Copy Code' : 'Copiar Código')}</span>
               </button>
 
               <button
@@ -349,7 +368,7 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-black text-xs transition cursor-pointer border border-amber-200 shadow-xs"
               >
                 <Printer className="w-3.5 h-3.5 text-amber-700" />
-                <span>Imprimir Certificado</span>
+                <span>{g.btnPrint || (isEn ? 'Print Certificate' : 'Imprimir Certificado')}</span>
               </button>
             </div>
 
@@ -359,7 +378,7 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-pink-600 hover:text-pink-700 transition pt-1"
               >
                 <Store className="w-3.5 h-3.5" />
-                <span>Ver catálogo y servicios de {business.name}</span>
+                <span>{isEn ? `View catalog & services of ${business.name}` : `Ver catálogo y servicios de ${business.name}`}</span>
                 <ArrowRight className="w-3 h-3" />
               </Link>
             )}
@@ -371,16 +390,16 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
           <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-3">
             <div className="flex items-center gap-2 text-gray-900 font-bold text-xs border-b border-gray-100 pb-2">
               <Receipt className="w-4 h-4 text-gray-500" />
-              <span>Historial de Consumos Realizados</span>
+              <span>{isEn ? 'Usage History' : 'Historial de Consumos Realizados'}</span>
             </div>
 
             <div className="space-y-2">
               {redemptions.map((r) => (
                 <div key={r.id} className="flex justify-between items-center text-xs p-2.5 rounded-xl bg-gray-50 border border-gray-100">
                   <div>
-                    <p className="font-semibold text-gray-800">{r.notes || 'Consumo en mostrador'}</p>
+                    <p className="font-semibold text-gray-800">{r.notes || (isEn ? 'Counter purchase' : 'Consumo en mostrador')}</p>
                     <p className="text-[10px] text-gray-400">
-                      {new Date(r.created_at).toLocaleDateString('es-HN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {new Date(r.created_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
                   <div className="text-right">
@@ -388,7 +407,7 @@ export default function GiftCardClientView({ card, business, redemptions, brandN
                       - {card.currency_symbol} {Number(r.amount).toFixed(2)}
                     </span>
                     <p className="text-[10px] text-gray-400">
-                      Saldo restante: {card.currency_symbol} {Number(r.new_balance).toFixed(2)}
+                      {isEn ? 'Remaining balance:' : 'Saldo restante:'} {card.currency_symbol} {Number(r.new_balance).toFixed(2)}
                     </p>
                   </div>
                 </div>

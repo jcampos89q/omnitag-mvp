@@ -33,6 +33,8 @@ import { resolveTheme, getGoogleFontUrl, getFontFamilyCss } from '@/lib/themes'
 import { recordPageViewScan } from '@/lib/analytics'
 import { cookies } from 'next/headers'
 import PublicPoweredBy, { OwnerLoginLink } from '@/components/PublicPoweredBy'
+import { getServerDictionary } from '@/lib/i18n/server'
+import LanguageSelector from '@/components/LanguageSelector'
 
 const getVCard = cache(async (slug: string) => {
   const supabase = await createClient()
@@ -104,6 +106,9 @@ export default async function PublicVCardPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
+  const { dict, locale } = await getServerDictionary()
+  const v = dict.publicVcard
+  const isEn = locale === 'en'
   const supabase = await createClient()
   const vcard = await getVCard(slug)
 
@@ -237,6 +242,11 @@ export default async function PublicVCardPage({
           fontFamily: fontFamilyCss 
         }}
       >
+        {/* Selector de Idioma Flotante */}
+        <div className="w-full max-w-md flex justify-end mb-2">
+          <LanguageSelector variant="pill" />
+        </div>
+
         {/* Barra superior de Propietario / Administrador */}
         {canManage && (
           <div className="w-full max-w-md mb-3 bg-black/90 text-white backdrop-blur-md px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs shadow-xl border border-white/10 animate-in fade-in z-20">
@@ -244,8 +254,8 @@ export default async function PublicVCardPage({
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>
                 {isOwner 
-                  ? 'Estás viendo tu tarjeta como propietario' 
-                  : 'Estás viendo esta tarjeta como administrador'}
+                  ? v.ownerBadge 
+                  : v.adminBadge}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -254,7 +264,7 @@ export default async function PublicVCardPage({
                 className="font-extrabold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl text-xs"
               >
                 <Edit3 className="w-3.5 h-3.5" />
-                <span>Editar Datos</span>
+                <span>{v.btnEdit}</span>
               </Link>
               <Link 
                 href="/dashboard" 
@@ -275,7 +285,7 @@ export default async function PublicVCardPage({
               className="flex items-center gap-2 bg-black/90 hover:bg-black text-amber-400 font-extrabold text-xs px-4 py-2.5 rounded-full shadow-2xl border border-white/20 backdrop-blur-md hover:scale-105 transition-all"
             >
               <Edit3 className="w-4 h-4" />
-              <span>Editar Tarjeta</span>
+              <span>{v.btnEditFloating}</span>
             </Link>
           </div>
         )}
@@ -429,7 +439,7 @@ export default async function PublicVCardPage({
               <div className="text-left mb-2">
                 <p className="text-[11px] font-black uppercase tracking-wider opacity-60 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5" style={{ color: theme.primary_color }} /> 
-                  Servicios & Accesos del Negocio
+                  {v.connectedServices}
                 </p>
               </div>
 
@@ -446,10 +456,10 @@ export default async function PublicVCardPage({
                       </div>
                       <div>
                         <p className="font-extrabold text-xs sm:text-sm" style={{ color: theme.text_color }}>
-                          {activeMenu.name || 'Menú Digital & Catálogo'}
+                          {activeMenu.name || v.menuTitle}
                         </p>
                         <p className="text-[11px] opacity-70">
-                          Explora platillos, precios y pide por WhatsApp
+                          {v.menuDesc}
                         </p>
                       </div>
                     </div>
@@ -469,10 +479,10 @@ export default async function PublicVCardPage({
                       </div>
                       <div>
                         <p className="font-extrabold text-xs sm:text-sm" style={{ color: theme.text_color }}>
-                          Reservar Cita / Apartar Turno
+                          {v.bookingTitle}
                         </p>
                         <p className="text-[11px] opacity-70">
-                          Elige tu especialista favorito y horario online
+                          {v.bookingDesc}
                         </p>
                       </div>
                     </div>
@@ -492,10 +502,10 @@ export default async function PublicVCardPage({
                       </div>
                       <div>
                         <p className="font-extrabold text-xs sm:text-sm" style={{ color: theme.text_color }}>
-                          Club de Sellos & Recompensas
+                          {v.loyaltyTitle}
                         </p>
                         <p className="text-[11px] opacity-70">
-                          {activeLoyalty.reward_text ? `Gana: ${activeLoyalty.reward_text}` : 'Sella tu tarjeta y canjea premios'}
+                          {activeLoyalty.reward_text ? `${isEn ? 'Win:' : 'Gana:'} ${activeLoyalty.reward_text}` : v.loyaltyDesc}
                         </p>
                       </div>
                     </div>
@@ -515,10 +525,10 @@ export default async function PublicVCardPage({
                       </div>
                       <div>
                         <p className="font-extrabold text-xs sm:text-sm" style={{ color: theme.text_color }}>
-                          Califícanos en Google Maps
+                          {v.reviewTitle}
                         </p>
                         <p className="text-[11px] opacity-70">
-                          Déjanos tus 5 estrellas en segundos
+                          {v.reviewDesc}
                         </p>
                       </div>
                     </div>
@@ -540,14 +550,14 @@ export default async function PublicVCardPage({
                   className={`w-full flex items-center justify-center gap-2 bg-[#25D366] text-white px-4 py-3.5 font-bold text-xs sm:text-sm hover:bg-[#1EBE57] transition-all shadow-sm ${btnRadiusClass}`}
                 >
                   <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                  <span>WhatsApp</span>
+                  <span>{v.btnWhatsapp}</span>
                 </a>
                 <a
                   href={`sms:${contact_info.phone.replace(/\D/g, '')}`}
                   className={`w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3.5 font-bold text-xs sm:text-sm hover:bg-blue-700 transition-all shadow-sm ${btnRadiusClass}`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                  <span>SMS</span>
+                  <span>{v.btnSms}</span>
                 </a>
               </div>
             )}
@@ -559,7 +569,7 @@ export default async function PublicVCardPage({
               className={`w-full flex items-center justify-center gap-2 text-white px-6 py-3.5 font-bold text-sm hover:opacity-90 transition-all shadow-md ${btnRadiusClass}`}
             >
               <Download className="w-5 h-5" />
-              Guardar Contacto en el Móvil
+              {v.btnSaveContact}
             </a>
 
             {/* Añadir a Google Wallet */}
@@ -587,6 +597,7 @@ export default async function PublicVCardPage({
                     legacyHoursText={businessInfo?.hours}
                     theme={theme}
                     btnRadiusClass={btnRadiusClass}
+                    locale={locale}
                   />
                 )}
 
@@ -596,7 +607,7 @@ export default async function PublicVCardPage({
                     <div className="flex items-start gap-3.5 text-left">
                       <MapPin className="w-5 h-5 shrink-0 opacity-70 mt-0.5" style={{ color: theme.primary_color }} />
                       <div>
-                        <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Ubicación / Dirección</p>
+                        <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">{v.locationAddress}</p>
                         <p className="text-xs sm:text-sm font-medium mt-0.5" style={{ color: theme.text_color }}>{businessInfo.address}</p>
                       </div>
                     </div>
@@ -608,7 +619,7 @@ export default async function PublicVCardPage({
                         className="text-xs font-bold px-3 py-1.5 rounded-lg border border-black/10 shrink-0 hover:bg-black/5 transition flex items-center gap-1"
                         style={{ color: theme.primary_color }}
                       >
-                        <ExternalLink className="w-3.5 h-3.5" /> Mapa
+                        <ExternalLink className="w-3.5 h-3.5" /> {v.mapLink}
                       </a>
                     )}
                   </div>
@@ -624,7 +635,7 @@ export default async function PublicVCardPage({
                       <Phone className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Llamada Directa</p>
+                      <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">{v.directCall}</p>
                       <p className="text-xs sm:text-sm font-medium" style={{ color: theme.text_color }}>{contact_info.phone}</p>
                     </div>
                   </a>
@@ -640,7 +651,7 @@ export default async function PublicVCardPage({
                       <Mail className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Correo Electrónico</p>
+                      <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">{v.email}</p>
                       <p className="text-xs sm:text-sm font-medium truncate" style={{ color: theme.text_color }}>{contact_info.email}</p>
                     </div>
                   </a>
@@ -653,7 +664,7 @@ export default async function PublicVCardPage({
         {/* Pie de Página */}
         <div className="mt-6 text-center space-y-2 opacity-70">
           <p className="text-xs font-semibold" style={{ color: theme.text_color }}>
-            <PublicPoweredBy ownerId={ownerId} prefix="Tarjeta Digital creada con" />
+            <PublicPoweredBy ownerId={ownerId} prefix={v.createdWith} />
           </p>
           {!currentUser && (
             <p className="text-[11px]">
@@ -664,7 +675,7 @@ export default async function PublicVCardPage({
                 style={{ color: theme.text_color }}
               >
                 <Lock className="w-3 h-3" />
-                <span>¿Eres el dueño de esta tarjeta? Inicia sesión aquí</span>
+                <span>{v.ownerLoginPrompt}</span>
               </OwnerLoginLink>
             </p>
           )}

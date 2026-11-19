@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { Star, CheckCircle, ShieldCheck, Send, MessageSquareHeart, Settings, Building2 } from 'lucide-react'
 import { submitPrivateFeedback, recordPositiveReviewClick } from './actions'
 import { ThemeConfig } from '@/lib/themes'
+import { useTranslation } from '@/lib/i18n/context'
+import LanguageSelector from '@/components/LanguageSelector'
 
 export default function FilterClient({ 
   deviceId, 
@@ -19,6 +21,8 @@ export default function FilterClient({
   businessName?: string | null
   isOwner?: boolean
 }) {
+  const { dict } = useTranslation()
+  const r = dict.publicReview
   const [rating, setRating] = useState<number>(0)
   const [hoveredRating, setHoveredRating] = useState<number>(0)
   const [showForm, setShowForm] = useState(false)
@@ -87,12 +91,15 @@ export default function FilterClient({
         className={`text-center p-8 shadow-2xl max-w-sm w-full animate-in fade-in zoom-in border border-black/5 ${cardRadiusClass}`}
         style={{ backgroundColor: cardBg, color: textColor }}
       >
+        <div className="flex justify-end mb-2">
+          <LanguageSelector variant="pill" />
+        </div>
         <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="w-8 h-8 text-emerald-600" />
         </div>
-        <h2 className="text-xl font-extrabold mb-2">Comentario recibido</h2>
+        <h2 className="text-xl font-extrabold mb-2">{r.successTitle}</h2>
         <p className="opacity-75 text-xs sm:text-sm leading-relaxed">
-          Tu opinión ha sido enviada de forma directa y privada a la administración para resolver cualquier inconveniente a la brevedad.
+          {r.successMessage}
         </p>
       </div>
     )
@@ -100,19 +107,24 @@ export default function FilterClient({
 
   return (
     <div className="w-full max-w-md mx-4 space-y-3">
+      {/* Selector de Idioma Flotante */}
+      <div className="flex justify-end">
+        <LanguageSelector variant="pill" />
+      </div>
+
       {/* Botón de acceso rápido para el dueño si tiene sesión iniciada */}
       {isOwner && (
         <div className="bg-black/90 text-white backdrop-blur-md px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs shadow-lg border border-white/10 animate-in fade-in">
           <div className="flex items-center gap-2 font-medium">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Eres el dueño de esta placa</span>
+            <span>{r.ownerBadge}</span>
           </div>
           <Link 
             href="/dashboard/devices" 
             className="font-extrabold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition"
           >
             <Settings className="w-3.5 h-3.5" />
-            <span>Ver mi Panel</span>
+            <span>{r.ownerDashboard}</span>
           </Link>
         </div>
       )}
@@ -129,14 +141,14 @@ export default function FilterClient({
             </div>
           ) : (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-bold mb-3">
-              <ShieldCheck className="w-3.5 h-3.5" /> Tu opinión es importante
+              <ShieldCheck className="w-3.5 h-3.5" /> {r.opinionImportant}
             </div>
           )}
           <h1 className="text-xl sm:text-2xl font-extrabold mb-1.5" style={{ color: textColor }}>
-            ¿Cómo calificarías tu experiencia hoy?
+            {r.feedbackTitle}
           </h1>
           <p className="text-xs sm:text-sm opacity-70">
-            Toca una estrella para calificar el servicio
+            {r.feedbackSubtitle}
           </p>
         </div>
 
@@ -168,22 +180,22 @@ export default function FilterClient({
           <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 text-xs">
             <p className="font-bold text-amber-900 flex items-center gap-1.5">
               <MessageSquareHeart className="w-4 h-4 text-amber-700" />
-              Lamentamos no haber alcanzado tus expectativas.
+              {r.privateAlertTitle}
             </p>
             <p className="opacity-80 mt-0.5 text-[11px]">
-              Queremos corregir el error de inmediato. Déjanos tus comentarios y datos para que la gerencia se comunique contigo.
+              {r.privateAlertSubtitle}
             </p>
           </div>
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">
-              ¿Qué sucedió? / Sugerencia o Motivo *
+              {r.fieldReason}
             </label>
             <textarea 
               name="message" 
               required 
               rows={3}
-              placeholder="Explícanos brevemente qué sucedió durante tu visita..."
+              placeholder={r.placeholderReason}
               className="w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-black resize-none font-medium"
               style={{
                 backgroundColor: inputBg,
@@ -196,12 +208,12 @@ export default function FilterClient({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">
-                Tu Nombre (Opcional)
+                {r.fieldName}
               </label>
               <input 
                 type="text" 
                 name="customer_name" 
-                placeholder="Ej. Carlos Mendoza"
+                placeholder={r.placeholderName}
                 className="w-full rounded-xl border px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-black font-medium"
                 style={{
                   backgroundColor: inputBg,
@@ -213,12 +225,12 @@ export default function FilterClient({
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider opacity-80 mb-1">
-                Teléfono / WhatsApp
+                {r.fieldPhone}
               </label>
               <input 
                 type="tel" 
                 name="customer_phone" 
-                placeholder="Ej. +504 9988-0000"
+                placeholder={r.placeholderPhone}
                 className="w-full rounded-xl border px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-black font-medium"
                 style={{
                   backgroundColor: inputBg,
@@ -237,14 +249,14 @@ export default function FilterClient({
               className={`w-full text-white font-bold py-3 text-xs sm:text-sm hover:opacity-90 transition-all disabled:opacity-50 shadow-md cursor-pointer flex items-center justify-center gap-2 ${btnRadiusClass}`}
             >
               <Send className="w-4 h-4" />
-              <span>{loading ? 'Enviando...' : 'Enviar al Buzón de Gerencia'}</span>
+              <span>{loading ? r.btnSending : r.btnSend}</span>
             </button>
           </div>
 
           <p className="text-[10px] text-center opacity-60 leading-tight">
-            Tus comentarios y datos se tratarán de forma confidencial conforme a nuestra{' '}
+            {r.privacyDisclaimer}{' '}
             <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:opacity-100">
-              Política de Privacidad
+              {r.privacyLink}
             </a>.
           </p>
         </form>

@@ -27,6 +27,8 @@ import {
 import GooglePlaceSearchInput, { PlaceDetails } from '@/components/GooglePlaceSearchInput'
 import { activatePlateAndRegister } from './actions'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslation } from '@/lib/i18n/context'
+import LanguageSelector from '@/components/LanguageSelector'
 
 export interface ExistingBusinessOption {
   id: string
@@ -59,6 +61,9 @@ export default function ActivatePlateClient({
   initialAuthMode
 }: ActivatePlateClientProps) {
   const router = useRouter()
+  const { dict, locale } = useTranslation()
+  const a = dict.publicActivate
+  const isEn = locale === 'en'
 
   const hasExistingBusinesses = existingBusinesses.length > 0
   const [bizMode, setBizMode] = useState<'existing' | 'new'>(hasExistingBusinesses ? 'existing' : 'new')
@@ -161,6 +166,11 @@ export default function ActivatePlateClient({
 
   return (
     <div className="max-w-md w-full bg-gray-900/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in zoom-in-95">
+      {/* Selector de idioma */}
+      <div className="flex justify-end">
+        <LanguageSelector variant="dark" />
+      </div>
+
       {/* Cabecera */}
       <div className="text-center space-y-2">
         <div className="w-14 h-14 bg-gradient-to-tr from-amber-500 to-amber-300 text-black rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
@@ -168,13 +178,13 @@ export default function ActivatePlateClient({
         </div>
         <div className="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full text-xs font-bold text-amber-400">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Placa NFC de Reseñas Google</span>
+          <span>{a.badgeNewPlate}</span>
         </div>
         <h1 className="text-2xl font-black tracking-tight text-white">
-          Activa tu Placa Inteligente
+          {a.title}
         </h1>
         <p className="text-xs text-gray-400">
-          Placa ID: <span className="font-mono font-bold text-white bg-white/10 px-2 py-0.5 rounded">{tagId}</span>
+          {a.plateId} <span className="font-mono font-bold text-white bg-white/10 px-2 py-0.5 rounded">{tagId}</span>
         </p>
       </div>
 
@@ -192,12 +202,12 @@ export default function ActivatePlateClient({
           <div className="space-y-0.5">
             <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
               <CheckCircle2 className="w-4 h-4" />
-              <span>Cuenta detectada</span>
+              <span>{isEn ? 'Account detected' : 'Cuenta detectada'}</span>
             </div>
             <p className="text-white font-bold text-xs truncate max-w-[220px]">{currentUser.email}</p>
           </div>
           <span className="text-[10px] bg-emerald-500/20 text-emerald-300 font-extrabold px-2.5 py-1 rounded-full border border-emerald-500/30">
-            Sesión Activa
+            {a.activeSession}
           </span>
         </div>
       ) : (
@@ -215,7 +225,7 @@ export default function ActivatePlateClient({
               }`}
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span>Ya tengo cuenta</span>
+              <span>{a.tabHaveAccount}</span>
             </button>
             <button
               type="button"
@@ -228,7 +238,7 @@ export default function ActivatePlateClient({
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>Soy nuevo</span>
+              <span>{a.tabNewUser}</span>
             </button>
           </div>
 
@@ -237,10 +247,10 @@ export default function ActivatePlateClient({
               <div className="space-y-1">
                 <p className="text-xs font-extrabold text-white flex items-center gap-1.5">
                   <KeyRound className="w-3.5 h-3.5 text-amber-400" />
-                  Inicia sesión para vincular a tu cuenta
+                  {a.loginTitle}
                 </p>
                 <p className="text-[11px] text-gray-400 leading-snug">
-                  Si ya tienes una placa previa o cuenta en OmniTag, ingresa tu clave para detectar tu negocio y vincular esta placa directamente sin volver a registrarte.
+                  {a.loginSubtitle}
                 </p>
               </div>
 
@@ -253,7 +263,7 @@ export default function ActivatePlateClient({
 
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Correo Electrónico</label>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{a.email}</label>
                   <div className="relative">
                     <Mail className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
@@ -267,14 +277,14 @@ export default function ActivatePlateClient({
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Contraseña</label>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{a.password}</label>
                   <div className="relative">
                     <Lock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Tu contraseña"
+                      placeholder="••••••••"
                       className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
                     />
                   </div>
@@ -289,12 +299,12 @@ export default function ActivatePlateClient({
                   {inlineLoggingIn ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Detectando tu cuenta y negocio...</span>
+                      <span>{a.detecting}</span>
                     </>
                   ) : (
                     <>
                       <LogIn className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Detectar mi Cuenta y Mis Negocios</span>
+                      <span>{a.btnDetect}</span>
                     </>
                   )}
                 </button>
@@ -309,7 +319,7 @@ export default function ActivatePlateClient({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-300">
-              ¿A qué negocio deseas vincular esta placa?
+              {a.whichBusiness}
             </label>
           </div>
 
@@ -322,7 +332,7 @@ export default function ActivatePlateClient({
               }`}
             >
               <Store className="w-3.5 h-3.5" />
-              <span>Mismo Negocio</span>
+              <span>{a.sameBusiness}</span>
             </button>
             <button
               type="button"
@@ -332,7 +342,7 @@ export default function ActivatePlateClient({
               }`}
             >
               <Search className="w-3.5 h-3.5" />
-              <span>Otro Negocio</span>
+              <span>{a.otherBusiness}</span>
             </button>
           </div>
 
@@ -341,16 +351,16 @@ export default function ActivatePlateClient({
             <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-3 animate-in fade-in">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1">
-                  <Check className="w-3 h-3" /> Negocio Detectado en tu Cuenta
+                  <Check className="w-3 h-3" /> {a.businessDetected}
                 </span>
                 <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">
-                  1-Clic Vinculación
+                  {a.oneClickLink}
                 </span>
               </div>
 
               {existingBusinesses.length > 1 && (
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-300 mb-1">Selecciona la sucursal o negocio:</label>
+                  <label className="block text-[11px] font-bold text-gray-300 mb-1">{isEn ? 'Select business location:' : 'Selecciona la sucursal o negocio:'}</label>
                   <select
                     value={selectedBizId}
                     onChange={(e) => {
@@ -389,19 +399,21 @@ export default function ActivatePlateClient({
               </div>
 
               <p className="text-[11px] text-amber-200/80 leading-relaxed">
-                Esta nueva placa se configurará con las mismas reseñas oficiales de <b>{activeExistingBiz.businessName}</b> y sumará 365 días de garantía.
+                {isEn 
+                  ? `This new plate will be configured with the official Google reviews for ${activeExistingBiz.businessName}.`
+                  : `Esta nueva placa se configurará con las mismas reseñas oficiales de ${activeExistingBiz.businessName} y sumará 365 días de garantía.`}
               </p>
 
               <div className="flex items-center justify-between pt-1 border-t border-amber-500/20">
                 <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Negocio listo para vincular
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {isEn ? 'Business ready to link' : 'Negocio listo para vincular'}
                 </span>
                 <button
                   type="button"
                   onClick={() => setBizMode('new')}
                   className="text-[11px] text-amber-300 hover:text-white underline font-semibold cursor-pointer"
                 >
-                  Buscar o cambiar en Google Maps
+                  {isEn ? 'Search Google Maps' : 'Buscar o cambiar en Google Maps'}
                 </button>
               </div>
             </div>
@@ -452,7 +464,7 @@ export default function ActivatePlateClient({
                 }`}
               >
                 <Search className="w-3.5 h-3.5" />
-                <span>Ya estoy en Google</span>
+                <span>{isEn ? 'On Google Maps' : 'Ya estoy en Google'}</span>
               </button>
               <button
                 type="button"
@@ -462,7 +474,7 @@ export default function ActivatePlateClient({
                 }`}
               >
                 <Building2 className="w-3.5 h-3.5" />
-                <span>Aún no en Google</span>
+                <span>{isEn ? 'Not on Google yet' : 'Aún no en Google'}</span>
               </button>
             </div>
 
@@ -470,7 +482,7 @@ export default function ActivatePlateClient({
             {!noGooglePlace ? (
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Busca tu Negocio en Google Maps *
+                  {a.searchGoogle}
                 </label>
                 <GooglePlaceSearchInput
                   onPlaceSelected={(place) => {
@@ -491,18 +503,19 @@ export default function ActivatePlateClient({
               <div className="space-y-3 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl animate-in fade-in">
                 <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs uppercase tracking-wider">
                   <Hourglass className="w-4 h-4" />
-                  <span>Alta comercial en proceso</span>
+                  <span>{isEn ? 'Registration in progress' : 'Alta comercial en proceso'}</span>
                 </div>
 
                 <p className="text-[11px] text-amber-200/90 leading-relaxed">
-                  Ingresa los datos de tu negocio para registrar tu placa con <b>365 días de garantía</b>. 
-                  <strong className="text-white block mt-1">⚠️ Recuerda no colocar la placa en tu mostrador todavía hasta que Google verifique tu local.</strong>
+                  {isEn 
+                    ? 'Enter your business details to register your smart plate with 365-day warranty. Please do not place the plate on your counter until Google verifies your listing.'
+                    : 'Ingresa los datos de tu negocio para registrar tu placa con 365 días de garantía. Recuerda no colocar la placa en tu mostrador todavía hasta que Google verifique tu local.'}
                 </p>
 
                 <input type="hidden" name="no_google_place" value="true" />
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-300 mb-1">Nombre Comercial del Negocio *</label>
+                  <label className="block text-[11px] font-bold text-gray-300 mb-1">{a.manualName}</label>
                   <div className="relative">
                     <Building2 className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
@@ -511,14 +524,14 @@ export default function ActivatePlateClient({
                       required={noGooglePlace}
                       value={manualBusinessName}
                       onChange={(e) => setManualBusinessName(e.target.value)}
-                      placeholder="Ej. Tacos El Paisa"
+                      placeholder={isEn ? "e.g. Downtown Coffee" : "Ej. Tacos El Paisa"}
                       className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-300 mb-1">Categoría / Giro del Negocio *</label>
+                  <label className="block text-[11px] font-bold text-gray-300 mb-1">{a.manualCategory}</label>
                   <div className="relative">
                     <Tag className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <select
@@ -527,20 +540,20 @@ export default function ActivatePlateClient({
                       onChange={(e) => setManualCategory(e.target.value)}
                       className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:border-amber-400 focus:outline-none"
                     >
-                      <option value="Restaurante / Cafetería" className="bg-gray-900 text-white">Restaurante / Cafetería</option>
-                      <option value="Salón de Belleza / Barbería" className="bg-gray-900 text-white">Salón de Belleza / Barbería / Spa</option>
-                      <option value="Clínica / Consultorio Dental" className="bg-gray-900 text-white">Clínica / Consultorio Dental</option>
-                      <option value="Tienda / Boutique / Comercio" className="bg-gray-900 text-white">Tienda / Boutique / Comercio</option>
-                      <option value="Taller Mecánico / Car Wash" className="bg-gray-900 text-white">Taller Mecánico / Car Wash</option>
-                      <option value="Gimnasio / Deportes" className="bg-gray-900 text-white">Gimnasio / Fitness</option>
-                      <option value="Servicios Profesionales" className="bg-gray-900 text-white">Servicios Profesionales</option>
-                      <option value="Otro Negocio Local" className="bg-gray-900 text-white">Otro Negocio Local</option>
+                      <option value="Restaurante / Cafetería" className="bg-gray-900 text-white">{isEn ? 'Restaurant / Cafe' : 'Restaurante / Cafetería'}</option>
+                      <option value="Salón de Belleza / Barbería" className="bg-gray-900 text-white">{isEn ? 'Beauty Salon / Barber / Spa' : 'Salón de Belleza / Barbería / Spa'}</option>
+                      <option value="Clínica / Consultorio Dental" className="bg-gray-900 text-white">{isEn ? 'Dental Clinic' : 'Clínica / Consultorio Dental'}</option>
+                      <option value="Tienda / Boutique / Comercio" className="bg-gray-900 text-white">{isEn ? 'Retail Store / Boutique' : 'Tienda / Boutique / Comercio'}</option>
+                      <option value="Taller Mecánico / Car Wash" className="bg-gray-900 text-white">{isEn ? 'Auto Repair / Car Wash' : 'Taller Mecánico / Car Wash'}</option>
+                      <option value="Gimnasio / Deportes" className="bg-gray-900 text-white">{isEn ? 'Gym & Fitness' : 'Gimnasio / Deportes'}</option>
+                      <option value="Servicios Profesionales" className="bg-gray-900 text-white">{isEn ? 'Professional Services & B2B' : 'Servicios Profesionales'}</option>
+                      <option value="Otro Negocio Local" className="bg-gray-900 text-white">{isEn ? 'Other Local Business' : 'Otro Negocio Local'}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-300 mb-1">Dirección del Establecimiento *</label>
+                  <label className="block text-[11px] font-bold text-gray-300 mb-1">{a.manualAddress}</label>
                   <div className="relative">
                     <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
@@ -549,14 +562,14 @@ export default function ActivatePlateClient({
                       required={noGooglePlace}
                       value={manualAddress}
                       onChange={(e) => setManualAddress(e.target.value)}
-                      placeholder="Ej. Col. Palmira, Ave. República de Chile #1402"
+                      placeholder={isEn ? "e.g. 123 Main St, Miami FL" : "Ej. Col. Palmira, Ave. República de Chile #1402"}
                       className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-300 mb-1">Teléfono de Atención al Cliente</label>
+                  <label className="block text-[11px] font-bold text-gray-300 mb-1">{a.manualPhone}</label>
                   <div className="relative">
                     <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
@@ -564,7 +577,7 @@ export default function ActivatePlateClient({
                       name="manual_business_phone"
                       value={manualPhone}
                       onChange={(e) => setManualPhone(e.target.value)}
-                      placeholder="Ej. +504 9876-5432"
+                      placeholder={isEn ? "e.g. +1 305-555-0199" : "Ej. +504 9876-5432"}
                       className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
                     />
                   </div>
@@ -587,10 +600,12 @@ export default function ActivatePlateClient({
             <div className="text-xs">
               <span className="font-extrabold text-white flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                Activar Escudo Inteligente Anti-Quejas
+                {isEn ? 'Smart Anti-Complaint Filter' : 'Activar Escudo Inteligente Anti-Quejas'}
               </span>
               <p className="text-[11px] text-gray-400 mt-0.5 leading-relaxed">
-                Las calificaciones de <b>4 y 5 estrellas</b> van a Google Maps. Las de <b>1 a 3 estrellas</b> van a tu buzón privado para resolver el problema antes de que dañe tu reputación.
+                {isEn 
+                  ? 'Ratings of 4 and 5 stars go straight to Google Maps. Ratings of 1 to 3 stars go to your private inbox so you can resolve issues immediately.'
+                  : 'Las calificaciones de 4 y 5 estrellas van a Google Maps. Las de 1 a 3 estrellas van a tu buzón privado para resolver el problema antes de que dañe tu reputación.'}
               </p>
             </div>
           </label>
@@ -602,11 +617,11 @@ export default function ActivatePlateClient({
             {authTab === 'login' ? (
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Tus Credenciales de Acceso
+                  {a.accountDetails}
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-400 mb-1">Correo Electrónico *</label>
+                  <label className="block text-[11px] font-bold text-gray-400 mb-1">{a.email}</label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
@@ -622,7 +637,7 @@ export default function ActivatePlateClient({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-400 mb-1">Contraseña *</label>
+                  <label className="block text-[11px] font-bold text-gray-400 mb-1">{a.password}</label>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
@@ -632,7 +647,7 @@ export default function ActivatePlateClient({
                       minLength={6}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Tu contraseña registrada"
+                      placeholder="••••••••"
                       className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
                     />
                   </div>
@@ -641,11 +656,11 @@ export default function ActivatePlateClient({
             ) : (
               <div className="space-y-3">
                 <div className="text-xs font-bold uppercase tracking-wider text-gray-300">
-                  Tus Datos de Acceso al Panel de Control
+                  {a.accountDetails}
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-400 mb-1">Nombre Completo *</label>
+                  <label className="block text-[11px] font-bold text-gray-400 mb-1">{a.fullName}</label>
                   <div className="relative">
                     <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
@@ -654,7 +669,7 @@ export default function ActivatePlateClient({
                       required={authTab === 'register'}
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Ej. Juan Pérez"
+                      placeholder={isEn ? "e.g. John Smith" : "Ej. Juan Pérez"}
                       className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
                     />
                   </div>
@@ -662,7 +677,7 @@ export default function ActivatePlateClient({
 
                 <div>
                   <label className="block text-[11px] font-bold text-gray-400 mb-1">
-                    WhatsApp Personal del Administrador *
+                    {a.personalPhone}
                   </label>
                   <div className="relative">
                     <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500" />
@@ -672,17 +687,17 @@ export default function ActivatePlateClient({
                       required={authTab === 'register'}
                       value={personalPhone}
                       onChange={(e) => setPersonalPhone(e.target.value)}
-                      placeholder="Ej. +504 9999-9999"
+                      placeholder={isEn ? "e.g. +1 555-0199" : "Ej. +504 9999-9999"}
                       className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-emerald-400 focus:border-emerald-400 focus:outline-none"
                     />
                   </div>
                   <span className="text-[10px] text-gray-400 mt-0.5 block">
-                    Para avisarte de quejas privadas o soporte directo de tu suscripción.
+                    {isEn ? 'For private alerts and direct account support.' : 'Para avisarte de quejas privadas o soporte directo de tu suscripción.'}
                   </span>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-400 mb-1">Correo Electrónico *</label>
+                  <label className="block text-[11px] font-bold text-gray-400 mb-1">{a.email}</label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
@@ -698,7 +713,7 @@ export default function ActivatePlateClient({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-400 mb-1">Crea tu Contraseña *</label>
+                  <label className="block text-[11px] font-bold text-gray-400 mb-1">{a.createPassword}</label>
                   <div className="relative">
                     <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                     <input
@@ -708,7 +723,7 @@ export default function ActivatePlateClient({
                       minLength={6}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder={isEn ? "Minimum 6 characters" : "Mínimo 6 caracteres"}
                       className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-xs placeholder:text-gray-500 focus:border-amber-400 focus:outline-none"
                     />
                   </div>
@@ -727,16 +742,7 @@ export default function ActivatePlateClient({
                       className="mt-0.5 w-4 h-4 rounded border-white/20 bg-black/40 text-amber-500 focus:ring-amber-500 cursor-pointer shrink-0"
                     />
                     <span className="leading-snug text-[11px]">
-                      Acepto los Términos del Servicio y la{' '}
-                      <a
-                        href="/privacidad"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-bold text-amber-400 underline hover:text-amber-300"
-                      >
-                        Política de Privacidad
-                      </a>{' '}
-                      de OmniTag.
+                      {a.acceptPrivacy}
                     </span>
                   </label>
                 </div>
@@ -754,16 +760,16 @@ export default function ActivatePlateClient({
           {submitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Procesando activación...</span>
+              <span>{a.activating}</span>
             </>
           ) : (
             <>
               <span>
                 {currentUser && hasExistingBusinesses && bizMode === 'existing' && activeExistingBiz
-                  ? `Vincular Placa a "${activeExistingBiz.businessName}"`
+                  ? (isEn ? `Link Plate to "${activeExistingBiz.businessName}"` : `Vincular Placa a "${activeExistingBiz.businessName}"`)
                   : noGooglePlace 
-                  ? 'Registrar Placa & Tramitar Alta en Google' 
-                  : 'Activar Placa & 1 Año de Servicio'}
+                  ? (isEn ? 'Register Plate & Process Google Listing' : 'Registrar Placa & Tramitar Alta en Google')
+                  : a.btnActivate}
               </span>
               <ArrowRight className="w-4 h-4" />
             </>

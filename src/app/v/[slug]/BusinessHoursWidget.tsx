@@ -9,14 +9,17 @@ interface BusinessHoursWidgetProps {
   legacyHoursText?: string | null
   theme: any
   btnRadiusClass?: string
+  locale?: 'es' | 'en'
 }
 
 export default function BusinessHoursWidget({
   scheduleConfig,
   legacyHoursText,
-  theme
+  theme,
+  locale = 'es'
 }: BusinessHoursWidgetProps) {
   const [showDetailedList, setShowDetailedList] = useState(false)
+  const isEn = locale === 'en'
 
   // Si no hay scheduleConfig estructurado, mostrar el texto directo
   if (!scheduleConfig || !scheduleConfig.days) {
@@ -29,15 +32,17 @@ export default function BusinessHoursWidget({
       >
         <Clock className="w-5 h-5 shrink-0 opacity-70 mt-0.5" style={{ color: theme.primary_color }} />
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Horario de Atención</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">
+            {isEn ? 'Business Hours' : 'Horario de Atención'}
+          </p>
           <p className="text-xs sm:text-sm font-medium mt-0.5" style={{ color: theme.text_color }}>{legacyHoursText}</p>
         </div>
       </div>
     )
   }
 
-  const liveStatus = getBusinessLiveStatus(scheduleConfig)
-  const summaryText = formatScheduleSummaryText(scheduleConfig)
+  const liveStatus = getBusinessLiveStatus(scheduleConfig, locale)
+  const summaryText = formatScheduleSummaryText(scheduleConfig, locale)
 
   return (
     <div 
@@ -72,7 +77,7 @@ export default function BusinessHoursWidget({
             className="text-[11px] font-bold opacity-70 hover:opacity-100 transition flex items-center gap-1 cursor-pointer px-2 py-1 rounded-lg hover:bg-black/5"
             style={{ color: theme.primary_color }}
           >
-            <span>{showDetailedList ? 'Ver resumen' : 'Ver días'}</span>
+            <span>{showDetailedList ? (isEn ? 'View summary' : 'Ver resumen') : (isEn ? 'View days' : 'Ver días')}</span>
             {showDetailedList ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
         </div>
@@ -82,10 +87,10 @@ export default function BusinessHoursWidget({
           <div className="flex items-start gap-2.5 pt-0.5">
             <Clock className="w-4 h-4 shrink-0 opacity-70 mt-0.5" style={{ color: theme.primary_color }} />
             <div className="text-xs leading-relaxed font-medium" style={{ color: theme.text_color }}>
-              <p className="font-bold opacity-90">{summaryText || 'Consultar horario directo con el negocio'}</p>
+              <p className="font-bold opacity-90">{summaryText || (isEn ? 'Check schedule directly with business' : 'Consultar horario directo con el negocio')}</p>
               {scheduleConfig.lunch_break?.enabled && (
                 <p className="text-[11px] opacity-70 mt-0.5">
-                  🥗 Pausa de almuerzo: {scheduleConfig.lunch_break.start} a {scheduleConfig.lunch_break.end}
+                  🥗 {isEn ? 'Lunch break' : 'Pausa de almuerzo'}: {scheduleConfig.lunch_break.start} - {scheduleConfig.lunch_break.end}
                 </p>
               )}
             </div>
@@ -96,7 +101,7 @@ export default function BusinessHoursWidget({
             className="pt-2 border-t border-black/5 space-y-1 text-xs animate-in fade-in"
           >
             <p className="text-[10px] font-extrabold uppercase tracking-wider opacity-60 pb-1">
-              Horario Detallado
+              {isEn ? 'Detailed Schedule' : 'Horario Detallado'}
             </p>
 
             <div className="space-y-1">
@@ -116,7 +121,7 @@ export default function BusinessHoursWidget({
                         className="text-[9px] px-1.5 py-0.2 rounded-full font-black uppercase text-white shadow-2xs"
                         style={{ backgroundColor: theme.primary_color }}
                       >
-                        Hoy
+                        {isEn ? 'Today' : 'Hoy'}
                       </span>
                     )}
                   </div>
@@ -128,7 +133,7 @@ export default function BusinessHoursWidget({
                       </span>
                     ) : (
                       <span className="text-red-500 font-bold text-[11px]">
-                        Cerrado
+                        {isEn ? 'Closed' : 'Cerrado'}
                       </span>
                     )}
                   </div>
@@ -138,7 +143,7 @@ export default function BusinessHoursWidget({
 
             {scheduleConfig.lunch_break?.enabled && (
               <p className="text-[10px] opacity-70 italic pt-1.5">
-                🥗 Pausa de comida: {scheduleConfig.lunch_break.start} a {scheduleConfig.lunch_break.end}
+                🥗 {isEn ? 'Lunch break' : 'Pausa de comida'}: {scheduleConfig.lunch_break.start} - {scheduleConfig.lunch_break.end}
               </p>
             )}
           </div>

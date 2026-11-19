@@ -21,6 +21,8 @@ import {
 } from 'lucide-react'
 import { createPublicBooking, createSpecialistReview, lookupCustomerBookings } from './actions'
 import { generateTimeSlotsForDate, isDayOpen } from '@/lib/schedule'
+import { useTranslation } from '@/lib/i18n/context'
+import LanguageSelector from '@/components/LanguageSelector'
 
 interface Specialist {
   id: string
@@ -94,11 +96,15 @@ export default function BookingClient({
   reviews: Review[]
   existingBookings?: any[]
 }) {
+  const { dict, locale } = useTranslation()
+  const b = dict.publicBooking
+  const isEn = locale === 'en'
+
   const effectiveServices: Service[] = services && services.length > 0 ? services : [
     {
       id: 'general-consultation',
-      name: 'Atención General / Consulta',
-      description: 'Cita general presencial en el local.',
+      name: isEn ? 'General Consultation / Visit' : 'Atención General / Consulta',
+      description: isEn ? 'General in-person consultation.' : 'Cita general presencial en el local.',
       price: 0,
       duration_minutes: 45
     }
@@ -232,9 +238,9 @@ export default function BookingClient({
     const isOpen = isDayOpen(business?.schedule_config, dateStr)
     return {
       dateStr,
-      dayName: i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : d.toLocaleDateString('es-HN', { weekday: 'short' }),
+      dayName: i === 0 ? (isEn ? 'Today' : 'Hoy') : i === 1 ? (isEn ? 'Tomorrow' : 'Mañana') : d.toLocaleDateString(isEn ? 'en-US' : 'es-HN', { weekday: 'short' }),
       dayNumber: d.getDate(),
-      monthName: d.toLocaleDateString('es-HN', { month: 'short' }),
+      monthName: d.toLocaleDateString(isEn ? 'en-US' : 'es-HN', { month: 'short' }),
       isOpen
     }
   })
@@ -371,7 +377,9 @@ export default function BookingClient({
       : 'Sin costo'
 
     const waText = encodeURIComponent(
-      `¡Hola *${business?.name || 'Negocio'}*! Acabo de agendar mi cita online para:\n\n${meta.icon} *${meta.serviceSingular}:* ${serviceName}\n👤 *Profesional:* ${specialistText}\n📅 *Fecha:* ${bookingSuccess.date}\n⏰ *Hora:* ${bookingSuccess.time}\n👤 *${meta.clientLabel}:* ${bookingSuccess.customerName || ''} (${bookingSuccess.customerPhone || ''})\n\n¿Me confirman la recepción? ¡Gracias!`
+      isEn
+        ? `Hello *${business?.name || 'Business'}*! I just booked my appointment online for:\n\n${meta.icon} *${meta.serviceSingular}:* ${serviceName}\n👤 *Professional:* ${specialistText}\n📅 *Date:* ${bookingSuccess.date}\n⏰ *Time:* ${bookingSuccess.time}\n👤 *${meta.clientLabel}:* ${bookingSuccess.customerName || ''} (${bookingSuccess.customerPhone || ''})\n\nCould you please confirm? Thank you!`
+        : `¡Hola *${business?.name || 'Negocio'}*! Acabo de agendar mi cita online para:\n\n${meta.icon} *${meta.serviceSingular}:* ${serviceName}\n👤 *Profesional:* ${specialistText}\n📅 *Fecha:* ${bookingSuccess.date}\n⏰ *Hora:* ${bookingSuccess.time}\n👤 *${meta.clientLabel}:* ${bookingSuccess.customerName || ''} (${bookingSuccess.customerPhone || ''})\n\n¿Me confirman la recepción? ¡Gracias!`
     )
     const waUrl = business?.whatsapp 
       ? `https://wa.me/${business.whatsapp.replace(/\D/g, '')}?text=${waText}`
@@ -384,9 +392,9 @@ export default function BookingClient({
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-xl font-black text-gray-900">¡Cita Agendada con Éxito!</h3>
+          <h3 className="text-xl font-black text-gray-900">{b.bookingSuccess || (isEn ? 'Appointment Booked Successfully!' : '¡Cita Agendada con Éxito!')}</h3>
           <p className="text-xs text-gray-500">
-            Tu turno ha sido apartado en {business?.name || 'el negocio'}.
+            {isEn ? `Your slot has been reserved at ${business?.name || 'the business'}.` : `Tu turno ha sido apartado en ${business?.name || 'el negocio'}.`}
           </p>
         </div>
 
@@ -397,12 +405,12 @@ export default function BookingClient({
             <span className="font-bold text-gray-900">{serviceName} ({servicePrice})</span>
           </div>
           <div className="flex justify-between border-b border-gray-200 pb-2">
-            <span className="text-gray-500">Profesional:</span>
+            <span className="text-gray-500">{isEn ? 'Professional:' : 'Profesional:'}</span>
             <span className="font-bold text-gray-900">{specialistText}</span>
           </div>
           <div className="flex justify-between border-b border-gray-200 pb-2">
-            <span className="text-gray-500">Fecha y Hora:</span>
-            <span className="font-bold text-purple-700">{bookingSuccess.date} a las {bookingSuccess.time}</span>
+            <span className="text-gray-500">{isEn ? 'Date & Time:' : 'Fecha y Hora:'}</span>
+            <span className="font-bold text-purple-700">{bookingSuccess.date} {isEn ? 'at' : 'a las'} {bookingSuccess.time}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">{meta.clientLabel}:</span>
@@ -419,14 +427,14 @@ export default function BookingClient({
             className="w-full bg-[#25D366] hover:bg-[#1EBE57] text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-lg transition flex items-center justify-center gap-2 text-sm"
           >
             <MessageCircle className="w-5 h-5 fill-white" />
-            <span>Confirmar en WhatsApp</span>
+            <span>{isEn ? 'Confirm on WhatsApp' : 'Confirmar en WhatsApp'}</span>
           </a>
 
           <button
             onClick={() => setBookingSuccess(null)}
             className="text-xs text-gray-500 hover:text-black font-semibold pt-1"
           >
-            ← Agendar otra cita
+            ← {isEn ? 'Book another appointment' : 'Agendar otra cita'}
           </button>
         </div>
       </div>
@@ -454,14 +462,15 @@ export default function BookingClient({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-20">
-      {/* Botón Superior para Consultar Citas Existentes */}
-      <div className="flex justify-end">
+      {/* Barra Superior con Selector de Idioma y Consulta de Citas */}
+      <div className="flex items-center justify-between gap-2">
+        <LanguageSelector variant="pill" />
         <button
           type="button"
           onClick={() => setShowLookupModal(true)}
           className="text-xs font-extrabold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
         >
-          <span>🔍 ¿Ya tienes una cita agendada? Consultar</span>
+          <span>🔍 {isEn ? 'Already booked? Look up' : '¿Ya tienes una cita agendada? Consultar'}</span>
         </button>
       </div>
       
@@ -470,9 +479,9 @@ export default function BookingClient({
         <div className="flex items-center justify-between">
           <h2 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
             <span className="w-6 h-6 rounded-lg bg-black text-white text-xs flex items-center justify-center font-bold">1</span>
-            Elige tu {meta.serviceSingular}
+            {isEn ? `Select your ${meta.serviceSingular}` : `Elige tu ${meta.serviceSingular}`}
           </h2>
-          <span className="text-xs text-gray-400 font-medium">{effectiveServices.length} disponibles</span>
+          <span className="text-xs text-gray-400 font-medium">{effectiveServices.length} {isEn ? 'available' : 'disponibles'}</span>
         </div>
 
         <div className="grid grid-cols-1 gap-2.5">
@@ -515,7 +524,7 @@ export default function BookingClient({
           <div className="flex items-center justify-between">
             <h2 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
               <span className="w-6 h-6 rounded-lg bg-black text-white text-xs flex items-center justify-center font-bold">2</span>
-              Elige a tu Profesional ({meta.staffLabel})
+              {isEn ? `Select Specialist (${meta.staffLabel})` : `Elige a tu Profesional (${meta.staffLabel})`}
             </h2>
           </div>
 
@@ -534,8 +543,8 @@ export default function BookingClient({
                 <Sparkles className="w-6 h-6 text-yellow-500" />
               </div>
               <div>
-                <p className="font-bold text-xs sm:text-sm text-gray-900">Cualquiera Disponible</p>
-                <p className="text-[11px] text-gray-500">Atención más rápida</p>
+                <p className="font-bold text-xs sm:text-sm text-gray-900">{b.anySpecialist}</p>
+                <p className="text-[11px] text-gray-500">{isEn ? 'Fastest booking' : 'Atención más rápida'}</p>
               </div>
             </button>
 
@@ -580,7 +589,7 @@ export default function BookingClient({
                     className="text-[10px] font-bold text-purple-700 hover:underline flex items-center gap-1 self-end pt-1"
                   >
                     <MessageSquare className="w-3 h-3" />
-                    <span>Calificar a {spec.name.split(' ')[0]}</span>
+                    <span>{isEn ? `Rate ${spec.name.split(' ')[0]}` : `Calificar a ${spec.name.split(' ')[0]}`}</span>
                   </button>
                 </div>
               )
@@ -593,7 +602,7 @@ export default function BookingClient({
       <section className="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-200 space-y-4">
         <h2 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
           <span className="w-6 h-6 rounded-lg bg-black text-white text-xs flex items-center justify-center font-bold">3</span>
-          Fecha y Horario
+          {b.step3}
         </h2>
 
         {/* Días */}
@@ -615,7 +624,7 @@ export default function BookingClient({
               <p className="text-lg font-black">{d.dayNumber}</p>
               <p className="text-[10px] uppercase opacity-75">{d.monthName}</p>
               {!d.isOpen && (
-                <span className="text-[8px] font-bold text-red-500 block mt-0.5">Cerrado</span>
+                <span className="text-[8px] font-bold text-red-500 block mt-0.5">{isEn ? 'Closed' : 'Cerrado'}</span>
               )}
             </button>
           ))}
@@ -624,18 +633,18 @@ export default function BookingClient({
         {/* Horarios */}
         <div>
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-            Horas disponibles:
+            {b.availableSlots}
           </label>
 
           {!isSelectedDayOpen ? (
             <div className="p-6 bg-red-50 text-red-800 rounded-2xl border border-red-200 text-center text-xs font-semibold space-y-1">
-              <p className="font-extrabold text-sm">🚪 Negocio Cerrado este día</p>
-              <p className="text-red-600 font-normal">Este día no está habilitado para atención. Por favor selecciona otro día en el calendario.</p>
+              <p className="font-extrabold text-sm">{isEn ? '🚪 Business Closed on this day' : '🚪 Negocio Cerrado este día'}</p>
+              <p className="text-red-600 font-normal">{b.closedDay}</p>
             </div>
           ) : timeSlots.length === 0 ? (
             <div className="p-6 bg-gray-50 text-gray-600 rounded-2xl border border-gray-200 text-center text-xs space-y-1">
-              <p className="font-bold">No hay horarios disponibles configurados</p>
-              <p className="text-gray-400 font-normal">Por favor consulta directamente con el negocio.</p>
+              <p className="font-bold">{b.noSlots}</p>
+              <p className="text-gray-400 font-normal">{isEn ? 'Please check directly with the business.' : 'Por favor consulta directamente con el negocio.'}</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -660,17 +669,17 @@ export default function BookingClient({
                     }`}
                     title={
                       isPast 
-                        ? 'Este horario ya transcurrió hoy' 
+                        ? (isEn ? 'Time has passed today' : 'Este horario ya transcurrió hoy')
                         : isOccupied 
-                        ? 'Horario ocupado' 
-                        : `Disponible (${formatDuration(currentServiceDuration)})`
+                        ? (isEn ? 'Time slot occupied' : 'Horario ocupado')
+                        : (isEn ? `Available (${formatDuration(currentServiceDuration)})` : `Disponible (${formatDuration(currentServiceDuration)})`)
                     }
                   >
                     <span>{time}</span>
                     {isPast ? (
-                      <span className="text-[8px] no-underline font-semibold text-gray-400">Pasado</span>
+                      <span className="text-[8px] no-underline font-semibold text-gray-400">{isEn ? 'Passed' : 'Pasado'}</span>
                     ) : isOccupied ? (
-                      <span className="text-[8px] no-underline font-semibold text-red-500">Ocupado</span>
+                      <span className="text-[8px] no-underline font-semibold text-red-500">{isEn ? 'Occupied' : 'Ocupado'}</span>
                     ) : null}
                   </button>
                 )
@@ -684,27 +693,27 @@ export default function BookingClient({
       <form onSubmit={handleBookingSubmit} className="bg-white p-5 sm:p-6 rounded-3xl shadow-xs border border-gray-200 space-y-4">
         <h2 className="text-base sm:text-lg font-black text-gray-900 flex items-center gap-2">
           <span className="w-6 h-6 rounded-lg bg-black text-white text-xs flex items-center justify-center font-bold">4</span>
-          Datos de Contacto ({meta.clientLabel})
+          {b.step4} ({meta.clientLabel})
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre Completo *</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{b.yourName}</label>
             <input
               type="text"
               required
-              placeholder="Ej. Mario Rivera"
+              placeholder={isEn ? 'E.g. John Doe' : 'Ej. Mario Rivera'}
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp / Teléfono *</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{b.yourPhone}</label>
             <input
               type="tel"
               required
-              placeholder="+504 9988-6256"
+              placeholder={isEn ? '+1 (555) 012-3456' : '+504 9988-6256'}
               value={customerPhone}
               onChange={(e) => setCustomerPhone(e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
@@ -713,10 +722,10 @@ export default function BookingClient({
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Nota Especial (Opcional)</label>
+          <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{b.notes}</label>
           <input
             type="text"
-            placeholder="Ej. Traigo corte de referencia, primera vez..."
+            placeholder={isEn ? 'E.g. First time visiting, special request...' : 'Ej. Traigo corte de referencia, primera vez...'}
             value={customerNotes}
             onChange={(e) => setCustomerNotes(e.target.value)}
             className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
@@ -734,14 +743,14 @@ export default function BookingClient({
               className="mt-0.5 w-4 h-4 rounded border-gray-300 text-black cursor-pointer shrink-0" 
             />
             <span>
-              Acepto los términos de reserva y el tratamiento de mis datos según la{' '}
+              {isEn ? 'I accept the booking terms and the processing of my data according to the ' : 'Acepto los términos de reserva y el tratamiento de mis datos según la '}
               <a 
                 href="/privacidad" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="font-bold text-black underline hover:text-gray-700"
               >
-                Política de Privacidad
+                {isEn ? 'Privacy Policy' : 'Política de Privacidad'}
               </a>.
             </span>
           </label>
@@ -753,7 +762,7 @@ export default function BookingClient({
           className="w-full bg-black hover:bg-gray-800 text-white font-extrabold py-4 px-6 rounded-2xl shadow-xl transition flex items-center justify-center gap-2 text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Calendar className="w-5 h-5" />
-          <span>{isSubmitting ? 'Apartando turno...' : 'Confirmar Reserva de Turno'}</span>
+          <span>{isSubmitting ? (isEn ? 'Reserving slot...' : 'Apartando turno...') : (b.btnBookWhatsapp || (isEn ? 'Confirm Appointment via WhatsApp' : 'Confirmar Reserva de Turno'))}</span>
         </button>
       </form>
 
@@ -777,20 +786,20 @@ export default function BookingClient({
                 )}
               </div>
               <h3 className="font-extrabold text-gray-900 text-base">
-                Calificar a {reviewModalSpecialist.name}
+                {isEn ? `Rate ${reviewModalSpecialist.name}` : `Calificar a ${reviewModalSpecialist.name}`}
               </h3>
               <p className="text-xs text-gray-500">{reviewModalSpecialist.role_title}</p>
             </div>
 
             {reviewSuccess ? (
               <div className="p-4 bg-emerald-50 text-emerald-800 rounded-2xl text-center text-xs font-bold">
-                ¡Gracias por tu opinión! Tu calificación ha sido registrada.
+                {isEn ? 'Thank you for your feedback! Your rating has been recorded.' : '¡Gracias por tu opinión! Tu calificación ha sido registrada.'}
               </div>
             ) : (
               <form onSubmit={handleReviewSubmit} className="space-y-4 text-left">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-2 text-center">
-                    ¿Cuántas estrellas le das?
+                    {isEn ? 'How many stars do you give?' : '¿Cuántas estrellas le das?'}
                   </label>
                   <div className="flex items-center justify-center gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -807,11 +816,11 @@ export default function BookingClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Tu Nombre</label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{isEn ? 'Your Name' : 'Tu Nombre'}</label>
                   <input
                     type="text"
                     required
-                    placeholder="Ej. Roberto Martínez"
+                    placeholder={isEn ? 'E.g. Robert Smith' : 'Ej. Roberto Martínez'}
                     value={reviewerName}
                     onChange={(e) => setReviewerName(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
@@ -820,27 +829,31 @@ export default function BookingClient({
 
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
-                    WhatsApp / Teléfono {reviewRating <= 3 ? '(Para que la gerencia pueda contactarte)' : '(Opcional)'}
+                    {isEn 
+                      ? `WhatsApp / Phone ${reviewRating <= 3 ? '(For management follow-up)' : '(Optional)'}` 
+                      : `WhatsApp / Teléfono ${reviewRating <= 3 ? '(Para que la gerencia pueda contactarte)' : '(Opcional)'}`}
                   </label>
                   <input
                     type="tel"
-                    placeholder="+504 9988-6256"
+                    placeholder={isEn ? '+1 (555) 012-3456' : '+504 9988-6256'}
                     value={reviewerPhone}
                     onChange={(e) => setReviewerPhone(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
                   />
                   {reviewRating <= 3 && (
                     <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-xl border border-amber-200 mt-1">
-                      🛡️ Tu opinión será tratada en privado por la gerencia para ofrecerte una disculpa o solución.
+                      {isEn 
+                        ? '🛡️ Your feedback will be handled privately by management to resolve any issues.' 
+                        : '🛡️ Tu opinión será tratada en privado por la gerencia para ofrecerte una disculpa o solución.'}
                     </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Comentario sobre la atención</label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase mb-1">{isEn ? 'Service Feedback' : 'Comentario sobre la atención'}</label>
                   <textarea
                     rows={3}
-                    placeholder="Escribe tu experiencia..."
+                    placeholder={isEn ? 'Share your experience...' : 'Escribe tu experiencia...'}
                     value={reviewerComment}
                     onChange={(e) => setReviewerComment(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none resize-none"
@@ -851,7 +864,7 @@ export default function BookingClient({
                   type="submit"
                   className="w-full bg-black hover:bg-gray-800 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition cursor-pointer shadow-md"
                 >
-                  Publicar Calificación
+                  {isEn ? 'Submit Review' : 'Publicar Calificación'}
                 </button>
               </form>
             )}
@@ -878,10 +891,10 @@ export default function BookingClient({
                 <Search className="w-6 h-6" />
               </div>
               <h3 className="font-extrabold text-gray-900 text-base">
-                Consultar Mis Citas Agendadas
+                {b.myBookings || (isEn ? 'Look Up My Appointments' : 'Consultar Mis Citas Agendadas')}
               </h3>
               <p className="text-xs text-gray-500">
-                Ingresa tu número de WhatsApp para ver tus reservas en <b>{business.name}</b>.
+                {isEn ? `Enter your WhatsApp number to check your appointments at ${business.name}.` : `Ingresa tu número de WhatsApp para ver tus reservas en ${business.name}.`}
               </p>
             </div>
 
@@ -890,7 +903,7 @@ export default function BookingClient({
                 <input
                   type="tel"
                   required
-                  placeholder="Ej. 9988-6256"
+                  placeholder={isEn ? 'E.g. 555-0123' : 'Ej. 9988-6256'}
                   value={lookupPhone}
                   onChange={(e) => setLookupPhone(e.target.value)}
                   className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-300 text-xs font-medium focus:border-black focus:outline-none"
@@ -900,7 +913,7 @@ export default function BookingClient({
                   disabled={lookupLoading}
                   className="bg-black hover:bg-gray-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer disabled:opacity-50"
                 >
-                  {lookupLoading ? 'Buscando...' : 'Buscar'}
+                  {lookupLoading ? (isEn ? 'Searching...' : 'Buscando...') : (isEn ? 'Search' : 'Buscar')}
                 </button>
               </div>
             </form>
@@ -910,21 +923,21 @@ export default function BookingClient({
               <div className="space-y-2.5 max-h-64 overflow-y-auto pt-2">
                 {myBookings.length === 0 ? (
                   <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 text-center text-xs text-gray-500">
-                    No encontramos citas registradas con ese número.
+                    {isEn ? 'No appointments found with that phone number.' : 'No encontramos citas registradas con ese número.'}
                   </div>
                 ) : (
                   myBookings.map((b) => (
                     <div key={b.id} className="p-3.5 bg-gray-50 rounded-2xl border border-gray-200 space-y-1 text-xs text-left">
                       <div className="flex justify-between items-start">
-                        <span className="font-extrabold text-gray-900">{b.appointment_services?.name || 'Servicio General'}</span>
+                        <span className="font-extrabold text-gray-900">{b.appointment_services?.name || (isEn ? 'General Service' : 'Servicio General')}</span>
                         <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
                           b.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'
                         }`}>
-                          {b.status === 'confirmed' ? 'Confirmada' : b.status}
+                          {b.status === 'confirmed' ? (isEn ? 'Confirmed' : 'Confirmada') : b.status}
                         </span>
                       </div>
-                      <p className="text-purple-700 font-bold">📅 {b.booking_date} a las {b.booking_time}</p>
-                      <p className="text-gray-500 text-[11px]">👤 Especialista: {b.specialists?.name || 'Cualquiera'}</p>
+                      <p className="text-purple-700 font-bold">📅 {b.booking_date} {isEn ? 'at' : 'a las'} {b.booking_time}</p>
+                      <p className="text-gray-500 text-[11px]">👤 {isEn ? 'Specialist' : 'Especialista'}: {b.specialists?.name || (isEn ? 'Any' : 'Cualquiera')}</p>
                     </div>
                   ))
                 )}

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { Sparkles, Gift, Check, Clock, AlertCircle, ShieldCheck, Lock, RefreshCw, X, ExternalLink } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
+import LanguageSelector from '@/components/LanguageSelector'
 
 interface WheelItem {
   id: string
@@ -31,13 +33,17 @@ export default function WheelPublicClient({
   table: initialTable,
   brandName = 'OmniTag'
 }: WheelPublicClientProps) {
+  const { dict, locale } = useTranslation()
+  const w = dict.publicWheel || {}
+  const isEn = locale === 'en'
+
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [table, setTable] = useState(initialTable || '')
   const [showLeadModal, setShowLeadModal] = useState(false)
   const [isSpinning, setIsSpinning] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
-  const [spinStatus, setSpinStatus] = useState('✨ Toca GIRAR para probar tu suerte')
+  const [spinStatus, setSpinStatus] = useState(isEn ? '✨ Tap SPIN to try your luck' : '✨ Toca GIRAR para probar tu suerte')
   const [acceptedTerms, setAcceptedTerms] = useState(true)
   
   // Estado del Premio Ganado
@@ -75,11 +81,11 @@ export default function WheelPublicClient({
           setHasSpunSession(true)
           if (parsed.status === 'claimed' && parsed.wonPrize) {
             setWonPrize(parsed.wonPrize)
-            setSpinStatus('🎁 Ya reclamaste tu cupón de hoy')
+            setSpinStatus(isEn ? '🎁 You already claimed your coupon for today' : '🎁 Ya reclamaste tu cupón de hoy')
           } else if (parsed.status === 'pending_claim' && parsed.prize) {
             setPendingPrize(parsed.prize)
             setShowLeadModal(true)
-            setSpinStatus(`🎉 Tienes un premio pendiente: ${parsed.prize.label}`)
+            setSpinStatus(isEn ? `🎉 You have a pending prize: ${parsed.prize.label}` : `🎉 Tienes un premio pendiente: ${parsed.prize.label}`)
             // Calcular ángulo para apuntar al premio guardado
             if (items.length > 0 && parsed.winningIndex !== undefined) {
               const arcSize = (2 * Math.PI) / items.length
@@ -284,7 +290,7 @@ export default function WheelPublicClient({
   const handleInitiateSpin = () => {
     if (isClosed || isSpinning) return
     if (wonPrize) {
-      setErrorMsg('Ya has reclamado tu cupón de hoy. ¡Muestra tu pantalla en caja!')
+      setErrorMsg(isEn ? 'You already claimed your coupon for today. Show this screen at the counter!' : 'Ya has reclamado tu cupón de hoy. ¡Muestra tu pantalla en caja!')
       return
     }
     if (hasSpunSession && pendingPrize) {
@@ -299,7 +305,7 @@ export default function WheelPublicClient({
     if (isSpinning || items.length === 0) return
     setIsSpinning(true)
     setErrorMsg('')
-    setSpinStatus('⚡ Girando ruleta...')
+    setSpinStatus(w.spinning || (isEn ? '⚡ Spinning wheel...' : '⚡ Girando ruleta...'))
 
     // 1. Selección ponderada inicial para animación fluida
     const totalWeight = items.reduce((sum, it) => sum + (parseInt(it.probability_weight as any) || 1), 0)
@@ -371,7 +377,7 @@ export default function WheelPublicClient({
         requestAnimationFrame(animate)
       } else {
         setIsSpinning(false)
-        setSpinStatus(`🎉 ¡Ganaste ${wonItem.icon || '🎁'} ${wonItem.label}!`)
+        setSpinStatus(isEn ? `🎉 You won ${wonItem.icon || '🎁'} ${wonItem.label}!` : `🎉 ¡Ganaste ${wonItem.icon || '🎁'} ${wonItem.label}!`)
         playWinFanfare()
         launchConfetti()
         
@@ -411,7 +417,7 @@ export default function WheelPublicClient({
 
       if (!res.ok) {
         setIsClaiming(false)
-        setErrorMsg(data.error || 'No se pudo generar el cupón.')
+        setErrorMsg(data.error || (isEn ? 'Could not generate coupon.' : 'No se pudo generar el cupón.'))
         return
       }
 
@@ -433,10 +439,10 @@ export default function WheelPublicClient({
       setIsClaiming(false)
       setShowLeadModal(false)
       setWonPrize(generatedPrize)
-      setSpinStatus('🎁 ¡Cupón generado con éxito!')
+      setSpinStatus(isEn ? '🎁 Coupon generated successfully!' : '🎁 ¡Cupón generado con éxito!')
     } catch (err: any) {
       setIsClaiming(false)
-      setErrorMsg(err.message || 'Error de conexión.')
+      setErrorMsg(err.message || (isEn ? 'Connection error.' : 'Error de conexión.'))
     }
   }
 
@@ -510,14 +516,14 @@ export default function WheelPublicClient({
       })
       const data = await res.json()
       if (!res.ok) {
-        setRedeemError(data.error || 'Error al validar cupón.')
+        setRedeemError(data.error || (isEn ? 'Error validating coupon.' : 'Error al validar cupón.'))
         setIsRedeeming(false)
         return
       }
       setRedeemedSuccess(true)
       setIsRedeeming(false)
     } catch {
-      setRedeemError('Error de conexión.')
+      setRedeemError(isEn ? 'Connection error.' : 'Error de conexión.')
       setIsRedeeming(false)
     }
   }
@@ -526,20 +532,23 @@ export default function WheelPublicClient({
   if (isClosed) {
     return (
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-5">
+        <div className="flex justify-end">
+          <LanguageSelector variant="dark" />
+        </div>
         <div className="w-16 h-16 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-3xl flex items-center justify-center mx-auto text-3xl shadow-inner">
           🎰
         </div>
         <div className="space-y-2">
           <h2 className="text-xl sm:text-2xl font-black text-white">
-            {wheel.name || 'Ruleta de Premios'}
+            {wheel.name || w.title || (isEn ? 'Prize Wheel' : 'Ruleta de Premios')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
             {closedReason}
           </p>
         </div>
         <div className="p-4 bg-slate-950/60 rounded-2xl border border-slate-800/80 text-xs text-slate-400 space-y-1">
-          <p className="font-bold text-slate-300">💡 ¿Quieres consultar otros servicios?</p>
-          <p>Pide a tu mesero tu tarjeta de sellos o consulta nuestro catálogo en la mesa.</p>
+          <p className="font-bold text-slate-300">{isEn ? '💡 Want to check other services?' : '💡 ¿Quieres consultar otros servicios?'}</p>
+          <p>{isEn ? 'Ask your server for your stamp card or browse our table menu.' : 'Pide a tu mesero tu tarjeta de sellos o consulta nuestro catálogo en la mesa.'}</p>
         </div>
       </div>
     )
@@ -554,18 +563,21 @@ export default function WheelPublicClient({
 
       {/* Cabecera VIP */}
       <div className="text-center relative z-10 space-y-1.5">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[11px] font-black uppercase tracking-widest">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-          <span>{table ? `Mesa ${table}` : 'Premio de Visita Exclusivo'}</span>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[11px] font-black uppercase tracking-widest">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span>{table ? (isEn ? `Table ${table}` : `Mesa ${table}`) : (isEn ? 'Exclusive Visit Reward' : 'Premio de Visita Exclusivo')}</span>
+          </div>
+          <LanguageSelector variant="dark" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center justify-center gap-2">
           <span>🎰</span>
           <span className="bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 bg-clip-text text-transparent">
-            {wheel.name || 'Ruleta de la Fortuna'}
+            {wheel.name || w.title || (isEn ? 'Wheel of Fortune' : 'Ruleta de la Fortuna')}
           </span>
         </h1>
         <p className="text-xs text-slate-400 max-w-xs mx-auto">
-          {wheel.description || 'Gira y desbloquea un beneficio instantáneo en tu visita.'}
+          {wheel.description || w.subtitle || (isEn ? 'Spin to unlock an instant treat during your visit.' : 'Gira y desbloquea un beneficio instantáneo en tu visita.')}
         </p>
       </div>
 
@@ -603,20 +615,20 @@ export default function WheelPublicClient({
             {wonPrize ? (
               <>
                 <span className="text-base sm:text-lg">🎟️</span>
-                <span className="tracking-tighter font-extrabold leading-none mt-0.5 text-[10px] sm:text-xs">CUPÓN</span>
-                <span className="text-[7px] sm:text-[8px] font-black opacity-80 mt-0.5">LISTO</span>
+                <span className="tracking-tighter font-extrabold leading-none mt-0.5 text-[10px] sm:text-xs">{isEn ? 'COUPON' : 'CUPÓN'}</span>
+                <span className="text-[7px] sm:text-[8px] font-black opacity-80 mt-0.5">{isEn ? 'READY' : 'LISTO'}</span>
               </>
             ) : hasSpunSession && pendingPrize ? (
               <>
                 <span className="text-base sm:text-lg">🎁</span>
-                <span className="tracking-tighter font-extrabold leading-none mt-0.5 text-[10px] sm:text-xs">PREMIO</span>
-                <span className="text-[7px] sm:text-[8px] font-black opacity-80 mt-0.5">GUARDAR</span>
+                <span className="tracking-tighter font-extrabold leading-none mt-0.5 text-[10px] sm:text-xs">{isEn ? 'PRIZE' : 'PREMIO'}</span>
+                <span className="text-[7px] sm:text-[8px] font-black opacity-80 mt-0.5">{isEn ? 'SAVE' : 'GUARDAR'}</span>
               </>
             ) : (
               <>
                 <span className="text-base sm:text-lg">🎲</span>
-                <span className="tracking-tighter font-extrabold leading-none mt-0.5">GIRAR</span>
-                <span className="text-[8px] font-black opacity-80 mt-0.5">GRATIS</span>
+                <span className="tracking-tighter font-extrabold leading-none mt-0.5">{isEn ? 'SPIN' : 'GIRAR'}</span>
+                <span className="text-[8px] font-black opacity-80 mt-0.5">{isEn ? 'FREE' : 'GRATIS'}</span>
               </>
             )}
           </button>
@@ -643,27 +655,27 @@ export default function WheelPublicClient({
           </div>
           <div>
             <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-900/60 border border-emerald-500/40 px-3 py-0.5 rounded-full">
-              ¡Premio Desbloqueado!
+              {isEn ? 'Prize Unlocked!' : '¡Premio Desbloqueado!'}
             </span>
             <h3 className="text-xl sm:text-2xl font-black text-white mt-1.5">
               {wonPrize.prize.label}
             </h3>
             <p className="text-xs text-slate-300 mt-0.5 max-w-xs mx-auto">
-              Muestra esta pantalla a tu mesero o cajero para validar tu beneficio.
+              {isEn ? 'Show this screen to your server or cashier to claim your reward.' : 'Muestra esta pantalla a tu mesero o cajero para validar tu beneficio.'}
             </p>
           </div>
 
           {/* Cupón con Código Único & Cuenta Regresiva */}
           <div className="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between gap-3 max-w-sm mx-auto shadow-inner">
             <div className="text-left">
-              <p className="text-[9px] uppercase font-bold text-slate-400">Código Único</p>
+              <p className="text-[9px] uppercase font-bold text-slate-400">{w.codeLabel || (isEn ? 'Unique Code' : 'Código Único')}</p>
               <p className="text-base font-mono font-black text-amber-400 tracking-wider">
                 {wonPrize.couponCode}
               </p>
             </div>
             <div className="text-right bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/30">
-              <p className="text-[9px] uppercase font-bold text-amber-400">Válido Durante</p>
-              <p className="text-xs font-mono font-black text-amber-300">2 Horas</p>
+              <p className="text-[9px] uppercase font-bold text-amber-400">{isEn ? 'Valid For' : 'Válido Durante'}</p>
+              <p className="text-xs font-mono font-black text-amber-300">{isEn ? '2 Hours' : '2 Horas'}</p>
             </div>
           </div>
 
@@ -676,12 +688,12 @@ export default function WheelPublicClient({
                 rel="noreferrer"
                 className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 hover:scale-[1.02] cursor-pointer"
               >
-                <span>🎁 Ver Mi Certificado / Gift Card</span>
+                <span>{isEn ? '🎁 View My Gift Card / Certificate' : '🎁 Ver Mi Certificado / Gift Card'}</span>
                 <ExternalLink className="w-4 h-4" />
               </a>
               {wonPrize.prize?.security_pin && (
                 <p className="text-[10px] text-amber-300/80 font-mono mt-1 text-center">
-                  PIN de Canje: <span className="font-bold text-white bg-black/40 px-2 py-0.5 rounded">{wonPrize.prize.security_pin}</span>
+                  {isEn ? 'Redemption PIN:' : 'PIN de Canje:'} <span className="font-bold text-white bg-black/40 px-2 py-0.5 rounded">{wonPrize.prize.security_pin}</span>
                 </p>
               )}
             </div>
@@ -692,7 +704,7 @@ export default function WheelPublicClient({
             {redeemedSuccess ? (
               <div className="p-3 bg-emerald-500/20 border border-emerald-500/50 rounded-xl flex items-center justify-center gap-2 text-emerald-300 text-xs font-bold">
                 <Check className="w-4 h-4" />
-                <span>¡Cupón canjeado y aplicado a tu cuenta!</span>
+                <span>{w.redeemSuccess || (isEn ? 'Coupon redeemed and applied to your bill!' : '¡Cupón canjeado y aplicado a tu cuenta!')}</span>
               </div>
             ) : (
               <button
@@ -701,7 +713,7 @@ export default function WheelPublicClient({
                 className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                <span>👨‍🍳 Botón para el Mesero: Marcar Canjeado</span>
+                <span>{isEn ? '👨‍🍳 Staff Button: Mark as Redeemed' : '👨‍🍳 Botón para el Mesero: Marcar Canjeado'}</span>
               </button>
             )}
           </div>
@@ -717,13 +729,13 @@ export default function WheelPublicClient({
                 {pendingPrize.icon || '🎁'}
               </div>
               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-3 py-0.5 rounded-full">
-                ¡Felicidades, eres ganador!
+                {w.wonTitle || (isEn ? 'Congratulations, you won!' : '¡Felicidades, eres ganador!')}
               </span>
               <h3 className="text-xl font-black text-white">
                 {pendingPrize.label}
               </h3>
               <p className="text-xs text-slate-300">
-                Ingresa tu nombre y WhatsApp para guardar y activar tu cupón digital antes de que expire.
+                {isEn ? 'Enter your name and WhatsApp to save and activate your digital coupon before it expires.' : 'Ingresa tu nombre y WhatsApp para guardar y activar tu cupón digital antes de que expire.'}
               </p>
             </div>
 
@@ -736,11 +748,11 @@ export default function WheelPublicClient({
 
             <form onSubmit={handleClaimPrize} className="space-y-3 pt-1">
               <div>
-                <label className="block text-[11px] font-bold text-slate-300 mb-1">Tu Nombre:</label>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">{isEn ? 'Your Name:' : 'Tu Nombre:'}</label>
                 <input 
                   type="text" 
                   required 
-                  placeholder="Ej. Carlos Mendoza" 
+                  placeholder={isEn ? 'E.g. John Doe' : 'Ej. Carlos Mendoza'} 
                   value={name} 
                   onChange={(e) => setName(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
@@ -748,11 +760,11 @@ export default function WheelPublicClient({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-300 mb-1">Número de WhatsApp:</label>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">{isEn ? 'WhatsApp Number:' : 'Número de WhatsApp:'}</label>
                 <input 
                   type="tel" 
                   required 
-                  placeholder="Ej. +504 9988-7766" 
+                  placeholder={isEn ? '+1 (555) 012-3456' : 'Ej. +504 9988-7766'} 
                   value={phone} 
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
@@ -760,10 +772,10 @@ export default function WheelPublicClient({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-300 mb-1">Mesa / Ubicación (Opcional):</label>
+                <label className="block text-[11px] font-bold text-slate-300 mb-1">{isEn ? 'Table / Location (Optional):' : 'Mesa / Ubicación (Opcional):'}</label>
                 <input 
                   type="text" 
-                  placeholder="Ej. Mesa 4 o Barra" 
+                  placeholder={isEn ? 'E.g. Table 4 or Bar' : 'Ej. Mesa 4 o Barra'} 
                   value={table} 
                   onChange={(e) => setTable(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
@@ -781,14 +793,14 @@ export default function WheelPublicClient({
                     className="mt-0.5 w-3.5 h-3.5 rounded border-slate-700 bg-slate-950 text-amber-500 cursor-pointer shrink-0" 
                   />
                   <span>
-                    Acepto registrarme para recibir mi cupón y la{' '}
+                    {isEn ? 'I agree to register to receive my coupon and accept the ' : 'Acepto registrarme para recibir mi cupón y la '}
                     <a 
                       href="/privacidad" 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="text-amber-400 underline font-bold hover:text-amber-300"
                     >
-                      Política de Privacidad
+                      {isEn ? 'Privacy Policy' : 'Política de Privacidad'}
                     </a>.
                   </span>
                 </label>
@@ -799,7 +811,7 @@ export default function WheelPublicClient({
                 disabled={isClaiming || !acceptedTerms}
                 className="w-full bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg transition flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>{isClaiming ? 'Generando Cupón...' : '🚀 GUARDAR MI PREMIO & GENERAR CUPÓN'}</span>
+                <span>{isClaiming ? (isEn ? 'Generating Coupon...' : 'Generando Cupón...') : (isEn ? '🚀 SAVE MY PRIZE & GET COUPON' : '🚀 GUARDAR MI PREMIO & GENERAR CUPÓN')}</span>
               </button>
             </form>
           </div>
@@ -813,7 +825,7 @@ export default function WheelPublicClient({
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Validación de Mesero</span>
+                <span>{w.cashierPinTitle || (isEn ? 'Staff Validation' : 'Validación de Mesero')}</span>
               </h4>
               <button 
                 type="button" 
@@ -824,7 +836,7 @@ export default function WheelPublicClient({
               </button>
             </div>
             <p className="text-[11px] text-slate-300">
-              Presiona confirmar para aplicar este beneficio al consumo de la mesa.
+              {w.cashierPinDesc || (isEn ? 'Press confirm to apply this reward to table consumption.' : 'Presiona confirmar para aplicar este beneficio al consumo de la mesa.')}
             </p>
 
             {redeemError && (
@@ -835,10 +847,10 @@ export default function WheelPublicClient({
 
             <form onSubmit={handleRedeemCoupon} className="space-y-3">
               <div>
-                <label className="block text-[10px] text-slate-400 font-bold mb-1">PIN del Local (Opcional):</label>
+                <label className="block text-[10px] text-slate-400 font-bold mb-1">{isEn ? 'Store PIN (Optional):' : 'PIN del Local (Opcional):'}</label>
                 <input 
                   type="password" 
-                  placeholder="PIN (por defecto 1234)" 
+                  placeholder={w.pinPlaceholder || (isEn ? 'PIN (default 1234)' : 'PIN (por defecto 1234)')} 
                   value={cashierPin} 
                   onChange={(e) => setCashierPin(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white text-center font-mono"
@@ -851,14 +863,14 @@ export default function WheelPublicClient({
                   onClick={() => setShowRedeemModal(false)}
                   className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-lg text-xs"
                 >
-                  Cancelar
+                  {isEn ? 'Cancel' : 'Cancelar'}
                 </button>
                 <button
                   type="submit"
                   disabled={isRedeeming}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2 rounded-lg text-xs"
                 >
-                  {isRedeeming ? 'Validando...' : 'Confirmar'}
+                  {isRedeeming ? (isEn ? 'Validating...' : 'Validando...') : (w.btnValidatePin || (isEn ? 'Confirm' : 'Confirmar'))}
                 </button>
               </div>
             </form>
@@ -870,7 +882,7 @@ export default function WheelPublicClient({
       <div className="pt-2 border-t border-slate-800 text-center">
         <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
           <span>🔒</span>
-          <span>Tecnología de Gamificación & Fidelización <b>{brandName}</b></span>
+          <span>{isEn ? 'Gamification & Loyalty Technology' : 'Tecnología de Gamificación & Fidelización'} <b>{brandName}</b></span>
         </p>
       </div>
 
