@@ -70,7 +70,7 @@ export default function RegisterForm({
 
   return (
     <div>
-      {/* Banner según origen: Tarjeta NFC física vs Prueba Gratis SaaS */}
+      {/* Banner según origen: Tarjeta NFC física vs Invitación de Agencia Partner */}
       {token ? (
         <div className="mb-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-md text-xs font-bold flex items-center gap-3 animate-in fade-in">
           <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -88,10 +88,10 @@ export default function RegisterForm({
           </div>
           <div className="leading-snug">
             <div className="font-extrabold text-indigo-200 text-xs sm:text-sm flex items-center gap-1.5">
-              <span>Prueba Gratis de 10 Días • Sin Tarjeta</span>
+              <span>Invitación Oficial de Agencia Partner</span>
             </div>
             <div className="text-[11px] text-gray-300 mt-0.5">
-              Elige el giro de tu negocio para probar las herramientas. ¿Ya compraste en Hotmart?{' '}
+              Crea tu cuenta empresarial vinculada a tu proveedor de servicios. ¿Compraste una suscripción o tarjeta directa?{' '}
               <Link href="/activar-compra" className="text-emerald-300 font-bold underline">
                 Activa tu compra aquí
               </Link>.

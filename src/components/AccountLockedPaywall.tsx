@@ -59,7 +59,7 @@ export default function AccountLockedPaywall({
                   <Sparkles className="w-4 h-4 text-purple-600" />
                 </div>
                 <div className="mt-3">
-                  <span className="text-3xl font-black text-gray-900">L. 550</span>
+                  <span className="text-3xl font-black text-gray-900">$25 USD</span>
                   <span className="text-xs font-semibold text-gray-500"> / mes</span>
                 </div>
                 <p className="text-xs text-gray-600 mt-2 leading-relaxed">

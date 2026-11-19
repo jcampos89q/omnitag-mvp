@@ -157,12 +157,12 @@ export default async function AdminDashboardPage() {
   const totalScans = Number(metricsData?.total_scans || 0) || users.reduce((acc, u) => acc + Number(u.out_scans_count || 0), 0)
   const totalDevices = creations.devices?.length || Number(metricsData?.total_devices || 0)
 
-  // Tasa de conversión y estimación de ingresos ($20 USD / mes o L. 550 HNL)
+  // Tasa de conversión y estimación de ingresos ($25 USD / mes o L. 625 HNL)
   const conversionRate = totalUsers > 0 
     ? ((totalProUsers / totalUsers) * 100).toFixed(1) 
     : '0.0'
-  const estimatedMrr = totalProUsers * 20 // $20/mes por usuario PRO
-  const estimatedMrrHnl = totalProUsers * 550 // L. 550/mes
+  const estimatedMrr = totalProUsers * 25 // $25/mes por usuario PRO
+  const estimatedMrrHnl = totalProUsers * 625 // L. 625/mes (~$25 USD)
 
   const pendingTransfers = transfers.filter(t => t.status === 'pending').length
 

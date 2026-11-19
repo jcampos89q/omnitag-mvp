@@ -13,7 +13,7 @@ export async function submitBankTransfer(formData: FormData) {
 
   const referenceNumber = (formData.get('reference_number') as string)?.trim()
   const receiptUrl = (formData.get('receipt_url') as string)?.trim()
-  const amount = (formData.get('amount') as string)?.trim() || 'L. 550 HNL'
+  const amount = (formData.get('amount') as string)?.trim() || 'L. 625 HNL ($25 USD)'
   const notes = (formData.get('notes') as string)?.trim() || null
 
   if (!referenceNumber) {

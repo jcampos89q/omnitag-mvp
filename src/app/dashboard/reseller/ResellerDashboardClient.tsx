@@ -861,7 +861,7 @@ export default function ResellerDashboardClient({
                     defaultValue="30"
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:outline-none bg-white"
                   >
-                    <option value="14">14 Días (Prueba Gratis)</option>
+                    <option value="14">14 Días (Prueba de Agencia)</option>
                     <option value="30">30 Días (Plan Mensual)</option>
                     <option value="365">365 Días (Plan Anual / Tarjeta NFC)</option>
                   </select>

@@ -88,7 +88,7 @@ export default async function LandingPage() {
             <div className="pt-1 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 text-xs font-semibold text-gray-600">
               <span className="flex items-center gap-1.5 text-emerald-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                <b>{isEn ? 'Instant cloud activation' : 'Activación inmediata'}</b> {isEn ? 'via secure Paddle billing' : 'tras tu compra en Hotmart o Paddle'}
+                <b>{isEn ? 'Instant cloud activation' : 'Activación inmediata'}</b> {isEn ? 'via secure Paddle billing' : 'facturación digital segura vía Paddle'}
               </span>
               <span className="flex items-center gap-1.5 text-gray-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
@@ -96,7 +96,7 @@ export default async function LandingPage() {
               </span>
               <span className="flex items-center gap-1.5 text-purple-700 font-bold bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
                 <Tag className="w-3.5 h-3.5 text-purple-600" />
-                {isEn ? '50% OFF ($10/mo) first month' : '50% OFF (L. 275) en tu primer mes'}
+                {isEn ? '$25 USD / month • Cancel anytime' : 'Suscripción mensual $25 USD • Cancela cuando quieras'}
               </span>
             </div>
 
@@ -487,12 +487,12 @@ export default async function LandingPage() {
                   </div>
 
                   <div className="pt-2">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-black text-purple-700">{isEn ? '$10' : 'L. 275'}</span>
-                      <span className="text-xs text-gray-400 line-through">{isEn ? '$25 USD' : 'L. 550 HNL'}</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-purple-700">{dict.pricingSection.proPlan.priceMonthly}</span>
+                      <span className="text-xs text-gray-500 font-bold ml-1">{dict.pricingSection.proPlan.periodMonthly}</span>
                     </div>
-                    <p className="text-[11px] text-emerald-700 font-bold mt-1">
-                      {isEn ? '50% OFF your first month • Regular: $25 / mo' : '50% OFF en tu primer mes • Regular: L. 550 / mes'}
+                    <p className="text-[11px] text-gray-500 font-medium mt-1">
+                      {dict.pricingSection.proPlan.billedMonthly}
                     </p>
                   </div>
 

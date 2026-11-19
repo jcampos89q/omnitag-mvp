@@ -40,8 +40,8 @@ export const en: typeof es = {
     closeMenu: 'Close menu',
   },
   banner: {
-    badge: 'LAUNCH SPECIAL',
-    text: '🚀 50% OFF ($10 / mo) on your first PRO month • Activate all digital tools for your business today.',
+    badge: 'CLOUD MEMBERSHIP',
+    text: '🚀 PRO Subscription for only $25 USD/mo • Digitize, sell, and retain your customers today.',
     cta: 'View Plans',
   },
   hero: {
@@ -152,7 +152,7 @@ export const en: typeof es = {
     subtitle: 'Start today with full access to all professional tools without hidden fees.',
     monthly: 'Monthly Billing',
     annual: 'Annual Billing',
-    annualBadge: '2 MONTHS FREE',
+    annualBadge: 'SAVE 2 MONTHS',
     proPlan: {
       name: 'OmniTag Business PRO',
       badge: 'Most Popular',
@@ -160,8 +160,8 @@ export const en: typeof es = {
       periodMonthly: 'USD / month',
       priceAnnual: '$200',
       periodAnnual: 'USD / year',
-      billedMonthly: 'Recurring monthly billing. Cancel anytime.',
-      billedAnnual: 'Recurring annual billing with priority VIP support.',
+      billedMonthly: 'Recurring monthly billing of $25 USD. No lock-in contracts, cancel anytime.',
+      billedAnnual: 'Recurring annual billing of $200 USD (~$16.60/mo) with priority VIP support.',
       features: [
         'Interactive digital menu with direct WhatsApp orders',
         'Interactive Prize Wheel and discount coupons',

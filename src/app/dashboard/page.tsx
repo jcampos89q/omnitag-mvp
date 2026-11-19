@@ -223,7 +223,7 @@ export default async function DashboardPage() {
               </div>
               <div className="mt-3 pt-2.5 border-t border-gray-200/60 flex items-center justify-between text-[11px]">
                 <span className="font-semibold text-gray-600">
-                  {planInfo.isMonthlyPro ? 'Renovación mensual activa' : planInfo.isTrial ? 'Incluido de cortesía' : 'L. 550 HNL / mes voluntario'}
+                  {planInfo.isMonthlyPro ? 'Renovación mensual activa' : planInfo.isTrial ? 'Incluido de cortesía' : '$25 USD / mes voluntario'}
                 </span>
                 <Link
                   href="/dashboard/billing#metodos-pago"
@@ -457,22 +457,13 @@ export default async function DashboardPage() {
               <span>Ver mi vCard</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
-          ) : !wlInfo.isWhiteLabeledClient && !isPro && isDiscountEligible ? (
-            <Link
-              href="/dashboard/billing#metodos-pago"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
-            >
-              <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-              <span>50% OFF: Primer mes por L. 275</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           ) : !wlInfo.isWhiteLabeledClient && !isPro ? (
             <Link
               href="/dashboard/billing#metodos-pago"
               className="bg-black text-white font-extrabold text-xs px-4 py-2.5 rounded-xl hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer"
             >
               <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span>{accountType === 'professional' ? 'Obtener Tarjeta NFC PRO (L. 1,200)' : 'Mejorar a PRO por L. 550'}</span>
+              <span>{accountType === 'professional' ? 'Obtener Tarjeta NFC PRO' : 'Mejorar a PRO ($25 USD/mes)'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           ) : null}
@@ -564,13 +555,13 @@ export default async function DashboardPage() {
                     ? `Vence: ${expiresAt ? new Date(expiresAt).toLocaleDateString('es-HN') : 'Activo'}` 
                     : planInfo.isTrial 
                     ? 'Mes de cortesía incluido' 
-                    : 'L. 550 HNL / mes voluntario'}
+                    : '$25 USD / mes'}
                 </span>
                 <Link
                   href="/dashboard/billing#metodos-pago"
                   className="font-extrabold text-black hover:underline flex items-center gap-1"
                 >
-                  {planInfo.isMonthlyPro ? 'Gestionar' : planInfo.isTrial ? 'Ver detalles' : 'Activar por L. 550'} <ArrowRight className="w-3 h-3" />
+                  {planInfo.isMonthlyPro ? 'Gestionar' : planInfo.isTrial ? 'Ver detalles' : 'Activar por $25/mes'} <ArrowRight className="w-3 h-3" />
                 </Link>
               </div>
             </div>

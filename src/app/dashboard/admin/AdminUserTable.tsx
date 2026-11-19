@@ -221,11 +221,6 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                           ? `⏳ Cortesía (${daysLeft || 30}d)` 
                           : 'Sin Plan'}
                       </span>
-                      {!isExpired && isDiscountEligible && (
-                        <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 rounded-sm">
-                          50% OFF ({discountDaysLeft}d)
-                        </span>
-                      )}
                     </div>
                   </div>
 
@@ -456,12 +451,7 @@ export default function AdminUserTable({ users }: { users: AdminUser[] }) {
                               ? 'Vencida' 
                               : `${daysLeft}d restantes`}
                           </span>
-                          {!isExpired && isDiscountEligible && (
-                            <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 rounded-sm">
-                              50% OFF ({discountDaysLeft}d)
-                            </span>
-                          )}
-                        </div>
+                            </div>
                       </td>
 
                       <td className="px-6 py-4">

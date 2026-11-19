@@ -179,8 +179,8 @@ export default function BusinessUpgradesShowcase({
             <Sparkles className="w-3 h-3 text-purple-600" /> Plan Completo
           </div>
           <div className="flex items-baseline gap-1 sm:justify-end">
-            <span className="text-xl font-black text-gray-900">L. 550</span>
-            <span className="text-xs text-gray-600 font-semibold">HNL / mes</span>
+            <span className="text-xl font-black text-gray-900">$25</span>
+            <span className="text-xs text-gray-600 font-semibold">USD / mes</span>
           </div>
           <div className="text-[10px] text-gray-500 font-medium sm:text-right">6 aplicaciones incluidas</div>
         </div>
@@ -256,8 +256,8 @@ export default function BusinessUpgradesShowcase({
                 Membresía Mensual Unificada
               </span>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-3xl font-black text-gray-900">L. 550</span>
-                <span className="text-xs text-gray-500 font-medium">HNL / mes</span>
+                <span className="text-3xl font-black text-gray-900">$25</span>
+                <span className="text-xs text-gray-500 font-medium">USD / mes</span>
               </div>
               <p className="text-xs text-gray-600 mt-2 leading-relaxed">
                 <b>Un solo pago mensual activa todo:</b> Menús con pedidos a WhatsApp, Sellos de Lealtad, Citas 24/7, Ruleta, Códigos QR HD y Gift Cards sin costos por separado.
@@ -269,11 +269,11 @@ export default function BusinessUpgradesShowcase({
                 href="/dashboard/billing#metodos-pago"
                 className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-purple-500/20"
               >
-                <span>Activar Todas las Apps por L. 550/mes</span>
+                <span>Activar Todas las Apps por $25 USD/mes</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <a
-                href="https://wa.me/50487724813?text=Hola%20OmniTag,%20deseo%20activar%20la%20Suite%20Empresarial%20mensual%20(todas%20las%206%20aplicaciones%20incluidas%20por%20L.550/mes)"
+                href="https://wa.me/50487724813?text=Hola%20OmniTag,%20deseo%20activar%20la%20Suite%20Empresarial%20mensual%20(todas%20las%206%20aplicaciones%20incluidas%20por%20$25%20USD/mes)"
                 target="_blank"
                 rel="noreferrer"
                 className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] py-2 px-3 rounded-xl transition flex items-center justify-center gap-1.5 border border-emerald-200"

@@ -295,8 +295,8 @@ export async function getUserPlanInfo(supabase: SupabaseClient, userId?: string)
     canAccessGoogleBusiness,
     canAccessAnalytics,
     canAccessProSuite,
-    isDiscountEligible: isTrial && trialDaysLeft > 0,
-    discountDaysLeft: isTrial ? trialDaysLeft : 0,
+    isDiscountEligible: false,
+    discountDaysLeft: 0,
     nfcCardToken: primaryNfcCard?.card_token || null,
     accountType: profile?.account_type || (hasReviewPlate ? 'review_plate' : 'professional')
   }

@@ -38,8 +38,8 @@ export const es = {
     closeMenu: 'Cerrar menú',
   },
   banner: {
-    badge: 'OFERTA DE LANZAMIENTO',
-    text: '🚀 50% OFF (L. 275 / $10) en tu primer mes PRO • Activa todas las herramientas digitales para tu negocio hoy mismo.',
+    badge: 'MEMBRESÍA DIGITAL',
+    text: '🚀 Suscripción PRO por solo $25 USD/mes • Digitaliza, vende y fideliza a tus clientes hoy mismo.',
     cta: 'Ver Planes',
   },
   hero: {
@@ -150,7 +150,7 @@ export const es = {
     subtitle: 'Comienza hoy con todas las herramientas profesionales sin costos ocultos.',
     monthly: 'Facturación Mensual',
     annual: 'Facturación Anual',
-    annualBadge: '2 MESES GRATIS',
+    annualBadge: 'AHORRA 2 MESES',
     proPlan: {
       name: 'OmniTag Negocio PRO',
       badge: 'Más Popular',
@@ -158,8 +158,8 @@ export const es = {
       periodMonthly: 'USD / mes',
       priceAnnual: '$200',
       periodAnnual: 'USD / año',
-      billedMonthly: 'Facturación mensual recurrente. Cancela cuando quieras.',
-      billedAnnual: 'Facturación anual recurrente con soporte prioritario.',
+      billedMonthly: 'Facturación mensual recurrente de $25 USD. Sin permanencia, cancela cuando quieras.',
+      billedAnnual: 'Facturación anual de $200 USD (~$16.60/mes) con soporte prioritario.',
       features: [
         'Menú digital interactivo con pedidos a WhatsApp',
         'Ruleta de Premios interactiva y cupones de descuento',
