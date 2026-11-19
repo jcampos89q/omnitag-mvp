@@ -571,27 +571,6 @@ export default async function LandingPage() {
                 </div>
               </div>
             </div>
-
-            {/* Banner de Marca Blanca para Agencias */}
-            <div className="mt-8 p-6 sm:p-8 rounded-3xl bg-linear-to-r from-purple-900 via-indigo-900 to-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
-              <div className="space-y-2 text-center md:text-left">
-                <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full text-purple-200">
-                  {dict.agenciasPage.badge}
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black">
-                  {dict.pricingSection.agencyBanner.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
-                  {dict.pricingSection.agencyBanner.desc}
-                </p>
-              </div>
-              <Link
-                href="/agencias"
-                className="bg-white text-gray-950 hover:bg-gray-100 font-extrabold px-6 py-3.5 rounded-xl text-xs sm:text-sm whitespace-nowrap transition shadow-md shrink-0"
-              >
-                {dict.pricingSection.agencyBanner.cta}
-              </Link>
-            </div>
           </div>
         </section>
 

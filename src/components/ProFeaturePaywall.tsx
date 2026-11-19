@@ -35,20 +35,20 @@ export default function ProFeaturePaywall({
         </p>
       </div>
 
-      {/* Explicación clara sobre su compra física */}
+      {/* Explicación clara sobre su membresía */}
       <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 text-left text-xs sm:text-sm text-gray-700 space-y-2.5">
         <div className="flex items-center gap-2 font-bold text-gray-900">
           <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Tu hardware físico sigue 100% activo:</span>
+          <span>Tu suscripción anual sigue 100% activa:</span>
         </div>
         <ul className="space-y-1.5 pl-6 list-disc text-gray-600">
           {isVcardHardware && (
-            <li>Tu <b>Tarjeta Inteligente NFC</b>, perfil <b>vCard</b>, <b>CRM de Contactos</b> y <b>Estadísticas</b> están activos por 1 año completo.</li>
+            <li>Tu perfil digital <b>vCard interactivo</b>, <b>CRM de Contactos</b> y <b>Estadísticas</b> están activos por 1 año completo.</li>
           )}
           {isPlateHardware && (
-            <li>Tu <b>Placa de Reseñas NFC</b>, sistema de <b>Quejas Privadas</b> y <b>Métricas de Escaneos</b> están activos por 1 año completo.</li>
+            <li>Tu enlace de <b>Reseñas Inteligentes</b>, sistema de <b>Quejas Privadas</b> y <b>Métricas de Escaneos</b> están activos por 1 año completo.</li>
           )}
-          <li>El primer mes gratis de prueba completa ha concluido. Para reactivar la ruleta de premios, tarjetas de sellos, agendas de citas y menús, solo requieres la suscripción mensual.</li>
+          <li>El primer mes de prueba completa ha concluido. Para reactivar la ruleta de premios, tarjetas de sellos, agendas de citas y menús, solo requieres la suscripción mensual.</li>
         </ul>
       </div>
 

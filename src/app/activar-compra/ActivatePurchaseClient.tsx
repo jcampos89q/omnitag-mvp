@@ -135,7 +135,7 @@ export default function ActivatePurchaseClient({
             <div className="flex items-center gap-2 text-emerald-800 font-extrabold text-xs uppercase tracking-wider">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               {isReseller
-                ? '¡Licencia de Agencia Marca Blanca Confirmada!'
+                ? '¡Licencia de Agencia Partner Confirmada!'
                 : '¡Suscripción PRO Confirmada en Hotmart!'}
             </div>
             <p className="text-xs text-emerald-700">
@@ -189,7 +189,7 @@ export default function ActivatePurchaseClient({
                 {isReseller ? <Building2 className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                 <span>
                   {isReseller
-                    ? 'Guardar Contraseña e Ir a Mi Consola Marca Blanca'
+                    ? 'Guardar Contraseña e Ir a Mi Consola'
                     : 'Guardar Contraseña e Ir a Mi Panel PRO'}
                 </span>
               </>

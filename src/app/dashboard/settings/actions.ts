@@ -145,6 +145,8 @@ export async function lockInitialIndustryAction(formData: FormData) {
   await applyTechnicalIndustryTransition(user.id, normalized)
 
   revalidatePath('/', 'layout')
+  revalidatePath('/', 'layout')
+  revalidatePath('/dashboard', 'layout')
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/settings')
 
@@ -226,6 +228,8 @@ export async function updateIndustrySetting(formData: FormData) {
 
   await applyTechnicalIndustryTransition(user.id, normalized)
 
+  revalidatePath('/', 'layout')
+  revalidatePath('/dashboard', 'layout')
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/settings')
   revalidatePath('/dashboard/menus')

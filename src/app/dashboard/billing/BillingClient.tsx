@@ -256,13 +256,13 @@ export default function BillingClient({
             </div>
             <div>
               <h4 className="font-extrabold text-sm text-gray-900 flex items-center gap-2">
-                <span>¿Tienes una Tarjeta Física Inteligente NFC?</span>
+                <span>¿Tienes un Código de Activación o Canje Anual?</span>
                 <span className="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.2 rounded-full uppercase">
                   1 Año PRO
                 </span>
               </h4>
               <p className="text-xs text-gray-600 mt-0.5">
-                Ingresa el código que viene en tu tarjeta para vincularla a tu perfil y sumar <b>365 días de membresía PRO</b>.
+                Ingresa tu código digital de membresía para vincularlo a tu perfil y activar <b>365 días de membresía PRO</b>.
               </p>
               {claimMessage && (
                 <p className={`text-xs mt-1.5 font-bold ${claimMessage.type === 'success' ? 'text-emerald-700' : 'text-red-600'}`}>
@@ -326,7 +326,7 @@ export default function BillingClient({
                 </li>
                 <li className="flex items-center gap-2 text-gray-400">
                   <span className="w-4 h-4 text-center">✕</span>
-                  <span className="line-through">Sin tarjeta física NFC</span>
+                  <span className="line-through">Sin soporte prioritario VIP</span>
                 </li>
               </ul>
             </div>
@@ -339,24 +339,24 @@ export default function BillingClient({
 
           <div className="border-2 border-blue-600 rounded-2xl p-6 sm:p-7 bg-white relative flex flex-col justify-between shadow-xl">
             <div className="absolute -top-3.5 right-6 bg-blue-600 text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
-              <CreditCard className="w-3.5 h-3.5" /> FÍSICA + PRO
+              <Sparkles className="w-3.5 h-3.5" /> PLAN ANUAL PRO
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-gray-900">Tarjeta NFC Física + 1 Año PRO</h3>
+                <h3 className="text-lg font-bold text-gray-900">Membresía Digital Anual PRO</h3>
               </div>
-              <p className="text-gray-500 text-xs mb-4">La manera profesional de conectar y compartir tus datos.</p>
+              <p className="text-gray-500 text-xs mb-4">La manera profesional de conectar y compartir tus datos en la nube.</p>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-extrabold text-blue-700">L. 1,200</span>
-                  <span className="text-gray-500 text-xs font-medium">HNL / pago único anual</span>
+                  <span className="text-3xl font-extrabold text-blue-700">$200</span>
+                  <span className="text-gray-500 text-xs font-medium">USD / año</span>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-0.5">Incluye la tarjeta física NFC + envío + 365 días PRO.</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Incluye 365 días de acceso PRO completo con soporte prioritario.</p>
               </div>
               <ul className="space-y-2.5 text-xs text-gray-700 mb-6 font-medium">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-blue-600 shrink-0 font-bold" />
-                  <span><b>Tarjeta Física Inteligente NFC</b></span>
+                  <span><b>Perfil Digital vCard Interactivo</b></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-blue-600 shrink-0 font-bold" />
@@ -368,7 +368,7 @@ export default function BillingClient({
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-blue-600 shrink-0 font-bold" />
-                  <span><b>Código QR Impreso</b> en la tarjeta</span>
+                  <span><b>Generador de Códigos QR HD</b> descargable</span>
                 </li>
               </ul>
             </div>
@@ -382,7 +382,7 @@ export default function BillingClient({
                   href="#metodos-pago"
                   className="w-full bg-black text-white font-extrabold py-3 px-4 rounded-xl hover:bg-gray-800 transition text-xs shadow-md flex items-center justify-center gap-1.5"
                 >
-                  <span>Solicitar Tarjeta NFC por BAC (L. 1,200)</span>
+                  <span>Activar Plan Anual ($200 USD/año)</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </a>
               )}
@@ -394,24 +394,24 @@ export default function BillingClient({
           {/* PLAN PLACA DE RESEÑAS NFC */}
           <div className="border-2 border-amber-500 rounded-2xl p-6 sm:p-7 bg-white relative flex flex-col justify-between shadow-xl">
             <div className="absolute -top-3.5 right-6 bg-linear-to-r from-amber-500 to-amber-600 text-black text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 fill-black text-black" /> PLACA FÍSICA + 1 AÑO PRO
+              <Sparkles className="w-3.5 h-3.5 fill-black text-black" /> PLAN ANUAL PRO
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-gray-900">Placa Tap-to-Rate NFC (Google)</h3>
+                <h3 className="text-lg font-bold text-gray-900">Escudo 5★ Tap-to-Rate (Google Maps)</h3>
               </div>
               <p className="text-gray-500 text-xs mb-4">Multiplica tus 5 estrellas en Google Maps con Escudo Anti-Quejas.</p>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-extrabold text-amber-600">L. 1,200</span>
-                  <span className="text-gray-500 text-xs font-medium">HNL / pago único anual</span>
+                  <span className="text-3xl font-extrabold text-amber-600">$200</span>
+                  <span className="text-gray-500 text-xs font-medium">USD / año</span>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-0.5">Incluye Placa Física de Mesa + Escudo Anti-Quejas + 1 Año de Membresía.</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Incluye Enlace Smart Review + Escudo Anti-Quejas + 1 Año de Membresía.</p>
               </div>
               <ul className="space-y-2.5 text-xs text-gray-700 mb-6 font-medium">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-600 shrink-0 font-bold" />
-                  <span><b>Placa Física Inteligente NFC</b> en vinil sobre PVC para mesa (altamente resistente)</span>
+                  <span><b>Enlace Smart Review y QR Inteligente</b></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-600 shrink-0 font-bold" />
@@ -423,7 +423,7 @@ export default function BillingClient({
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-600 shrink-0 font-bold" />
-                  <span><b>Métricas en tiempo real</b> de escaneos y dispositivos</span>
+                  <span><b>Métricas en tiempo real</b> de escaneos y calificaciones</span>
                 </li>
               </ul>
             </div>
@@ -703,13 +703,13 @@ export default function BillingClient({
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-gray-900">Placa o Tarjeta NFC</span>
+                    <span className="text-xs font-black text-gray-900">Membresía Anual PRO</span>
                     <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
                       1 AÑO PRO
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1 leading-snug">
-                    Dispositivo físico inteligente para mostrador o mesa + 1 año completo PRO.
+                    Acceso completo a la plataforma cloud durante 12 meses.
                   </p>
                 </div>
                 <div className="mt-3 pt-2 border-t border-black/5 flex items-baseline gap-1">
@@ -868,7 +868,7 @@ export default function BillingClient({
                     }`}
                   >
                     {isHardwareAccount 
-                      ? 'L. 1,200 Lempiras (Dispositivo Físico + 1 Año PRO)' 
+                      ? 'L. 1,200 Lempiras (Plan Anual PRO)' 
                       : 'L. 625 Lempiras ($25 USD)'}
                   </button>
                 </div>

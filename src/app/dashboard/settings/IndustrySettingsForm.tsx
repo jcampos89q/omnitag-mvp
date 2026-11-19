@@ -55,12 +55,16 @@ export default function IndustrySettingsForm({
   const { locale } = useTranslation()
   const isEn = locale === 'en'
 
-  const currentNormalized = normalizeIndustry(initialIndustry) as SelectableIndustryId
+  const [currentIndustryState, setCurrentIndustryState] = useState<SelectableIndustryId>(
+    normalizeIndustry(initialIndustry) as SelectableIndustryId
+  )
+  const currentNormalized = currentIndustryState
   const currentConfig = getIndustryConfig(currentNormalized)
   const CurrentIcon = industryIcons[currentNormalized] || Briefcase
 
   const [isWizardOpen, setIsWizardOpen] = useState(false)
   const [targetIndustry, setTargetIndustry] = useState<SelectableIndustryId | null>(null)
+  const [migratedIndustryName, setMigratedIndustryName] = useState<string | null>(null)
   const [confirmationText, setConfirmationText] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [savedSuccess, setSavedSuccess] = useState(false)
@@ -95,17 +99,27 @@ export default function IndustrySettingsForm({
     setErrorMsg('')
     setSavedSuccess(false)
 
+    const selectedIndustry = targetIndustry
+    const localizedSelectedName = getLocalizedIndustryName(selectedIndustry, isEn)
+
     try {
       const formData = new FormData()
-      formData.set('industry', targetIndustry)
+      formData.set('industry', selectedIndustry)
       formData.set('confirmation_text', cleaned)
       await updateIndustrySetting(formData)
+      
+      setCurrentIndustryState(selectedIndustry)
+      setMigratedIndustryName(localizedSelectedName)
       setSavedSuccess(true)
       setIsWizardOpen(false)
       setTargetIndustry(null)
       setConfirmationText('')
-      showToast(isEn ? `Industry updated to: ${getLocalizedIndustryName(targetIndustry, true)}` : `Giro migrado a: ${INDUSTRIES[targetIndustry].name}`, 'success')
-      router.refresh()
+      showToast(isEn ? `Industry updated to: ${localizedSelectedName}` : `Giro migrado a: ${localizedSelectedName}`, 'success')
+      
+      // Forzar recarga total para asegurar que toda la suite, navbar y módulos cambien inmediatamente
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
     } catch (err: any) {
       setErrorMsg(err.message || (isEn ? 'Error while changing industry.' : 'Error al realizar el cambio de giro.'))
     } finally {
@@ -138,7 +152,7 @@ export default function IndustrySettingsForm({
       {savedSuccess && (
         <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 font-bold flex items-center gap-2">
           <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>{isEn ? `Technical migration completed! Your account is configured as ${getLocalizedIndustryName(currentNormalized, true)} for the next 30 days.` : `¡Migración técnica completada! Tu cuenta quedó configurada como ${currentConfig.name} por los próximos 30 días.`}</span>
+          <span>{isEn ? `Technical migration completed! Your account is configured as ${migratedIndustryName || getLocalizedIndustryName(currentNormalized, true)} for the next 30 days.` : `¡Migración técnica completada! Tu cuenta quedó configurada como ${migratedIndustryName || currentConfig.name} por los próximos 30 días.`}</span>
         </div>
       )}
 

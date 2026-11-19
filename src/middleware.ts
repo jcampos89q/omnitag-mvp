@@ -32,13 +32,21 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 1.5. Bloquear ruta pública de venta física /tienda en producción para cumplimiento SaaS internacional
+  const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
+
+  // 1.5. Redirigir /agencias al subdominio independiente aprobado agencias.omnitag.site
+  if (pathname === '/agencias' || pathname.startsWith('/agencias/')) {
+    if (!isAgenciesSalesHost(rawHost)) {
+      return NextResponse.redirect('https://agencias.omnitag.site/', 301)
+    }
+  }
+
+  // 1.6. Bloquear ruta pública de venta física /tienda en producción para cumplimiento SaaS internacional
   if (pathname === '/tienda') {
     return NextResponse.redirect(new URL('/pricing', request.url))
   }
 
   // 2. Resolución de Portal SaaS de Agencias (app.omnitag.site) o Dominio Personalizado
-  const rawHost = request.headers.get('x-forwarded-host') || request.headers.get('host') || ''
   let customContext:
     | { partnerId?: string; customDomain?: string; agencyPortal?: boolean; rewriteToPath?: string }
     | undefined

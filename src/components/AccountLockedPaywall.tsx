@@ -86,19 +86,19 @@ export default function AccountLockedPaywall({
                   <CreditCard className="w-4 h-4 text-gray-600" />
                 </div>
                 <div className="mt-3">
-                  <span className="text-3xl font-black text-gray-900">L. 1,200</span>
-                  <span className="text-xs font-semibold text-gray-500"> / pago único</span>
+                  <span className="text-3xl font-black text-gray-900">$200</span>
+                  <span className="text-xs font-semibold text-gray-500"> USD / año</span>
                 </div>
                 <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-                  Incluye placa física o tarjeta NFC programada + 365 días de servicio PRO completo sin mensualidades.
+                  365 días de servicio PRO completo con soporte prioritario VIP sin mensualidades obligatorias.
                 </p>
               </div>
 
               <Link
-                href="/tienda"
+                href="/dashboard/billing"
                 className="w-full mt-3 py-2.5 px-4 rounded-xl bg-black hover:bg-gray-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm"
               >
-                <span>Renovar Membresía Anual / Tienda NFC</span>
+                <span>Renovar Membresía Anual ($200 USD/año)</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>

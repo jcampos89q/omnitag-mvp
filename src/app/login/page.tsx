@@ -150,20 +150,10 @@ export default async function LoginPage({
         {/* Enlaces inferiores: solo para usuarios directos de OmniTag */}
         {!hideOmniTagLinks ? (
           <div className="text-center text-xs sm:text-sm text-gray-600 space-y-1.5">
-            <p>
-              ¿Ya realizaste tu pago en Hotmart?{' '}
-              <Link href="/activar-compra" className="font-extrabold text-purple-700 hover:underline">
-                Activa tu acceso aquí
-              </Link>
-            </p>
             <p className="text-xs text-gray-500">
-              ¿Aún no tienes licencia?{' '}
-              <Link href="/agencias" className="font-bold text-black hover:underline">
-                Ver Licencias Marca Blanca
-              </Link>{' '}
-              o{' '}
-              <Link href="/pricing" className="font-bold text-purple-700 hover:underline">
-                Ver Planes para Comercios
+              ¿Aún no tienes una cuenta activa?{' '}
+              <Link href="/pricing" className="font-extrabold text-purple-700 hover:underline">
+                Suscribirme o Ver Planes Oficiales
               </Link>
             </p>
           </div>

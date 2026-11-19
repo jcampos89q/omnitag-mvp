@@ -129,14 +129,14 @@ export default async function NfcClaimOrRedirectPage({
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-1.5 bg-linear-to-r from-amber-400 to-orange-500 text-black px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-md">
             <Sparkles className="w-3.5 h-3.5 fill-black" />
-            <span>Activación de Tarjeta NFC</span>
+            <span>Activación de Membresía Digital</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight pt-1">
-            ¡Bienvenido a tu Tarjeta Inteligente!
+            ¡Bienvenido a tu Perfil Digital PRO!
           </h1>
           <p className="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
-            Esta tarjeta física incluye <span className="text-amber-400 font-bold">1 Año Completo de Membresía PRO</span> con tu vCard y CRM de prospectos.
+            Esta clave digital incluye <span className="text-amber-400 font-bold">1 Año Completo de Membresía PRO</span> con tu vCard y CRM de prospectos.
           </p>
         </div>
 

@@ -13,6 +13,9 @@ import PaddleCheckoutButton from '@/components/PaddleCheckoutButton'
 export const metadata = {
   title: 'Licencia SaaS Marca Blanca & Programa de Agencias | OmniTag',
   description: 'Lanza tu propia plataforma SaaS de Menús QR, Agendas Médicas, Fidelización y vCards Digitales bajo tu propia marca y cobra el 100% directo a tus clientes.',
+  alternates: {
+    canonical: 'https://agencias.omnitag.site',
+  },
 }
 
 export default async function AgenciasWhiteLabelPage({

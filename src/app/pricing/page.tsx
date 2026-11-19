@@ -22,6 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function PricingPage() {
   const { dict } = await getServerDictionary()
   const proPriceId = process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID || 'pri_01m7b4g3v0p8jdrszjpa3bbyfy'
+  const annualPriceId = process.env.NEXT_PUBLIC_PADDLE_PLAN_ANNUAL_PRICE_ID || 'pri_01m7695stt6jtf8rcvh232a8gj'
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 selection:bg-black selection:text-white flex flex-col justify-between">
@@ -120,58 +121,60 @@ export default async function PricingPage() {
             </div>
           </div>
 
-          {/* Card 2: Licencias para Agencias (Marca Blanca) */}
-          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-2xs flex flex-col justify-between hover:border-gray-300 transition">
+          {/* Card 2: Suscripción Anual PRO */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-emerald-500 shadow-xl flex flex-col justify-between relative transform md:-translate-y-2">
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md whitespace-nowrap">
+              {dict.pricingSection.annualBadge}
+            </div>
+
             <div className="space-y-5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-purple-700">
-                  {dict.pricingPage.agencyBoxBadge}
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-700">
+                  {isEn ? 'Annual Cloud SaaS' : 'Plan Anual SaaS'}
                 </span>
-                <span className="text-[11px] font-bold bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">
-                  Multi-Client
+                <span className="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">
+                  {isEn ? '2 Months Free' : '2 Meses Gratis'}
                 </span>
               </div>
 
               <div>
-                <h2 className="text-2xl font-black text-gray-950">{dict.pricingPage.agencyBoxTitle}</h2>
+                <h2 className="text-2xl font-black text-gray-950">{isEn ? 'Annual Business PRO' : 'Suscripción Anual PRO'}</h2>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-xs font-bold text-gray-500">From</span>
-                  <span className="text-4xl font-black text-gray-950">$49</span>
-                  <span className="text-xs font-bold text-gray-500">USD / mo</span>
+                  <span className="text-4xl font-black text-gray-950">$200</span>
+                  <span className="text-xs font-bold text-gray-500">USD / {isEn ? 'year' : 'año'}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {dict.pricingPage.agencyBoxDesc}
+                  {dict.pricingSection.proPlan.billedAnnual}
                 </p>
               </div>
 
               <ul className="pt-4 border-t border-gray-100 space-y-3 text-xs sm:text-sm text-gray-700">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span><b>100% White-Label:</b> Zero mention of OmniTag to your clients</span>
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span><b>{isEn ? '12 months of PRO access' : '12 meses de suscripción PRO'}</b> {isEn ? 'fully included' : 'completamente incluidos'}</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span>Portal to create and manage <b>10, 25 or 100 businesses</b></span>
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{isEn ? 'HD QR Code Generator and unlimited cloud vCards' : 'Generador QR HD y vCards digitales ilimitadas'}</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span><b>Keep 100% of client revenue</b> deposited directly to your bank</span>
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{isEn ? 'Prize Wheel and interactive cloud catalog' : 'Ruleta de premios y catálogo interactivo en la nube'}</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span>Custom domain and logo on all web applications</span>
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{isEn ? 'Priority customer support and instant updates' : 'Soporte prioritario y actualizaciones continuas'}</span>
                 </li>
               </ul>
             </div>
 
             <div className="pt-6">
-              <Link
-                href="/agencias"
-                className="w-full bg-gray-950 hover:bg-gray-800 text-white font-bold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs"
+              <PaddleCheckoutButton
+                priceId={annualPriceId}
+                className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
               >
-                <span>{dict.pricingPage.agencyBoxCta}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+                <span>{dict.pricingSection.proPlan.ctaAnnual}</span>
+              </PaddleCheckoutButton>
             </div>
           </div>
         </div>

@@ -93,57 +93,31 @@ export default async function RegisterPage({
             message={params?.message} 
           />
         ) : (
-          /* Pantalla de bloqueo de registro libre sin pago */
+          /* Pantalla de suscripción y registro digital */
           <div className="space-y-4">
-            {/* Opción 1: Ya compró en Hotmart */}
-            <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2.5">
-              <div className="flex items-center gap-2 text-emerald-900 font-extrabold text-xs uppercase tracking-wider">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                1. ¿Ya realizaste tu pago en Hotmart?
+            {/* Opción 1: Contratar Suscripción Digital */}
+            <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-2.5">
+              <div className="flex items-center gap-2 text-purple-900 font-extrabold text-xs uppercase tracking-wider">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                1. Suscripción Digital PRO
               </div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Si ya compraste tu suscripción o Licencia Marca Blanca en Hotmart, activa tu cuenta y contraseña en un paso:
+                Obtén acceso inmediato a todas las herramientas digitales profesionales (Menús QR, Agendas, Fidelización y vCard) con facturación oficial por Paddle:
               </p>
               <Link
-                href="/activar-compra"
-                className="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs"
+                href="/pricing"
+                className="w-full py-3 px-4 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs"
               >
-                <Sparkles className="w-4 h-4" />
-                <span>Activar Mi Compra de Hotmart</span>
+                <span>Ver Planes y Suscribirme ($25 USD/mes)</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 
-            {/* Opción 2: Comprar Licencia / Suscripción */}
-            <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-200 space-y-2.5">
-              <div className="flex items-center gap-2 text-purple-900 font-extrabold text-xs uppercase tracking-wider">
-                <Building2 className="w-4 h-4 text-purple-600" />
-                2. ¿Aún no tienes una Licencia Activa?
-              </div>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Adquiere tu suscripción para negocio o tu Licencia de Agencia SaaS Marca Blanca en Hotmart:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <Link
-                  href="/agencias"
-                  className="py-2.5 px-3 rounded-xl bg-black hover:bg-gray-800 text-white font-bold text-xs text-center transition"
-                >
-                  Licencia Marca Blanca
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="py-2.5 px-3 rounded-xl bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 font-bold text-xs text-center transition"
-                >
-                  Planes para mi Negocio
-                </Link>
-              </div>
-            </div>
-
-            {/* Opción 3: Tiene código de Invitación o Canje Digital */}
+            {/* Opción 2: Tiene código de Invitación o Canje Digital */}
             <form action="/register" method="GET" className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-2.5">
               <div className="flex items-center gap-2 text-gray-800 font-extrabold text-xs uppercase tracking-wider">
                 <CreditCard className="w-4 h-4 text-gray-600" />
-                3. ¿Tienes un Código de Canje o Cupón Digital?
+                2. ¿Tienes un Código de Canje o Cupón Digital?
               </div>
               <div className="flex gap-2">
                 <input

@@ -70,15 +70,15 @@ export default function RegisterForm({
 
   return (
     <div>
-      {/* Banner según origen: Tarjeta NFC física vs Invitación de Agencia Partner */}
+      {/* Banner según origen: Membresía Digital PRO vs Invitación de Agencia Partner */}
       {token ? (
         <div className="mb-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-md text-xs font-bold flex items-center gap-3 animate-in fade-in">
           <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-            <CreditCard className="w-5 h-5 text-white" />
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <div className="uppercase tracking-wider text-[10px] text-blue-200">Tarjeta NFC Física Detectada</div>
-            <div className="text-white text-xs sm:text-sm font-extrabold">¡1 Año Completo en tu Tarjeta + 1 Mes de Cortesía en Suite PRO!</div>
+            <div className="uppercase tracking-wider text-[10px] text-blue-200">Membresía Digital PRO Detectada</div>
+            <div className="text-white text-xs sm:text-sm font-extrabold">¡Acceso Digital Completo con Licencia Anual PRO!</div>
           </div>
         </div>
       ) : (
@@ -91,9 +91,9 @@ export default function RegisterForm({
               <span>Invitación Oficial de Agencia Partner</span>
             </div>
             <div className="text-[11px] text-gray-300 mt-0.5">
-              Crea tu cuenta empresarial vinculada a tu proveedor de servicios. ¿Compraste una suscripción o tarjeta directa?{' '}
-              <Link href="/activar-compra" className="text-emerald-300 font-bold underline">
-                Activa tu compra aquí
+              Crea tu cuenta empresarial vinculada a tu proveedor de servicios. ¿Tienes una cuenta existente?{' '}
+              <Link href="/login" className="text-emerald-300 font-bold underline">
+                Inicia sesión aquí
               </Link>.
             </div>
           </div>
