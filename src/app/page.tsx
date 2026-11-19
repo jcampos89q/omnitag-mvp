@@ -1,66 +1,40 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { 
-  Smartphone, 
   Star, 
-  Coffee, 
-  Scissors, 
-  Gift, 
-  Users, 
-  QrCode, 
-  ShieldCheck, 
   ArrowRight, 
-  Zap, 
   CheckCircle2, 
-  Calendar, 
-  MessageCircle, 
-  Lock, 
   Sparkles,
   ChevronRight, 
-  Clock, 
-  Layers, 
-  Palette, 
-  RefreshCw, 
-  Download, 
-  Wifi, 
   Tag, 
   Check, 
-  CreditCard,
-  UtensilsCrossed,
-  MapPin,
-  TrendingUp,
-  Truck,
-  Disc,
-  HeartHandshake
+  ShieldCheck
 } from 'lucide-react'
 import LandingNavbar from '@/components/LandingNavbar'
 import InteractiveHeroShowcase from '@/components/InteractiveHeroShowcase'
 import LandingFaq from '@/components/LandingFaq'
+import LanguageSelector from '@/components/LanguageSelector'
+import { getServerDictionary } from '@/lib/i18n/server'
 
-export default function LandingPage() {
-  const industries = [
-    { name: 'Restaurantes & Bares', emoji: '🍽️', desc: 'Menús con turno activo, Ruleta o Raspa y Gana en mesa, y comandas a WhatsApp.' },
-    { name: 'Barberías & Salones', emoji: '💈', desc: 'Reservas online 24/7 con selección de especialista, Gift Cards y club de sellos.' },
-    { name: 'Spas & Estética', emoji: '💆‍♀️', desc: 'Tarjetas de regalo prepago, agendamiento de turnos y opiniones privadas.' },
-    { name: 'Clínicas & Médicos', emoji: '🩺', desc: 'Citas ordenadas, perfil profesional y reseñas de pacientes verificadas en Google.' },
-    { name: 'Profesionales & Negocios', emoji: '💼', desc: 'vCards digitales, intercambio de contactos y captura de prospectos permanente.' }
-  ]
+export default async function LandingPage() {
+  const { dict, locale } = await getServerDictionary()
+  const isEn = locale === 'en'
 
   return (
     <div className="min-h-screen bg-white flex flex-col selection:bg-black selection:text-white font-sans antialiased">
       {/* 0. CINTILLO SUPERIOR DE OFERTA */}
       <div className="bg-gradient-to-r from-purple-800 via-indigo-700 to-emerald-700 text-white py-2 px-4 text-center text-xs font-bold flex items-center justify-center gap-2 shadow-xs">
         <span className="bg-yellow-400 text-black text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0">
-          OFERTA DE LANZAMIENTO
+          {dict.banner.badge}
         </span>
         <span className="truncate sm:overflow-visible sm:whitespace-normal">
-          🚀 <b>50% OFF (L. 275 / $10)</b> en tu primer mes PRO • Activa todas las herramientas digitales para tu negocio hoy mismo.
+          {dict.banner.text}
         </span>
         <a 
           href="#precios" 
           className="hidden sm:inline-flex items-center gap-1 underline font-black text-yellow-300 hover:text-white transition ml-1 shrink-0"
         >
-          <span>Ver Planes</span>
+          <span>{dict.banner.cta}</span>
           <ArrowRight className="w-3 h-3" />
         </a>
       </div>
@@ -71,7 +45,6 @@ export default function LandingPage() {
       {/* 2. HERO SECTION */}
       <main className="flex-1">
         <section className="relative overflow-hidden pt-10 sm:pt-16 pb-16 sm:pb-20 px-4 sm:px-6 border-b border-gray-100 bg-gradient-to-b from-white via-gray-50/50 to-white">
-          {/* Fondo decorativo con gradientes suaves */}
           <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none">
             <div className="w-[600px] h-[600px] bg-gradient-to-tr from-amber-100/40 via-purple-100/40 to-emerald-50/40 rounded-full blur-3xl opacity-80" />
           </div>
@@ -79,18 +52,18 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-black tracking-wide shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 text-emerald-600 fill-current animate-pulse" />
-              <span>PLATAFORMA SAAS TODO-EN-UNO PARA COMERCIOS Y PROFESIONALES</span>
+              <span>{dict.hero.badge}</span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-gray-950 leading-[1.08]">
-              Digitaliza tu negocio local, <br />
+              {dict.hero.titleLine1} <br />
               <span className="bg-gradient-to-r from-purple-600 via-amber-600 to-emerald-600 bg-clip-text text-transparent">
-                con herramientas cloud en un solo lugar.
+                {dict.hero.titleLine2}
               </span>
             </h1>
 
             <p className="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium">
-              Todo en un solo software: <b>Menús interactivos y comandas a WhatsApp</b>, <b>Ruleta de Premios & Promociones</b> para fidelizar clientes, <b>Cupones de Descuento</b>, <b>Agendas de Citas 24/7</b> y <b>Filtro Inteligente de Reseñas en Google Maps</b> 100% digital.
+              {dict.hero.description}
             </p>
 
             {/* Botones de Acción */}
@@ -99,7 +72,7 @@ export default function LandingPage() {
                 href="#precios" 
                 className="w-full sm:w-auto bg-black text-white px-8 py-4 rounded-2xl font-black text-sm sm:text-base hover:bg-gray-800 transition flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl cursor-pointer"
               >
-                <span>Ver Planes y Suscripciones</span>
+                <span>{dict.hero.ctaPricing}</span>
                 <ArrowRight className="w-4 h-4" />
               </a>
               <Link 
@@ -107,7 +80,7 @@ export default function LandingPage() {
                 className="w-full sm:w-auto bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 px-6 py-4 rounded-2xl font-bold text-sm sm:text-base transition flex items-center justify-center gap-2"
               >
                 <Tag className="w-4 h-4 text-purple-700" />
-                <span>Planes Oficiales</span>
+                <span>{dict.common.pricing}</span>
               </Link>
             </div>
 
@@ -115,19 +88,19 @@ export default function LandingPage() {
             <div className="pt-1 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 text-xs font-semibold text-gray-600">
               <span className="flex items-center gap-1.5 text-emerald-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                <b>Activación inmediata</b> tras tu compra en Hotmart
+                <b>{isEn ? 'Instant cloud activation' : 'Activación inmediata'}</b> {isEn ? 'via secure Paddle billing' : 'tras tu compra en Hotmart o Paddle'}
               </span>
               <span className="flex items-center gap-1.5 text-gray-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                Herramientas especializadas según tu giro
+                {dict.industries.subtitle}
               </span>
               <span className="flex items-center gap-1.5 text-purple-700 font-bold bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
                 <Tag className="w-3.5 h-3.5 text-purple-600" />
-                50% OFF (L. 275) en tu primer mes
+                {isEn ? '50% OFF ($10/mo) first month' : '50% OFF (L. 275) en tu primer mes'}
               </span>
             </div>
 
-            {/* MOCKUP INTERACTIVO EN VIVO: DEMOSTRACIÓN DE LA EXPERIENCIA DEL CLIENTE */}
+            {/* MOCKUP INTERACTIVO EN VIVO */}
             <div className="pt-6">
               <InteractiveHeroShowcase />
             </div>
@@ -139,15 +112,15 @@ export default function LandingPage() {
           <div className="max-w-6xl mx-auto space-y-6">
             <div className="text-center space-y-1">
               <p className="text-[11px] font-black uppercase tracking-widest text-gray-400">
-                ADAPTADO A LA MEDIDA DE TU COMERCIO
+                {isEn ? 'TAILORED FOR YOUR BUSINESS INDUSTRY' : 'ADAPTADO A LA MEDIDA DE TU COMERCIO'}
               </p>
               <h2 className="text-xl sm:text-2xl font-black text-gray-900">
-                Diseñado para operar en cualquier sector sin complicaciones
+                {dict.industries.title}
               </h2>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-              {industries.map((ind, i) => (
+              {dict.industries.items.map((ind, i) => (
                 <div key={i} className="bg-gray-50/70 hover:bg-white p-4 rounded-2xl border border-gray-200/80 shadow-2xs transition hover:shadow-md space-y-1.5 text-center sm:text-left">
                   <div className="text-2xl mb-1">{ind.emoji}</div>
                   <h3 className="font-extrabold text-sm text-gray-900">{ind.name}</h3>
@@ -162,13 +135,13 @@ export default function LandingPage() {
         <section className="py-16 sm:py-24 px-4 sm:px-6 max-w-7xl mx-auto space-y-16">
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <span className="text-xs font-black uppercase tracking-wider text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
-              Ecosistema Completo de Venta y Fidelización
+              {dict.features.badge}
             </span>
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-gray-950">
-              Herramientas que enamoran a tus clientes y multiplican tu consumo
+              {dict.features.title}
             </h2>
             <p className="text-sm sm:text-base text-gray-600 font-medium">
-              Todo integrado en una sola plataforma: cartas digitales con turnos, juegos en mesa para subir el ticket, tarjetas de regalo prepagadas y reservas 24/7.
+              {dict.features.subtitle}
             </p>
           </div>
 
@@ -182,36 +155,26 @@ export default function LandingPage() {
                     🍽️
                   </div>
                   <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                    Restaurantes & Bares
+                    {dict.features.menu.tag}
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-amber-900 transition">
-                    Menús Digitales con Turno Activo & Comandas
+                    {dict.features.menu.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Digitaliza tu carta gastronómica con fotos HD. El cliente ve automáticamente el menú del turno actual (Desayunos, Almuerzos o Cenas) y pide a WhatsApp con su número de mesa.
+                    {dict.features.menu.desc}
                   </p>
                 </div>
 
                 <div className="pt-2 space-y-2 border-t border-gray-100">
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Turnos Activos Automáticos:</b> Muestra desayunos, almuerzos o cenas según la hora del día.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Plato del Día Exclusivo:</b> Sección para la preparación única de hoy que cambia a diario.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Comandas por Mesa (#Mesa QR):</b> Pedidos estructurados a tu WhatsApp y comandera en cocina.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Edición en Vivo:</b> Cambia precios y disponibilidad al instante sin reimprimir papel.</span>
-                  </div>
+                  {dict.features.menu.bullets.map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -220,13 +183,13 @@ export default function LandingPage() {
                   href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-900 hover:text-amber-700 transition"
                 >
-                  <span>Crear menú para mi restaurante</span>
+                  <span>{isEn ? 'Create digital menu' : 'Crear menú para mi restaurante'}</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
                 </a>
               </div>
             </div>
 
-            {/* CARD 2: RULETA DE PREMIOS & RASPA Y GANA EN MESA */}
+            {/* CARD 2: RULETA DE PREMIOS EN MESA */}
             <div id="gamificacion" className="bg-gradient-to-b from-amber-50/50 via-white to-white rounded-3xl p-6 sm:p-7 border-2 border-amber-400 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -235,36 +198,26 @@ export default function LandingPage() {
                   </div>
                   <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-amber-600 fill-current" />
-                    <span>Gamificación en Mesa</span>
+                    <span>{dict.features.wheel.tag}</span>
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-amber-950 transition">
-                    Ruleta de Premios & Tarjetas Raspables
+                    {dict.features.wheel.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Convierte la visita en una experiencia emocionante. Los comensales giran la ruleta o raspan una tarjeta digital interactiva en su mesa para ganar cortesías que se aplican directo a su comanda.
+                    {dict.features.wheel.desc}
                   </p>
                 </div>
 
                 <div className="pt-2 space-y-2 border-t border-amber-100">
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Ruleta Virtual y Raspa y Gana:</b> El cliente juega en su propio móvil sin descargar apps.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Premios a tu Medida:</b> Postres gratis, 10% de descuento o bebidas para subir el ticket.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Cupones con Temporizador:</b> Válidos durante la estadía (45 min) para consumo inmediato.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Captura de Leads:</b> Obtén el nombre y WhatsApp de cada comensal para tu base de datos.</span>
-                  </div>
+                  {dict.features.wheel.bullets.map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -273,65 +226,13 @@ export default function LandingPage() {
                   href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-900 hover:text-amber-700 transition"
                 >
-                  <span>Activar ruleta y raspables en mis mesas</span>
+                  <span>{isEn ? 'Activate Prize Wheel' : 'Activar ruleta y promociones'}</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
                 </a>
               </div>
             </div>
 
-            {/* CARD 3: CUPONES & PROMOCIONES DIGITALES */}
-            <div id="promociones" className="bg-gradient-to-b from-purple-50/50 via-white to-white rounded-3xl p-6 sm:p-7 border-2 border-purple-300 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center font-black text-xl shadow-xs">
-                    🎟️
-                  </div>
-                  <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-100 text-purple-900 border border-purple-200">
-                    Marketing Digital
-                  </span>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-purple-950 transition">
-                    Cupones de Descuento & Promociones
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Crea campañas de cupones digitales con códigos de descuento promocionales para atraer nuevos clientes y fidelizar a tu clientela habitual.
-                  </p>
-                </div>
-
-                <div className="pt-2 space-y-2 border-t border-purple-100">
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Campañas de Descuento:</b> Crea ofertas por porcentaje o descuento fijo en consumo.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Difusión Digital Inmediata:</b> Comparte tus promociones por WhatsApp o redes sociales.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Validación Antifraude:</b> Control y verificación de cupones mediante código QR o PIN.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Atracción de Clientes Nuevos:</b> Incentiva visitas recurrentes con ofertas atractivas.</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-gray-100">
-                <a
-                  href="#precios"
-                  className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-900 hover:text-purple-700 transition"
-                >
-                  <span>Crear cupones para mi negocio</span>
-                  <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </a>
-              </div>
-            </div>
-
-            {/* CARD 4: CITAS & AGENDAS */}
+            {/* CARD 3: CITAS & AGENDAS */}
             <div id="citas" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-purple-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -339,36 +240,26 @@ export default function LandingPage() {
                     💈
                   </div>
                   <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-purple-50 text-purple-800 border border-purple-200">
-                    Salones & Spas
+                    {dict.features.appointments.tag}
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-purple-900 transition">
-                    Agendas & Reservas con Especialistas 24/7
+                    {dict.features.appointments.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Permite a tus clientes reservar turnos online las 24 horas del día. Asignación inteligente de barberos o estilistas, portal móvil con PIN y bloqueo de horarios automático.
+                    {dict.features.appointments.desc}
                   </p>
                 </div>
 
                 <div className="pt-2 space-y-2 border-t border-gray-100">
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Reserva por Especialista:</b> Horarios sincronizados en vivo por barbero o terapeuta.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Portal Móvil para Colaboradores:</b> Acceso personal protegido con PIN de 4 dígitos.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Control de Tiempo Extra:</b> Extiende servicios en vivo (+15m, +30m) para evitar choques de turnos.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Confirmación Instantánea:</b> Avisos automáticos directos a WhatsApp.</span>
-                  </div>
+                  {dict.features.appointments.bullets.map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -377,13 +268,13 @@ export default function LandingPage() {
                   href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-purple-900 hover:text-purple-700 transition"
                 >
-                  <span>Activar agenda para mi salón</span>
+                  <span>{isEn ? 'Enable 24/7 booking' : 'Activar agenda para mi salón o clínica'}</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
                 </a>
               </div>
             </div>
 
-            {/* CARD 5: RESEÑAS GOOGLE & ESCUDO */}
+            {/* CARD 4: RESEÑAS GOOGLE & SMART REVIEW */}
             <div id="reputacion" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-yellow-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -391,36 +282,26 @@ export default function LandingPage() {
                     ⭐
                   </div>
                   <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-yellow-50 text-yellow-900 border border-yellow-300">
-                    Google Maps
+                    {dict.features.reviews.tag}
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-yellow-900 transition">
-                    Reseñas Google & Escudo Antirreclamos
+                    {dict.features.reviews.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Multiplica las opiniones de 5 estrellas en tu perfil de Google Maps con tecnología Smart Review & QR, desviando quejas a un buzón privado para resolverlas antes de que dañen tu imagen.
+                    {dict.features.reviews.desc}
                   </p>
                 </div>
 
                 <div className="pt-2 space-y-2 border-t border-gray-100">
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Smart Review & QR Dinámico:</b> El cliente califica escaneando desde su smartphone.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Filtro Inteligente:</b> 5★ van directo a Google; 1-3★ van al buzón confidencial de gerencia.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Mejora tu Posición Local:</b> Atrae clientes que buscan negocios cercanos en Google.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Generador de Código QR HD:</b> Diseñado para colocar en mesas, mostradores o vitrinas.</span>
-                  </div>
+                  {dict.features.reviews.bullets.map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -429,65 +310,13 @@ export default function LandingPage() {
                   href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-yellow-950 hover:text-yellow-700 transition"
                 >
-                  <span>Blindar mi reputación en Google</span>
+                  <span>{isEn ? 'Shield Google reputation' : 'Blindar mi reputación en Google'}</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
                 </a>
               </div>
             </div>
 
-            {/* CARD 6: FIDELIZACIÓN & SELLOS DIGITALES */}
-            <div id="fidelizacion" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-emerald-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-xl shadow-xs">
-                    🏆
-                  </div>
-                  <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    Fidelización
-                  </span>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-emerald-900 transition">
-                    Club de Sellos & Recompensas Digitales
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Sustituye las tarjetas de cartón que se pierden o arrugan por una tarjeta de fidelización digital en el smartphone de tu cliente con sellos acumulativos por visita y validación con PIN.
-                  </p>
-                </div>
-
-                <div className="pt-2 space-y-2 border-t border-gray-100">
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Sin Descargar Apps:</b> Funciona al instante en cualquier teléfono mediante escaneo QR.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Sellado Rápido con PIN:</b> El cajero o colaborador valida el sello en 2 segundos.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Premios Configurables:</b> Define el número de visitas y el beneficio (ej. 8º café gratis).</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Clientes Recurrentes:</b> Multiplica las visitas repetidas a tu establecimiento.</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-6 mt-6 border-t border-gray-100">
-                <a
-                  href="#precios"
-                  className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-900 hover:text-emerald-700 transition"
-                >
-                  <span>Crear mi club de sellos digital</span>
-                  <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
-                </a>
-              </div>
-            </div>
-
-            {/* CARD 7: VCARDS & CRM */}
+            {/* CARD 5: VCARDS & CRM */}
             <div id="vcards" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-blue-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -495,36 +324,26 @@ export default function LandingPage() {
                     💼
                   </div>
                   <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
-                    vCards & CRM
+                    {dict.features.vcard.tag}
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-blue-900 transition">
-                    vCards Profesionales Cloud & CRM Digital
+                    {dict.features.vcard.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Comparte tu tarjeta de presentación profesional interactiva, catálogo, redes sociales y formas de pago con un clic o código QR. Los contactos que interactúan quedan guardados en tu base de datos CRM.
+                    {dict.features.vcard.desc}
                   </p>
                 </div>
 
                 <div className="pt-2 space-y-2 border-t border-gray-100">
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Guardado Directo en Agenda:</b> Descarga de contacto (.vcf) al móvil en un solo clic.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Captura Bidireccional:</b> Pide los datos de la otra persona para hacer seguimiento.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>CRM Permanente Centralizado:</b> Exporta contactos a Excel para campañas de WhatsApp.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Generación de Código QR Directo:</b> Para imprimir en papelería o compartir digitalmente.</span>
-                  </div>
+                  {dict.features.vcard.bullets.map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -533,13 +352,13 @@ export default function LandingPage() {
                   href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-blue-900 hover:text-blue-700 transition"
                 >
-                  <span>Diseñar mi vCard profesional</span>
+                  <span>{isEn ? 'Create professional vCard' : 'Diseñar mi vCard profesional'}</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
                 </a>
               </div>
             </div>
 
-            {/* CARD 8: ESTUDIO QR DINÁMICO & WI-FI */}
+            {/* CARD 6: ESTUDIO QR */}
             <div id="estudio-qr" className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-pink-200/80 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group hover:-translate-y-1 relative overflow-hidden">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -547,36 +366,26 @@ export default function LandingPage() {
                     🎨
                   </div>
                   <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-pink-50 text-pink-800 border border-pink-200">
-                    Diseño & Wi-Fi
+                    {dict.features.qrStudio.tag}
                   </span>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-extrabold text-gray-900 group-hover:text-pink-900 transition">
-                    Estudio QR Dinámico & Autoconexión Wi-Fi
+                    {dict.features.qrStudio.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
-                    Crea códigos QR con degradados estilo Instagram, puntos redondeados, tu logo oficial y marcos para mostradores. Además, conecta a tus clientes al Wi-Fi sin dictar contraseñas.
+                    {dict.features.qrStudio.desc}
                   </p>
                 </div>
 
                 <div className="pt-2 space-y-2 border-t border-gray-100">
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>QRs 100% Dinámicos:</b> Cambia el menú o destino cuando quieras sin reimprimir papel.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Conexión Wi-Fi Instantánea:</b> Conexión rápida por escaneo de código QR en mesa.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Diseños VIP con tu Logotipo:</b> Degradados modernos y esquinas redondeadas.</span>
-                  </div>
-                  <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span><b>Descargas en Ultra HD & SVG:</b> Archivos vectoriales listos para imprenta y acrílicos.</span>
-                  </div>
+                  {dict.features.qrStudio.bullets.map((b, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs font-medium text-gray-700">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{b}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -585,7 +394,7 @@ export default function LandingPage() {
                   href="#precios"
                   className="inline-flex items-center gap-1.5 text-xs font-extrabold text-pink-900 hover:text-pink-700 transition"
                 >
-                  <span>Generar QRs exclusivos</span>
+                  <span>{isEn ? 'Generate vector QRs' : 'Descargar códigos QR en HD'}</span>
                   <ChevronRight className="w-4 h-4 transition group-hover:translate-x-1" />
                 </a>
               </div>
@@ -593,233 +402,160 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 4. HERRAMIENTAS DIGITALES Y VINCULACIÓN SMART */}
-        <section className="py-16 sm:py-20 bg-gradient-to-br from-gray-950 via-slate-900 to-black text-white px-4 sm:px-6">
-          <div className="max-w-6xl mx-auto space-y-10">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-              <div className="space-y-4 max-w-xl text-center lg:text-left">
-                <span className="text-xs font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30">
-                  Tecnología Cloud & Contactless
-                </span>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
-                  Herramientas Digitales Compatibles con Cualquier Dispositivo
-                </h2>
-                <p className="text-sm sm:text-base text-gray-300 leading-relaxed font-medium">
-                  Configura tus menús, tarjetas de presentación digital y ruletas interactivas en minutos. Tus clientes acceden al instante escaneando tus códigos QR generados en alta resolución desde cualquier smartphone.
-                </p>
-                <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-3 text-xs font-bold text-gray-300">
-                  <span className="flex items-center gap-1.5 text-emerald-400">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Activación 100% Inmediata en la Nube</span>
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center gap-1.5 text-yellow-300">
-                    <Sparkles className="w-4 h-4 fill-current" />
-                    <span>Compatible con iOS y Android</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:max-w-md">
-                <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/15 space-y-3">
-                  <div className="text-2xl">💼</div>
-                  <h4 className="font-extrabold text-base text-white">vCard Digital Cloud</h4>
-                  <p className="text-xs text-gray-300">Para ejecutivos y profesionales. Comparte tu perfil y catálogo con un toque digital.</p>
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-sm font-black text-emerald-400">Incluido en PRO</span>
-                    <a href="#precios" className="text-xs font-black bg-white text-black px-3 py-1.5 rounded-xl hover:bg-gray-200 transition">
-                      Ver Planes
-                    </a>
-                  </div>
-                </div>
-
-                <div className="bg-white/10 backdrop-blur-md p-5 rounded-3xl border border-white/15 space-y-3">
-                  <div className="text-2xl">⭐</div>
-                  <h4 className="font-extrabold text-base text-white">Captura de Reseñas Google</h4>
-                  <p className="text-xs text-gray-300">Filtro inteligente para multiplicar tus 5 estrellas en Google Maps.</p>
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-sm font-black text-emerald-400">Incluido en PRO</span>
-                    <a href="#precios" className="text-xs font-black bg-white text-black px-3 py-1.5 rounded-xl hover:bg-gray-200 transition">
-                      Ver Planes
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 5. CÓMO FUNCIONA EN 3 PASOS */}
-        <section id="como-funciona" className="py-20 sm:py-24 px-4 sm:px-6 max-w-5xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-14">
-            <span className="text-xs font-black uppercase tracking-wider text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
-              Rápido & Sin Complicaciones
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900">
-              Operativo en tu negocio en menos de 5 minutos
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-center relative">
-            <div className="p-6 bg-white rounded-3xl border-2 border-gray-100 shadow-xs space-y-3 hover:border-black transition">
-              <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-black text-lg mx-auto shadow-xs">
-                1
-              </div>
-              <h3 className="font-extrabold text-base text-gray-900">Crea tu Cuenta en 1 Minuto</h3>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Sin tarjeta de crédito. Activa tu negocio y selecciona qué módulos deseas utilizar (Menús, Ruleta, Gift Cards, Citas o Reseñas).
-              </p>
-            </div>
-
-            <div className="p-6 bg-white rounded-3xl border-2 border-gray-100 shadow-xs space-y-3 hover:border-black transition">
-              <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-black text-lg mx-auto shadow-xs">
-                2
-              </div>
-              <h3 className="font-extrabold text-base text-gray-900">Personaliza con tu Marca</h3>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Configura tus turnos de menú, premios de ruleta, gift cards, horarios de citas y logotipo oficial en tu panel intuitivo.
-              </p>
-            </div>
-
-            <div className="p-6 bg-white rounded-3xl border-2 border-gray-100 shadow-xs space-y-3 hover:border-black transition">
-              <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-black text-lg mx-auto shadow-xs">
-                3
-              </div>
-              <h3 className="font-extrabold text-base text-gray-900">Conecta Clientes por Códigos QR</h3>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Coloca los códigos QR generados en tus mesas o mostradores y recibe pedidos, cupones canjeados y reservas directo a WhatsApp.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* 6. TABLA DE PLANES & PRECIOS CLAROS Y TRANSPARENTES */}
-        <section id="precios" className="py-20 bg-gray-50/70 border-y border-gray-200 px-4 sm:px-6">
-          <div className="max-w-6xl mx-auto space-y-12">
-            <div className="text-center max-w-2xl mx-auto space-y-3">
-              <span className="text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
-                Precios Claros • Cero Letras Pequeñas
+        {/* 4. CÓMO FUNCIONA EN 3 PASOS */}
+        <section className="py-16 sm:py-24 bg-gray-50 border-y border-gray-200 px-4 sm:px-6">
+          <div className="max-w-5xl mx-auto space-y-12">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-black uppercase tracking-wider text-purple-700 bg-purple-100 px-3 py-1 rounded-full border border-purple-200">
+                {dict.howItWorks.tag}
               </span>
               <h2 className="text-3xl sm:text-4xl font-black text-gray-900">
-                Elige la opción ideal para impulsar tu negocio
+                {dict.howItWorks.title}
               </h2>
               <p className="text-xs sm:text-sm text-gray-500 font-medium">
-                Comienza sin costo hoy mismo. Pagos fáciles por transferencia o depósito en bancos de Honduras sin contratos forzosos.
+                {dict.howItWorks.subtitle}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-2xs space-y-3 text-center">
+                <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center font-black text-lg mx-auto shadow-xs">
+                  1
+                </div>
+                <h3 className="font-extrabold text-base text-gray-900">{dict.howItWorks.step1.title}</h3>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  {dict.howItWorks.step1.desc}
+                </p>
+              </div>
+
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-2xs space-y-3 text-center">
+                <div className="w-12 h-12 bg-purple-700 text-white rounded-2xl flex items-center justify-center font-black text-lg mx-auto shadow-xs">
+                  2
+                </div>
+                <h3 className="font-extrabold text-base text-gray-900">{dict.howItWorks.step2.title}</h3>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  {dict.howItWorks.step2.desc}
+                </p>
+              </div>
+
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-2xs space-y-3 text-center">
+                <div className="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center font-black text-lg mx-auto shadow-xs">
+                  3
+                </div>
+                <h3 className="font-extrabold text-base text-gray-900">{dict.howItWorks.step3.title}</h3>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  {dict.howItWorks.step3.desc}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. TABLA DE PRECIOS */}
+        <section id="precios" className="py-16 sm:py-24 px-4 sm:px-6 bg-gradient-to-b from-white via-purple-50/20 to-white">
+          <div className="max-w-5xl mx-auto space-y-12">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+                {dict.pricingSection.tag}
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-gray-900">
+                {dict.pricingSection.title}
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-500 font-medium">
+                {dict.pricingSection.subtitle}
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-6 lg:gap-8 items-stretch">
-              {/* PLAN 1: MENSUALIDAD PRO (RECOMENDADO) */}
+              {/* PLAN 1: MENSUALIDAD PRO */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-purple-600 shadow-xl flex flex-col justify-between relative transform md:-translate-y-2">
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-700 to-indigo-600 text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
-                  ⭐ MÁS POPULAR • 50% OFF
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-purple-700 to-indigo-600 text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md whitespace-nowrap">
+                  ⭐ {dict.pricingSection.proPlan.badge}
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-wider text-purple-700">Membresía Completa</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-purple-700">{isEn ? 'Monthly Access' : 'Membresía Completa'}</span>
                     <span className="text-[10px] font-black bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">
-                      Todo Incluido
+                      {isEn ? 'All Included' : 'Todo Incluido'}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-2xl font-black text-gray-900">Membresía Mensual PRO</h3>
-                    <p className="text-xs text-gray-500 mt-1">Digitalización total para tu negocio sin contratos forzosos.</p>
+                    <h3 className="text-2xl font-black text-gray-900">{dict.pricingSection.proPlan.name}</h3>
+                    <p className="text-xs text-gray-500 mt-1">{dict.pricingSection.proPlan.billedMonthly}</p>
                   </div>
 
                   <div className="pt-2">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-black text-purple-700">L. 275</span>
-                      <span className="text-xs text-gray-400 line-through">L. 550 HNL</span>
+                      <span className="text-4xl font-black text-purple-700">{isEn ? '$10' : 'L. 275'}</span>
+                      <span className="text-xs text-gray-400 line-through">{isEn ? '$25 USD' : 'L. 550 HNL'}</span>
                     </div>
                     <p className="text-[11px] text-emerald-700 font-bold mt-1">
-                      50% OFF en tu primer mes • Regular: L. 550 / mes
+                      {isEn ? '50% OFF your first month • Regular: $25 / mo' : '50% OFF en tu primer mes • Regular: L. 550 / mes'}
                     </p>
                   </div>
 
                   <div className="pt-4 space-y-2.5 border-t border-gray-100 text-xs text-gray-700">
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Menús con turnos activos</b> (Desayuno, Almuerzo, Cena)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Ruleta & Tarjetas Raspables</b> en mesas ilimitadas</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Gift Cards Digitales</b> con canje seguro</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Plato del Día destacado</b> con horario propio</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>Agendas de Citas</b> y portal móvil para colaboradores</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>CRM permanente</b> y exportación de clientes a Excel</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Cancela cuando quieras sin compromisos</span>
-                    </div>
+                    {dict.pricingSection.proPlan.features.map((feat, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{feat}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
                 <div className="pt-8">
-                  <a
-                    href="https://pay.hotmart.com/F108380682J?checkoutMode=2"
+                  <Link
+                    href="/pricing"
                     className="w-full bg-black hover:bg-gray-800 text-white font-black py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md"
                   >
-                    <span>Adquirir Membresía Ahora</span>
+                    <span>{dict.pricingSection.proPlan.ctaMonthly}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </a>
+                  </Link>
                 </div>
               </div>
 
-              {/* PLAN 3: PLAN ANUAL PRO CLOUD */}
+              {/* PLAN 2: PLAN ANUAL PRO CLOUD */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xs flex flex-col justify-between">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black uppercase tracking-wider text-emerald-700">Plan Anual SaaS</span>
+                    <span className="text-xs font-black uppercase tracking-wider text-emerald-700">{isEn ? 'Annual Cloud SaaS' : 'Plan Anual SaaS'}</span>
                     <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                      Ahorra 2 Meses
+                      {dict.pricingSection.annualBadge}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-2xl font-black text-gray-900">Suscripción Anual PRO</h3>
-                    <p className="text-xs text-gray-500 mt-1">Acceso ilimitado a todas las herramientas digitales por 12 meses.</p>
+                    <h3 className="text-2xl font-black text-gray-900">{isEn ? 'Annual Business PRO' : 'Suscripción Anual PRO'}</h3>
+                    <p className="text-xs text-gray-500 mt-1">{dict.pricingSection.proPlan.billedAnnual}</p>
                   </div>
 
                   <div className="pt-2">
-                    <span className="text-4xl font-black text-gray-900">$200</span>
-                    <span className="text-xs text-gray-500 ml-1">USD / año</span>
+                    <span className="text-4xl font-black text-gray-900">{dict.pricingSection.proPlan.priceAnnual}</span>
+                    <span className="text-xs text-gray-500 ml-1">{dict.pricingSection.proPlan.periodAnnual}</span>
                     <p className="text-[11px] text-emerald-700 font-bold mt-1">
-                      Facturación anual recurrente con soporte prioritario
+                      {dict.pricingSection.proPlan.billedAnnual}
                     </p>
                   </div>
 
                   <div className="pt-4 space-y-2.5 border-t border-gray-100 text-xs text-gray-700">
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span><b>12 meses de suscripción PRO</b> completamente incluidos</span>
+                      <span><b>{isEn ? '12 months of PRO access' : '12 meses de suscripción PRO'}</b> {isEn ? 'fully included' : 'completamente incluidos'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Generador QR HD y vCards digitales ilimitadas</span>
+                      <span>{isEn ? 'HD QR Code Generator and unlimited cloud vCards' : 'Generador QR HD y vCards digitales ilimitadas'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Ruleta de premios y catálogo interactivo en la nube</span>
+                      <span>{isEn ? 'Prize Wheel and interactive cloud catalog' : 'Ruleta de premios y catálogo interactivo en la nube'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Soporte prioritario y actualizaciones continuas</span>
+                      <span>{isEn ? 'Priority customer support and instant updates' : 'Soporte prioritario y actualizaciones continuas'}</span>
                     </div>
                   </div>
                 </div>
@@ -827,13 +563,34 @@ export default function LandingPage() {
                 <div className="pt-8">
                   <Link
                     href="/pricing"
-                    className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs"
+                    className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs"
                   >
-                    <span>Ver Planes Disponibles</span>
+                    <span>{dict.pricingSection.proPlan.ctaAnnual}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
+            </div>
+
+            {/* Banner de Marca Blanca para Agencias */}
+            <div className="mt-8 p-6 sm:p-8 rounded-3xl bg-linear-to-r from-purple-900 via-indigo-900 to-slate-900 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+              <div className="space-y-2 text-center md:text-left">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full text-purple-200">
+                  {dict.agenciasPage.badge}
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black">
+                  {dict.pricingSection.agencyBanner.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-300 max-w-xl">
+                  {dict.pricingSection.agencyBanner.desc}
+                </p>
+              </div>
+              <Link
+                href="/agencias"
+                className="bg-white text-gray-950 hover:bg-gray-100 font-extrabold px-6 py-3.5 rounded-xl text-xs sm:text-sm whitespace-nowrap transition shadow-md shrink-0"
+              >
+                {dict.pricingSection.agencyBanner.cta}
+              </Link>
             </div>
           </div>
         </section>
@@ -842,13 +599,13 @@ export default function LandingPage() {
         <section id="faq" className="py-20 px-4 sm:px-6 max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-2">
             <span className="text-xs font-black uppercase tracking-wider text-gray-400">
-              Resolvemos tus Dudas
+              {dict.faqSection.tag}
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900">
-              Preguntas Frecuentes
+              {dict.faqSection.title}
             </h2>
             <p className="text-xs sm:text-sm text-gray-500 font-medium">
-              Todo lo que necesitas saber antes de comenzar.
+              {dict.faqSection.subtitle}
             </p>
           </div>
 
@@ -863,13 +620,13 @@ export default function LandingPage() {
 
             <div className="relative space-y-3">
               <span className="text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30 shadow-xs">
-                DIGITALIZA TU NEGOCIO HOY
+                {dict.banner.badge}
               </span>
               <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-                Empieza a digitalizar tu negocio hoy mismo
+                {isEn ? 'Start digitizing your business today' : 'Empieza a digitalizar tu negocio hoy mismo'}
               </h2>
               <p className="text-xs sm:text-base text-gray-300 max-w-lg mx-auto font-medium leading-relaxed">
-                Adquiere tu suscripción comercial o plan de agencia y activa en segundos el menú con turnos activos, la ruleta en mesa, cupones digitales, agendas de citas y escudo de reseñas Google.
+                {dict.hero.description}
               </p>
             </div>
 
@@ -878,13 +635,13 @@ export default function LandingPage() {
                 href="#precios" 
                 className="w-full sm:w-auto bg-white text-black hover:bg-gray-100 font-bold px-6 py-3 rounded-xl text-xs sm:text-sm transition shadow-lg cursor-pointer"
               >
-                Ver Planes para mi Negocio
+                {dict.hero.ctaPricing}
               </a>
               <Link 
-                href="/activar-compra" 
+                href="/pricing" 
                 className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl text-xs sm:text-sm transition"
               >
-                Activar mi Compra Hotmart
+                {dict.common.pricing}
               </Link>
             </div>
           </div>
@@ -893,7 +650,7 @@ export default function LandingPage() {
 
       {/* 9. FOOTER PROFESIONAL */}
       <footer className="border-t border-gray-200 bg-white py-12 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
           <div className="flex items-center gap-2">
             <Image
               src="/logo-light.png"
@@ -907,33 +664,35 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Plataforma Segura • Conexión Cifrada SSL</span>
+            <span>{dict.common.securePaddleBilling}</span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-semibold text-gray-500">
+          <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 flex-wrap justify-center sm:justify-start">
             <Link href="/pricing" className="hover:text-black hover:underline">
-              Planes y Precios
+              {dict.footer.links.pricing}
             </Link>
             <span>•</span>
             <Link href="/terms" className="hover:text-black hover:underline">
-              Términos de Servicio
+              {dict.footer.links.terms}
             </Link>
             <span>•</span>
             <Link href="/privacidad" className="hover:text-black hover:underline">
-              Políticas de Privacidad
+              {dict.footer.links.privacy}
             </Link>
             <span>•</span>
             <Link href="/refunds" className="hover:text-black hover:underline">
-              Reembolsos
+              {dict.footer.links.refunds}
             </Link>
             <span>•</span>
             <Link href="/login" className="hover:text-black hover:underline">
-              Iniciar Sesión
+              {dict.footer.links.login}
             </Link>
           </div>
 
+          <LanguageSelector variant="footer" />
+
           <p className="text-gray-400 text-xs font-medium">
-            © {new Date().getFullYear()} OmniTag. Todos los derechos reservados.
+            © {new Date().getFullYear()} OmniTag. {dict.common.allRightsReserved}
           </p>
         </div>
       </footer>

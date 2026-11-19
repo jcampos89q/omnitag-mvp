@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { headers } from "next/headers";
 import { getPartnerBrandById } from "@/lib/whitelabel";
+import { I18nProvider } from "@/lib/i18n/context";
+import { Locale, DEFAULT_LOCALE } from "@/lib/i18n/config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,15 +28,25 @@ export async function generateMetadata(): Promise<Metadata> {
   const partnerId = headersList.get("x-partner-id");
   const isAgencyPortal = headersList.get("x-agency-portal") === "true";
   const customDomain = headersList.get("x-custom-domain");
+  const locale = (headersList.get("x-locale") as Locale) || DEFAULT_LOCALE;
+  const isEn = locale === "en";
   const partnerBrand = partnerId ? await getPartnerBrandById(partnerId) : null;
 
   const isWhiteLabelHost = Boolean(partnerBrand || isAgencyPortal || customDomain);
-  const brandTitle = partnerBrand?.brand_name || (isAgencyPortal ? "Portal de Acceso" : "OmniTag");
+  const brandTitle = partnerBrand?.brand_name || (isAgencyPortal ? (isEn ? "Access Portal" : "Portal de Acceso") : "OmniTag");
   const baseUrl = customDomain
     ? `https://${customDomain}`
     : isAgencyPortal
     ? "https://app.omnitag.site"
     : "https://www.omnitag.site";
+
+  const defaultTitle = isEn
+    ? "OmniTag - Cloud SaaS Platform for Digital Marketing & Customer Loyalty"
+    : "OmniTag - Plataforma SaaS de Marketing y Fidelización Digital";
+
+  const defaultDescription = isEn
+    ? "Cloud SaaS software for interactive digital menus, 24/7 appointment booking, discount coupons, and smart Google Maps review filtering."
+    : "Software SaaS en la nube para menús digitales interactivos, agendas de citas, cupones y captación inteligente de reseñas en Google.";
 
   return {
     metadataBase: new URL(baseUrl),
@@ -44,20 +56,20 @@ export async function generateMetadata(): Promise<Metadata> {
           template: `%s | ${brandTitle}`,
         }
       : {
-          default: "OmniTag - Plataforma SaaS de Marketing y Fidelización Digital",
-          template: "%s | OmniTag",
+          default: defaultTitle,
+          template: `%s | OmniTag`,
         },
     description: isWhiteLabelHost
-      ? `Plataforma digital de ${brandTitle}.`
-      : "Software SaaS en la nube para menús digitales interactivos, agendas de citas, cupones y captación inteligente de reseñas en Google.",
+      ? isEn ? `Digital platform by ${brandTitle}.` : `Plataforma digital de ${brandTitle}.`
+      : defaultDescription,
     openGraph: {
-      title: isWhiteLabelHost ? brandTitle : "OmniTag - Plataforma SaaS de Marketing y Fidelización Digital",
+      title: isWhiteLabelHost ? brandTitle : defaultTitle,
       description: isWhiteLabelHost
-        ? `Plataforma digital de ${brandTitle}.`
-        : "Software SaaS en la nube para menús digitales interactivos, agendas de citas, cupones y captación inteligente de reseñas en Google.",
+        ? isEn ? `Digital platform by ${brandTitle}.` : `Plataforma digital de ${brandTitle}.`
+        : defaultDescription,
       url: baseUrl,
       siteName: brandTitle,
-      locale: "es_ES",
+      locale: isEn ? "en_US" : "es_ES",
       type: "website",
     },
     icons: {
@@ -71,18 +83,23 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  const locale = (headersList.get("x-locale") as Locale) || DEFAULT_LOCALE;
+
   return (
     <html
-      lang="es"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white text-gray-900 selection:bg-black selection:text-white">
-        {children}
+        <I18nProvider initialLocale={locale}>
+          {children}
+        </I18nProvider>
       </body>
     </html>
   );

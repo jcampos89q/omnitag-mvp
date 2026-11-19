@@ -7,19 +7,14 @@ import {
   ArrowRight, 
   Menu, 
   X, 
-  CreditCard, 
-  Sparkles,
-  UtensilsCrossed,
-  Scissors,
-  Star,
-  Gift,
-  HelpCircle,
-  Tag,
-  Disc
+  Tag
 } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
+import LanguageSelector from './LanguageSelector'
 
 export default function LandingNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { dict } = useTranslation()
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-2xs">
@@ -38,42 +33,44 @@ export default function LandingNavbar() {
         </Link>
 
         {/* Links de Navegación en Desktop */}
-        <div className="hidden lg:flex items-center gap-4 xl:gap-5 text-xs font-bold text-gray-600">
+        <div className="hidden lg:flex items-center gap-3.5 xl:gap-5 text-xs font-bold text-gray-600">
           <a href="#restaurantes" className="hover:text-black transition flex items-center gap-1">
-            <span>🍽️ Menús QR</span>
+            <span>{dict.nav.menus}</span>
           </a>
           <a href="#gamificacion" className="text-amber-800 hover:text-amber-950 transition flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-            <span>🎰 Ruleta Interactiva</span>
+            <span>{dict.nav.roulette}</span>
           </a>
           <a href="#fidelizacion" className="text-purple-700 hover:text-purple-900 transition flex items-center gap-1 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-            <span>🎟️ Cupones y Fidelización</span>
+            <span>{dict.nav.loyalty}</span>
           </a>
           <a href="#citas" className="hover:text-black transition flex items-center gap-1">
-            <span>💈 Citas</span>
+            <span>{dict.nav.appointments}</span>
           </a>
           <a href="#reputacion" className="hover:text-black transition flex items-center gap-1">
-            <span>⭐ Reseñas Google</span>
+            <span>{dict.nav.reviews}</span>
           </a>
           <a href="#precios" className="text-gray-900 hover:text-purple-900 transition flex items-center gap-1 font-extrabold">
             <Tag className="w-3.5 h-3.5 text-purple-600" />
-            <span>Precios</span>
+            <span>{dict.nav.pricing}</span>
           </a>
-          <a href="#faq" className="hover:text-black transition">FAQ</a>
+          <a href="#faq" className="hover:text-black transition">{dict.nav.faq}</a>
         </div>
 
-        {/* Botones de Acción en Desktop & Mobile */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        {/* Selector de Idioma & Botones de Acción */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          <LanguageSelector variant="pill" className="hidden sm:inline-flex" />
+
           <Link 
             href="/login" 
             className="text-xs sm:text-sm text-gray-700 hover:text-black font-bold px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl transition"
           >
-            Iniciar Sesión
+            {dict.common.login}
           </Link>
           <Link 
             href="/activar-compra" 
             className="bg-black text-white text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-extrabold hover:bg-gray-800 transition shadow-xs flex items-center gap-1.5"
           >
-            <span>Activar Compra</span>
+            <span>{dict.nav.activatePurchase}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
 
@@ -82,7 +79,7 @@ export default function LandingNavbar() {
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden p-2 rounded-xl text-gray-600 hover:text-black hover:bg-gray-100 transition cursor-pointer"
-            aria-label="Abrir menú de navegación"
+            aria-label={dict.nav.openMenu}
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -92,41 +89,46 @@ export default function LandingNavbar() {
       {/* Menú Desplegable en Móvil */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-gray-100 bg-white/95 backdrop-blur-md px-4 py-4 space-y-3 shadow-lg animate-in slide-in-from-top-2 duration-150">
+          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+            <span className="text-xs font-bold text-gray-500">{dict.common.language}:</span>
+            <LanguageSelector variant="pill" />
+          </div>
+
           <div className="grid grid-cols-2 gap-2 text-xs font-bold">
             <a 
               href="#restaurantes" 
               onClick={() => setMobileMenuOpen(false)}
               className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 flex items-center gap-2"
             >
-              <span>🍽️ Menús QR</span>
+              <span>{dict.nav.menus}</span>
             </a>
             <a 
               href="#gamificacion" 
               onClick={() => setMobileMenuOpen(false)}
               className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-2"
             >
-              <span>🎰 Ruleta & Raspa</span>
+              <span>{dict.nav.roulette}</span>
             </a>
             <a 
               href="#fidelizacion" 
               onClick={() => setMobileMenuOpen(false)}
               className="p-2.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 flex items-center gap-2"
             >
-              <span>🎟️ Fidelización</span>
+              <span>{dict.nav.loyalty}</span>
             </a>
             <a 
               href="#citas" 
               onClick={() => setMobileMenuOpen(false)}
               className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 flex items-center gap-2"
             >
-              <span>💈 Citas 24/7</span>
+              <span>{dict.nav.appointments}</span>
             </a>
             <a 
               href="#reputacion" 
               onClick={() => setMobileMenuOpen(false)}
               className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 flex items-center gap-2"
             >
-              <span>⭐ Reseñas Google</span>
+              <span>{dict.nav.reviews}</span>
             </a>
             <a 
               href="#precios" 
@@ -134,7 +136,7 @@ export default function LandingNavbar() {
               className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-2 font-black"
             >
               <Tag className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Ver Planes</span>
+              <span>{dict.nav.pricing}</span>
             </a>
           </div>
 
@@ -145,14 +147,14 @@ export default function LandingNavbar() {
               className="text-purple-700 flex items-center gap-1 font-extrabold"
             >
               <Tag className="w-3.5 h-3.5" />
-              <span>Ver Planes & Precios</span>
+              <span>{dict.pricingSection.title}</span>
             </a>
             <a 
               href="#faq" 
               onClick={() => setMobileMenuOpen(false)}
               className="text-gray-600"
             >
-              Preguntas Frecuentes
+              {dict.nav.faq}
             </a>
           </div>
         </div>

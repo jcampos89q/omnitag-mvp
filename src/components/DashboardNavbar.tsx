@@ -36,6 +36,8 @@ import {
 } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
 import NotificationBell from './NotificationBell'
+import LanguageSelector from './LanguageSelector'
+import { useTranslation } from '@/lib/i18n/context'
 import { UserPlanInfo } from '@/lib/plans'
 import { getIndustryConfig, normalizeIndustry } from '@/lib/industries'
 import type { WhiteLabelBrandConfig } from '@/lib/whitelabel'
@@ -437,6 +439,7 @@ export default function DashboardNavbar({
         ] : [])
       ]
 
+  const { dict } = useTranslation()
   const isActive = (href: string) => {
     const cleanHref = href.split('?')[0]
     if (cleanHref === '/dashboard') return pathname === '/dashboard'
@@ -514,15 +517,17 @@ export default function DashboardNavbar({
             )}
           </div>
 
-          {/* Derecha: Botón Cuadrícula de Herramientas + Notificaciones + Salir */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Derecha: Selector de Idioma + Botón Cuadrícula de Herramientas + Notificaciones + Salir */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <LanguageSelector variant="pill" className="hidden sm:inline-flex" />
+
             <button
               type="button"
               onClick={() => setIsGridLauncherOpen(true)}
               className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm transition shadow-xs cursor-pointer"
             >
               <LayoutGrid className="w-4 h-4" />
-              <span>Menú de Herramientas</span>
+              <span>{dict.dashboardNav.toolsMenu}</span>
             </button>
 
             <NotificationBell userId={userId} position="topbar" />
@@ -641,8 +646,9 @@ export default function DashboardNavbar({
 
             {/* Pie del Launcher con cuenta y botón de Cerrar Sesión */}
             <div className="px-5 sm:px-8 py-3.5 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="text-xs text-gray-600 font-medium truncate">
-                Sesión iniciada como: <strong className="text-gray-900">{userEmail}</strong>
+              <div className="text-xs text-gray-600 font-medium truncate flex items-center gap-2">
+                <span>{dict.common.language}:</span>
+                <LanguageSelector variant="pill" />
               </div>
               <div className="flex items-center gap-3">
                 {externalWebUrl && (

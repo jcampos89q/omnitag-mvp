@@ -1,19 +1,30 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Check, ShieldCheck, ArrowRight, Zap, Building2, Store } from 'lucide-react'
+import { Check, ShieldCheck, ArrowRight, Zap } from 'lucide-react'
 import PaddleCheckoutButton from '@/components/PaddleCheckoutButton'
+import LanguageSelector from '@/components/LanguageSelector'
+import { getServerDictionary } from '@/lib/i18n/server'
 
-export const metadata: Metadata = {
-  title: 'Planes y Precios Oficiales | OmniTag',
-  description: 'Conoce los planes de suscripción para comercios y negocios en OmniTag. Fidelización, reseñas Google y herramientas interactivas.',
+export async function generateMetadata(): Promise<Metadata> {
+  const { dict, locale } = await getServerDictionary()
+  return {
+    title: `${dict.pricingPage.title} | OmniTag`,
+    description: dict.pricingPage.subtitle,
+    openGraph: {
+      title: `${dict.pricingPage.title} | OmniTag`,
+      description: dict.pricingPage.subtitle,
+      locale: locale === 'en' ? 'en_US' : 'es_ES',
+    },
+  }
 }
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const { dict } = await getServerDictionary()
   const proPriceId = process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID || 'pri_01m7b4g3v0p8jdrszjpa3bbyfy'
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900 selection:bg-black selection:text-white flex flex-col justify-between">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -27,35 +38,36 @@ export default function PricingPage() {
             />
             <span className="font-black text-xl tracking-tight text-gray-900">OmniTag</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageSelector variant="pill" />
             <Link
               href="/login"
-              className="text-xs font-bold text-gray-600 hover:text-black transition"
+              className="text-xs font-bold text-gray-600 hover:text-black transition px-2 py-1.5"
             >
-              Iniciar Sesión
+              {dict.common.login}
             </Link>
             <Link
               href="/register"
               className="bg-black hover:bg-gray-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-xs"
             >
-              Crear Cuenta
+              {dict.common.register}
             </Link>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-12">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-12 flex-1 w-full">
         <div className="text-center space-y-3">
           <span className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-800 text-xs font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full border border-blue-200">
             <Zap className="w-4 h-4 text-blue-600" />
-            Precios Transparentes para Comercios
+            {dict.pricingPage.badge}
           </span>
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-gray-950">
-            Planes y Precios Oficiales
+            {dict.pricingPage.title}
           </h1>
           <p className="text-sm sm:text-base text-gray-600 max-w-xl mx-auto">
-            Impulsa las ventas recurrentes de tu negocio, captura datos de clientes y multiplica tus reseñas de Google.
+            {dict.pricingPage.subtitle}
           </p>
         </div>
 
@@ -63,52 +75,38 @@ export default function PricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           {/* Card 1: Plan Negocio PRO (Cliente Final) */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-blue-600 shadow-xl flex flex-col justify-between relative">
-            <div className=" -top-3 left-1/2 -translate-x-1/2 absolute bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full whitespace-nowrap">
-              ⭐ Plan Comercio Recomendado
+            <div className="-top-3 left-1/2 -translate-x-1/2 absolute bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-0.5 rounded-full whitespace-nowrap">
+              {dict.pricingPage.proCardBadge}
             </div>
 
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-wider text-blue-700">
-                  Comercio / Negocio Directo
+                  {dict.pricingPage.proCardType}
                 </span>
                 <span className="text-[11px] font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">
-                  1 Negocio
+                  {dict.pricingPage.proCardScope}
                 </span>
               </div>
 
               <div>
-                <h2 className="text-2xl font-black text-gray-950">OmniTag Negocio PRO</h2>
+                <h2 className="text-2xl font-black text-gray-950">{dict.pricingPage.proPlanName}</h2>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-4xl font-black text-blue-700">$25</span>
-                  <span className="text-xs font-bold text-gray-500">USD / mes</span>
+                  <span className="text-4xl font-black text-blue-700">{dict.pricingPage.proPlanPrice}</span>
+                  <span className="text-xs font-bold text-gray-500">{dict.pricingPage.proPlanPeriod}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Acceso completo sin contratos de permanencia. Cancela cuando quieras.
+                  {dict.pricingPage.proPlanNotice}
                 </p>
               </div>
 
               <ul className="pt-4 border-t border-gray-100 space-y-3 text-xs sm:text-sm text-gray-700">
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span><b>Captura Inteligente de Reseñas Google 5 Estrellas</b></span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span><b>Tarjetas Digitales de Fidelización y Sellos</b></span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span><b>Ruleta de Premios Interactiva</b> para mesas y mostradores</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span><b>Generador de Códigos QR HD</b> en vectores para imprenta</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>Soporte técnico directo y actualizaciones continuas</span>
-                </li>
+                {dict.pricingPage.featuresList.map((feature, idx) => (
+                  <li key={idx} className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -117,7 +115,7 @@ export default function PricingPage() {
                 priceId={proPriceId}
                 className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
               >
-                <span>Suscribirme al Plan PRO ($25/mes)</span>
+                <span>{dict.pricingPage.paddlePayBtn}</span>
               </PaddleCheckoutButton>
             </div>
           </div>
@@ -127,51 +125,51 @@ export default function PricingPage() {
             <div className="space-y-5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-wider text-purple-700">
-                  Agencias y Revendedores
+                  {dict.pricingPage.agencyBoxBadge}
                 </span>
                 <span className="text-[11px] font-bold bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">
-                  Multi-Cuentas
+                  Multi-Client
                 </span>
               </div>
 
               <div>
-                <h2 className="text-2xl font-black text-gray-950">Planes Marca Blanca</h2>
+                <h2 className="text-2xl font-black text-gray-950">{dict.pricingPage.agencyBoxTitle}</h2>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-xs font-bold text-gray-500">Desde</span>
+                  <span className="text-xs font-bold text-gray-500">From</span>
                   <span className="text-4xl font-black text-gray-950">$49</span>
-                  <span className="text-xs font-bold text-gray-500">USD / mes</span>
+                  <span className="text-xs font-bold text-gray-500">USD / mo</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Revende la plataforma a tus clientes bajo tu propio nombre y logo.
+                  {dict.pricingPage.agencyBoxDesc}
                 </p>
               </div>
 
               <ul className="pt-4 border-t border-gray-100 space-y-3 text-xs sm:text-sm text-gray-700">
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span><b>100% Marca Blanca:</b> Sin mención de OmniTag ante tus clientes</span>
+                  <span><b>100% White-Label:</b> Zero mention of OmniTag to your clients</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span>Panel para crear y gestionar <b>10, 25 o 100 negocios</b></span>
+                  <span>Portal to create and manage <b>10, 25 or 100 businesses</b></span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span><b>Cobro directo del 100%</b> a tus clientes a tus cuentas</span>
+                  <span><b>Keep 100% of client revenue</b> deposited directly to your bank</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-purple-600 shrink-0" />
-                  <span>Dominio propio y logo personalizado en todas las apps</span>
+                  <span>Custom domain and logo on all web applications</span>
                 </li>
               </ul>
             </div>
 
             <div className="pt-6">
               <Link
-                href="https://agencias.omnitag.site"
+                href="/agencias"
                 className="w-full bg-gray-950 hover:bg-gray-800 text-white font-bold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs"
               >
-                <span>Ver Planes para Agencias ($49 - $199)</span>
+                <span>{dict.pricingPage.agencyBoxCta}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -182,23 +180,31 @@ export default function PricingPage() {
         <div className="border-t border-gray-200 pt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-500">
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Garantía de reembolso de 7 días</span>
+            <span>7-day money-back guarantee</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Zap className="w-4 h-4 text-blue-600" />
-            <span>Activación inmediata 100% digital</span>
+            <span>Instant 100% digital cloud activation</span>
           </div>
           <Link href="/terms" className="hover:text-black underline">
-            Términos de servicio
+            {dict.common.terms}
           </Link>
           <Link href="/privacidad" className="hover:text-black underline">
-            Políticas de privacidad
+            {dict.common.privacy}
           </Link>
           <Link href="/refunds" className="hover:text-black underline">
-            Política de reembolso
+            {dict.common.refunds}
           </Link>
         </div>
       </main>
+
+      {/* Footer selector */}
+      <footer className="border-t border-gray-200 bg-white py-6 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+          <span>© {new Date().getFullYear()} OmniTag. {dict.common.allRightsReserved}</span>
+          <LanguageSelector variant="footer" />
+        </div>
+      </footer>
     </div>
   )
 }

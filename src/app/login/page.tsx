@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { headers } from 'next/headers'
 import { ArrowLeft, ShieldCheck } from 'lucide-react'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
+import LanguageSelector from '@/components/LanguageSelector'
 import { getPartnerBrandById } from '@/lib/whitelabel'
 
 export default async function LoginPage({
@@ -26,9 +27,9 @@ export default async function LoginPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-      {/* Botón superior: solo si NO es marca blanca ni portal de agencia */}
-      {!hideOmniTagLinks && (
-        <div className="w-full max-w-md mb-3 flex items-center justify-between">
+      {/* Barra superior con botón volver y selector de idioma */}
+      <div className="w-full max-w-md mb-3 flex items-center justify-between">
+        {!hideOmniTagLinks ? (
           <Link 
             href={homeUrl} 
             className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black transition bg-white hover:bg-gray-100 px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs"
@@ -36,12 +37,7 @@ export default async function LoginPage({
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Volver al Inicio</span>
           </Link>
-          <span className="text-xs font-medium text-gray-400">OmniTag Web</span>
-        </div>
-      )}
-
-      {isWhiteLabel && partnerBrand?.website_url && (
-        <div className="w-full max-w-md mb-3 flex items-center justify-between">
+        ) : isWhiteLabel && partnerBrand?.website_url ? (
           <a 
             href={partnerBrand.website_url} 
             target="_blank"
@@ -51,9 +47,11 @@ export default async function LoginPage({
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Volver a {brandName}</span>
           </a>
-          <span className="text-xs font-medium text-gray-400">Acceso Seguro</span>
-        </div>
-      )}
+        ) : (
+          <div />
+        )}
+        <LanguageSelector variant="pill" />
+      </div>
 
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-gray-100">
         <div className="text-center">

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { detectLocaleFromHeaders, LOCALE_COOKIE_NAME, type Locale } from '@/lib/i18n/config'
 
 export async function updateSession(
   request: NextRequest,
@@ -8,11 +9,17 @@ export async function updateSession(
     customDomain?: string
     agencyPortal?: boolean
     rewriteToPath?: string
+    locale?: Locale
   }
 ) {
   const pathname = request.nextUrl.pathname
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set('x-current-path', pathname)
+
+  // Detección de idioma por región geográfica, cabecera de navegador o cookie previa
+  const detectedLocale = customContext?.locale || detectLocaleFromHeaders(request.headers, request.cookies)
+  requestHeaders.set('x-locale', detectedLocale)
+
   if (customContext?.partnerId) {
     requestHeaders.set('x-partner-id', customContext.partnerId)
   }
@@ -24,16 +31,29 @@ export async function updateSession(
   }
 
   const buildResponse = () => {
+    let res: NextResponse
     if (customContext?.rewriteToPath) {
       const rewriteUrl = request.nextUrl.clone()
       rewriteUrl.pathname = customContext.rewriteToPath
-      return NextResponse.rewrite(rewriteUrl, {
+      res = NextResponse.rewrite(rewriteUrl, {
+        request: { headers: requestHeaders },
+      })
+    } else {
+      res = NextResponse.next({
         request: { headers: requestHeaders },
       })
     }
-    return NextResponse.next({
-      request: { headers: requestHeaders },
-    })
+
+    // Persistir cookie si el usuario es nuevo para que el cliente la conozca
+    if (!request.cookies.get(LOCALE_COOKIE_NAME)) {
+      res.cookies.set(LOCALE_COOKIE_NAME, detectedLocale, {
+        path: '/',
+        maxAge: 31536000,
+        sameSite: 'lax',
+      })
+    }
+
+    return res
   }
 
   let supabaseResponse = buildResponse()

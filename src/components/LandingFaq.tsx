@@ -1,59 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, HelpCircle } from 'lucide-react'
-
-interface FaqItem {
-  q: string
-  a: string
-  badge?: string
-}
+import { ChevronDown } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n/context'
 
 export default function LandingFaq() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
+  const { dict } = useTranslation()
 
-  const faqs: FaqItem[] = [
-    {
-      q: '¿Cómo funciona la Ruleta de Premios y las Tarjetas Raspables en las mesas?',
-      a: 'Tus comensales escanean el código QR en su mesa (#Mesa QR) y pueden girar la ruleta virtual o raspar la tarjeta dorada interactiva directamente en su smartphone sin descargar ninguna app. Pueden ganar premios configurados por ti (postres de cortesía, 10% de descuento o bebidas gratis) con un temporizador de mesa de 45 minutos. El premio se añade automáticamente a su comanda de WhatsApp y tú capturas su nombre y teléfono para tu CRM.',
-      badge: 'Gamificación'
-    },
-    {
-      q: '¿Cómo funcionan las Gift Cards o Tarjetas de Regalo digitales?',
-      a: 'Permiten a tus clientes comprar o regalar saldo de consumo en tu restaurante, salón o comercio para obsequiar en cumpleaños, aniversarios o fechas especiales. Tu negocio cobra el dinero por adelantado (mejorando tu flujo de caja) y genera un cupón digital con dedicatoria ("De: Juan, Para: María") que el homenajeado canjea en caja de forma segura mediante un código QR o PIN antifraude.',
-      badge: 'Gift Cards'
-    },
-    {
-      q: '¿Mis clientes necesitan descargar alguna aplicación para ordenar o reservar?',
-      a: 'No, absolutamente ninguna. Todo funciona de forma instantánea en el navegador web de cualquier teléfono móvil (iPhone o Android) con solo escanear el código QR o acercar el smartphone a una placa o tarjeta física NFC. Cero fricción y sin ocupar espacio en la memoria de su teléfono.',
-      badge: 'Cero Fricción'
-    },
-    {
-      q: '¿Cómo funciona el Menú Digital con turnos activos y platos del día?',
-      a: 'El menú detecta automáticamente la hora y muestra de entrada el turno activo correspondiente (por ejemplo: Desayunos en la mañana, Almuerzos al mediodía o Cenas por la noche). Además, cuenta con una sección dedicada para el "Plato del Día" exclusivo que cambia a diario y no se repite, permitiendo a los clientes cambiar a ver toda la carta con un solo clic.',
-      badge: 'Restaurantes'
-    },
-    {
-      q: '¿Cómo recibo los pedidos y comandas de los comensales?',
-      a: 'Llegan estructuradas y detalladas al instante a tu número de WhatsApp (con número de mesa, platos elegidos, notas de cocina, cupones canjeados y total a pagar), y al mismo tiempo quedan registradas en tu comandera y panel de control en tiempo real.',
-      badge: 'WhatsApp + Cloud'
-    },
-    {
-      q: '¿Cómo protege a mi negocio el Escudo de Reseñas de Google Maps?',
-      a: 'Cuando un cliente escanea el QR o acerca su teléfono a la placa NFC Tap-to-Rate: si califica con 4 o 5 estrellas, se le redirige directo a Google Maps para publicar su reseña y subir tu posición local. Si califica con 1 a 3 estrellas, se abre un buzón confidencial para que gerencia resuelva la queja en privado antes de que dañe la reputación pública del negocio.',
-      badge: 'Google Reviews'
-    },
-    {
-      q: '¿Cómo activo mi cuenta tras comprar mi suscripción o licencia en Hotmart?',
-      a: 'En el mismo instante en que completas tu pago en Hotmart, nuestro sistema crea y activa tu licencia automáticamente. Solo entras a la página de activación (/activar-compra), ingresas el correo con el que pagaste en Hotmart, eliges tu contraseña y entras directo a tu panel PRO o a tu Consola de Agencia Marca Blanca.',
-      badge: 'Activación Inmediata'
-    },
-    {
-      q: '¿Cómo funciona la Licencia de Agencia SaaS Marca Blanca?',
-      a: 'Con nuestra Licencia de Distribuidor Marca Blanca puedes subir tu propio Logo, poner el Nombre de tu Agencia y conectar tu propia pasarela de pagos. Tus sub-clientes verán únicamente tu marca en todo el sistema y tú conservarás el 100% de lo que les cobres mensual o anualmente.',
-      badge: 'Marca Blanca'
-    }
-  ]
+  const faqs = dict.faqSection.items
 
   return (
     <div className="space-y-3 max-w-3xl mx-auto">

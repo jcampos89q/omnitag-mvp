@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { ArrowLeft, ShieldCheck, Sparkles, CreditCard, ArrowRight, Building2 } from 'lucide-react'
 import FriendlyErrorAlert from '@/components/FriendlyErrorAlert'
 import RegisterForm from './RegisterForm'
+import LanguageSelector from '@/components/LanguageSelector'
 import { getPartnerBrandById } from '@/lib/whitelabel'
 
 export default async function RegisterPage({
@@ -28,19 +29,21 @@ export default async function RegisterPage({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 font-sans antialiased">
-      {/* Botón para regresar al inicio de la web */}
-      {((!partnerBrand && !isAgencyPortal) || Boolean(partnerBrand?.website_url)) && (
+      {/* Barra superior con botón volver y selector de idioma */}
       <div className="w-full max-w-md mb-3 flex items-center justify-between">
-        <Link 
-          href={homeUrl} 
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black transition bg-white hover:bg-gray-100 px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Volver al Inicio</span>
-        </Link>
-        <span className="text-xs font-medium text-gray-400">{displayBrandName}</span>
+        {((!partnerBrand && !isAgencyPortal) || Boolean(partnerBrand?.website_url)) ? (
+          <Link 
+            href={homeUrl} 
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-black transition bg-white hover:bg-gray-100 px-3.5 py-2 rounded-xl border border-gray-200 shadow-2xs"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Volver al Inicio</span>
+          </Link>
+        ) : (
+          <div />
+        )}
+        <LanguageSelector variant="pill" />
       </div>
-      )}
 
       <div className="w-full max-w-md space-y-6 rounded-3xl bg-white p-8 shadow-xl border border-gray-100">
         <div className="text-center">
