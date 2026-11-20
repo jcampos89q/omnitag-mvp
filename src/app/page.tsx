@@ -15,6 +15,7 @@ import InteractiveHeroShowcase from '@/components/InteractiveHeroShowcase'
 import LandingFaq from '@/components/LandingFaq'
 import LanguageSelector from '@/components/LanguageSelector'
 import PaddleCheckoutButton from '@/components/PaddleCheckoutButton'
+import HotmartCheckoutButton from '@/components/HotmartCheckoutButton'
 import { getServerDictionary } from '@/lib/i18n/server'
 
 export default async function LandingPage() {
@@ -508,13 +509,13 @@ export default async function LandingPage() {
                 </div>
 
                 <div className="pt-8">
-                  <PaddleCheckoutButton
-                    priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID || 'pri_01m7b4g3v0p8jdrszjpa3bbyfy'}
+                  <HotmartCheckoutButton
+                    plan="monthly"
                     className="w-full bg-black hover:bg-gray-800 text-white font-black py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
                   >
                     <span>{dict.pricingSection.proPlan.ctaMonthly}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </PaddleCheckoutButton>
+                  </HotmartCheckoutButton>
                 </div>
               </div>
 
@@ -562,13 +563,13 @@ export default async function LandingPage() {
                 </div>
 
                 <div className="pt-8">
-                  <PaddleCheckoutButton
-                    priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_ANNUAL_PRICE_ID || 'pri_01m7695stt6jtf8rcvh232a8gj'}
+                  <HotmartCheckoutButton
+                    plan="annual"
                     className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
                   >
                     <span>{dict.pricingSection.proPlan.ctaAnnual}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
-                  </PaddleCheckoutButton>
+                  </HotmartCheckoutButton>
                 </div>
               </div>
             </div>

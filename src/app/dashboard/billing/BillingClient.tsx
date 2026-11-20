@@ -23,6 +23,7 @@ import { submitBankTransfer } from './actions'
 import { claimNfcCardByToken } from '@/app/dashboard/admin/nfcActions'
 import { UserPlanInfo } from '@/lib/plans'
 import PaddleCheckoutButton from '@/components/PaddleCheckoutButton'
+import HotmartCheckoutButton from '@/components/HotmartCheckoutButton'
 
 interface BankTransfer {
   id: string
@@ -94,12 +95,11 @@ export default function BillingClient({
     isHardwareAccount ? 'hardware' : 'monthly'
   )
 
-  const priceMonthly = 'L. 625 HNL ($25 USD)'
-  const priceHnl = paymentOption === 'combo'
-    ? 'L. 2,200 HNL'
-    : paymentOption === 'hardware'
-    ? 'L. 1,200 HNL'
-    : priceMonthly
+  const priceMonthly = 'L. 380 HNL ($15 USD)'
+  const priceAnnual = 'L. 2,500 HNL ($100 USD)'
+  const priceHnl = paymentOption === 'combo' || paymentOption === 'hardware'
+    ? 'L. 2,500 HNL'
+    : 'L. 380 HNL'
   const priceUsd = priceHnl
 
   const pendingTransfer = transfers.find(t => t.status === 'pending')
@@ -456,10 +456,10 @@ export default function BillingClient({
               <p className="text-gray-500 text-xs mb-4">Añade marketing digital completo a tu restaurante o tienda.</p>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-extrabold text-purple-700">$25</span>
+                  <span className="text-3xl font-extrabold text-purple-700">$15</span>
                   <span className="text-gray-500 text-xs font-medium">USD / mes adicional</span>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-0.5">Renovación mensual vía Paddle o transferencia bancaria BAC (L. 625 HNL).</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Renovación mensual vía Hotmart o transferencia BAC (L. 380 HNL).</p>
               </div>
               <ul className="space-y-2.5 text-xs text-gray-600 mb-6">
                 <li className="flex items-center gap-2">
@@ -485,28 +485,27 @@ export default function BillingClient({
               </ul>
             </div>
             <div className="pt-4 border-t border-gray-100 space-y-2">
-              <PaddleCheckoutButton
-                priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID || 'pri_01m7b4g3v0p8jdrszjpa3bbyfy'}
+              <HotmartCheckoutButton
+                plan="monthly"
                 userEmail={userEmail}
                 userId={userId}
                 className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                Suscribirme con Tarjeta (Paddle - $25/mes)
-              </PaddleCheckoutButton>
-              <a
-                href={hotmartCheckoutUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-xl transition text-[11px] flex items-center justify-center gap-1.5"
+                Suscribirme Plan Mensual (Hotmart - $15/mes)
+              </HotmartCheckoutButton>
+              <HotmartCheckoutButton
+                plan="annual"
+                userEmail={userEmail}
+                userId={userId}
+                className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-2 px-4 rounded-xl transition text-[11px] shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <CreditCard className="w-3.5 h-3.5 text-gray-500" />
-                <span>Alternativa: Pagar en Hotmart</span>
-              </a>
+                <span>Plan Anual (Hotmart - $100/año)</span>
+              </HotmartCheckoutButton>
               <a
                 href="#metodos-pago"
                 className="w-full bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-2.5 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
               >
-                <span>O pagar por Transferencia BAC (L. 625/mes - $25 USD)</span>
+                <span>O pagar por Transferencia BAC (L. 380/mes - $15 USD)</span>
               </a>
             </div>
           </div>
@@ -577,10 +576,10 @@ export default function BillingClient({
             <div className="mb-6">
               <div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-extrabold text-gray-900">$25</span>
+                  <span className="text-3xl font-extrabold text-gray-900">$15</span>
                   <span className="text-gray-500 text-xs font-medium">USD / mes</span>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-0.5">Suscripción mensual recurrente vía Paddle o Transferencia BAC (L. 625 HNL)</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Suscripción mensual de $15 USD (~L. 380 HNL) o Anual de $100 USD (~L. 2,500 HNL)</p>
               </div>
             </div>
 
@@ -618,32 +617,31 @@ export default function BillingClient({
                 ✓ Plan PRO Activo en tu cuenta
               </span>
             )}
-            <PaddleCheckoutButton
-              priceId={process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID}
+            <HotmartCheckoutButton
+              plan="monthly"
               userEmail={userEmail}
               userId={userId}
               className="w-full bg-linear-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold py-3 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              {isPro ? 'Probar Pasarela Paddle ($20/mes)' : 'Suscribirme con Tarjeta (Paddle - $20/mes)'}
-            </PaddleCheckoutButton>
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>{isPro ? 'Renovar Plan Mensual ($15/mes)' : 'Suscribirme Plan Mensual ($15/mes)'}</span>
+            </HotmartCheckoutButton>
+            <HotmartCheckoutButton
+              plan="annual"
+              userEmail={userEmail}
+              userId={userId}
+              className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-2.5 px-4 rounded-xl transition text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Suscripción Anual PRO ($100/año - Ahorra 44%)</span>
+            </HotmartCheckoutButton>
             {!isPro && (
-              <>
-                <a
-                  href={hotmartCheckoutUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold py-2 px-4 rounded-xl transition text-[11px] flex items-center justify-center gap-1.5"
-                >
-                  <CreditCard className="w-3.5 h-3.5 text-gray-400" />
-                  <span>Alternativa: Pagar en Hotmart</span>
-                </a>
-                <a
-                  href="#metodos-pago"
-                  className="w-full bg-gray-100 text-gray-800 font-bold py-2.5 px-4 rounded-xl hover:bg-gray-200 transition text-xs flex items-center justify-center gap-1.5"
-                >
-                  <span>O pagar por Transferencia Bancaria BAC</span>
-                </a>
-              </>
+              <a
+                href="#metodos-pago"
+                className="w-full bg-gray-100 text-gray-800 font-bold py-2 px-4 rounded-xl hover:bg-gray-200 transition text-[11px] flex items-center justify-center gap-1.5"
+              >
+                <span>O pagar por Transferencia Bancaria BAC</span>
+              </a>
             )}
           </div>
         </div>
@@ -697,50 +695,24 @@ export default function BillingClient({
                 onClick={() => setPaymentOption('hardware')}
                 className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
                   paymentOption === 'hardware'
-                    ? 'border-blue-600 bg-blue-50/70 shadow-sm ring-2 ring-blue-600/20'
+                    ? 'border-emerald-600 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-600/20'
                     : 'border-gray-200 bg-white hover:bg-gray-50'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-gray-900">Membresía Anual PRO</span>
-                    <span className="text-[10px] font-black bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
-                      1 AÑO PRO
+                    <span className="text-xs font-black text-gray-900">Suscripción Anual PRO</span>
+                    <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full">
+                      AHORRA 44%
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1 leading-snug">
-                    Acceso completo a la plataforma cloud durante 12 meses.
+                    12 meses de acceso total a todas las herramientas cloud con soporte prioritario.
                   </p>
                 </div>
                 <div className="mt-3 pt-2 border-t border-black/5 flex items-baseline gap-1">
-                  <span className="text-lg font-black text-blue-700">L. 1,200 HNL</span>
-                  <span className="text-[10px] text-gray-500 font-semibold">/ pago único</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentOption('combo')}
-                className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${
-                  paymentOption === 'combo'
-                    ? 'border-amber-600 bg-amber-50/70 shadow-sm ring-2 ring-amber-600/20'
-                    : 'border-gray-200 bg-white hover:bg-gray-50'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-gray-900">Combo Dúo VIP</span>
-                    <span className="text-[10px] font-black bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
-                      COMBO
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1 leading-snug">
-                    Tarjeta NFC + Placa de Reseñas en PVC + 1 año completo PRO incluido.
-                  </p>
-                </div>
-                <div className="mt-3 pt-2 border-t border-black/5 flex items-baseline gap-1">
-                  <span className="text-lg font-black text-amber-800">L. 2,200 HNL</span>
-                  <span className="text-[10px] text-gray-500 font-semibold">/ pago único</span>
+                  <span className="text-lg font-black text-emerald-700">L. 2,500 HNL</span>
+                  <span className="text-[10px] text-gray-500 font-semibold">($100 USD / año)</span>
                 </div>
               </button>
             </div>

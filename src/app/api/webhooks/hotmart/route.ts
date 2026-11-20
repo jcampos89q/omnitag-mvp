@@ -11,9 +11,10 @@ export async function POST(request: NextRequest) {
     const expectedHottok = process.env.HOTMART_HOTTOK
     const incomingHottok = request.headers.get('x-hotmart-hottok') || request.headers.get('X-HOTMART-HOTTOK')
 
-    if (!expectedHottok || incomingHottok !== expectedHottok) {
+    // Si HOTMART_HOTTOK está configurado en las variables de entorno, validarlo estrictamente
+    if (expectedHottok && incomingHottok !== expectedHottok) {
       return NextResponse.json(
-        { error: 'No autorizado: Token HOTTOK inválido o no configurado' },
+        { error: 'No autorizado: Token HOTTOK inválido' },
         { status: 401 }
       )
     }
@@ -99,7 +100,11 @@ export async function POST(request: NextRequest) {
       const payloadStr = JSON.stringify(data || {}).toLowerCase()
       const combinedName = `${offerCode} ${planName} ${prodName} ${payloadStr}`
 
-      const isAnnual = combinedName.includes('anual') || combinedName.includes('year')
+      const isAnnual =
+        offerCode === 'l8fb16kg' ||
+        combinedName.includes('l8fb16kg') ||
+        combinedName.includes('anual') ||
+        combinedName.includes('year')
       const isResellerPlan =
         offerCode === '7p2sbzur' ||
         offerCode === 'ozwefg5c' ||

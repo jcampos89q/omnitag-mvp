@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Check, ShieldCheck, ArrowRight, Zap } from 'lucide-react'
 import PaddleCheckoutButton from '@/components/PaddleCheckoutButton'
+import HotmartCheckoutButton from '@/components/HotmartCheckoutButton'
 import LanguageSelector from '@/components/LanguageSelector'
 import { getServerDictionary } from '@/lib/i18n/server'
 
@@ -20,7 +21,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PricingPage() {
-  const { dict } = await getServerDictionary()
+  const { dict, locale } = await getServerDictionary()
+  const isEn = locale === 'en'
   const proPriceId = process.env.NEXT_PUBLIC_PADDLE_PLAN_PRO_PRICE_ID || 'pri_01m7b4g3v0p8jdrszjpa3bbyfy'
   const annualPriceId = process.env.NEXT_PUBLIC_PADDLE_PLAN_ANNUAL_PRICE_ID || 'pri_01m7695stt6jtf8rcvh232a8gj'
 
@@ -112,12 +114,12 @@ export default async function PricingPage() {
             </div>
 
             <div className="pt-6">
-              <PaddleCheckoutButton
-                priceId={proPriceId}
+              <HotmartCheckoutButton
+                plan="monthly"
                 className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
               >
                 <span>{dict.pricingPage.paddlePayBtn}</span>
-              </PaddleCheckoutButton>
+              </HotmartCheckoutButton>
             </div>
           </div>
 
@@ -133,15 +135,15 @@ export default async function PricingPage() {
                   {isEn ? 'Annual Cloud SaaS' : 'Plan Anual SaaS'}
                 </span>
                 <span className="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">
-                  {isEn ? '2 Months Free' : '2 Meses Gratis'}
+                  {dict.pricingSection.annualBadge}
                 </span>
               </div>
 
               <div>
                 <h2 className="text-2xl font-black text-gray-950">{isEn ? 'Annual Business PRO' : 'Suscripción Anual PRO'}</h2>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-4xl font-black text-gray-950">$200</span>
-                  <span className="text-xs font-bold text-gray-500">USD / {isEn ? 'year' : 'año'}</span>
+                  <span className="text-4xl font-black text-gray-950">{dict.pricingSection.proPlan.priceAnnual}</span>
+                  <span className="text-xs font-bold text-gray-500">{dict.pricingSection.proPlan.periodAnnual}</span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   {dict.pricingSection.proPlan.billedAnnual}
@@ -169,12 +171,12 @@ export default async function PricingPage() {
             </div>
 
             <div className="pt-6">
-              <PaddleCheckoutButton
-                priceId={annualPriceId}
+              <HotmartCheckoutButton
+                plan="annual"
                 className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
               >
                 <span>{dict.pricingSection.proPlan.ctaAnnual}</span>
-              </PaddleCheckoutButton>
+              </HotmartCheckoutButton>
             </div>
           </div>
         </div>
