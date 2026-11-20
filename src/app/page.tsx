@@ -98,7 +98,7 @@ export default async function LandingPage() {
               </span>
               <span className="flex items-center gap-1.5 text-purple-700 font-bold bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
                 <Tag className="w-3.5 h-3.5 text-purple-600" />
-                {isEn ? '$15 USD / month • Cancel anytime' : 'Suscripción mensual $15 USD • Cancela cuando quieras'}
+                {isEn ? '$15 USD / month • Cancel anytime' : 'Suscripción mensual $15 USD (~L 427 HNL) • Cancela cuando quieras'}
               </span>
             </div>
 
