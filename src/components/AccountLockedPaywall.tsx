@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Lock, CreditCard, MessageCircle, Sparkles, ArrowRight, ShieldAlert, LogOut } from 'lucide-react'
 import { logout } from '@/app/auth/actions'
+import HotmartCheckoutButton from '@/components/HotmartCheckoutButton'
 
 export default function AccountLockedPaywall({ 
   userEmail,
@@ -59,48 +60,50 @@ export default function AccountLockedPaywall({
                   <Sparkles className="w-4 h-4 text-purple-600" />
                 </div>
                 <div className="mt-3">
-                  <span className="text-3xl font-black text-gray-900">$25 USD</span>
-                  <span className="text-xs font-semibold text-gray-500"> / mes</span>
+                  <span className="text-3xl font-black text-gray-900">$15 USD</span>
+                  <span className="text-xs font-semibold text-gray-500"> / mes (~L. 380 HNL)</span>
                 </div>
                 <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-                  Acceso completo inmediato a vCards ilimitadas, menús interactivos, escudo de reseñas de Google 5★ y CRM de clientes.
+                  Acceso completo inmediato a vCards ilimitadas, menús interactivos, ruleta de premios, escudo de reseñas 5★ y CRM.
                 </p>
               </div>
 
-              <Link
-                href="/dashboard/billing#metodos-pago"
-                className="w-full mt-3 py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm"
+              <HotmartCheckoutButton
+                plan="monthly"
+                userEmail={userEmail}
+                className="w-full mt-3 py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
               >
-                <span>Ver Cuentas de Pago</span>
+                <span>Reactivar Plan Mensual ($15/mes)</span>
                 <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+              </HotmartCheckoutButton>
             </div>
 
             {/* Opción 2: Tarjeta o Placa NFC Anual */}
             <div className="p-5 rounded-2xl border border-gray-200 bg-gray-50 hover:border-gray-300 transition space-y-3 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-700 bg-gray-200 px-2 py-0.5 rounded-md">
-                    1 Año PRO Incluido
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                    1 Año PRO (Ahorra 44%)
                   </span>
-                  <CreditCard className="w-4 h-4 text-gray-600" />
+                  <CreditCard className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div className="mt-3">
-                  <span className="text-3xl font-black text-gray-900">$200</span>
-                  <span className="text-xs font-semibold text-gray-500"> USD / año</span>
+                  <span className="text-3xl font-black text-gray-900">$100</span>
+                  <span className="text-xs font-semibold text-gray-500"> USD / año (~$8.33/mes)</span>
                 </div>
                 <p className="text-xs text-gray-600 mt-2 leading-relaxed">
-                  365 días de servicio PRO completo con soporte prioritario VIP sin mensualidades obligatorias.
+                  365 días de servicio PRO completo con soporte prioritario VIP sin preocupaciones de renovaciones mensuales.
                 </p>
               </div>
 
-              <Link
-                href="/dashboard/billing"
-                className="w-full mt-3 py-2.5 px-4 rounded-xl bg-black hover:bg-gray-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm"
+              <HotmartCheckoutButton
+                plan="annual"
+                userEmail={userEmail}
+                className="w-full mt-3 py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
               >
-                <span>Renovar Membresía Anual ($200 USD/año)</span>
+                <span>Reactivar Anual ($100/año)</span>
                 <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+              </HotmartCheckoutButton>
             </div>
 
           </div>

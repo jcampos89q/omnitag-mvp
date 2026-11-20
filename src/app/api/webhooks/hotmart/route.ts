@@ -89,10 +89,26 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Procesar el evento de suscripción de Hotmart
-    const approveEvents = ['PURCHASE_APPROVED', 'PURCHASE_COMPLETE']
-    const revokeEvents = ['PURCHASE_REFUNDED', 'PURCHASE_CHARGEBACK', 'SUBSCRIPTION_CANCELLATION', 'PURCHASE_CANCELED', 'PURCHASE_EXPIRED']
+    const approveEvents = [
+      'PURCHASE_APPROVED', 
+      'PURCHASE_COMPLETE', 
+      'SUBSCRIPTION_RENEWAL', 
+      'SUBSCRIPTION_REACTIVATION', 
+      'RECURRENCE_APPROVED'
+    ]
+    const revokeEvents = [
+      'PURCHASE_REFUNDED', 
+      'PURCHASE_CHARGEBACK', 
+      'SUBSCRIPTION_CANCELLATION', 
+      'PURCHASE_CANCELED', 
+      'PURCHASE_EXPIRED', 
+      'PURCHASE_DELAYED'
+    ]
 
-    if (approveEvents.includes(event)) {
+    const isApprove = approveEvents.includes(event) || event.includes('APPROVED') || event.includes('COMPLETE')
+    const isRevoke = revokeEvents.includes(event) || event.includes('REFUND') || event.includes('CHARGEBACK') || event.includes('CANCEL') || event.includes('EXPIRED')
+
+    if (isApprove) {
       // Detectar si es plan anual, mensual o Licencia de Distribuidor Marca Blanca según el nombre de la oferta/producto o Claves de Seguimiento
       const offerCode = (data?.purchase?.offer?.code || '').toString().toLowerCase()
       const planName = (data?.subscription?.plan?.name || '').toString().toLowerCase()
@@ -125,7 +141,19 @@ export async function POST(request: NextRequest) {
         combinedName.includes('whitelabel')
 
       const durationDays = isAnnual ? 365 : 32 // 32 días de margen para cobros mensuales
-      const newExpiry = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString()
+
+      // Si el usuario ya tiene suscripción vigente en el futuro, sumar días encima de la fecha existente
+      const { data: userCurrent } = await admin
+        .from('users')
+        .select('subscription_expires_at')
+        .eq('id', targetUser.id)
+        .maybeSingle()
+
+      const currentExpiryMs = userCurrent?.subscription_expires_at
+        ? new Date(userCurrent.subscription_expires_at).getTime()
+        : 0
+      const baseMs = currentExpiryMs > Date.now() ? currentExpiryMs : Date.now()
+      const newExpiry = new Date(baseMs + durationDays * 24 * 60 * 60 * 1000).toISOString()
 
       if (isResellerPlan) {
         const { data: targetAuth } = await admin.auth.admin.getUserById(targetUser.id)
@@ -178,7 +206,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, action: 'pro_activated', userId: targetUser.id, expiresAt: newExpiry })
     }
 
-    if (revokeEvents.includes(event)) {
+    if (isRevoke) {
       const expiredIso = new Date(Date.now() - 60 * 1000).toISOString()
 
       const { data: targetAuth } = await admin.auth.admin.getUserById(targetUser.id)

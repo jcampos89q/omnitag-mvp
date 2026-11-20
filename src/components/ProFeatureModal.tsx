@@ -79,20 +79,20 @@ export default function ProFeatureModal({
         <div className="space-y-3 text-center pt-1">
           <div>
             <div className="flex items-baseline justify-center gap-1.5">
-              <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">$25</span>
-              <span className="text-xs text-gray-500 font-medium">USD / mes</span>
+              <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">$15</span>
+              <span className="text-xs text-gray-500 font-medium">USD / mes (~L. 380 HNL)</span>
             </div>
-            <p className="text-[11px] text-gray-400 mt-0.5">Transferencia Bancaria BAC Credomatic o Pago en Efectivo</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">Suscripción digital segura con Hotmart o Transferencia BAC</p>
           </div>
 
           <div className="space-y-2">
             <Link
-              href="/dashboard/billing#metodos-pago"
+              href="/dashboard/billing"
               onClick={onClose}
               className="w-full bg-black text-white font-extrabold py-3.5 px-4 rounded-xl hover:bg-gray-800 transition text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Building2 className="w-4 h-4 text-red-500" />
-              <span>Ver Datos de Transferencia BAC</span>
+              <Zap className="w-4 h-4 text-yellow-400" />
+              <span>Ver Opciones de Suscripción PRO</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
 
@@ -103,7 +103,7 @@ export default function ProFeatureModal({
                 onClick={onClose}
                 className="text-purple-600 hover:text-purple-700 font-bold underline inline-flex items-center gap-0.5"
               >
-                Plan Anual $200 USD (Ahorra 2 meses)
+                Plan Anual $100 USD (Ahorra más del 44%)
               </Link>
             </p>
           </div>
