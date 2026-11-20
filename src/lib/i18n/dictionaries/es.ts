@@ -20,7 +20,7 @@ export const es = {
     english: 'English',
     allRightsReserved: 'Todos los derechos reservados.',
     cloudSaaSDisclaimer: 'OmniTag es un software como servicio (SaaS) 100% digital alojado en la nube. No vendemos ni distribuimos bienes físicos ni hardware.',
-    securePaddleBilling: 'Pagos procesados de forma segura por Paddle como Merchant of Record autorizado.',
+    securePaddleBilling: 'Pagos procesados de forma segura con cifrado SSL bancario de 256 bits y garantía de reembolso de 7 días.',
   },
   nav: {
     getStarted: 'Comenzar',
@@ -50,7 +50,7 @@ export const es = {
     description: 'Todo en un solo software: Menús interactivos y comandas a WhatsApp, Ruleta de Premios & Promociones para fidelizar clientes, Cupones de Descuento, Agendas de Citas 24/7 y Filtro Inteligente de Reseñas en Google Maps 100% digital.',
     ctaPricing: 'Ver Planes y Precios',
     ctaDemo: 'Probar Demo en Vivo',
-    guarantee: 'Sin contratos forzosos • Cancela cuando quieras • Facturación Paddle 100% segura',
+    guarantee: 'Sin contratos forzosos • Cancela cuando quieras • Facturación 100% digital y segura',
   },
   industries: {
     title: 'Diseñado para Todo Tipo de Negocios y Comercios',
@@ -151,7 +151,7 @@ export const es = {
     subtitle: 'Comienza hoy con todas las herramientas profesionales sin costos ocultos.',
     monthly: 'Facturación Mensual',
     annual: 'Facturación Anual',
-    annualBadge: 'AHORRA MÁS DEL 44%',
+    annualBadge: '🔥 AHORRA $80 USD AL AÑO (44% OFF • 5+ MESES GRATIS)',
     proPlan: {
       name: 'OmniTag Negocio PRO',
       badge: 'Más Popular',
@@ -160,7 +160,7 @@ export const es = {
       priceAnnual: '$100',
       periodAnnual: 'USD / año',
       billedMonthly: 'Facturación mensual de $15 USD (~L. 380 HNL). Cancela cuando quieras.',
-      billedAnnual: 'Facturación anual de $100 USD (~$8.33/mes). Ahorra más del 44%.',
+      billedAnnual: 'Pagas solo $8.33/mes en lugar de $15/mes. ¡Ahorras $80 USD al año (más del 44% de descuento directo)!',
       features: [
         'Menú digital interactivo con pedidos a WhatsApp',
         'Ruleta de Premios interactiva y cupones de descuento',
@@ -171,8 +171,8 @@ export const es = {
         'Actualizaciones continuas y soporte prioritario',
       ],
       ctaMonthly: 'Suscribirme por $15/mes',
-      ctaAnnual: 'Suscribirme por $100/año',
-      paddleNotice: 'Procesamiento seguro y facturación oficial por Paddle',
+      ctaAnnual: 'Suscribirme por $100/año (Ahorra $80 USD)',
+      paddleNotice: 'Procesamiento digital seguro con cifrado bancario y garantía de 7 días',
     },
     agencyBanner: {
       title: '¿Tienes una Agencia de Marketing o Quieres Revender?',
@@ -218,12 +218,12 @@ export const es = {
       {
         badge: 'Activación Inmediata',
         q: '¿Cómo accedo a las herramientas tras suscribirme?',
-        a: 'En el mismo instante en que completas tu suscripción mediante nuestra pasarela oficial Paddle, nuestro sistema activa tu acceso automáticamente. Ingresas con tu correo y contraseña directamente a tu panel de control PRO.',
+        a: 'En el mismo instante en que completas tu suscripción, nuestro sistema activa tu acceso automáticamente. Ingresas con tu correo y contraseña directamente a tu panel de control PRO.',
       },
       {
         badge: 'Pagos Seguros',
         q: '¿Qué métodos de pago aceptan y cómo se procesan?',
-        a: 'Aceptamos tarjetas de crédito y débito internacionales (Visa, Mastercard, American Express) y PayPal a través de Paddle, nuestro Merchant of Record oficial con cifrado bancario SSL de 256 bits.',
+        a: 'Aceptamos tarjetas de crédito y débito internacionales (Visa, Mastercard, American Express) y PayPal a través de nuestra pasarela de pagos oficial con cifrado bancario SSL de 256 bits y garantía de satisfacción.',
       },
     ],
   },
@@ -269,7 +269,7 @@ export const es = {
     agencyBoxTitle: '¿Buscas revender a tus propios clientes?',
     agencyBoxDesc: 'Con nuestra Licencia Marca Blanca obtienes tu propio software con tu logo, dominio personalizado y pasarela de cobro directa.',
     agencyBoxCta: 'Explorar Planes de Agencia ($49 - $199/mes)',
-    securityNotice: 'Tus pagos están cifrados con tecnología SSL y son procesados de forma segura a través de Paddle, Merchant of Record oficial.',
+    securityNotice: 'Tus pagos están cifrados con tecnología SSL y son procesados de forma segura con garantía de satisfacción y reembolso de 7 días.',
   },
   agenciasPage: {
     badge: 'PROGRAMA DE AGENCIA SAAS & MARCA BLANCA',

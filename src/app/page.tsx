@@ -90,7 +90,7 @@ export default async function LandingPage() {
             <div className="pt-1 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 text-xs font-semibold text-gray-600">
               <span className="flex items-center gap-1.5 text-emerald-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
-                <b>{isEn ? 'Instant cloud activation' : 'Activación inmediata'}</b> {isEn ? 'via secure Paddle billing' : 'facturación digital segura vía Paddle'}
+                <b>{isEn ? 'Instant cloud activation' : 'Activación inmediata'}</b> {isEn ? 'via secure encrypted billing' : 'con facturación digital segura'}
               </span>
               <span className="flex items-center gap-1.5 text-gray-700">
                 <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
@@ -98,7 +98,7 @@ export default async function LandingPage() {
               </span>
               <span className="flex items-center gap-1.5 text-purple-700 font-bold bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
                 <Tag className="w-3.5 h-3.5 text-purple-600" />
-                {isEn ? '$25 USD / month • Cancel anytime' : 'Suscripción mensual $25 USD • Cancela cuando quieras'}
+                {isEn ? '$15 USD / month • Cancel anytime' : 'Suscripción mensual $15 USD (~L. 380 HNL) • Cancela cuando quieras'}
               </span>
             </div>
 
@@ -535,14 +535,24 @@ export default async function LandingPage() {
                   </div>
 
                   <div className="pt-2">
-                    <span className="text-4xl font-black text-gray-900">{dict.pricingSection.proPlan.priceAnnual}</span>
-                    <span className="text-xs text-gray-500 ml-1">{dict.pricingSection.proPlan.periodAnnual}</span>
-                    <p className="text-[11px] text-emerald-700 font-bold mt-1">
+                    <div className="flex items-baseline flex-wrap gap-1.5">
+                      <span className="text-4xl font-black text-gray-900">{dict.pricingSection.proPlan.priceAnnual}</span>
+                      <span className="text-xs text-gray-500 font-bold">{dict.pricingSection.proPlan.periodAnnual}</span>
+                      <span className="text-sm text-gray-400 line-through font-bold ml-1">$180 USD</span>
+                      <span className="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        {isEn ? 'SAVE $80 USD • 44% OFF' : 'AHORRAS $80 USD • 44% OFF'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-emerald-700 font-bold mt-1.5">
                       {dict.pricingSection.proPlan.billedAnnual}
                     </p>
                   </div>
 
                   <div className="pt-4 space-y-2.5 border-t border-gray-100 text-xs text-gray-700">
+                    <div className="flex items-center gap-2 text-emerald-900 font-bold bg-emerald-50/80 p-2 rounded-xl border border-emerald-200">
+                      <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{isEn ? '🔥 5+ Free Months Included ($80 USD savings)' : '🔥 Más de 5 meses gratis incluidos (Ahorras $80 USD directos)'}</span>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                       <span><b>{isEn ? '12 months of PRO access' : '12 meses de suscripción PRO'}</b> {isEn ? 'fully included' : 'completamente incluidos'}</span>
@@ -565,7 +575,7 @@ export default async function LandingPage() {
                 <div className="pt-8">
                   <HotmartCheckoutButton
                     plan="annual"
-                    className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-xs cursor-pointer"
+                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black py-3.5 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md cursor-pointer"
                   >
                     <span>{dict.pricingSection.proPlan.ctaAnnual}</span>
                     <ArrowRight className="w-3.5 h-3.5" />

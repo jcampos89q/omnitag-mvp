@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Check, ShieldCheck, ArrowRight, Zap } from 'lucide-react'
+import { Check, ShieldCheck, ArrowRight, Zap, Sparkles } from 'lucide-react'
 import PaddleCheckoutButton from '@/components/PaddleCheckoutButton'
 import HotmartCheckoutButton from '@/components/HotmartCheckoutButton'
 import LanguageSelector from '@/components/LanguageSelector'
@@ -141,16 +141,24 @@ export default async function PricingPage() {
 
               <div>
                 <h2 className="text-2xl font-black text-gray-950">{isEn ? 'Annual Business PRO' : 'Suscripción Anual PRO'}</h2>
-                <div className="flex items-baseline gap-1 mt-2">
+                <div className="flex items-baseline flex-wrap gap-2 mt-2">
                   <span className="text-4xl font-black text-gray-950">{dict.pricingSection.proPlan.priceAnnual}</span>
                   <span className="text-xs font-bold text-gray-500">{dict.pricingSection.proPlan.periodAnnual}</span>
+                  <span className="text-sm text-gray-400 line-through font-bold ml-1">$180 USD</span>
+                  <span className="text-[10px] font-black bg-emerald-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    {isEn ? 'SAVE $80 USD • 44% OFF' : 'AHORRAS $80 USD • 44% OFF'}
+                  </span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-emerald-700 font-bold mt-2">
                   {dict.pricingSection.proPlan.billedAnnual}
                 </p>
               </div>
 
               <ul className="pt-4 border-t border-gray-100 space-y-3 text-xs sm:text-sm text-gray-700">
+                <li className="flex items-center gap-2 bg-emerald-50 text-emerald-900 font-bold p-2 rounded-xl border border-emerald-200">
+                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{isEn ? '🔥 5+ Free Months Included ($80 USD direct savings)' : '🔥 Más de 5 meses gratis incluidos (Ahorras $80 USD directos)'}</span>
+                </li>
                 <li className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span><b>{isEn ? '12 months of PRO access' : '12 meses de suscripción PRO'}</b> {isEn ? 'fully included' : 'completamente incluidos'}</span>

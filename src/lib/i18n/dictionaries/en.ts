@@ -22,7 +22,7 @@ export const en: typeof es = {
     english: 'English',
     allRightsReserved: 'All rights reserved.',
     cloudSaaSDisclaimer: 'OmniTag is a 100% digital cloud-hosted Software-as-a-Service (SaaS). We do not sell or ship physical goods or hardware.',
-    securePaddleBilling: 'Payments securely processed by Paddle as the authorized Merchant of Record.',
+    securePaddleBilling: 'Payments processed securely with 256-bit bank-grade SSL encryption and a 7-day money-back guarantee.',
   },
   nav: {
     getStarted: 'Get Started',
@@ -52,7 +52,7 @@ export const en: typeof es = {
     description: 'Everything in one software: Interactive menus and WhatsApp orders, Prize Wheel & Promotions to engage customers, Discount Coupons, 24/7 Appointment Scheduling, and Smart Google Reviews Filter 100% cloud-based.',
     ctaPricing: 'View Plans & Pricing',
     ctaDemo: 'Try Live Demo',
-    guarantee: 'No lock-in contracts • Cancel anytime • 100% secure Paddle billing',
+    guarantee: 'No lock-in contracts • Cancel anytime • 100% digital & secure billing',
   },
   industries: {
     title: 'Designed for Every Business & Commercial Industry',
@@ -153,7 +153,7 @@ export const en: typeof es = {
     subtitle: 'Start today with full access to all professional tools without hidden fees.',
     monthly: 'Monthly Billing',
     annual: 'Annual Billing',
-    annualBadge: 'SAVE OVER 44%',
+    annualBadge: '🔥 SAVE $80 USD PER YEAR (44% OFF • 5+ MONTHS FREE)',
     proPlan: {
       name: 'OmniTag Business PRO',
       badge: 'Most Popular',
@@ -162,7 +162,7 @@ export const en: typeof es = {
       priceAnnual: '$100',
       periodAnnual: 'USD / year',
       billedMonthly: 'Recurring monthly billing of $15 USD. No lock-in contracts, cancel anytime.',
-      billedAnnual: 'Recurring annual billing of $100 USD (~$8.33/mo). Save over 44%.',
+      billedAnnual: 'Pay only $8.33/mo instead of $15/mo. Save $80 USD per year (over 44% direct discount)!',
       features: [
         'Interactive digital menu with direct WhatsApp orders',
         'Interactive Prize Wheel and discount coupons',
@@ -173,8 +173,8 @@ export const en: typeof es = {
         'Continuous cloud updates and priority support',
       ],
       ctaMonthly: 'Subscribe for $15/month',
-      ctaAnnual: 'Subscribe for $100/year',
-      paddleNotice: 'Secure processing and official billing handled by Paddle',
+      ctaAnnual: 'Subscribe for $100/year (Save $80 USD)',
+      paddleNotice: 'Secure digital processing with 256-bit encryption and 7-day money-back guarantee',
     },
     agencyBanner: {
       title: 'Running a Marketing Agency or Want to Resell?',
