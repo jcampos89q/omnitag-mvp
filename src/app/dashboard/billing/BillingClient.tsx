@@ -95,11 +95,11 @@ export default function BillingClient({
     isHardwareAccount ? 'hardware' : 'monthly'
   )
 
-  const priceMonthly = 'L. 380 HNL ($15 USD)'
-  const priceAnnual = 'L. 2,500 HNL ($100 USD)'
+  const priceMonthly = '$15 USD'
+  const priceAnnual = '$100 USD'
   const priceHnl = paymentOption === 'combo' || paymentOption === 'hardware'
-    ? 'L. 2,500 HNL'
-    : 'L. 380 HNL'
+    ? '$100 USD'
+    : '$15 USD'
   const priceUsd = priceHnl
 
   const pendingTransfer = transfers.find(t => t.status === 'pending')
@@ -459,7 +459,7 @@ export default function BillingClient({
                   <span className="text-3xl font-extrabold text-purple-700">$15</span>
                   <span className="text-gray-500 text-xs font-medium">USD / mes adicional</span>
                 </div>
-                <p className="text-[11px] text-gray-400 mt-0.5">Renovación mensual vía Hotmart o transferencia BAC (L. 380 HNL).</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">Renovación mensual de $15 USD vía Hotmart o transferencia BAC.</p>
               </div>
               <ul className="space-y-2.5 text-xs text-gray-600 mb-6">
                 <li className="flex items-center gap-2">
@@ -505,7 +505,7 @@ export default function BillingClient({
                 href="#metodos-pago"
                 className="w-full bg-purple-700 hover:bg-purple-800 text-white font-extrabold py-2.5 px-4 rounded-xl transition text-xs shadow-md flex items-center justify-center gap-1.5"
               >
-                <span>O pagar por Transferencia BAC (L. 380/mes - $15 USD)</span>
+                <span>O pagar por Transferencia BAC ($15 USD / mes)</span>
               </a>
             </div>
           </div>
@@ -711,8 +711,8 @@ export default function BillingClient({
                   </p>
                 </div>
                 <div className="mt-3 pt-2 border-t border-black/5 flex items-baseline gap-1">
-                  <span className="text-lg font-black text-emerald-700">L. 2,500 HNL</span>
-                  <span className="text-[10px] text-gray-500 font-semibold">($100 USD / año)</span>
+                  <span className="text-lg font-black text-emerald-700">$100 USD</span>
+                  <span className="text-[10px] text-gray-500 font-semibold">/ año</span>
                 </div>
               </button>
             </div>

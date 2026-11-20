@@ -271,7 +271,7 @@ export const en: typeof es = {
     agencyBoxTitle: 'Looking to resell to your own clients?',
     agencyBoxDesc: 'With our White-Label Agency License, get your own branded platform with custom domain, your logo, and direct payment processing.',
     agencyBoxCta: 'Explore Agency Plans ($49 - $199/mo)',
-    securityNotice: 'Your payments are encrypted with SSL technology and processed securely through Paddle, our official Merchant of Record.',
+    securityNotice: 'Your payments are encrypted with SSL technology and processed securely with a 7-day money-back guarantee.',
   },
   agenciasPage: {
     badge: 'SAAS AGENCY & WHITE-LABEL PROGRAM',

@@ -102,7 +102,7 @@ export default async function RegisterPage({
                 1. Suscripción Digital PRO
               </div>
               <p className="text-xs text-gray-600 leading-relaxed">
-                Obtén acceso inmediato a todas las herramientas digitales profesionales (Menús QR, Agendas, Fidelización y vCard) con facturación oficial por Paddle:
+                Obtén acceso inmediato a todas las herramientas digitales profesionales (Menús QR, Agendas, Fidelización y vCard) con facturación digital segura:
               </p>
               <Link
                 href="/pricing"
