@@ -40,7 +40,7 @@ export const es = {
   },
   banner: {
     badge: 'MEMBRESÍA DIGITAL',
-    text: '🚀 Suscripción PRO por solo $15 USD/mes (~L. 380 HNL) • Digitaliza, vende y fideliza a tus clientes hoy mismo.',
+    text: '🚀 Suscripción PRO por solo $15 USD/mes • Digitaliza, vende y fideliza a tus clientes hoy mismo.',
     cta: 'Ver Planes',
   },
   hero: {
@@ -159,7 +159,7 @@ export const es = {
       periodMonthly: 'USD / mes',
       priceAnnual: '$100',
       periodAnnual: 'USD / año',
-      billedMonthly: 'Facturación mensual de $15 USD (~L. 380 HNL). Cancela cuando quieras.',
+      billedMonthly: 'Facturación mensual de $15 USD. Cancela cuando quieras.',
       billedAnnual: 'Pagas solo $8.33/mes en lugar de $15/mes. ¡Ahorras $80 USD al año (más del 44% de descuento directo)!',
       features: [
         'Menú digital interactivo con pedidos a WhatsApp',
