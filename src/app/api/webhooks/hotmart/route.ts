@@ -8,8 +8,12 @@ import { getAdminClient } from '@/lib/supabase/admin'
  */
 export async function POST(request: NextRequest) {
   try {
-    const expectedHottok = process.env.HOTMART_HOTTOK
-    const incomingHottok = request.headers.get('x-hotmart-hottok') || request.headers.get('X-HOTMART-HOTTOK')
+    const payload = await request.json()
+    const expectedHottok = process.env.HOTMART_HOTTOK?.trim()
+    const incomingHottok = 
+      request.headers.get('x-hotmart-hottok') || 
+      request.headers.get('X-HOTMART-HOTTOK') ||
+      payload?.hottok
 
     // Si HOTMART_HOTTOK está configurado en las variables de entorno, validarlo estrictamente
     if (expectedHottok && incomingHottok !== expectedHottok) {
@@ -19,7 +23,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const payload = await request.json()
     const event = (payload?.event || '').toString().toUpperCase()
     const data = payload?.data || {}
 
