@@ -40,7 +40,7 @@ export const es = {
   },
   banner: {
     badge: 'MEMBRESÍA DIGITAL',
-    text: '🚀 Suscripción PRO por solo $15 USD/mes (~L 427 HNL) • Digitaliza, vende y fideliza a tus clientes hoy mismo.',
+    text: '🚀 Suscripción PRO por solo $15 USD/mes • Digitaliza, vende y fideliza a tus clientes hoy mismo.',
     cta: 'Ver Planes',
   },
   hero: {
@@ -159,8 +159,8 @@ export const es = {
       periodMonthly: 'USD / mes',
       priceAnnual: '$100',
       periodAnnual: 'USD / año',
-      billedMonthly: 'Facturación mensual de $15 USD (~L 427 HNL). Cancela cuando quieras.',
-      billedAnnual: 'Pagas solo $8.33/mes en lugar de $15/mes (~L 2,839 HNL/año). ¡Ahorras $80 USD al año (más del 44% de descuento directo)!',
+      billedMonthly: 'Facturación mensual de $15 USD. Cancela cuando quieras.',
+      billedAnnual: 'Pagas solo $8.33/mes en lugar de $15/mes. ¡Ahorras $80 USD al año (más del 44% de descuento directo)!',
       features: [
         'Menú digital interactivo con pedidos a WhatsApp',
         'Ruleta de Premios interactiva y cupones de descuento',
@@ -170,7 +170,7 @@ export const es = {
         'Generador QR HD descargable e imprimible',
         'Actualizaciones continuas y soporte prioritario',
       ],
-      ctaMonthly: 'Suscribirme por $15/mes (~L 427 HNL)',
+      ctaMonthly: 'Suscribirme por $15/mes',
       ctaAnnual: 'Suscribirme por $100/año (Ahorra $80 USD)',
       paddleNotice: 'Procesamiento digital seguro con cifrado bancario y garantía de 7 días',
     },
@@ -264,7 +264,7 @@ export const es = {
       'Generador y Descarga de Códigos QR en Alta Definición (HD)',
       'Soporte prioritario y actualizaciones continuas en la nube',
     ],
-    paddlePayBtn: 'Suscribirme por $15/mes (~L 427 HNL)',
+    paddlePayBtn: 'Suscribirme por $15/mes',
     agencyBoxBadge: 'Para Emprendedores y Agencias',
     agencyBoxTitle: '¿Buscas revender a tus propios clientes?',
     agencyBoxDesc: 'Con nuestra Licencia Marca Blanca obtienes tu propio software con tu logo, dominio personalizado y pasarela de cobro directa.',

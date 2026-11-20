@@ -80,7 +80,7 @@ export default function ProFeatureModal({
           <div>
             <div className="flex items-baseline justify-center gap-1.5">
               <span className="text-2xl sm:text-3xl font-extrabold text-gray-900">$15</span>
-              <span className="text-xs text-gray-500 font-medium">USD / mes (~L. 380 HNL)</span>
+              <span className="text-xs text-gray-500 font-medium">USD / mes</span>
             </div>
             <p className="text-[11px] text-gray-400 mt-0.5">Suscripción digital segura con Hotmart o Transferencia BAC</p>
           </div>

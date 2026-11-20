@@ -61,7 +61,7 @@ export default function AccountLockedPaywall({
                 </div>
                 <div className="mt-3">
                   <span className="text-3xl font-black text-gray-900">$15 USD</span>
-                  <span className="text-xs font-semibold text-gray-500"> / mes (~L. 380 HNL)</span>
+                  <span className="text-xs font-semibold text-gray-500"> / mes</span>
                 </div>
                 <p className="text-xs text-gray-600 mt-2 leading-relaxed">
                   Acceso completo inmediato a vCards ilimitadas, menús interactivos, ruleta de premios, escudo de reseñas 5★ y CRM.
